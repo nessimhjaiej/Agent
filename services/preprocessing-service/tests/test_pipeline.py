@@ -8,6 +8,7 @@ if str(SERVICE_ROOT) not in sys.path:
 from app.models import ChunkingContext, RawDocument  # noqa: E402
 from app.orchestrator import PreprocessingOrchestrator  # noqa: E402
 from normalization.basic import BasicTextNormalizer  # noqa: E402
+from normalization.language import LightweightLanguageDetector  # noqa: E402
 
 
 def test_basic_normalizer_cleans_whitespace() -> None:
@@ -28,7 +29,10 @@ def test_basic_normalizer_cleans_whitespace() -> None:
 
 def test_process_source_txt_file(tmp_path: Path) -> None:
     source = tmp_path / "doc.txt"
-    source.write_text("Alpha beta gamma delta epsilon", encoding="utf-8")
+    source.write_text(
+        "The digital economy regulation framework is evolving rapidly and this text is in English.",
+        encoding="utf-8",
+    )
 
     orchestrator = PreprocessingOrchestrator(chunk_strategy="overlap", pipeline_version="v-test")
     chunks = orchestrator.process_source(
@@ -40,4 +44,9 @@ def test_process_source_txt_file(tmp_path: Path) -> None:
     assert chunks[0].metadata.source_filename == "doc.txt"
     assert chunks[0].metadata.pipeline_version == "v-test"
     assert chunks[0].metadata.normalization_version == "basic-v1"
+    assert chunks[0].metadata.language in {"en", "und"}
 
+
+def test_language_detector_short_text_returns_und() -> None:
+    detector = LightweightLanguageDetector(min_chars=20)
+    assert detector.detect("hello") == "und"

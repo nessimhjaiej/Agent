@@ -7,6 +7,8 @@ class ProcessSourceRequest(BaseModel):
     chunk_strategy: str | None = None
     chunk_size: int | None = Field(default=None, gt=0)
     chunk_overlap: int | None = Field(default=None, ge=0)
+    late_size_multiplier: float | None = Field(default=None, gt=0)
+    late_overlap_multiplier: float | None = Field(default=None, gt=0)
 
 
 class ChunkMetadataResponse(BaseModel):
@@ -43,4 +45,3 @@ class HealthResponse(BaseModel):
     status: str = "ok"
     service: str
     version: str
-

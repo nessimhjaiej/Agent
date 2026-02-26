@@ -20,6 +20,8 @@ def process_source(payload: ProcessSourceRequest) -> ProcessSourceResponse:
             chunk_strategy=payload.chunk_strategy,
             chunk_size=payload.chunk_size,
             chunk_overlap=payload.chunk_overlap,
+            late_size_multiplier=payload.late_size_multiplier,
+            late_overlap_multiplier=payload.late_overlap_multiplier,
         )
     except (FileNotFoundError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -32,4 +34,3 @@ def process_source(payload: ProcessSourceRequest) -> ProcessSourceResponse:
         chunk_count=len(chunk_payload),
         chunks=chunk_payload,
     )
-
