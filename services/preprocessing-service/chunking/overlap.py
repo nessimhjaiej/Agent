@@ -40,6 +40,9 @@ class OverlapChunker(BaseChunker):
                 char_count=len(chunk_text),
                 token_count_estimate=token_count_estimate,
                 chunking_strategy=self.name,
+                source_filename=document.source_uri.split("/")[-1].split("\\")[-1],
+                document_checksum=document.checksum,
+                normalization_version=document.normalization_version,
             )
             chunks.append(
                 ChunkRecord(
@@ -55,4 +58,3 @@ class OverlapChunker(BaseChunker):
             index += 1
 
         return chunks
-

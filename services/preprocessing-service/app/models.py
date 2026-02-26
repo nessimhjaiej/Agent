@@ -1,10 +1,30 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from hashlib import sha256
+from pathlib import Path
 from typing import Any
 
 
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def text_sha256(value: str) -> str:
+    return sha256(value.encode("utf-8")).hexdigest()
+
+
+@dataclass(slots=True)
+class RawDocument:
+    document_id: str
+    source_type: str
+    source_uri: str
+    raw_text: str
+    checksum: str
+    created_at: str = field(default_factory=utc_now_iso)
+
+    @property
+    def source_filename(self) -> str:
+        return Path(self.source_uri).name
 
 
 @dataclass(slots=True)
@@ -13,6 +33,7 @@ class NormalizedDocument:
     source_type: str
     source_uri: str
     normalized_text: str
+    checksum: str
     language: str = "und"
     normalization_version: str = "v1"
     created_at: str = field(default_factory=utc_now_iso)
@@ -38,6 +59,9 @@ class ChunkMetadata:
     char_count: int
     token_count_estimate: int
     chunking_strategy: str
+    source_filename: str
+    document_checksum: str
+    normalization_version: str
     pipeline_version: str = "v1"
     created_at: str = field(default_factory=utc_now_iso)
 
@@ -48,4 +72,3 @@ class ChunkRecord:
     document_id: str
     chunk_text: str
     metadata: ChunkMetadata
-

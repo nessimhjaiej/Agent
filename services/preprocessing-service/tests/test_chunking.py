@@ -18,6 +18,7 @@ def _make_doc(text: str) -> NormalizedDocument:
         source_type="pdf",
         source_uri="raw_data/sample.pdf",
         normalized_text=text,
+        checksum="dummy-checksum",
         language="fr",
     )
 
@@ -36,6 +37,7 @@ def test_overlap_chunking_respects_size_and_overlap() -> None:
     assert chunks[0].metadata.start_char == 0
     assert chunks[1].metadata.start_char == 7
     assert chunks[0].metadata.chunking_strategy == "overlap"
+    assert chunks[0].metadata.document_checksum == "dummy-checksum"
 
 
 def test_factory_returns_requested_chunker() -> None:
@@ -56,4 +58,3 @@ def test_placeholder_chunkers_raise_not_implemented(strategy: str) -> None:
 
     with pytest.raises(NotImplementedError):
         orchestrator.process_document(doc, ctx)
-
