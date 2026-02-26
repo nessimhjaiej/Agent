@@ -7,6 +7,7 @@ SERVICE_ROOT = Path(__file__).resolve().parents[1]
 if str(SERVICE_ROOT) not in sys.path:
     sys.path.insert(0, str(SERVICE_ROOT))
 
+from app.config import Settings  # noqa: E402
 from app.main import create_app  # noqa: E402
 
 
@@ -58,3 +59,44 @@ def test_process_source_returns_400_when_file_missing() -> None:
     )
 
     assert response.status_code == 400
+
+
+def test_rate_limit_returns_429(tmp_path: Path) -> None:
+    source = tmp_path / "sample.txt"
+    source.write_text("One two three four five six seven", encoding="utf-8")
+    app = create_app(
+        Settings(
+            rate_limit_requests=2,
+            rate_limit_window_seconds=60,
+            max_request_size_bytes=1_048_576,
+        )
+    )
+    client = TestClient(app)
+    payload = {"source_path": str(source), "chunk_strategy": "overlap"}
+
+    r1 = client.post("/preprocessing/process-source", json=payload)
+    r2 = client.post("/preprocessing/process-source", json=payload)
+    r3 = client.post("/preprocessing/process-source", json=payload)
+
+    assert r1.status_code == 200
+    assert r2.status_code == 200
+    assert r3.status_code == 429
+
+
+def test_request_size_limit_returns_413() -> None:
+    app = create_app(
+        Settings(
+            max_request_size_bytes=80,
+            rate_limit_requests=100,
+            rate_limit_window_seconds=60,
+        )
+    )
+    client = TestClient(app)
+    long_path = "x" * 500
+
+    response = client.post(
+        "/preprocessing/process-source",
+        json={"source_path": long_path},
+    )
+
+    assert response.status_code == 413

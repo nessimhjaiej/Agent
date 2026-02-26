@@ -10,6 +10,9 @@ class Settings:
     chunk_size: int = 800
     chunk_overlap: int = 120
     pipeline_version: str = "v1"
+    rate_limit_requests: int = 60
+    rate_limit_window_seconds: int = 60
+    max_request_size_bytes: int = 1_048_576
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -20,5 +23,7 @@ class Settings:
             chunk_size=int(os.getenv("PREPROCESSING_CHUNK_SIZE", "800")),
             chunk_overlap=int(os.getenv("PREPROCESSING_CHUNK_OVERLAP", "120")),
             pipeline_version=os.getenv("PREPROCESSING_PIPELINE_VERSION", "v1"),
+            rate_limit_requests=int(os.getenv("PREPROCESSING_RATE_LIMIT_REQUESTS", "60")),
+            rate_limit_window_seconds=int(os.getenv("PREPROCESSING_RATE_LIMIT_WINDOW_SECONDS", "60")),
+            max_request_size_bytes=int(os.getenv("PREPROCESSING_MAX_REQUEST_SIZE_BYTES", "1048576")),
         )
-
