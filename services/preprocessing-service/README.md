@@ -95,3 +95,5 @@ uvicorn app.main:app --reload --app-dir services/preprocessing-service
   - Domain/pipeline layer (`models`, `chunking`, `normalization`, `metadata`)
 - Middleware Pattern:
   - Rate limiting and request-size controls in FastAPI middleware
+
+## UML DIGRAMS
