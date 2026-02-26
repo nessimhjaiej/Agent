@@ -76,3 +76,22 @@ uvicorn app.main:app --reload --app-dir services/preprocessing-service
 - `PREPROCESSING_RATE_LIMIT_REQUESTS`
 - `PREPROCESSING_RATE_LIMIT_WINDOW_SECONDS`
 - `PREPROCESSING_MAX_REQUEST_SIZE_BYTES`
+
+## Design Patterns Used
+
+- Strategy Pattern:
+  - `BaseChunker` with `OverlapChunker`, `SemanticChunker`, `LateChunker`, `SentenceChunker`
+  - `BaseInputAdapter` with concrete input adapters
+  - `BaseNormalizer` with `BasicTextNormalizer`
+  - `BaseMetadataBuilder` with `DefaultMetadataBuilder`
+- Factory Pattern:
+  - `ChunkerFactory`
+  - `InputAdapterFactory`
+- Orchestrator Pattern:
+  - `PreprocessingOrchestrator` coordinates adapter -> normalizer -> chunker -> metadata builder
+- Layered Architecture (separation of concerns):
+  - API layer (`routers`, `schemas`)
+  - Service layer (`service.py`)
+  - Domain/pipeline layer (`models`, `chunking`, `normalization`, `metadata`)
+- Middleware Pattern:
+  - Rate limiting and request-size controls in FastAPI middleware
