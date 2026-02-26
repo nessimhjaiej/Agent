@@ -36,6 +36,8 @@ def test_process_source_txt_endpoint(tmp_path: Path) -> None:
             "chunk_strategy": "overlap",
             "chunk_size": 10,
             "chunk_overlap": 2,
+            "late_size_multiplier": 2.0,
+            "late_overlap_multiplier": 2.0,
         },
     )
 
@@ -56,4 +58,3 @@ def test_process_source_returns_400_when_file_missing() -> None:
     )
 
     assert response.status_code == 400
-

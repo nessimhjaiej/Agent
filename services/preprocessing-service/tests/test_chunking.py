@@ -50,11 +50,43 @@ def test_factory_raises_for_unknown_strategy() -> None:
         ChunkerFactory.create("unknown")
 
 
-@pytest.mark.parametrize("strategy", ["semantic", "late", "sentence"])
-def test_placeholder_chunkers_raise_not_implemented(strategy: str) -> None:
+def test_semantic_chunking_with_overlap() -> None:
+    doc = _make_doc(
+        "Sentence one. Sentence two with more words. Sentence three.\n\n"
+        "Second paragraph starts here. It ends here."
+    )
+    ctx = ChunkingContext(chunk_size=45, chunk_overlap=12)
+
+    chunks = PreprocessingOrchestrator("semantic").process_document(doc, ctx)
+
+    assert len(chunks) >= 2
+    assert chunks[0].metadata.chunking_strategy == "semantic"
+    assert chunks[1].metadata.start_char < chunks[0].metadata.end_char
+
+
+def test_late_chunking_with_overlap() -> None:
+    doc = _make_doc(
+        "Alpha sentence. Beta sentence. Gamma sentence. Delta sentence.\n\n"
+        "Paragraph two starts. Another sentence. Final sentence."
+    )
+    ctx = ChunkingContext(
+        chunk_size=30,
+        chunk_overlap=8,
+        strategy_params={"late_size_multiplier": 2.0, "late_overlap_multiplier": 2.0},
+    )
+
+    chunks = PreprocessingOrchestrator("late").process_document(doc, ctx)
+
+    assert len(chunks) >= 1
+    assert chunks[0].metadata.chunking_strategy == "late"
+    if len(chunks) > 1:
+        assert chunks[1].metadata.start_char < chunks[0].metadata.end_char
+
+
+def test_sentence_chunker_still_not_implemented() -> None:
     doc = _make_doc("hello world")
     ctx = ChunkingContext(chunk_size=10, chunk_overlap=2)
-    orchestrator = PreprocessingOrchestrator(strategy)
+    orchestrator = PreprocessingOrchestrator("sentence")
 
     with pytest.raises(NotImplementedError):
         orchestrator.process_document(doc, ctx)

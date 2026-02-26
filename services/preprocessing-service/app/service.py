@@ -14,11 +14,19 @@ class PreprocessingService:
         chunk_strategy: str | None = None,
         chunk_size: int | None = None,
         chunk_overlap: int | None = None,
+        late_size_multiplier: float | None = None,
+        late_overlap_multiplier: float | None = None,
     ) -> list[ChunkRecord]:
         strategy = chunk_strategy or self._settings.chunk_strategy
+        strategy_params: dict[str, float] = {}
+        if late_size_multiplier is not None:
+            strategy_params["late_size_multiplier"] = late_size_multiplier
+        if late_overlap_multiplier is not None:
+            strategy_params["late_overlap_multiplier"] = late_overlap_multiplier
         context = ChunkingContext(
             chunk_size=chunk_size or self._settings.chunk_size,
             chunk_overlap=chunk_overlap if chunk_overlap is not None else self._settings.chunk_overlap,
+            strategy_params=strategy_params,
         )
         orchestrator = PreprocessingOrchestrator(
             chunk_strategy=strategy,
@@ -29,4 +37,3 @@ class PreprocessingService:
             source_type=source_type,
             context=context,
         )
-

@@ -30,6 +30,12 @@ paths:
                   type: integer
                 chunk_overlap:
                   type: integer
+                late_size_multiplier:
+                  type: number
+                  format: float
+                late_overlap_multiplier:
+                  type: number
+                  format: float
       responses:
         "200":
           description: Chunks created
@@ -37,4 +43,3 @@ paths:
           description: Invalid request or source
         "500":
           description: Server error
-
