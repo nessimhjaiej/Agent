@@ -1,5 +1,9 @@
 ﻿# preprocessing-service
 
+This service transforms source files into normalized, chunked, metadata-enriched records ready for embedding and indexing.
+
+## Workflow
+
 1. Input arrives as a file path (`.pdf`, `.txt`, `.md`, etc.).
 2. `PreprocessingOrchestrator.process_source(...)` infers source type (or uses provided one).
 3. `InputAdapterFactory` selects the right adapter.
@@ -10,20 +14,60 @@
 8. `DefaultMetadataBuilder` enriches each chunk with traceability metadata (`source_filename`, `document_checksum`, `normalization_version`, `pipeline_version`).
 9. Final output is a list of chunks ready for embedding/indexing.
 
-## FastAPI
+## Folder Overview
 
-- App entrypoint: `services/preprocessing-service/app/main.py`
-- Health endpoint: `GET /health`
-- Processing endpoint: `POST /preprocessing/process-source`
+- `app/`: API and orchestration layer.
+- `app/main.py`: FastAPI entrypoint and router registration.
+- `app/config.py`: environment-driven settings (strategy, chunk params, version).
+- `app/schemas.py`: request/response API models.
+- `app/service.py`: service layer connecting API payloads to orchestrator calls.
+- `app/orchestrator.py`: end-to-end preprocessing pipeline coordination.
+- `app/input_adapters/`: source ingestion adapters by format (`pdf`, `txt`, `md`).
+- `chunking/`: chunking strategy interface + implementations (`overlap` implemented, others scaffolded).
+- `normalization/`: normalization interface + implementations (`BasicTextNormalizer`).
+- `metadata/`: metadata enrichment logic for chunk traceability.
+- `tests/`: unit and API contract tests.
 
-Example request body:
+## API Endpoints
+
+- `GET /health`: service status/version.
+- `POST /preprocessing/process-source`: process one source file into chunks.
+
+## Usage
+
+1. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+2. Run the API:
+
+```bash
+uvicorn app.main:app --reload --app-dir services/preprocessing-service
+```
+
+3. Open interactive docs:
+
+`http://127.0.0.1:8000/docs`
+
+4. Example request body for `POST /preprocessing/process-source`:
 
 ```json
 {
-  "source_path": "shared/raw_data/example.txt",
-  "source_type": "txt",
+  "source_path": "c:/Users/NESSIM/Desktop/agentic/shared/raw_data/example.pdf",
+  "source_type": "pdf",
   "chunk_strategy": "overlap",
   "chunk_size": 800,
   "chunk_overlap": 120
 }
 ```
+
+## Environment Variables
+
+- `PREPROCESSING_APP_NAME`
+- `PREPROCESSING_APP_VERSION`
+- `PREPROCESSING_CHUNK_STRATEGY`
+- `PREPROCESSING_CHUNK_SIZE`
+- `PREPROCESSING_CHUNK_OVERLAP`
+- `PREPROCESSING_PIPELINE_VERSION`
