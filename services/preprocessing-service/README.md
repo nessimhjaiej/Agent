@@ -9,3 +9,21 @@
 7. Chunker splits normalized text into `ChunkRecord` objects with base metadata (offsets, token estimate, strategy).
 8. `DefaultMetadataBuilder` enriches each chunk with traceability metadata (`source_filename`, `document_checksum`, `normalization_version`, `pipeline_version`).
 9. Final output is a list of chunks ready for embedding/indexing.
+
+## FastAPI
+
+- App entrypoint: `services/preprocessing-service/app/main.py`
+- Health endpoint: `GET /health`
+- Processing endpoint: `POST /preprocessing/process-source`
+
+Example request body:
+
+```json
+{
+  "source_path": "shared/raw_data/example.txt",
+  "source_type": "txt",
+  "chunk_strategy": "overlap",
+  "chunk_size": 800,
+  "chunk_overlap": 120
+}
+```

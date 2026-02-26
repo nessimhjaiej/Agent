@@ -1,0 +1,40 @@
+openapi: 3.0.3
+info:
+  title: preprocessing-service
+  version: 0.1.0
+paths:
+  /health:
+    get:
+      summary: Service health
+      responses:
+        "200":
+          description: OK
+  /preprocessing/process-source:
+    post:
+      summary: Process source file and return chunks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source_path]
+              properties:
+                source_path:
+                  type: string
+                source_type:
+                  type: string
+                chunk_strategy:
+                  type: string
+                chunk_size:
+                  type: integer
+                chunk_overlap:
+                  type: integer
+      responses:
+        "200":
+          description: Chunks created
+        "400":
+          description: Invalid request or source
+        "500":
+          description: Server error
+
