@@ -8,7 +8,7 @@ from normalization.basic import BasicTextNormalizer
 class PreprocessingOrchestrator:
     def __init__(
         self,
-        chunk_strategy: str = "overlap",
+        chunk_strategy: str = "late",
         pipeline_version: str = "v1",
     ) -> None:
         self._chunker = ChunkerFactory.create(chunk_strategy)

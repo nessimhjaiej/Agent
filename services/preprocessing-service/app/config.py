@@ -6,7 +6,7 @@ from dataclasses import dataclass
 class Settings:
     app_name: str = "preprocessing-service"
     app_version: str = "0.1.0"
-    chunk_strategy: str = "overlap"
+    chunk_strategy: str = "late"
     chunk_size: int = 800
     chunk_overlap: int = 120
     pipeline_version: str = "v1"
@@ -19,7 +19,7 @@ class Settings:
         return cls(
             app_name=os.getenv("PREPROCESSING_APP_NAME", "preprocessing-service"),
             app_version=os.getenv("PREPROCESSING_APP_VERSION", "0.1.0"),
-            chunk_strategy=os.getenv("PREPROCESSING_CHUNK_STRATEGY", "overlap"),
+            chunk_strategy=os.getenv("PREPROCESSING_CHUNK_STRATEGY", "late"),
             chunk_size=int(os.getenv("PREPROCESSING_CHUNK_SIZE", "800")),
             chunk_overlap=int(os.getenv("PREPROCESSING_CHUNK_OVERLAP", "120")),
             pipeline_version=os.getenv("PREPROCESSING_PIPELINE_VERSION", "v1"),
