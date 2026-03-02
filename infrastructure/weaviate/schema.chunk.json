@@ -1,0 +1,27 @@
+{
+  "class": "Chunk",
+  "description": "Preprocessed document chunks with externally generated embeddings",
+  "vectorizer": "none",
+  "vectorIndexConfig": {
+    "distance": "cosine"
+  },
+  "properties": [
+    { "name": "chunk_id", "dataType": ["text"] },
+    { "name": "document_id", "dataType": ["text"] },
+    { "name": "chunk_text", "dataType": ["text"] },
+    { "name": "source_type", "dataType": ["text"] },
+    { "name": "source_uri", "dataType": ["text"] },
+    { "name": "source_filename", "dataType": ["text"] },
+    { "name": "language", "dataType": ["text"] },
+    { "name": "chunk_index", "dataType": ["int"] },
+    { "name": "start_char", "dataType": ["int"] },
+    { "name": "end_char", "dataType": ["int"] },
+    { "name": "char_count", "dataType": ["int"] },
+    { "name": "token_count_estimate", "dataType": ["int"] },
+    { "name": "chunking_strategy", "dataType": ["text"] },
+    { "name": "document_checksum", "dataType": ["text"] },
+    { "name": "normalization_version", "dataType": ["text"] },
+    { "name": "pipeline_version", "dataType": ["text"] },
+    { "name": "created_at", "dataType": ["date"] }
+  ]
+}

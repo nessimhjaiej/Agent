@@ -1,4 +1,13 @@
+# Environment / secrets
 .env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+!.env.exemple
+!**/.env.exemple
+
 __pycache__/
 *.pyc
 .pytest_cache/

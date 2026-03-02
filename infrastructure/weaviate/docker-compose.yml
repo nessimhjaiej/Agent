@@ -15,27 +15,5 @@ services:
       CLUSTER_HOSTNAME: "node1"
     restart: unless-stopped
 
-  auth-service:
-    build:
-      context: .
-      dockerfile: services/auth-service/Dockerfile
-    container_name: auth-service
-    env_file:
-      - .env
-    ports:
-      - "8001:8001"
-    restart: unless-stopped
-
-  preprocessing-service:
-    build:
-      context: .
-      dockerfile: services/preprocessing-service/Dockerfile
-    container_name: preprocessing-service
-    env_file:
-      - .env
-    ports:
-      - "8000:8000"
-    restart: unless-stopped
-
 volumes:
   weaviate_data:
