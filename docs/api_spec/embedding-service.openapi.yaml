@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: embedding-service
+  version: 0.1.0
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Returns service status, name, and version.
+      responses:
+        "200":
+          description: OK
+  /embedding/index-chunks:
+    post:
+      summary: Embed and index chunks
+      description: Receives preprocessed chunks, generates embeddings, and upserts vectors into Weaviate.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IndexChunksRequest"
+            example:
+              chunks:
+                - chunk_id: doc-123:0
+                  document_id: doc-123
+                  chunk_text: This is a sample chunk ready for embedding.
+                  metadata:
+                    source_type: pdf
+                    source_uri: shared/raw_data/example.pdf
+                    language: en
+                    chunk_index: 0
+                    start_char: 0
+                    end_char: 44
+                    char_count: 44
+                    token_count_estimate: 9
+                    chunking_strategy: late
+                    source_filename: example.pdf
+                    document_checksum: a5d2f1
+                    normalization_version: basic-v1
+                    pipeline_version: v1
+                    created_at: "2026-03-02T10:00:00Z"
+      responses:
+        "200":
+          description: Chunks processed and indexing results returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndexChunksResponse"
+        "400":
+          description: Invalid service/runtime configuration
+        "422":
+          description: Invalid request payload format
+        "502":
+          description: Embedding provider error (OpenAI)
+        "503":
+          description: Vector store error (Weaviate unavailable/schema issue)
+        "500":
+          description: Unexpected internal error
+
+components:
+  schemas:
+    ChunkMetadataInput:
+      type: object
+      required:
+        - source_type
+        - source_uri
+        - language
+        - chunk_index
+        - start_char
+        - end_char
+        - char_count
+        - token_count_estimate
+        - chunking_strategy
+        - source_filename
+        - document_checksum
+        - normalization_version
+        - pipeline_version
+        - created_at
+      properties:
+        source_type: { type: string }
+        source_uri: { type: string }
+        language: { type: string }
+        chunk_index: { type: integer, minimum: 0 }
+        start_char: { type: integer, minimum: 0 }
+        end_char: { type: integer, minimum: 0 }
+        char_count: { type: integer, minimum: 0 }
+        token_count_estimate: { type: integer, minimum: 0 }
+        chunking_strategy: { type: string }
+        source_filename: { type: string }
+        document_checksum: { type: string }
+        normalization_version: { type: string }
+        pipeline_version: { type: string }
+        created_at: { type: string, format: date-time }
+
+    ChunkInput:
+      type: object
+      required: [chunk_id, document_id, chunk_text, metadata]
+      properties:
+        chunk_id:
+          type: string
+          minLength: 1
+        document_id:
+          type: string
+          minLength: 1
+        chunk_text:
+          type: string
+          minLength: 1
+        metadata:
+          $ref: "#/components/schemas/ChunkMetadataInput"
+
+    IndexChunksRequest:
+      type: object
+      required: [chunks]
+      properties:
+        chunks:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ChunkInput"
+
+    IndexedChunkResponse:
+      type: object
+      required: [chunk_id, indexed]
+      properties:
+        chunk_id:
+          type: string
+        indexed:
+          type: boolean
+        reason:
+          type: string
+          nullable: true
+
+    IndexChunksResponse:
+      type: object
+      required: [status, collection, total_count, indexed_count, results]
+      properties:
+        status:
+          type: string
+          example: ok
+        collection:
+          type: string
+          example: Chunk
+        total_count:
+          type: integer
+          minimum: 0
+        indexed_count:
+          type: integer
+          minimum: 0
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexedChunkResponse"

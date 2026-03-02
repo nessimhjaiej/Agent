@@ -17,7 +17,23 @@ router = APIRouter(prefix="/embedding", tags=["embedding"])
 logger = logging.getLogger(__name__)
 
 
-@router.post("/index-chunks", response_model=IndexChunksResponse)
+@router.post(
+    "/index-chunks",
+    response_model=IndexChunksResponse,
+    summary="Embed and index chunks",
+    description=(
+        "Receives preprocessed chunks, generates embeddings with OpenAI, "
+        "and upserts vectors + metadata into Weaviate."
+    ),
+    responses={
+        200: {"description": "Chunks processed and indexing results returned."},
+        400: {"description": "Invalid service/runtime configuration."},
+        422: {"description": "Invalid request payload format."},
+        502: {"description": "Embedding provider error (OpenAI)."},
+        503: {"description": "Vector store error (Weaviate unavailable/schema issue)."},
+        500: {"description": "Unexpected internal service error."},
+    },
+)
 def index_chunks(payload: IndexChunksRequest) -> IndexChunksResponse:
     started_at = perf_counter()
     try:
