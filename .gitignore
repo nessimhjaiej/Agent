@@ -13,3 +13,9 @@ __pycache__/
 .pytest_cache/
 .venv/
 venv/
+
+# Node.js / Frontend
+node_modules/
+dist/
+.cache/
+*.local
