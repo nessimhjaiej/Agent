@@ -1,0 +1,72 @@
+from dataclasses import replace
+
+from app.models import CandidateChunk, QueryContext
+from fusion.base import BaseFusion
+
+
+class RRFFusion(BaseFusion):
+    @property
+    def name(self) -> str:
+        return "rrf"
+
+    def combine(
+        self,
+        bm25_candidates: list[CandidateChunk],
+        vector_candidates: list[CandidateChunk],
+        ctx: QueryContext,
+    ) -> list[CandidateChunk]:
+        merged = self._merge_candidates(bm25_candidates, vector_candidates)
+        if not merged:
+            return []
+
+        bm25_rank: dict[str, int] = {}
+        vector_rank: dict[str, int] = {}
+        for idx, c in enumerate(bm25_candidates, start=1):
+            bm25_rank[c.chunk_id] = c.rank_bm25 or idx
+        for idx, c in enumerate(vector_candidates, start=1):
+            vector_rank[c.chunk_id] = c.rank_vector or idx
+
+        k = ctx.rrf_k
+        fused: list[CandidateChunk] = []
+        for chunk_id, c in merged.items():
+            score = 0.0
+            br = bm25_rank.get(chunk_id)
+            vr = vector_rank.get(chunk_id)
+            if br is not None:
+                score += 1.0 / (k + br)
+            if vr is not None:
+                score += 1.0 / (k + vr)
+            fused.append(replace(c, fusion_score=score))
+
+        fused.sort(
+            key=lambda x: (
+                x.fusion_score if x.fusion_score is not None else -1.0,
+                x.vector_score if x.vector_score is not None else -1.0,
+                x.bm25_score if x.bm25_score is not None else -1.0,
+                x.chunk_id,
+            ),
+            reverse=True,
+        )
+        return fused
+
+    def _merge_candidates(
+        self,
+        bm25_candidates: list[CandidateChunk],
+        vector_candidates: list[CandidateChunk],
+    ) -> dict[str, CandidateChunk]:
+        merged: dict[str, CandidateChunk] = {}
+        for c in bm25_candidates:
+            merged[c.chunk_id] = c
+        for c in vector_candidates:
+            existing = merged.get(c.chunk_id)
+            if existing is None:
+                merged[c.chunk_id] = c
+                continue
+            merged[c.chunk_id] = replace(
+                existing,
+                chunk_text=existing.chunk_text or c.chunk_text,
+                metadata=existing.metadata or c.metadata,
+                vector_score=c.vector_score if c.vector_score is not None else existing.vector_score,
+                rank_vector=c.rank_vector if c.rank_vector is not None else existing.rank_vector,
+            )
+        return merged
