@@ -17,9 +17,7 @@ if str(SERVICE_ROOT) not in sys.path:
     sys.path.insert(0, str(SERVICE_ROOT))
 
 from app.main import create_app  # noqa: E402
-
-# Patch Supabase create_client for all tests
-_MOCK_DB = "app.database.create_client"
+import app.database as database_module  # noqa: E402
 
 
 def _make_mock_supabase_user(**overrides):
@@ -64,7 +62,7 @@ def test_health_endpoint() -> None:
 # ── Signup ────────────────────────────────────────────────────────────
 
 
-@patch(_MOCK_DB, return_value=MagicMock())
+@patch.object(database_module, "create_client", return_value=MagicMock())
 def test_signup_success(mock_create: MagicMock) -> None:
     mock_client = mock_create.return_value
     mock_user = _make_mock_supabase_user()
@@ -95,7 +93,7 @@ def test_signup_success(mock_create: MagicMock) -> None:
     assert data["user"]["email"] == "new@example.com"
 
 
-@patch(_MOCK_DB, return_value=MagicMock())
+@patch.object(database_module, "create_client", return_value=MagicMock())
 def test_signup_email_confirmation(mock_create: MagicMock) -> None:
     """When email confirmation is enabled, session is None."""
     mock_client = mock_create.return_value
@@ -126,7 +124,7 @@ def test_signup_email_confirmation(mock_create: MagicMock) -> None:
 # ── Login ─────────────────────────────────────────────────────────────
 
 
-@patch(_MOCK_DB, return_value=MagicMock())
+@patch.object(database_module, "create_client", return_value=MagicMock())
 def test_login_success(mock_create: MagicMock) -> None:
     mock_client = mock_create.return_value
     mock_user = _make_mock_supabase_user()
@@ -178,7 +176,7 @@ def test_me_endpoint_requires_auth() -> None:
     assert response.status_code == 401
 
 
-@patch(_MOCK_DB, return_value=MagicMock())
+@patch.object(database_module, "create_client", return_value=MagicMock())
 def test_me_returns_user(mock_create: MagicMock) -> None:
     mock_client = mock_create.return_value
     mock_user = _make_mock_supabase_user()
@@ -201,7 +199,7 @@ def test_me_returns_user(mock_create: MagicMock) -> None:
 # ── Password reset ────────────────────────────────────────────────────
 
 
-@patch(_MOCK_DB, return_value=MagicMock())
+@patch.object(database_module, "create_client", return_value=MagicMock())
 def test_password_reset_request(mock_create: MagicMock) -> None:
     mock_client = mock_create.return_value
     mock_client.auth.reset_password_email.return_value = None

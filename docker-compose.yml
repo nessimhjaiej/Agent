@@ -37,5 +37,31 @@ services:
       - "8000:8000"
     restart: unless-stopped
 
+  embedding-service:
+    build:
+      context: .
+      dockerfile: services/embedding-service/Dockerfile
+    container_name: embedding-service
+    env_file:
+      - .env
+    ports:
+      - "8002:8002"
+    depends_on:
+      - weaviate
+    restart: unless-stopped
+
+  retrieval-service:
+    build:
+      context: .
+      dockerfile: services/retrieval-service/Dockerfile
+    container_name: retrieval-service
+    env_file:
+      - .env
+    ports:
+      - "8003:8003"
+    depends_on:
+      - weaviate
+    restart: unless-stopped
+
 volumes:
   weaviate_data:
