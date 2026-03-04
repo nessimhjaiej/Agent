@@ -17,7 +17,6 @@ from app.exceptions import (
     InvalidPasswordException,
     UnauthorizedException,
     UserAlreadyExistsException,
-    UserNotFoundException,
 )
 from app.models import AuthSession, AuthUser
 
