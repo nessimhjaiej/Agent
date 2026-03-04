@@ -151,7 +151,7 @@ export default function LoginPage() {
                   <motion.button
                     key={provider}
                     onClick={() => handleOAuth(provider)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all"
+                    className="flex-1 flex items-center justify-center gap-2 px-5 py-4 rounded-xl text-sm font-medium transition-all"
                     style={{
                       border: '1px solid var(--border-color)',
                       color: 'var(--text-primary)',
@@ -239,7 +239,7 @@ export default function LoginPage() {
                   id="login-submit"
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  className="w-full py-4.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                   style={{
                     background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
                     boxShadow: '0 0 25px rgba(139,92,246,0.3)',

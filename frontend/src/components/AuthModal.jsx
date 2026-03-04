@@ -77,7 +77,7 @@ export default function AuthModal({ isOpen, onClose }) {
               {/* Close */}
               <motion.button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-1.5 rounded-lg transition-colors hover:bg-primary-500/10"
+                className="absolute top-4 right-4 p-2.5 rounded-lg transition-colors hover:bg-primary-500/10"
                 style={{ color: 'var(--text-muted)' }}
                 whileHover={{ rotate: 90 }}
                 transition={{ duration: 0.2 }}

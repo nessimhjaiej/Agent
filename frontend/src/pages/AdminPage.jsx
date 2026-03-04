@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Check, X, Clock, Search, Upload, Send, Bot, User, Eye, Trash2 } from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
 import TypingIndicator from '../components/TypingIndicator';
+import { useTheme } from '../context/ThemeContext';
 
 const MOCK_DOCUMENTS = [
   { id: '1', name: 'GDPR_Regulation_EU_2016_679.pdf', status: 'validated', size: '2.3 MB', date: '2026-02-15', chunks: 142 },
@@ -38,6 +39,7 @@ function StatusBadge({ status }) {
 }
 
 export default function AdminPage() {
+  const { theme } = useTheme();
   const [tab, setTab] = useState('documents');
   const [docs, setDocs] = useState(MOCK_DOCUMENTS);
   const [search, setSearch] = useState('');
@@ -72,47 +74,48 @@ export default function AdminPage() {
   ];
 
   return (
-    <AnimatedPage className="h-full flex flex-col overflow-hidden items-center">
-      {/* Tabs */}
-      <div className="flex border-b shrink-0 px-8 w-full max-w-5xl" style={{ borderColor: 'var(--border-color)' }}>
+    <AnimatedPage className="h-full flex flex-col">
+      <div className="w-full flex flex-col items-center">
+        {/* Tabs */}
+        <div className="flex gap-0 shrink-0 max-w-5xl mx-auto px-5 md:px-8" style={{ marginBottom: '24px' }}>
         {tabs.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className="relative flex items-center gap-2 px-5 py-3.5 text-sm font-medium transition-colors"
-            style={{ color: tab === key ? 'var(--color-primary-400)' : 'var(--text-secondary)' }}
+            className="flex items-center gap-2 px-6 text-sm font-medium transition-all"
+            style={{
+              background: tab === key ? 'linear-gradient(135deg, #7c3aed, #06b6d4)' : 'var(--bg-secondary)',
+              border: tab === key ? 'none' : '1px solid var(--border-color)',
+              color: tab === key ? 'white' : 'var(--text-secondary)',
+              boxShadow: tab === key ? '0 0 20px rgba(139,92,246,0.3)' : 'none',
+              borderRadius: key === 'documents' ? '12px 0 0 12px' : key === 'agent' ? '0 12px 12px 0' : '12px',
+              padding: '16px 24px',
+              minHeight: '56px',
+              display: 'flex',
+              alignItems: 'center',
+            }}
           >
             <Icon size={16} /> {label}
-            {tab === key && (
-              <motion.div
-                className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full"
-                style={{
-                  background: 'linear-gradient(90deg, #7c3aed, #06b6d4)',
-                  boxShadow: '0 0 8px rgba(139,92,246,0.4)',
-                }}
-                layoutId="admin-tab"
-                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              />
-            )}
           </button>
         ))}
       </div>
 
-      <div className="flex-1 overflow-hidden w-full max-w-5xl">
+      <div className="flex-1 w-screen flex justify-center" style={{ minHeight: 0 }}>
         <AnimatePresence mode="wait">
           {tab === 'documents' ? (
-            <motion.div key="docs" className="h-full flex flex-col p-8 overflow-hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div key="docs" className="h-full w-full flex justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <div className="h-full w-full max-w-5xl flex flex-col px-5 md:px-8 mt-8 md:mt-12 overflow-auto" style={{ minHeight: 0 }}>
               {/* Toolbar */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6 shrink-0">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0" style={{ marginTop: '24px', marginBottom: '16px' }}>
                 <div
-                  className="flex items-center gap-2 flex-1 w-full sm:w-auto px-4 py-2.5 rounded-xl transition-all input-glow"
-                  style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}
+                  className="flex items-center gap-2 flex-1 w-full sm:w-auto px-4 rounded-xl transition-all input-glow"
+                  style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minHeight: '48px', display: 'flex', alignItems: 'center' }}
                 >
                   <Search size={16} style={{ color: 'var(--text-muted)' }} />
                   <input id="doc-search" type="text" placeholder="Search documents..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1 bg-transparent outline-none text-sm" style={{ color: 'var(--text-primary)' }} />
                 </div>
                 <div className="flex items-center gap-2">
-                  <select id="status-filter" value={filter} onChange={e => setFilter(e.target.value)} className="px-3 py-2.5 rounded-xl text-sm outline-none" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
+                  <select id="status-filter" value={filter} onChange={e => setFilter(e.target.value)} className="px-4 rounded-xl text-sm outline-none" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', minWidth: '160px', display: 'flex', alignItems: 'center', textAlign: 'center' }}>
                     <option value="all">All Status</option>
                     <option value="validated">Validated</option>
                     <option value="pending">Pending</option>
@@ -120,10 +123,15 @@ export default function AdminPage() {
                   </select>
                   <motion.button
                     id="upload-btn"
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white"
+                    className="flex items-center gap-2 px-6 rounded-xl text-sm font-medium text-white"
                     style={{
                       background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
                       boxShadow: '0 0 15px rgba(139,92,246,0.2)',
+                      minHeight: '48px',
+                      minWidth: '140px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                     whileHover={{ boxShadow: '0 0 25px rgba(139,92,246,0.4)', scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -134,7 +142,7 @@ export default function AdminPage() {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 shrink-0">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0" style={{ marginBottom: '16px' }}>
                 {[
                   { l: 'Total', v: docs.length, gradient: 'linear-gradient(135deg, rgba(139,92,246,0.1), rgba(6,182,212,0.05))', color: 'var(--color-primary-400)' },
                   { l: 'Validated', v: docs.filter(d=>d.status==='validated').length, gradient: 'rgba(16,185,129,0.08)', color: '#10b981' },
@@ -143,10 +151,11 @@ export default function AdminPage() {
                 ].map((s,i) => (
                   <motion.div
                     key={i}
-                    className="rounded-xl p-4"
+                    className="rounded-xl"
                     style={{
                       background: 'var(--bg-secondary)',
                       border: '1px solid var(--border-color)',
+                      padding: '16px',
                     }}
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -160,7 +169,7 @@ export default function AdminPage() {
               </div>
 
               {/* Table */}
-              <div className="flex-1 overflow-auto rounded-xl" style={{ border: '1px solid var(--border-color)' }}>
+              <div className="flex-1 overflow-auto rounded-xl" style={{ border: '1px solid var(--border-color)', marginTop: '16px' }}>
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
@@ -187,7 +196,7 @@ export default function AdminPage() {
                             >
                               <FileText size={14} style={{ color: 'var(--color-primary-400)' }} />
                             </div>
-                            <span className="font-medium truncate max-w-[200px]" style={{ color: 'var(--text-primary)' }}>{doc.name}</span>
+                            <span className="font-medium truncate max-w-50" style={{ color: 'var(--text-primary)' }}>{doc.name}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell" style={{ color: 'var(--text-secondary)' }}>{doc.size}</td>
@@ -217,13 +226,15 @@ export default function AdminPage() {
                   </div>
                 )}
               </div>
+              </div>
             </motion.div>
           ) : (
-            <motion.div key="agent" className="h-full flex flex-col items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <div className="flex-1 overflow-y-auto px-8 py-6 w-full">
-                <div className="max-w-3xl mx-auto space-y-4">
+            <motion.div key="agent" className="h-full w-full flex justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <div className="h-full w-full max-w-5xl flex flex-col px-5 md:px-8 relative md:left-20 lg:left-32 xl:left-40 mt-12 md:mt-16" style={{ minHeight: 0 }}>
+              <div className="flex-1 w-full" style={{ overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth', minHeight: 0, scrollbarGutter: 'stable', paddingTop: '32px', paddingBottom: '32px' }}>
+                <div className="max-w-5xl" style={{ marginLeft: 'auto', marginRight: '0' }}>
                   {agentMsgs.map(msg => (
-                    <motion.div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <motion.div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`} style={{ marginBottom: '32px' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                       {msg.role === 'assistant' && (
                         <div
                           className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1"
@@ -236,13 +247,13 @@ export default function AdminPage() {
                         </div>
                       )}
                       <div
-                        className={`max-w-[80%] rounded-2xl px-4 py-3 ${msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'}`}
+                        className={`max-w-[80%] rounded-2xl ${msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'}`}
                         style={msg.role === 'user'
-                          ? { background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', color: 'white', boxShadow: '0 4px 15px rgba(139,92,246,0.2)' }
-                          : { background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }
+                          ? { background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', color: 'white', boxShadow: '0 4px 15px rgba(139,92,246,0.2)', padding: '16px 24px' }
+                          : { background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '16px 24px' }
                         }
                       >
-                        <p className="text-sm leading-relaxed whitespace-pre-line">{msg.content}</p>
+                        <p className="text-sm leading-relaxed whitespace-pre-line my-2">{msg.content}</p>
                         <p className={`text-xs mt-2 ${msg.role === 'user' ? 'text-white/50' : ''}`} style={msg.role === 'assistant' ? { color: 'var(--text-muted)' } : {}}>{msg.timestamp}</p>
                       </div>
                       {msg.role === 'user' && (
@@ -257,7 +268,7 @@ export default function AdminPage() {
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', boxShadow: '0 0 12px rgba(245,158,11,0.3)' }}>
                         <Bot size={15} className="text-white" />
                       </div>
-                      <div className="rounded-2xl rounded-bl-md" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}>
+                      <div className="rounded-2xl rounded-bl-md" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', padding: '16px 24px' }}>
                         <TypingIndicator />
                       </div>
                     </motion.div>
@@ -265,32 +276,36 @@ export default function AdminPage() {
                   <div ref={endRef} />
                 </div>
               </div>
-              <div className="border-t px-8 py-5 w-full" style={{ borderColor: 'var(--border-color)' }}>
-                <div
-                  className="max-w-3xl mx-auto flex items-end gap-3 rounded-2xl p-2 input-glow"
-                  style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
-                >
-                  <textarea id="admin-agent-input" value={agentInput} onChange={e => setAgentInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }}
-                    placeholder='Try: "Add document" or "Re-embed database"' rows={1}
-                    className="flex-1 bg-transparent outline-none text-sm resize-none px-3 py-2 max-h-32" style={{ color: 'var(--text-primary)' }}
-                  />
-                  <motion.button id="admin-send" onClick={sendAgent} disabled={!agentInput.trim() || typing}
-                    className="p-2.5 rounded-xl text-white disabled:opacity-20 shrink-0"
-                    style={{
-                      background: agentInput.trim() && !typing ? 'linear-gradient(135deg, #7c3aed, #06b6d4)' : 'var(--text-muted)',
-                      boxShadow: agentInput.trim() && !typing ? '0 0 15px rgba(139,92,246,0.3)' : 'none',
-                    }}
-                    whileHover={agentInput.trim() && !typing ? { scale: 1.05, boxShadow: '0 0 25px rgba(139,92,246,0.4)' } : {}}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Send size={16} />
-                  </motion.button>
+              <div className="py-3 w-full" style={{ borderColor: 'var(--border-color)', borderTop: '1px solid var(--border-color)' }}>
+                <div className="max-w-3xl mx-auto">
+                    <div
+                      className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow"
+                      style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
+                    >
+                      <textarea id="admin-agent-input" value={agentInput} onChange={e => setAgentInput(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }}
+                        placeholder='Try: "Add document" or "Re-embed database"' rows={3}
+                        className="flex-1 bg-transparent outline-none text-sm resize-none max-h-56" style={{ color: 'var(--text-primary)', padding: '16px 24px' }}
+                      />
+                      <motion.button id="admin-send" onClick={sendAgent} disabled={!agentInput.trim() || typing}
+                        className="rounded-xl disabled:opacity-20 shrink-0"
+                        style={{
+                          padding: '16px 22px',
+                          marginRight: '8px',
+                        }}
+                        whileHover={agentInput.trim() && !typing ? { scale: 1.05 } : {}}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Send size={16} color={agentInput.trim() && !typing ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
+                      </motion.button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
       </div>
     </AnimatedPage>
   );

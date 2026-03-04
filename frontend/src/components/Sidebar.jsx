@@ -125,7 +125,7 @@ export default function Sidebar({ collapsed, onToggle }) {
       {/* Collapse toggle */}
       <motion.button
         onClick={onToggle}
-        className="absolute -right-3.5 top-20 w-7 h-7 rounded-full flex items-center justify-center shadow-md z-10"
+        className="absolute -right-3.5 top-20 w-8 h-8 rounded-full flex items-center justify-center shadow-md z-10"
         style={{
           background: 'var(--bg-secondary)',
           border: '1px solid var(--border-color)',

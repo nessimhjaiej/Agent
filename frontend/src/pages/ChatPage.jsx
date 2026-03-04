@@ -7,6 +7,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import AuthModal from '../components/AuthModal';
 import TypingIndicator from '../components/TypingIndicator';
 import AnimatedPage from '../components/AnimatedPage';
@@ -20,6 +21,7 @@ const MOCK_RESPONSES = [
 
 export default function ChatPage() {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -67,9 +69,10 @@ export default function ChatPage() {
   };
 
   return (
-    <AnimatedPage className="h-full w-full flex flex-col items-center">
+    <AnimatedPage className="h-full w-full flex justify-center">
+      <div className="h-full w-full max-w-4xl flex flex-col px-5 md:px-8 relative md:left-20 lg:left-32 xl:left-40 mt-12 md:mt-16" style={{ minHeight: 0 }}>
       {/* Messages */}
-      <div className="flex-1 w-full max-w-5xl overflow-y-auto px-4 md:px-6 py-8">
+      <div className="flex-1 w-full" style={{ overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth', minHeight: 0, scrollbarGutter: 'stable', paddingTop: '32px', paddingBottom: '32px' }}>
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center max-w-3xl mx-auto w-full">
             {/* Animated icon */}
@@ -94,15 +97,17 @@ export default function ChatPage() {
               {/* Orbital dot */}
               <motion.div
                 className="absolute w-3 h-3 rounded-full"
+                animate={{ 
+                  rotate: 360,
+                }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'linear', repeatType: 'loop' }}
                 style={{
                   background: 'linear-gradient(135deg, #a78bfa, #22d3ee)',
                   boxShadow: '0 0 10px rgba(139,92,246,0.5)',
-                  top: '50%',
-                  left: '50%',
-                  transformOrigin: '-25px 0px',
+                  top: 'calc(50% - 6px)',
+                  left: 'calc(50% + 60px)',
+                  transformOrigin: '-60px 6px',
                 }}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
               />
             </div>
 
@@ -114,7 +119,7 @@ export default function ChatPage() {
               Ask any question about legal regulations, compliance, or regulatory frameworks.
               Our AI will retrieve and analyze relevant sources.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl mb-8" style={{ marginTop: '32px' }}>
               {[
                 'What are the key GDPR requirements for data controllers?',
                 'Explain ICC arbitration procedures',
@@ -124,11 +129,12 @@ export default function ChatPage() {
                 <motion.button
                   key={i}
                   onClick={() => setInput(suggestion)}
-                  className="text-left text-sm px-5 py-4 rounded-xl transition-all"
+                  className="text-left text-xs rounded-xl transition-all"
                   style={{
                     border: '1px solid var(--border-color)',
                     color: 'var(--text-secondary)',
                     background: 'var(--bg-secondary)',
+                    padding: '14px 18px',
                   }}
                   whileHover={{
                     borderColor: 'rgba(139,92,246,0.3)',
@@ -143,13 +149,54 @@ export default function ChatPage() {
                 </motion.button>
               ))}
             </div>
+
+            {/* Input Area - Centered in Welcome */}
+            <div className="w-full max-w-2xl" style={{ marginTop: '32px' }}>
+              <div
+                className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow"
+                style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                }}
+              >
+                <textarea
+                  ref={inputRef}
+                  id="chat-input"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={user ? 'Ask about legal regulations, compliance...' : 'Sign in to start a conversation...'}
+                  rows={3}
+                  className="flex-1 bg-transparent outline-none text-[15px] resize-none max-h-56"
+                  style={{ color: 'var(--text-primary)', padding: '16px 24px' }}
+                />
+                <motion.button
+                  id="chat-send-btn"
+                  onClick={handleSend}
+                  disabled={!input.trim() || isTyping}
+                  className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+                  style={{
+                    padding: '16px 22px',
+                    marginRight: '8px',
+                  }}
+                  whileHover={input.trim() && !isTyping ? { scale: 1.05 } : {}}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Send size={18} color={input.trim() && !isTyping ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
+                </motion.button>
+              </div>
+              <p className="text-xs text-center mt-3" style={{ color: 'var(--text-muted)' }}>
+                AI responses are generated from indexed legal documents. Always verify with official sources.
+              </p>
+            </div>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto space-y-6">
+          <div className="max-w-2xl mx-auto">
             {messages.map((msg) => (
               <motion.div
                 key={msg.id}
                 className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                style={{ marginBottom: '40px' }}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35 }}
@@ -166,7 +213,7 @@ export default function ChatPage() {
                   </div>
                 )}
                 <div
-                  className={`max-w-[75%] rounded-2xl px-5 py-4 ${
+                  className={`max-w-[75%] rounded-2xl ${
                     msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'
                   }`}
                   style={
@@ -175,15 +222,17 @@ export default function ChatPage() {
                           background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
                           color: 'white',
                           boxShadow: '0 4px 15px rgba(139,92,246,0.2)',
+                          padding: '16px 24px',
                         }
                       : {
                           background: 'var(--bg-tertiary)',
                           color: 'var(--text-primary)',
                           border: '1px solid var(--border-color)',
+                          padding: '16px 24px',
                         }
                   }
                 >
-                  <p className="text-[15px] leading-relaxed">{msg.content}</p>
+                  <p className="text-[15px] leading-relaxed my-2">{msg.content}</p>
                   {msg.sources && (
                     <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-color)' }}>
                       <p className="text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>Sources:</p>
@@ -240,6 +289,7 @@ export default function ChatPage() {
                   style={{
                     background: 'var(--bg-tertiary)',
                     border: '1px solid var(--border-color)',
+                    padding: '16px 24px',
                   }}
                 >
                   <TypingIndicator />
@@ -251,11 +301,12 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="border-t px-4 md:px-6 py-5 w-full max-w-5xl" style={{ borderColor: 'var(--border-color)' }}>
-        <div className="max-w-3xl mx-auto">
+      {/* Input Area - Footer for conversation */}
+      {messages.length > 0 && (
+      <div className="py-3 w-full" style={{ borderColor: 'var(--border-color)', borderTop: '1px solid var(--border-color)' }}>
+        <div className="max-w-2xl mx-auto">
           <div
-            className="flex items-end gap-3 rounded-2xl p-3 transition-all input-glow"
+            className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow"
             style={{
               background: 'var(--bg-secondary)',
               border: '1px solid var(--border-color)',
@@ -268,23 +319,23 @@ export default function ChatPage() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={user ? 'Ask about legal regulations, compliance...' : 'Sign in to start a conversation...'}
-              rows={1}
-              className="flex-1 bg-transparent outline-none text-[15px] resize-none px-3 py-2.5 max-h-36"
-              style={{ color: 'var(--text-primary)' }}
+              rows={3}
+              className="flex-1 bg-transparent outline-none text-[15px] resize-none max-h-56"
+              style={{ color: 'var(--text-primary)', padding: '16px 24px' }}
             />
             <motion.button
               id="chat-send-btn"
               onClick={handleSend}
               disabled={!input.trim() || isTyping}
-              className="p-3 rounded-xl text-white transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+              className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
               style={{
-                background: input.trim() && !isTyping ? 'linear-gradient(135deg, #7c3aed, #06b6d4)' : 'var(--text-muted)',
-                boxShadow: input.trim() && !isTyping ? '0 0 15px rgba(139,92,246,0.3)' : 'none',
+                padding: '16px 22px',
+                marginRight: '8px',
               }}
-              whileHover={input.trim() && !isTyping ? { scale: 1.05, boxShadow: '0 0 25px rgba(139,92,246,0.4)' } : {}}
+              whileHover={input.trim() && !isTyping ? { scale: 1.05 } : {}}
               whileTap={{ scale: 0.95 }}
             >
-              <Send size={18} />
+              <Send size={18} color={input.trim() && !isTyping ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
             </motion.button>
           </div>
           <p className="text-xs text-center mt-3" style={{ color: 'var(--text-muted)' }}>
@@ -292,8 +343,10 @@ export default function ChatPage() {
           </p>
         </div>
       </div>
+      )}
 
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      </div>
     </AnimatedPage>
   );
 }
