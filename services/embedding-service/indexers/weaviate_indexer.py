@@ -137,6 +137,7 @@ class WeaviateIndexer(BaseVectorIndexer):
             "char_count": chunk.metadata.char_count,
             "token_count_estimate": chunk.metadata.token_count_estimate,
             "chunking_strategy": chunk.metadata.chunking_strategy,
+            "embedding_model": self._embedding_model,
             "document_checksum": chunk.metadata.document_checksum,
             "normalization_version": chunk.metadata.normalization_version,
             "pipeline_version": chunk.metadata.pipeline_version,

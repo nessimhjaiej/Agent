@@ -1,10 +1,13 @@
 from pathlib import Path
 import sys
 
+import pytest
+
 SERVICE_ROOT = Path(__file__).resolve().parents[1]
 if str(SERVICE_ROOT) not in sys.path:
     sys.path.insert(0, str(SERVICE_ROOT))
 
+from app.errors import RetrievalValidationError  # noqa: E402
 from app.models import QueryContext  # noqa: E402
 from retrievers.vector import VectorRetriever  # noqa: E402
 
@@ -51,12 +54,14 @@ def test_vector_retriever_maps_rows_with_rank_and_similarity_score() -> None:
             "document_id": "doc-1",
             "chunk_text": "alpha text",
             "language": "en",
+            "embedding_model": "text-embedding-3-small",
             "_additional": {"distance": 0.12},
         },
         {
             "chunk_id": "doc-1:1",
             "document_id": "doc-1",
             "chunk_text": "beta text",
+            "embedding_model": "text-embedding-3-small",
             "_additional": {"distance": "0.25"},
         },
     ]
@@ -79,7 +84,12 @@ def test_vector_retriever_skips_invalid_rows() -> None:
     rows = [
         {"document_id": "doc-1", "chunk_text": "missing chunk_id"},
         {"chunk_id": "doc-2:0", "chunk_text": "missing document_id"},
-        {"chunk_id": "doc-3:0", "document_id": "doc-3", "chunk_text": "ok"},
+        {
+            "chunk_id": "doc-3:0",
+            "document_id": "doc-3",
+            "chunk_text": "ok",
+            "embedding_model": "text-embedding-3-small",
+        },
     ]
     retriever = VectorRetriever(
         embedder=_FakeEmbedder([0.1]),
@@ -91,3 +101,42 @@ def test_vector_retriever_skips_invalid_rows() -> None:
 
     assert len(candidates) == 1
     assert candidates[0].chunk_id == "doc-3:0"
+
+
+def test_vector_retriever_raises_when_chunk_embedding_model_missing() -> None:
+    rows = [
+        {
+            "chunk_id": "doc-1:0",
+            "document_id": "doc-1",
+            "chunk_text": "alpha text",
+            "_additional": {"distance": 0.12},
+        }
+    ]
+    retriever = VectorRetriever(
+        embedder=_FakeEmbedder([0.1]),
+        weaviate_client=_FakeWeaviateClient(rows=rows),
+    )
+    ctx = QueryContext(query="alpha", top_k_retrieve=5, top_k_return=3)
+
+    with pytest.raises(RetrievalValidationError):
+        _ = retriever.retrieve(ctx)
+
+
+def test_vector_retriever_raises_when_embedding_model_mismatch() -> None:
+    rows = [
+        {
+            "chunk_id": "doc-1:0",
+            "document_id": "doc-1",
+            "chunk_text": "alpha text",
+            "embedding_model": "text-embedding-3-large",
+            "_additional": {"distance": 0.12},
+        }
+    ]
+    retriever = VectorRetriever(
+        embedder=_FakeEmbedder([0.1]),
+        weaviate_client=_FakeWeaviateClient(rows=rows),
+    )
+    ctx = QueryContext(query="alpha", top_k_retrieve=5, top_k_return=3)
+
+    with pytest.raises(RetrievalValidationError):
+        _ = retriever.retrieve(ctx)

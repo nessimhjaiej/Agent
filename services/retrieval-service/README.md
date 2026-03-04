@@ -77,6 +77,7 @@ It also includes internal reranker modules (`none`, `cross_encoder`, `llm_batch`
 - `RETRIEVAL_DEFAULT_RRF_K` (default `60`)
 - `RETRIEVAL_DEFAULT_RANKER` (`none`, `cross_encoder`, `llm_batch`)
 - `RETRIEVAL_DEFAULT_RERANK_TOP_N`
+- `RETRIEVAL_ENFORCE_EMBEDDING_MODEL_MATCH` (default `true`)
 - `WEAVIATE_HTTP_URL`
 - `WEAVIATE_COLLECTION`
 - `OPENAI_KEY`

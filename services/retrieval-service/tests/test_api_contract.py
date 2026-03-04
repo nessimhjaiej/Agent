@@ -16,13 +16,14 @@ class _FakeRetrievalService:
 
     def search(self, payload):  # noqa: ANN001
         _FakeRetrievalService.captured_mode = payload.mode
+        fusion_type = payload.fusion.type if payload.fusion and payload.fusion.type else "alpha"
         return {
             "status": "ok",
             "query": payload.query,
             "mode": payload.mode,
             "retrieval_count": 0,
             "returned_count": 0,
-            "fusion_type": payload.fusion.type,
+            "fusion_type": fusion_type,
             "rerank_type": "none",
             "chunks": [],
             "documents": [],

@@ -2,6 +2,18 @@ import os
 from dataclasses import dataclass
 
 
+def _parse_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None or raw.strip() == "":
+        return default
+    value = raw.strip().lower()
+    if value in {"1", "true", "yes", "on"}:
+        return True
+    if value in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"{name} must be a boolean (true/false)")
+
+
 @dataclass(slots=True)
 class Settings:
     app_name: str = "retrieval-service"
@@ -17,6 +29,7 @@ class Settings:
     default_rrf_k: int = 60
     default_ranker_type: str = "none"
     default_rerank_top_n: int = 20
+    enforce_embedding_model_match: bool = True
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -41,4 +54,7 @@ class Settings:
             default_rrf_k=int(os.getenv("RETRIEVAL_DEFAULT_RRF_K", "60")),
             default_ranker_type=os.getenv("RETRIEVAL_DEFAULT_RANKER", "none"),
             default_rerank_top_n=int(os.getenv("RETRIEVAL_DEFAULT_RERANK_TOP_N", "20")),
+            enforce_embedding_model_match=_parse_bool(
+                "RETRIEVAL_ENFORCE_EMBEDDING_MODEL_MATCH", True
+            ),
         )

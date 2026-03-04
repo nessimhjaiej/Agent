@@ -19,6 +19,7 @@
     { "name": "char_count", "dataType": ["int"] },
     { "name": "token_count_estimate", "dataType": ["int"] },
     { "name": "chunking_strategy", "dataType": ["text"] },
+    { "name": "embedding_model", "dataType": ["text"] },
     { "name": "document_checksum", "dataType": ["text"] },
     { "name": "normalization_version", "dataType": ["text"] },
     { "name": "pipeline_version", "dataType": ["text"] },

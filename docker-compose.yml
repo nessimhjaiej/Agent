@@ -63,5 +63,16 @@ services:
       - weaviate
     restart: unless-stopped
 
+  generation-service:
+    build:
+      context: .
+      dockerfile: services/generation-service/Dockerfile
+    container_name: generation-service
+    env_file:
+      - .env
+    ports:
+      - "8004:8004"
+    restart: unless-stopped
+
 volumes:
   weaviate_data:

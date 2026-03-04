@@ -39,7 +39,14 @@ def _schema_has_chunk(base_url: str, collection: str) -> bool:
     return collection in names
 
 
-def _insert_seed_chunk(base_url: str, collection: str, doc_id: str, chunk_id: str, token: str) -> None:
+def _insert_seed_chunk(
+    base_url: str,
+    collection: str,
+    doc_id: str,
+    chunk_id: str,
+    token: str,
+    embedding_model: str,
+) -> None:
     body = {
         "class": collection,
         "id": str(uuid4()),
@@ -57,6 +64,7 @@ def _insert_seed_chunk(base_url: str, collection: str, doc_id: str, chunk_id: st
             "char_count": 48,
             "token_count_estimate": 6,
             "chunking_strategy": "late",
+            "embedding_model": embedding_model,
             "document_checksum": "retrieval-it-checksum",
             "normalization_version": "basic-v1",
             "pipeline_version": "v1",
@@ -69,7 +77,14 @@ def _insert_seed_chunk(base_url: str, collection: str, doc_id: str, chunk_id: st
     assert response.status_code in {200, 201}, response.text
 
 
-def _insert_seed_chunks(base_url: str, collection: str, doc_id: str, token: str, count: int = 2) -> list[str]:
+def _insert_seed_chunks(
+    base_url: str,
+    collection: str,
+    doc_id: str,
+    token: str,
+    embedding_model: str,
+    count: int = 2,
+) -> list[str]:
     chunk_ids: list[str] = []
     for idx in range(count):
         chunk_id = f"{doc_id}:{idx}"
@@ -90,6 +105,7 @@ def _insert_seed_chunks(base_url: str, collection: str, doc_id: str, token: str,
                 "char_count": 50,
                 "token_count_estimate": 8,
                 "chunking_strategy": "late",
+                "embedding_model": embedding_model,
                 "document_checksum": "retrieval-it-checksum",
                 "normalization_version": "basic-v1",
                 "pipeline_version": "v1",
@@ -116,7 +132,14 @@ def test_retrieval_api_modes_end_to_end() -> None:
     token = f"retrieval-token-{uuid4().hex[:8]}"
     doc_id = f"retrieval-doc-{uuid4().hex[:8]}"
     chunk_id = f"{doc_id}:0"
-    _insert_seed_chunk(settings.weaviate_http_url, settings.weaviate_collection, doc_id, chunk_id, token)
+    _insert_seed_chunk(
+        settings.weaviate_http_url,
+        settings.weaviate_collection,
+        doc_id,
+        chunk_id,
+        token,
+        settings.embedding_model,
+    )
 
     app = create_app()
     client = TestClient(app)
@@ -188,6 +211,7 @@ def test_retrieval_api_llm_batch_rerank_end_to_end() -> None:
         settings.weaviate_collection,
         doc_id,
         token,
+        settings.embedding_model,
         count=2,
     )
 
@@ -238,6 +262,7 @@ def test_retrieval_api_cross_encoder_rerank_end_to_end_optional() -> None:
         settings.weaviate_collection,
         doc_id,
         token,
+        settings.embedding_model,
         count=2,
     )
 

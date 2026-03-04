@@ -80,6 +80,8 @@ def test_upsert_updates_existing_object() -> None:
     assert results[0].reason == "upsert_update"
     assert len(indexer._client.put_calls) == 1
     assert len(indexer._client.post_calls) == 0
+    props = indexer._client.put_calls[0]["json"]["properties"]
+    assert props["embedding_model"] == settings.embedding_model
 
 
 def test_upsert_creates_when_update_returns_404() -> None:

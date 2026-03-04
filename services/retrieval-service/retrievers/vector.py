@@ -1,4 +1,5 @@
 from app.config import Settings
+from app.errors import RetrievalValidationError
 from app.models import CandidateChunk, QueryContext
 from clients.openai_client import OpenAIClient
 from clients.weaviate_client import WeaviateClient
@@ -16,6 +17,8 @@ class VectorRetriever(BaseRetriever):
             api_key=settings.openai_key,
             model=settings.embedding_model,
         )
+        self._embedding_model = settings.embedding_model
+        self._enforce_embedding_model_match = settings.enforce_embedding_model_match
         self._weaviate = weaviate_client or WeaviateClient(
             base_url=settings.weaviate_http_url,
             collection=settings.weaviate_collection,
@@ -42,6 +45,19 @@ class VectorRetriever(BaseRetriever):
             chunk_text = str(row.get("chunk_text", ""))
             if not chunk_id or not document_id:
                 continue
+
+            row_embedding_model = row.get("embedding_model")
+            if self._enforce_embedding_model_match:
+                if not isinstance(row_embedding_model, str) or not row_embedding_model.strip():
+                    raise RetrievalValidationError(
+                        "Chunk embedding_model is missing; cannot verify query/chunk model consistency. "
+                        "Re-index chunks with embedding_model metadata."
+                    )
+                if row_embedding_model.strip() != self._embedding_model:
+                    raise RetrievalValidationError(
+                        "Embedding model mismatch between query and indexed chunk. "
+                        f"query_model={self._embedding_model}, chunk_model={row_embedding_model.strip()}"
+                    )
 
             metadata = {
                 key: value

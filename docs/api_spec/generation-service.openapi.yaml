@@ -1,0 +1,239 @@
+openapi: 3.0.3
+info:
+  title: generation-service API
+  version: 0.1.0
+  description: Contract-first API for grounded chat generation using retrieved chunks.
+servers:
+  - url: http://localhost:8004
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: Service health
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /generation/chat:
+    post:
+      summary: Generate grounded chat response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+      responses:
+        "200":
+          description: Generation response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+  /generation/ask:
+    post:
+      summary: Retrieve then generate a grounded answer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskRequest"
+      responses:
+        "200":
+          description: Retrieval + generation response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskResponse"
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, version]
+      properties:
+        status:
+          type: string
+          example: ok
+        service:
+          type: string
+          example: generation-service
+        version:
+          type: string
+          example: 0.1.0
+    RetrievedChunkInput:
+      type: object
+      required:
+        - chunk_id
+        - document_id
+        - document_name
+        - chunk_text
+        - metadata
+      properties:
+        chunk_id:
+          type: string
+        document_id:
+          type: string
+        document_name:
+          type: string
+        chunk_text:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        bm25_score:
+          type: number
+          nullable: true
+        vector_score:
+          type: number
+          nullable: true
+        fusion_score:
+          type: number
+          nullable: true
+        rerank_score:
+          type: number
+          nullable: true
+    ChatTurnInput:
+      type: object
+      required: [role, content]
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+    ChatRequest:
+      type: object
+      required: [query, retrieved_chunks]
+      properties:
+        query:
+          type: string
+        retrieved_chunks:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/RetrievedChunkInput"
+        chat_history:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatTurnInput"
+        session_id:
+          type: string
+          nullable: true
+    CitationResponse:
+      type: object
+      required: [chunk_id, document_id, document_name, chunk_text]
+      properties:
+        chunk_id:
+          type: string
+        document_id:
+          type: string
+        document_name:
+          type: string
+        chunk_text:
+          type: string
+    ChatResponse:
+      type: object
+      required:
+        - status
+        - query
+        - answer
+        - citations
+        - used_chunk_ids
+        - model
+      properties:
+        status:
+          type: string
+          example: ok
+        session_id:
+          type: string
+          nullable: true
+        query:
+          type: string
+        answer:
+          type: string
+        citations:
+          type: array
+          items:
+            $ref: "#/components/schemas/CitationResponse"
+        used_chunk_ids:
+          type: array
+          items:
+            type: string
+        model:
+          type: string
+          example: gpt-4o
+    RetrievalFusionOptions:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [alpha, rrf]
+        alpha:
+          type: number
+          minimum: 0
+          maximum: 1
+        rrf_k:
+          type: integer
+          minimum: 1
+    RetrievalRerankOptions:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        type:
+          type: string
+          enum: [none, cross_encoder, llm_batch]
+        top_n:
+          type: integer
+          minimum: 1
+        batch_size:
+          type: integer
+          minimum: 1
+    AskRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+        mode:
+          type: string
+          enum: [bm25, vector, hybrid]
+        top_k_retrieve:
+          type: integer
+          minimum: 1
+        top_k_return:
+          type: integer
+          minimum: 1
+        filters:
+          type: object
+          additionalProperties: true
+        fusion:
+          $ref: "#/components/schemas/RetrievalFusionOptions"
+        rerank:
+          $ref: "#/components/schemas/RetrievalRerankOptions"
+        chat_history:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatTurnInput"
+        session_id:
+          type: string
+          nullable: true
+    AskResponse:
+      allOf:
+        - $ref: "#/components/schemas/ChatResponse"
+        - type: object
+          required: [retrieval_count, returned_count, retrieval_mode, fusion_type, rerank_type]
+          properties:
+            retrieval_count:
+              type: integer
+            returned_count:
+              type: integer
+            retrieval_mode:
+              type: string
+            fusion_type:
+              type: string
+            rerank_type:
+              type: string
