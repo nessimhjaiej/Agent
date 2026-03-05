@@ -88,7 +88,7 @@ export default function AdminPage() {
               border: tab === key ? 'none' : '1px solid var(--border-color)',
               color: tab === key ? 'white' : 'var(--text-secondary)',
               boxShadow: tab === key ? '0 0 20px rgba(139,92,246,0.3)' : 'none',
-              borderRadius: key === 'documents' ? '12px 0 0 12px' : key === 'agent' ? '0 12px 12px 0' : '12px',
+              borderRadius: key === 'documents' ? '12px 0 0 50px' : key === 'agent' ? '0 12px 50px 0' : '12px',
               padding: '16px 24px',
               minHeight: '56px',
               display: 'flex',
