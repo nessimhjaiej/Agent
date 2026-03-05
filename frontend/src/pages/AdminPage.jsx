@@ -75,7 +75,7 @@ export default function AdminPage() {
 
   return (
     <AnimatedPage className="h-full flex flex-col">
-      <div className="w-full flex flex-col items-center">
+      <div className="w-full h-full flex flex-col items-center" style={{ minHeight: 0 }}>
         {/* Tabs */}
         <div className="flex gap-0 shrink-0 max-w-5xl mx-auto px-5 md:px-8" style={{ marginBottom: '24px' }}>
         {tabs.map(({ key, label, icon: Icon }) => (
@@ -230,9 +230,9 @@ export default function AdminPage() {
             </motion.div>
           ) : (
             <motion.div key="agent" className="h-full w-full flex justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <div className="h-full w-full max-w-5xl flex flex-col px-5 md:px-8 relative md:left-20 lg:left-32 xl:left-40 mt-12 md:mt-16" style={{ minHeight: 0 }}>
+              <div className="h-full w-full max-w-5xl flex flex-col px-5 md:px-8 relative md:left-10 lg:left-16 xl:left-20 mt-12 md:mt-16" style={{ minHeight: 0 }}>
               <div className="flex-1 w-full" style={{ overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth', minHeight: 0, scrollbarGutter: 'stable', paddingTop: '32px', paddingBottom: '32px' }}>
-                <div className="max-w-5xl" style={{ marginLeft: 'auto', marginRight: '0' }}>
+                <div className="max-w-3xl ml-auto md:translate-x-28 lg:translate-x-40">
                   {agentMsgs.map(msg => (
                     <motion.div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`} style={{ marginBottom: '32px' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                       {msg.role === 'assistant' && (
@@ -276,8 +276,8 @@ export default function AdminPage() {
                   <div ref={endRef} />
                 </div>
               </div>
-              <div className="py-3 w-full" style={{ borderColor: 'var(--border-color)', borderTop: '1px solid var(--border-color)' }}>
-                <div className="max-w-3xl mx-auto">
+              <div className="py-3 w-full relative -translate-y-3 md:-translate-y-5">
+                <div className="max-w-3xl mx-auto md:translate-x-28 lg:translate-x-40">
                     <div
                       className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow"
                       style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}

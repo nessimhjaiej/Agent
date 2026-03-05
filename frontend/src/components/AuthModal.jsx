@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, Github, Eye, EyeOff, CheckCircle, ArrowRight } from 'lucide-react';
+import { X, Mail, Lock, Eye, EyeOff, CheckCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function AuthModal({ isOpen, onClose }) {
@@ -59,14 +59,14 @@ export default function AuthModal({ isOpen, onClose }) {
 
           {/* Modal */}
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-6"
             initial={{ opacity: 0, scale: 0.9, filter: 'blur(8px)' }}
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             exit={{ opacity: 0, scale: 0.9, filter: 'blur(8px)' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           >
             <div
-              className="relative w-full max-w-md rounded-2xl p-8"
+              className="relative w-full max-w-md rounded-2xl p-10"
               style={{
                 background: 'var(--bg-secondary)',
                 border: '1px solid var(--border-color)',
@@ -86,7 +86,7 @@ export default function AuthModal({ isOpen, onClose }) {
               </motion.button>
 
               {emailSent ? (
-                <motion.div className="text-center py-6" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <motion.div className="text-center py-8" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   <motion.div
                     className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                     style={{ background: 'rgba(16,185,129,0.1)', boxShadow: '0 0 25px rgba(16,185,129,0.2)' }}
@@ -106,7 +106,7 @@ export default function AuthModal({ isOpen, onClose }) {
               ) : (
                 <>
                   {/* Header */}
-                  <div className="text-center mb-6">
+                  <div className="text-center mb-10">
                     <h2 className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>
                       {mode === 'signin' ? 'Welcome back' : 'Create account'}
                     </h2>
@@ -116,7 +116,7 @@ export default function AuthModal({ isOpen, onClose }) {
                   </div>
 
                   {/* OAuth */}
-                  <div className="flex gap-3 mb-6">
+                  <div className="flex gap-4 mb-10">
                     {[
                       { provider: 'google', label: 'Google', icon: (
                         <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -126,12 +126,11 @@ export default function AuthModal({ isOpen, onClose }) {
                           <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                         </svg>
                       )},
-                      { provider: 'github', label: 'GitHub', icon: <Github size={18} /> },
                     ].map(({ provider, label, icon }) => (
                       <motion.button
                         key={provider}
                         onClick={() => handleOAuth(provider)}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+                        className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-sm font-medium transition-all"
                         style={{ border: '1px solid var(--border-color)', color: 'var(--text-primary)', background: 'var(--bg-tertiary)' }}
                         whileHover={{ borderColor: 'rgba(139,92,246,0.3)', boxShadow: '0 0 15px rgba(139,92,246,0.1)' }}
                         whileTap={{ scale: 0.98 }}
@@ -143,20 +142,20 @@ export default function AuthModal({ isOpen, onClose }) {
                   </div>
 
                   {/* Divider */}
-                  <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center gap-4 mb-10">
                     <div className="flex-1 h-px" style={{ background: 'var(--border-color)' }} />
                     <span className="text-xs font-medium tracking-wider" style={{ color: 'var(--text-muted)' }}>OR</span>
                     <div className="flex-1 h-px" style={{ background: 'var(--border-color)' }} />
                   </div>
 
                   {/* Form */}
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)' }}>
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="flex items-center gap-3 px-5 py-4.5 rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)' }}>
                       <Mail size={16} style={{ color: 'var(--text-muted)' }} />
                       <input id="auth-email" type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} required className="flex-1 bg-transparent outline-none text-sm" style={{ color: 'var(--text-primary)' }} />
                     </div>
 
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)' }}>
+                    <div className="flex items-center gap-3 px-5 py-4.5 rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)' }}>
                       <Lock size={16} style={{ color: 'var(--text-muted)' }} />
                       <input id="auth-password" type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="flex-1 bg-transparent outline-none text-sm" style={{ color: 'var(--text-primary)' }} />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ color: 'var(--text-muted)' }}>
@@ -172,7 +171,7 @@ export default function AuthModal({ isOpen, onClose }) {
 
                     <motion.button
                       id="auth-submit" type="submit" disabled={loading}
-                      className="w-full py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full py-5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50"
                       style={{ background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', boxShadow: '0 0 25px rgba(139,92,246,0.3)' }}
                       whileHover={{ boxShadow: '0 0 40px rgba(139,92,246,0.5)', scale: 1.01 }}
                       whileTap={{ scale: 0.99 }}
@@ -182,7 +181,7 @@ export default function AuthModal({ isOpen, onClose }) {
                     </motion.button>
                   </form>
 
-                  <p className="text-center text-sm mt-6" style={{ color: 'var(--text-secondary)' }}>
+                  <p className="text-center text-sm mt-10" style={{ color: 'var(--text-secondary)' }}>
                     {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
                     <button onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); }} className="font-semibold gradient-text hover:opacity-80 transition-opacity">
                       {mode === 'signin' ? 'Sign Up' : 'Sign In'}

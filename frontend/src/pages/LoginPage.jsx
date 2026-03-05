@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Github, Eye, EyeOff, Scale, CheckCircle, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Scale, CheckCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AnimatedPage from '../components/AnimatedPage';
 
@@ -48,7 +48,7 @@ export default function LoginPage() {
     <AnimatedPage className="min-h-screen flex">
       {/* Left — Form */}
       <div
-        className="flex-1 flex items-center justify-center p-8 relative noise-overlay"
+        className="flex-1 flex items-center justify-center p-10 md:p-12 relative noise-overlay"
         style={{ background: 'var(--bg-primary)' }}
       >
         {/* Ambient orb */}
@@ -63,7 +63,7 @@ export default function LoginPage() {
 
         {emailSent ? (
           <motion.div
-            className="w-full max-w-md rounded-2xl p-10 text-center relative"
+            className="w-full max-w-md rounded-2xl p-12 text-center relative"
             style={{
               background: 'var(--bg-secondary)',
               border: '1px solid var(--border-color)',
@@ -105,7 +105,7 @@ export default function LoginPage() {
             transition={{ duration: 0.6 }}
           >
             {/* Logo — Centered above text */}
-            <div className="flex flex-col items-center text-center mb-10">
+            <div className="flex flex-col items-center text-center mb-12">
               <motion.div
                 className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
                 style={{
@@ -128,7 +128,7 @@ export default function LoginPage() {
 
             {/* Card */}
             <div
-              className="rounded-2xl p-8"
+              className="rounded-2xl p-10"
               style={{
                 background: 'var(--bg-secondary)',
                 border: '1px solid var(--border-color)',
@@ -136,7 +136,7 @@ export default function LoginPage() {
               }}
             >
               {/* OAuth */}
-              <div className="flex gap-3 mb-6">
+              <div className="flex gap-4 mb-10">
                 {[
                   { provider: 'google', label: 'Google', icon: (
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -146,12 +146,11 @@ export default function LoginPage() {
                       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                     </svg>
                   )},
-                  { provider: 'github', label: 'GitHub', icon: <Github size={18} /> },
                 ].map(({ provider, label, icon }) => (
                   <motion.button
                     key={provider}
                     onClick={() => handleOAuth(provider)}
-                    className="flex-1 flex items-center justify-center gap-2 px-5 py-4 rounded-xl text-sm font-medium transition-all"
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4.5 rounded-xl text-sm font-medium transition-all"
                     style={{
                       border: '1px solid var(--border-color)',
                       color: 'var(--text-primary)',
@@ -171,16 +170,16 @@ export default function LoginPage() {
               </div>
 
               {/* Divider */}
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-4 mb-10">
                 <div className="flex-1 h-px" style={{ background: 'var(--border-color)' }} />
                 <span className="text-xs font-medium tracking-wider" style={{ color: 'var(--text-muted)' }}>OR</span>
                 <div className="flex-1 h-px" style={{ background: 'var(--border-color)' }} />
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div
-                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all input-glow"
+                  className="flex items-center gap-3 px-5 py-5 rounded-xl transition-all input-glow"
                   style={{
                     border: '1px solid var(--border-color)',
                     background: 'var(--bg-tertiary)',
@@ -201,7 +200,7 @@ export default function LoginPage() {
                 </div>
 
                 <div
-                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all input-glow"
+                  className="flex items-center gap-3 px-5 py-5 rounded-xl transition-all input-glow"
                   style={{
                     border: '1px solid var(--border-color)',
                     background: 'var(--bg-tertiary)',
@@ -239,7 +238,7 @@ export default function LoginPage() {
                   id="login-submit"
                   type="submit"
                   disabled={loading}
-                  className="w-full py-4.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  className="w-full py-5.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                   style={{
                     background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
                     boxShadow: '0 0 25px rgba(139,92,246,0.3)',
@@ -255,7 +254,7 @@ export default function LoginPage() {
                 </motion.button>
               </form>
 
-              <p className="text-center text-sm mt-6" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-center text-sm mt-10" style={{ color: 'var(--text-secondary)' }}>
                 {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
                 <button
                   onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); }}
@@ -310,7 +309,7 @@ export default function LoginPage() {
         ))}
 
         {/* Content — CENTERED */}
-        <div className="relative z-10 text-center text-white max-w-sm px-8 flex flex-col items-center">
+        <div className="relative z-10 text-center text-white max-w-sm px-10 flex flex-col items-center">
           <motion.div
             className="w-20 h-20 rounded-2xl flex items-center justify-center mb-8"
             style={{
@@ -339,7 +338,7 @@ export default function LoginPage() {
           </p>
 
           {/* Feature pills */}
-          <div className="flex flex-wrap justify-center gap-2 mt-8">
+          <div className="flex flex-wrap justify-center gap-2 mt-10">
             {['AI-Powered', 'Real-time', 'Multi-source', 'Secure'].map((feat, i) => (
               <motion.span
                 key={feat}
