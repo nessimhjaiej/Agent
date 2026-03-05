@@ -11,13 +11,7 @@ import { useTheme } from '../context/ThemeContext';
 import AuthModal from '../components/AuthModal';
 import TypingIndicator from '../components/TypingIndicator';
 import AnimatedPage from '../components/AnimatedPage';
-
-const MOCK_RESPONSES = [
-  "Based on Article 12 of Regulation (EU) 2016/679 (GDPR), the data controller shall take appropriate measures to provide information relating to processing in a concise, transparent, intelligible and easily accessible form, using clear and plain language.",
-  "According to the French Labor Code (Code du travail), Article L1232-1, an employer who intends to dismiss an employee must summon the employee to a preliminary interview before any decision is made.",
-  "Under the ICC Rules of Arbitration (2021), Article 6, the Request for Arbitration shall contain specific information including the nature and circumstances of the dispute, the relief sought, and relevant agreements.",
-  "The Sarbanes-Oxley Act, Section 302, requires the CEO and CFO to certify the accuracy of financial statements filed with the SEC, including that they fairly present the financial condition of the company.",
-];
+import { askGeneration } from '../config/api';
 
 export default function ChatPage() {
   const { user } = useAuth();
@@ -41,27 +35,53 @@ export default function ChatPage() {
     if (!input.trim()) return;
     if (!user) { setShowAuthModal(true); return; }
 
+    const queryText = input.trim();
     const userMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: input,
+      content: queryText,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
+    try {
+      const chatHistory = messages
+        .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
+        .map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        }));
 
-    setTimeout(() => {
+      const response = await askGeneration({
+        query: queryText,
+        chatHistory,
+      });
+
+      const sources = Array.isArray(response?.citations)
+        ? [...new Set(response.citations.map((citation) => citation.document_name).filter(Boolean))]
+        : [];
+
       const aiResponse = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: MOCK_RESPONSES[Math.floor(Math.random() * MOCK_RESPONSES.length)],
+        content: response?.answer || 'No answer returned by generation service.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        sources: ['Article 12, GDPR', 'Regulation (EU) 2016/679'],
+        sources,
       };
       setMessages((prev) => [...prev, aiResponse]);
+    } catch (error) {
+      const aiError = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `Generation request failed: ${error.message}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sources: [],
+      };
+      setMessages((prev) => [...prev, aiError]);
+    } finally {
       setIsTyping(false);
-    }, 1500 + Math.random() * 1500);
+    }
   };
 
   const handleKeyDown = (e) => {
