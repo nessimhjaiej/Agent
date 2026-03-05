@@ -32,26 +32,6 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/generation/, ''),
       },
-      '/api/reranking': {
-        target: 'http://localhost:8005',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/reranking/, ''),
-      },
-      '/api/security': {
-        target: 'http://localhost:8006',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/security/, ''),
-      },
-      '/api/ingestion': {
-        target: 'http://localhost:8007',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/ingestion/, ''),
-      },
-      '/api/feedback': {
-        target: 'http://localhost:8008',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/feedback/, ''),
-      },
     },
   },
 })
