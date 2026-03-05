@@ -104,3 +104,47 @@ def test_run_calls_preprocessing_and_embedding(monkeypatch, tmp_path: Path) -> N
     assert result.chunks_indexed == 3
     assert result.results[0].status == "ok"
 
+
+def test_remove_document_chunks_deletes_matching_objects(monkeypatch) -> None:
+    deleted_ids: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "POST" and str(request.url).endswith("/v1/graphql"):
+            return httpx.Response(
+                200,
+                json={
+                    "data": {
+                        "Get": {
+                            "Chunk": [
+                                {"_additional": {"id": "obj-1"}},
+                                {"_additional": {"id": "obj-2"}},
+                            ]
+                        }
+                    }
+                },
+            )
+        if request.method == "DELETE" and "/v1/objects/" in str(request.url):
+            deleted_ids.append(str(request.url).split("/")[-1])
+            return httpx.Response(204)
+        return httpx.Response(404, json={"detail": "not found"})
+
+    transport = httpx.MockTransport(handler)
+
+    class _MockClient(httpx.Client):
+        def __init__(self, *args, **kwargs):
+            super().__init__(transport=transport, **kwargs)
+
+    monkeypatch.setattr("app.orchestrator.httpx.Client", _MockClient)
+
+    orchestrator = IngestionOrchestrator(timeout_seconds=5.0)
+    result = orchestrator.remove_document_chunks(
+        weaviate_base_url="http://weaviate:8080",
+        collection="Chunk",
+        source_paths=["/shared/raw_data/supabase/validated/u/doc.pdf"],
+    )
+
+    assert result.status == "ok"
+    assert result.requested_count == 1
+    assert result.matched_objects_count == 2
+    assert result.deleted_count == 2
+    assert deleted_ids == ["obj-1", "obj-2"]

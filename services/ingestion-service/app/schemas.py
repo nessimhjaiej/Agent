@@ -58,6 +58,17 @@ class IndexDocumentResponse(BaseModel):
     message: str | None = None
 
 
+class RemoveDocumentChunksRequest(BaseModel):
+    target_relative_paths: list[str] = Field(..., min_length=1)
+
+
+class RemoveDocumentChunksResponse(BaseModel):
+    status: str
+    requested_count: int
+    matched_objects_count: int
+    deleted_count: int
+
+
 class CheckDocumentsRequest(BaseModel):
     target_relative_paths: list[str] = Field(..., min_length=1)
 

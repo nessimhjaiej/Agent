@@ -9,6 +9,7 @@ from app.models import (
     IngestionDocumentResult,
     IngestionRunParams,
     IngestionRunResult,
+    RemoveDocumentChunksResult,
 )
 
 
@@ -197,6 +198,47 @@ class IngestionOrchestrator:
                 )
         return result
 
+    def remove_document_chunks(
+        self,
+        weaviate_base_url: str,
+        collection: str,
+        source_paths: list[str],
+    ) -> RemoveDocumentChunksResult:
+        unique_paths = list(dict.fromkeys(path for path in source_paths if path))
+        if not unique_paths:
+            return RemoveDocumentChunksResult(
+                status="ok",
+                requested_count=0,
+                matched_objects_count=0,
+                deleted_count=0,
+            )
+
+        matched_total = 0
+        deleted_total = 0
+        with httpx.Client(timeout=self._timeout_seconds) as client:
+            for source_path in unique_paths:
+                object_ids = self._lookup_weaviate_object_ids_by_source(
+                    client=client,
+                    weaviate_base_url=weaviate_base_url,
+                    collection=collection,
+                    source_uri=source_path,
+                )
+                matched_total += len(object_ids)
+                for object_id in object_ids:
+                    self._delete_weaviate_object(
+                        client=client,
+                        weaviate_base_url=weaviate_base_url,
+                        object_id=object_id,
+                    )
+                    deleted_total += 1
+
+        return RemoveDocumentChunksResult(
+            status="ok",
+            requested_count=len(unique_paths),
+            matched_objects_count=matched_total,
+            deleted_count=deleted_total,
+        )
+
     def _discover_files(self, raw_dir: Path, patterns: list[str], recursive: bool) -> list[Path]:
         files: set[Path] = set()
         for pattern in patterns:
@@ -317,3 +359,53 @@ class IngestionOrchestrator:
             .get(collection, [])
         )
         return isinstance(hits, list) and len(hits) > 0
+
+    def _lookup_weaviate_object_ids_by_source(
+        self,
+        client: httpx.Client,
+        weaviate_base_url: str,
+        collection: str,
+        source_uri: str,
+    ) -> list[str]:
+        escaped = source_uri.replace("\\", "\\\\").replace('"', '\\"')
+        query = (
+            "{ Get { "
+            f"{collection}(where: {{path: [\"source_uri\"], operator: Equal, valueText: \"{escaped}\"}}, limit: 5000) "
+            "{ _additional { id } } } }"
+        )
+        try:
+            response = client.post(
+                f"{weaviate_base_url.rstrip('/')}/v1/graphql",
+                json={"query": query},
+            )
+        except httpx.HTTPError as exc:
+            raise UpstreamServiceError(f"weaviate graphql lookup failed: {exc}") from exc
+        self._raise_for_status(response, "weaviate graphql lookup")
+        payload = response.json()
+        hits = payload.get("data", {}).get("Get", {}).get(collection, [])
+        if not isinstance(hits, list):
+            return []
+
+        object_ids: list[str] = []
+        for hit in hits:
+            if not isinstance(hit, dict):
+                continue
+            additional = hit.get("_additional", {})
+            if not isinstance(additional, dict):
+                continue
+            object_id = additional.get("id")
+            if isinstance(object_id, str) and object_id.strip():
+                object_ids.append(object_id.strip())
+        return object_ids
+
+    def _delete_weaviate_object(
+        self,
+        client: httpx.Client,
+        weaviate_base_url: str,
+        object_id: str,
+    ) -> None:
+        try:
+            response = client.delete(f"{weaviate_base_url.rstrip('/')}/v1/objects/{object_id}")
+        except httpx.HTTPError as exc:
+            raise UpstreamServiceError(f"weaviate object delete failed: {exc}") from exc
+        self._raise_for_status(response, f"weaviate delete object {object_id}")

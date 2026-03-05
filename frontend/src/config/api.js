@@ -20,21 +20,25 @@ const API = {
 };
 
 async function parseResponse(response) {
+  const rawText = await response.text();
+  let payload = null;
+  if (rawText) {
+    try {
+      payload = JSON.parse(rawText);
+    } catch {
+      payload = null;
+    }
+  }
+
   if (response.ok) {
-    return response.json();
+    return payload ?? {};
   }
 
   let detail = `HTTP ${response.status}`;
-  try {
-    const payload = await response.json();
-    if (payload?.detail) {
-      detail = typeof payload.detail === 'string' ? payload.detail : JSON.stringify(payload.detail);
-    }
-  } catch {
-    const text = await response.text();
-    if (text) {
-      detail = text;
-    }
+  if (payload?.detail) {
+    detail = typeof payload.detail === 'string' ? payload.detail : JSON.stringify(payload.detail);
+  } else if (rawText) {
+    detail = rawText;
   }
   throw new Error(detail);
 }
@@ -61,6 +65,10 @@ export async function runIngestion(payload = {}) {
 
 export async function indexDocument(payload) {
   return postJson(`${API.ingestion}/ingestion/index-document`, payload);
+}
+
+export async function removeDocumentChunks(payload) {
+  return postJson(`${API.ingestion}/ingestion/remove-document-chunks`, payload);
 }
 
 export default API;

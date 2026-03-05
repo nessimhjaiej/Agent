@@ -7,18 +7,18 @@ import {
   Clock,
   Search,
   Send,
+  ChevronDown,
   Bot,
   User,
   Upload,
   Eye,
   Trash2,
-  RefreshCw,
 } from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
 import TypingIndicator from '../components/TypingIndicator';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { askGeneration, indexDocument } from '../config/api';
+import { askGeneration, indexDocument, removeDocumentChunks } from '../config/api';
 
 const DOCS_BUCKET = import.meta.env.VITE_SUPABASE_DOCS_BUCKET || 'documents';
 const DOCS_TABLE = import.meta.env.VITE_SUPABASE_DOCS_TABLE || 'documents';
@@ -57,7 +57,10 @@ function StatusBadge({ status }) {
   }[status];
   const Icon = cfg.icon;
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style={{ background: cfg.bg, color: cfg.text, border: `1px solid ${cfg.border}` }}>
+    <span
+      className="inline-flex items-center gap-1.5 py-1 rounded-full text-xs font-medium"
+      style={{ background: cfg.bg, color: cfg.text, border: `1px solid ${cfg.border}`, paddingLeft: '20px', paddingRight: '20px' }}
+    >
       <Icon size={11} /> {cfg.label}
     </span>
   );
@@ -82,6 +85,7 @@ export default function AdminPage() {
       role: 'assistant',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       content: 'Documents now track embedded state in Supabase. Validate to index once, then it is skipped.',
+      sources: [],
     },
   ]);
   const [agentInput, setAgentInput] = useState('');
@@ -130,6 +134,30 @@ export default function AdminPage() {
   useEffect(() => {
     loadDocuments();
   }, [supabase, user]);
+
+  useEffect(() => {
+    if (!supabase || !user?.id) return undefined;
+
+    const channel = supabase
+      .channel(`documents-realtime-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: DOCS_TABLE,
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          loadDocuments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, user?.id]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -302,6 +330,15 @@ export default function AdminPage() {
     markBusy(doc.id, true);
     setDocsError('');
     try {
+      const candidateRelativePaths = [`supabase/${doc.storagePath}`];
+      if (!doc.storagePath.startsWith('validated/')) {
+        const validatedPath = doc.storagePath.replace(/^(pending|rejected)\//, 'validated/');
+        if (validatedPath !== doc.storagePath) {
+          candidateRelativePaths.push(`supabase/${validatedPath}`);
+        }
+      }
+      await removeDocumentChunks({ target_relative_paths: [...new Set(candidateRelativePaths)] });
+
       const { error: rmErr } = await supabase.storage.from(DOCS_BUCKET).remove([doc.storagePath]);
       if (rmErr) throw rmErr;
       const { error: delErr } = await supabase.from(DOCS_TABLE).delete().eq('id', doc.id);
@@ -381,6 +418,7 @@ export default function AdminPage() {
     try {
       const normalized = userText.toLowerCase();
       let content = '';
+      let sources = [];
       if (normalized.includes('embed validated')) {
         await embedAllValidated();
         content = 'Embedding triggered for validated non-embedded documents.';
@@ -391,10 +429,13 @@ export default function AdminPage() {
         const history = agentMsgs.filter((m) => m.role === 'user' || m.role === 'assistant').map((m) => ({ role: m.role, content: m.content }));
         const response = await askGeneration({ query: userText, chatHistory: history });
         content = response.answer || 'No answer returned by generation service.';
+        sources = Array.isArray(response?.citations)
+          ? [...new Set(response.citations.map((citation) => citation.document_name).filter(Boolean))]
+          : [];
       }
-      setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+      setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources }]);
     } catch (error) {
-      setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: `Request failed: ${error.message}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+      setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: `Request failed: ${error.message}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources: [] }]);
     } finally {
       setTyping(false);
     }
@@ -446,20 +487,30 @@ export default function AdminPage() {
                 <div className="h-full w-full max-w-[1400px] flex flex-col px-5 md:px-8 mt-8 md:mt-12 overflow-auto" style={{ minHeight: 0 }}>
 
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0" style={{ marginTop: '24px', marginBottom: '16px' }}>
-                    <div className="flex items-center gap-2 flex-1 w-full sm:w-auto px-4 rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minHeight: '48px' }}>
+                    <div className="flex items-center gap-2 flex-1 w-full sm:w-auto rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minHeight: '48px', paddingLeft: '24px', paddingRight: '24px' }}>
                       <Search size={16} style={{ color: 'var(--text-muted)' }} />
                       <input id="doc-search" type="text" placeholder="Search documents..." value={search} onChange={(e) => setSearch(e.target.value)} className="flex-1 bg-transparent outline-none text-sm" style={{ color: 'var(--text-primary)' }} />
                     </div>
                     <div className="flex items-center gap-2">
-                      <select id="status-filter" value={filter} onChange={(e) => setFilter(e.target.value)} className="px-4 rounded-xl text-sm outline-none" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', minWidth: '160px' }}>
-                        <option value="all">All Status</option>
-                        <option value="validated">Validated</option>
-                        <option value="pending">Pending</option>
-                        <option value="rejected">Rejected</option>
-                      </select>
-                      <motion.button onClick={loadDocuments} disabled={loadingDocs} className="flex items-center gap-2 px-6 rounded-xl text-sm font-medium" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', minHeight: '48px', minWidth: '140px', justifyContent: 'center' }}>
-                        <RefreshCw size={16} /> Refresh
-                      </motion.button>
+                      <div className="relative">
+                        <select
+                          id="status-filter"
+                          value={filter}
+                          onChange={(e) => setFilter(e.target.value)}
+                          className="rounded-xl text-sm outline-none appearance-none"
+                          style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', minWidth: '200px', paddingLeft: '24px', paddingRight: '48px' }}
+                        >
+                          <option value="all">All Status</option>
+                          <option value="validated">Validated</option>
+                          <option value="pending">Pending</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
+                        <ChevronDown
+                          size={16}
+                          className="pointer-events-none absolute top-1/2 -translate-y-1/2"
+                          style={{ right: '16px', color: 'var(--text-muted)' }}
+                        />
+                      </div>
                       <motion.button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-6 rounded-xl text-sm font-medium text-white" style={{ background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', minHeight: '48px', minWidth: '140px', justifyContent: 'center' }}>
                         <Upload size={16} /> Upload
                       </motion.button>
@@ -495,7 +546,7 @@ export default function AdminPage() {
                       { l: 'Pending', v: docs.filter((d) => d.status === 'pending').length, color: '#f59e0b' },
                       { l: 'Rejected', v: docs.filter((d) => d.status === 'rejected').length, color: '#ef4444' },
                     ].map((s, i) => (
-                      <motion.div key={i} className="rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '16px' }}>
+                      <motion.div key={i} className="rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '18px 30px' }}>
                         <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>{s.l}</p>
                         <p className="text-2xl font-bold font-display" style={{ color: s.color }}>{s.v}</p>
                       </motion.div>
@@ -556,19 +607,19 @@ export default function AdminPage() {
                             <td className="px-4 py-4 align-middle"><StatusBadge status={doc.status} /></td>
                             <td className="px-4 py-4 w-48 align-middle">
                               <div className="grid grid-cols-4 justify-items-center items-center gap-2">
-                                <button className="p-2.5 rounded-lg hover:bg-primary-500/10 transition-colors" title="View document" disabled={busyDocIds.has(doc.id)} onClick={() => viewDocument(doc)}><Eye size={18} /></button>
-                                {doc.embedded ? (
+                                <button className="p-2.5 rounded-lg hover:bg-primary-500/10 transition-colors" style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }} title="View document" disabled={busyDocIds.has(doc.id)} onClick={() => viewDocument(doc)}><Eye size={18} /></button>
+                                {doc.embedded || doc.status !== 'pending' || busyDocIds.has(doc.id) ? (
                                   <>
                                     <span className="p-2.5 invisible"><Check size={18} /></span>
                                     <span className="p-2.5 invisible"><X size={18} /></span>
                                   </>
                                 ) : (
                                   <>
-                                    <button className="p-2.5 rounded-lg hover:bg-success/10 transition-colors" title="Validate and index if needed" disabled={busyDocIds.has(doc.id)} onClick={() => validateDocument(doc)}><Check size={18} /></button>
-                                    <button className="p-2.5 rounded-lg hover:bg-warning/10 transition-colors" title="Reject" disabled={busyDocIds.has(doc.id)} onClick={() => rejectDocument(doc)}><X size={18} /></button>
+                                    <button className="p-2.5 rounded-lg hover:bg-success/10 transition-colors" style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }} title="Validate and index if needed" disabled={busyDocIds.has(doc.id)} onClick={() => validateDocument(doc)}><Check size={18} /></button>
+                                    <button className="p-2.5 rounded-lg hover:bg-warning/10 transition-colors" style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }} title="Reject" disabled={busyDocIds.has(doc.id)} onClick={() => rejectDocument(doc)}><X size={18} /></button>
                                   </>
                                 )}
-                                <button className="p-2.5 rounded-lg hover:bg-danger/10 text-danger transition-colors" title="Remove" disabled={busyDocIds.has(doc.id)} onClick={() => removeDocument(doc)}><Trash2 size={18} /></button>
+                                <button className="p-2.5 rounded-lg hover:bg-danger/10 transition-colors" style={{ color: '#ef4444' }} title="Remove" disabled={busyDocIds.has(doc.id)} onClick={() => removeDocument(doc)}><Trash2 size={18} /></button>
                               </div>
                             </td>
                           </motion.tr>
@@ -602,6 +653,18 @@ export default function AdminPage() {
                           {msg.role === 'assistant' && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', boxShadow: '0 0 12px rgba(245,158,11,0.3)' }}><Bot size={15} className="text-white" /></div>}
                           <div className={`max-w-[80%] rounded-2xl ${msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'}`} style={msg.role === 'user' ? { background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', color: 'white', boxShadow: '0 4px 15px rgba(139,92,246,0.2)', padding: '16px 24px' } : { background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '16px 24px' }}>
                             <p className="text-sm leading-relaxed whitespace-pre-line my-2">{msg.content}</p>
+                            {msg.sources && msg.sources.length > 0 && (
+                              <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-color)' }}>
+                                <p className="text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>Sources:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {msg.sources.map((src, i) => (
+                                    <span key={i} className="text-xs px-2.5 py-0.5 rounded-full" style={{ background: 'rgba(139,92,246,0.08)', color: 'var(--color-primary-400)', border: '1px solid rgba(139,92,246,0.15)' }}>
+                                      {src}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                             <p className={`text-xs mt-2 ${msg.role === 'user' ? 'text-white/50' : ''}`} style={msg.role === 'assistant' ? { color: 'var(--text-muted)' } : {}}>{msg.timestamp}</p>
                           </div>
                           {msg.role === 'user' && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1" style={{ background: 'linear-gradient(135deg, #52525b, #27272a)' }}><User size={15} className="text-white" /></div>}

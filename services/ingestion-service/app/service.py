@@ -6,9 +6,10 @@ from app.models import (
     IndexDocumentResult,
     IngestionRunParams,
     IngestionRunResult,
+    RemoveDocumentChunksResult,
 )
 from app.orchestrator import IngestionOrchestrator
-from app.schemas import IndexDocumentRequest, RunIngestionRequest
+from app.schemas import IndexDocumentRequest, RemoveDocumentChunksRequest, RunIngestionRequest
 
 
 class IngestionService:
@@ -58,6 +59,17 @@ class IngestionService:
             for path in target_relative_paths
         ]
         return self._orchestrator.check_documents_exist(
+            weaviate_base_url=self._settings.weaviate_http_url,
+            collection=self._settings.weaviate_collection,
+            source_paths=source_paths,
+        )
+
+    def remove_document_chunks(self, payload: RemoveDocumentChunksRequest) -> RemoveDocumentChunksResult:
+        source_paths = [
+            self._to_preprocessing_source_path(self._normalize_target_path(path))
+            for path in payload.target_relative_paths
+        ]
+        return self._orchestrator.remove_document_chunks(
             weaviate_base_url=self._settings.weaviate_http_url,
             collection=self._settings.weaviate_collection,
             source_paths=source_paths,

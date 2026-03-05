@@ -36,3 +36,12 @@ def test_index_document_requires_target_relative_path() -> None:
     response = client.post("/ingestion/index-document", json={"source_url": "https://example.com/doc.pdf"})
 
     assert response.status_code == 422
+
+
+def test_remove_document_chunks_requires_non_empty_list() -> None:
+    app = create_app(Settings())
+    client = TestClient(app)
+
+    response = client.post("/ingestion/remove-document-chunks", json={"target_relative_paths": []})
+
+    assert response.status_code == 422

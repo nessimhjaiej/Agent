@@ -79,8 +79,12 @@ services:
     container_name: generation-service
     env_file:
       - .env
+    environment:
+      RETRIEVAL_BASE_URL: http://retrieval-service:8003
     ports:
       - "8004:8004"
+    depends_on:
+      - retrieval-service
     restart: unless-stopped
 
   ingestion-service:

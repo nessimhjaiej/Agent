@@ -56,3 +56,11 @@ class IndexDocumentResult:
     chunks_count: int
     indexed_count: int
     message: str | None = None
+
+
+@dataclass(slots=True)
+class RemoveDocumentChunksResult:
+    status: str
+    requested_count: int
+    matched_objects_count: int
+    deleted_count: int

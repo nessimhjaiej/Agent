@@ -6,6 +6,8 @@ from app.schemas import (
     IndexDocumentRequest,
     IndexDocumentResponse,
     IngestionDocumentResponse,
+    RemoveDocumentChunksRequest,
+    RemoveDocumentChunksResponse,
     RunIngestionRequest,
     RunIngestionResponse,
 )
@@ -72,4 +74,26 @@ def index_document(payload: IndexDocumentRequest) -> IndexDocumentResponse:
         chunks_count=result.chunks_count,
         indexed_count=result.indexed_count,
         message=result.message,
+    )
+
+
+@router.post("/remove-document-chunks", response_model=RemoveDocumentChunksResponse)
+def remove_document_chunks(payload: RemoveDocumentChunksRequest) -> RemoveDocumentChunksResponse:
+    try:
+        service = IngestionService(settings=Settings.from_env())
+        result = service.remove_document_chunks(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ConfigurationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except UpstreamServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except IngestionServiceError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return RemoveDocumentChunksResponse(
+        status=result.status,
+        requested_count=result.requested_count,
+        matched_objects_count=result.matched_objects_count,
+        deleted_count=result.deleted_count,
     )
