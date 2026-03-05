@@ -149,11 +149,17 @@ export default function Navbar() {
             <motion.button
               id="nav-sign-in"
               onClick={() => navigate('/login')}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all"
+              className="flex items-center gap-2 rounded-xl text-sm font-medium transition-all"
               style={{
                 background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
                 color: 'white',
                 boxShadow: '0 0 20px rgba(139,92,246,0.3)',
+                paddingLeft: '24px',
+                paddingRight: '24px',
+                paddingTop: '10px',
+                paddingBottom: '10px',
+                minHeight: '44px',
+                minWidth: '118px',
               }}
               whileHover={{
                 scale: 1.03,

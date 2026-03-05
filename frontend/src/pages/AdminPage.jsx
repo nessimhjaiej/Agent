@@ -564,8 +564,8 @@ export default function AdminPage() {
                   >
                     <table className="w-full text-sm">
                       <thead>
-                        <tr style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
-                          <th className="px-3 py-4 text-center text-base font-semibold w-10" style={{ color: 'var(--text-secondary)' }}>
+                        <tr className="sticky top-0 z-10" style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)', minHeight: '62px' }}>
+                          <th className="px-3 text-center text-base font-semibold w-10" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>
                             <input
                               type="checkbox"
                               checked={allFilteredSelected}
@@ -573,11 +573,11 @@ export default function AdminPage() {
                               aria-label="Select all documents in current filter"
                             />
                           </th>
-                          <th className="px-4 py-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)' }}>Document</th>
-                          <th className="px-4 py-4 text-left text-base font-semibold hidden md:table-cell" style={{ color: 'var(--text-secondary)' }}>Size</th>
-                          <th className="px-4 py-4 text-left text-base font-semibold hidden sm:table-cell" style={{ color: 'var(--text-secondary)' }}>Date</th>
-                          <th className="px-4 py-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)' }}>Status</th>
-                          <th className="px-4 py-4 text-center text-base font-semibold w-48" style={{ color: 'var(--text-secondary)' }}>Actions</th>
+                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Document</th>
+                          <th className="px-4 text-left text-base font-semibold hidden md:table-cell" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Size</th>
+                          <th className="px-4 text-left text-base font-semibold hidden sm:table-cell" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Date</th>
+                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Status</th>
+                          <th className="px-4 text-center text-base font-semibold w-48" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -645,9 +645,9 @@ export default function AdminPage() {
               </motion.div>
             ) : (
               <motion.div key="agent" className="h-full w-full flex justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div className="h-full w-full max-w-5xl flex flex-col px-5 md:px-8 relative md:left-20 lg:left-32 xl:left-40 mt-12 md:mt-16" style={{ minHeight: 0 }}>
+                <div className="h-full w-full max-w-5xl flex flex-col px-5 md:px-8 mt-12 md:mt-16" style={{ minHeight: 0 }}>
                   <div className="flex-1 w-full" style={{ overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth', minHeight: 0, scrollbarGutter: 'stable', paddingTop: '32px', paddingBottom: '32px' }}>
-                    <div className="max-w-5xl" style={{ marginLeft: 'auto', marginRight: '0' }}>
+                    <div className="max-w-5xl md:-ml-24 lg:-ml-32 xl:-ml-40" style={{ marginLeft: '0', marginRight: 'auto' }}>
                       {agentMsgs.map((msg) => (
                         <motion.div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`} style={{ marginBottom: '32px' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                           {msg.role === 'assistant' && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', boxShadow: '0 0 12px rgba(245,158,11,0.3)' }}><Bot size={15} className="text-white" /></div>}
@@ -674,13 +674,15 @@ export default function AdminPage() {
                       <div ref={endRef} />
                     </div>
                   </div>
-                  <div className="py-3 w-full" style={{ borderColor: 'var(--border-color)', borderTop: '1px solid var(--border-color)' }}>
-                    <div className="max-w-3xl mx-auto">
-                      <div className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-                        <textarea id="admin-agent-input" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }} placeholder='Try: "refresh status" or "embed validated"' rows={3} className="flex-1 bg-transparent outline-none text-sm resize-none max-h-56" style={{ color: 'var(--text-primary)', padding: '16px 24px' }} />
-                        <motion.button id="admin-send" onClick={sendAgent} disabled={!agentInput.trim() || typing} className="rounded-xl disabled:opacity-20 shrink-0" style={{ padding: '16px 22px', marginRight: '8px' }}>
-                          <Send size={16} color={agentInput.trim() && !typing ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
-                        </motion.button>
+                  <div className="py-3 w-full" style={{ transform: 'translateY(-14px)' }}>
+                    <div className="max-w-5xl md:-ml-24 lg:-ml-32 xl:-ml-40" style={{ marginLeft: '0', marginRight: 'auto' }}>
+                      <div className="w-full" style={{ paddingLeft: '44px', paddingRight: '44px' }}>
+                        <div className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                          <textarea id="admin-agent-input" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }} placeholder='Try: "refresh status" or "embed validated"' rows={3} className="flex-1 bg-transparent outline-none text-sm resize-none max-h-56" style={{ color: 'var(--text-primary)', padding: '16px 24px' }} />
+                          <motion.button id="admin-send" onClick={sendAgent} disabled={!agentInput.trim() || typing} className="rounded-xl disabled:opacity-20 shrink-0" style={{ padding: '16px 22px', marginRight: '8px' }}>
+                            <Send size={16} color={agentInput.trim() && !typing ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
+                          </motion.button>
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Github, Eye, EyeOff, Scale, CheckCircle, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Scale, CheckCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AnimatedPage from '../components/AnimatedPage';
 
@@ -105,7 +105,7 @@ export default function LoginPage() {
             transition={{ duration: 0.6 }}
           >
             {/* Logo — Centered above text */}
-            <div className="flex flex-col items-center text-center mb-10">
+            <div className="flex flex-col items-center text-center mb-12">
               <motion.div
                 className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
                 style={{
@@ -119,7 +119,7 @@ export default function LoginPage() {
               <h1 className="text-3xl md:text-4xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>
                 {mode === 'signin' ? 'Welcome back' : 'Get started'}
               </h1>
-              <p className="text-sm mt-3" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-sm mt-4" style={{ color: 'var(--text-secondary)' }}>
                 {mode === 'signin'
                   ? 'Sign in to your Legal Intelligence account'
                   : 'Create your account to access legal RAG'}
@@ -130,13 +130,14 @@ export default function LoginPage() {
             <div
               className="rounded-2xl p-8"
               style={{
-                background: 'var(--bg-secondary)',
+                background: 'transparent',
                 border: '1px solid var(--border-color)',
                 boxShadow: '0 25px 50px -12px var(--shadow-color)',
+                marginTop: '20px',
               }}
             >
               {/* OAuth */}
-              <div className="flex gap-3 mb-6">
+              <div className="flex gap-3" style={{ marginBottom: '24px' }}>
                 {[
                   { provider: 'google', label: 'Google', icon: (
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -146,7 +147,6 @@ export default function LoginPage() {
                       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                     </svg>
                   )},
-                  { provider: 'github', label: 'GitHub', icon: <Github size={18} /> },
                 ].map(({ provider, label, icon }) => (
                   <motion.button
                     key={provider}
@@ -156,6 +156,11 @@ export default function LoginPage() {
                       border: '1px solid var(--border-color)',
                       color: 'var(--text-primary)',
                       background: 'var(--bg-tertiary)',
+                      minHeight: '56px',
+                      paddingLeft: '24px',
+                      paddingRight: '24px',
+                      paddingTop: '16px',
+                      paddingBottom: '16px',
                     }}
                     whileHover={{
                       scale: 1.02,
@@ -171,19 +176,24 @@ export default function LoginPage() {
               </div>
 
               {/* Divider */}
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3" style={{ marginBottom: '24px' }}>
                 <div className="flex-1 h-px" style={{ background: 'var(--border-color)' }} />
                 <span className="text-xs font-medium tracking-wider" style={{ color: 'var(--text-muted)' }}>OR</span>
                 <div className="flex-1 h-px" style={{ background: 'var(--border-color)' }} />
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div
-                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all input-glow"
+                  className="flex items-center gap-3 px-4 py-4.5 rounded-xl transition-all input-glow"
                   style={{
                     border: '1px solid var(--border-color)',
                     background: 'var(--bg-tertiary)',
+                    minHeight: '58px',
+                    paddingLeft: '18px',
+                    paddingRight: '18px',
+                    paddingTop: '15px',
+                    paddingBottom: '15px',
                   }}
                 >
                   <Mail size={16} style={{ color: 'var(--text-muted)' }} />
@@ -201,10 +211,15 @@ export default function LoginPage() {
                 </div>
 
                 <div
-                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all input-glow"
+                  className="flex items-center gap-3 px-4 py-4.5 rounded-xl transition-all input-glow"
                   style={{
                     border: '1px solid var(--border-color)',
                     background: 'var(--bg-tertiary)',
+                    minHeight: '58px',
+                    paddingLeft: '18px',
+                    paddingRight: '18px',
+                    paddingTop: '15px',
+                    paddingBottom: '15px',
                   }}
                 >
                   <Lock size={16} style={{ color: 'var(--text-muted)' }} />
@@ -243,6 +258,11 @@ export default function LoginPage() {
                   style={{
                     background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
                     boxShadow: '0 0 25px rgba(139,92,246,0.3)',
+                    minHeight: '58px',
+                    paddingTop: '16px',
+                    paddingBottom: '16px',
+                    paddingLeft: '24px',
+                    paddingRight: '24px',
                   }}
                   whileHover={{
                     boxShadow: '0 0 40px rgba(139,92,246,0.5)',
@@ -255,7 +275,7 @@ export default function LoginPage() {
                 </motion.button>
               </form>
 
-              <p className="text-center text-sm mt-6" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-center text-sm" style={{ color: 'var(--text-secondary)', marginTop: '22px' }}>
                 {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
                 <button
                   onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); }}
