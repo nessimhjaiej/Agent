@@ -10,27 +10,27 @@ export default defineConfig({
       '/api/auth': {
         target: 'http://localhost:8001',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/auth/, ''),
+        rewrite: (path) => path.replace(/^\/api\/auth/, '/auth'),
       },
       '/api/preprocessing': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/preprocessing/, ''),
+        rewrite: (path) => path.replace(/^\/api\/preprocessing/, '/preprocessing'),
       },
       '/api/embedding': {
         target: 'http://localhost:8002',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/embedding/, ''),
+        rewrite: (path) => path.replace(/^\/api\/embedding/, '/embedding'),
       },
       '/api/retrieval': {
         target: 'http://localhost:8003',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/retrieval/, ''),
+        rewrite: (path) => path.replace(/^\/api\/retrieval/, '/retrieval'),
       },
       '/api/generation': {
         target: 'http://localhost:8004',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/generation/, ''),
+        rewrite: (path) => path.replace(/^\/api\/generation/, '/generation'),
       },
     },
   },
