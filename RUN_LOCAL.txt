@@ -1,0 +1,39 @@
+Run Locally (Windows PowerShell)
+================================
+
+1) Start backend services (from project root)
+---------------------------------------------
+cd C:\Users\NESSIM\Desktop\agentic
+docker compose up -d weaviate auth-service preprocessing-service embedding-service retrieval-service generation-service
+
+Optional: rebuild images before starting
+docker compose build auth-service preprocessing-service embedding-service retrieval-service generation-service
+
+2) Check service health
+-----------------------
+curl.exe http://localhost:8000/health
+curl.exe http://localhost:8001/health
+curl.exe http://localhost:8002/health
+curl.exe http://localhost:8003/health
+curl.exe http://localhost:8004/health
+curl.exe http://localhost:8080/v1/.well-known/ready
+
+3) Start frontend (new terminal)
+--------------------------------
+cd C:\Users\NESSIM\Desktop\agentic\frontend
+npm install
+npm run dev
+
+4) Open app
+-----------
+http://localhost:5173
+
+5) Stop backend services
+------------------------
+cd C:\Users\NESSIM\Desktop\agentic
+docker compose down
+
+
+admin pass : 
+jmemsaif07@gmail.com
++183461Saif

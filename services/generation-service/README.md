@@ -81,3 +81,26 @@ Added `POST /generation/ask` for one-shot flow:
 1. Calls retrieval-service `/retrieval/search`
 2. Feeds returned chunks to generation pipeline
 3. Returns final answer + citations + retrieval summary metadata
+
+## Ragas Evaluation Reports (Implemented)
+
+Ragas evaluation is available directly inside generation-service.
+
+- Runner module: `app/evaluation/ragas_runner.py`
+- Sample dataset: `evals/sample_eval_dataset.json`
+- Report output folder: `evaluation_reports/`
+
+Run:
+
+```bash
+python -m app.evaluation.ragas_runner --dataset evals/sample_eval_dataset.json
+```
+
+Environment:
+- set `OPENAI_API_KEY` (or `OPENAI_KEY`; runner maps it automatically for Ragas).
+
+Each run:
+- executes generation-service ask logic for each dataset row;
+- computes Ragas metrics (`ContextRecall`, `Faithfulness`, `FactualCorrectness`);
+- writes a timestamped JSON report like:
+  `evaluation_reports/ragas_report_YYYYMMDD_HHMMSS.json`.

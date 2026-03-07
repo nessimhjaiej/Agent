@@ -1,0 +1,16 @@
+[
+  {
+    "question": "What are the obligations for AML transaction monitoring?",
+    "reference": "Financial institutions should apply risk-based transaction monitoring, document suspicious activity, and report it to the competent authority within required timelines.",
+    "mode": "hybrid",
+    "top_k_retrieve": 8,
+    "top_k_return": 5
+  },
+  {
+    "question": "When is customer due diligence required?",
+    "reference": "CDD is required before establishing a business relationship, for occasional high-value transactions, when suspicion arises, and when customer identity information is doubtful.",
+    "mode": "hybrid",
+    "top_k_retrieve": 8,
+    "top_k_return": 5
+  }
+]

@@ -1,0 +1,34 @@
+{
+  "generated_at_utc": "2026-03-07T15:25:00.366659+00:00",
+  "dataset_path": "evals\\sample_eval_dataset.json",
+  "sample_count": 2,
+  "summary": {
+    "context_recall": 0.0,
+    "faithfulness": 0.878571,
+    "factual_correctness(mode=f1)": 0.0
+  },
+  "records": [
+    {
+      "user_input": "What are the obligations for AML transaction monitoring?",
+      "retrieved_contexts": [
+        "\u2022 Establishing security privilege policies to restrict unnecessary user access, while keeping systems up to\ndate with the latest security patches. This is particularly relevant in the case of OT systems with access\nto non-replicated or safety-critical infrastructure.\n\u2022 Utilising endpoint detection and response (EDR) systems, including multifactor authentication for\npublicly exposed assets.\n\u2022 Implementing advanced cross-layer detection and response solutions on all platforms.\n\u2022 Employing up-to-date antivirus signatures and configuring firewalls at the application level.\n\u2022 Paying attention to vulnerabilities in backup and storage appliances, VPN software, and gateways and\npatching software to address vulnerabilities for both server and client applications.\n\u2022 Applying zero trust principles across network architecture.\n\u2022 Adding cyber-defence capabilities (based on SOC \u2013 Security Operation Centre) to processes,\ntechnologies, and operations, as well as the development of detailed incident response plans (IRP), with\nprocedures for incident response strategies and providing dedicated incidence response teams (IRT).\n\u2022 In the face of potential operational disruptions and financial burdens, essential service providers are\nincreasingly turning to partnerships and cooperative initiatives as a cornerstone of their defence.\nMonitoring of cyberattacks trends, information sharing and collaboration with regional authorities and\nother essential services providers is key.\n"
+      ],
+      "response": "The obligations for AML transaction monitoring include establishing security privilege policies to restrict unnecessary user access, while keeping systems up to date with the latest security patches. This is particularly relevant in the case of OT systems with access to non-replicated or safety-critical infrastructure. Additionally, implementing advanced cross-layer detection and response solutions on all platforms, employing up-to-date antivirus signatures, configuring firewalls at the application level, and applying zero trust principles across network architecture are essential. Cyber-defence capabilities, based on SOC (Security Operation Centre), should be integrated into processes, technologies, and operations, along with the development of detailed incident response plans (IRP) and dedicated incident response teams (IRT).",
+      "reference": "Financial institutions should apply risk-based transaction monitoring, document suspicious activity, and report it to the competent authority within required timelines.",
+      "context_recall": 0.0,
+      "faithfulness": 0.9,
+      "factual_correctness(mode=f1)": 0.0
+    },
+    {
+      "user_input": "When is customer due diligence required?",
+      "retrieved_contexts": [
+        "A small manufacturer selling inputs\nto a multinational buyer for use in multiple jurisdictions may need to comply with multiple\nlayers of data privacy and cybersecurity rules across those different jurisdictions. Without\nlegal support or digital infrastructure, many MSMEs are simply unable to comply, cutting them\noff from global value chains.\nFragmented data flows undermine supply chain traceability compliance\nSupply chain data flows are essential for compliance with laws that require upstream supply\nchain traceability, such as the EU Deforestation Regulation (EUDR) and the US Uyghur Forced\nLabor Prevention Act (UFLPA). To comply with these regulations companies need to prove the\norigin and ethical sourcing of goods well beyond their immediate suppliers, which is only feasible\nif data can move efficiently and securely across borders and between tiers. Interoperable, timely,\nand standardised data exchange allows businesses to gather the necessary documentation,\nconduct due diligence, and respond to audits or enforcement actions.\nConfidential business information and compliance risks\nSupply chain data flows often involve the transfer of highly sensitive commercial information,\nincluding data that may qualify as Confidential Business Information (CBI), under applicable laws.\nThis includes information such as supplier networks, inventory levels, logistics routes, trade finance\nrecords, profit margins, customer lists, purchase histories, supplier contracts, pricing agreements,\nand product designs. "
+      ],
+      "response": "The retrieved chunks do not provide specific information on when customer due diligence is required. However, due diligence is generally necessary in contexts involving compliance with regulations, such as supply chain traceability and cybersecurity, where businesses need to ensure the secure and ethical sourcing of goods and data protection. This often involves gathering documentation and responding to audits or enforcement actions.",
+      "reference": "CDD is required before establishing a business relationship, for occasional high-value transactions, when suspicion arises, and when customer identity information is doubtful.",
+      "context_recall": 0.0,
+      "faithfulness": 0.8571428571428571,
+      "factual_correctness(mode=f1)": 0.0
+    }
+  ]
+}

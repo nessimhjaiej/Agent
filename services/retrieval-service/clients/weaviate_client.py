@@ -35,7 +35,6 @@ class WeaviateClient:
               char_count
               token_count_estimate
               chunking_strategy
-              embedding_model
               document_checksum
               normalization_version
               pipeline_version
@@ -92,7 +91,6 @@ class WeaviateClient:
               char_count
               token_count_estimate
               chunking_strategy
-              embedding_model
               document_checksum
               normalization_version
               pipeline_version
