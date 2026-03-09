@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -42,6 +42,7 @@ export function AuthProvider({ children }) {
   const [userRole, setUserRole] = useState(null);
   const [requireInviteOnboarding, setRequireInviteOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);
+  const authMutationInFlightRef = useRef(false);
 
   useEffect(() => {
     if (!supabase) {
@@ -71,6 +72,7 @@ export function AuthProvider({ children }) {
     };
 
     const enforceAccountState = async (sessionUser = undefined) => {
+      if (authMutationInFlightRef.current) return;
       if (isEnforcing) {
         hasQueuedEnforcement = true;
         queuedSessionUser = sessionUser ?? null;
@@ -215,56 +217,60 @@ export function AuthProvider({ children }) {
     completeInviteOnboarding = false,
   }) => {
     if (!supabase) throw new Error('Supabase not configured');
+    authMutationInFlightRef.current = true;
+    try {
+      const { data: currentData } = await supabase.auth.getUser();
+      const currentUser = currentData?.user;
+      const existingMetadata = currentUser?.user_metadata || {};
+      const resolvedUsername = (username || '').trim()
+        || (existingMetadata.username || '').trim()
+        || deriveUsernameFromEmail(currentUser?.email || '');
 
-    const { data: currentData } = await supabase.auth.getUser();
-    const currentUser = currentData?.user;
-    const existingMetadata = currentUser?.user_metadata || {};
-    const resolvedUsername = (username || '').trim()
-      || (existingMetadata.username || '').trim()
-      || deriveUsernameFromEmail(currentUser?.email || '');
-
-    if (!resolvedUsername) {
-      throw new Error('Username is required.');
-    }
-    let uploadedProfilePictureUrl = removeProfilePicture
-      ? ''
-      : (existingMetadata.profile_picture || '').trim();
-
-    if (profilePictureFile instanceof File) {
-      const originalName = profilePictureFile.name || 'profile-image';
-      const extension = originalName.includes('.') ? originalName.split('.').pop() : 'png';
-      const safeExtension = (extension || 'png').replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'png';
-      const targetPath = `${currentUser?.id || 'user'}/${Date.now()}.${safeExtension}`;
-      const { error: uploadError } = await supabase.storage
-        .from(profileBucket)
-        .upload(targetPath, profilePictureFile, { upsert: true });
-      if (uploadError) {
-        throw new Error(`Profile picture upload failed: ${uploadError.message}`);
+      if (!resolvedUsername) {
+        throw new Error('Username is required.');
       }
-      const { data: publicData } = supabase.storage.from(profileBucket).getPublicUrl(targetPath);
-      uploadedProfilePictureUrl = publicData?.publicUrl || uploadedProfilePictureUrl;
-    }
+      let uploadedProfilePictureUrl = removeProfilePicture
+        ? ''
+        : (existingMetadata.profile_picture || '').trim();
 
-    const attributes = {
-      data: {
-        ...existingMetadata,
-        username: resolvedUsername,
-        phone_number: phoneNumber.trim(),
-        profile_picture: uploadedProfilePictureUrl,
-        ...(completeInviteOnboarding ? { invite_onboarding_completed: true } : {}),
-      },
-    };
-    if (newPassword && newPassword.trim()) {
-      attributes.password = newPassword.trim();
-    }
+      if (profilePictureFile instanceof File) {
+        const originalName = profilePictureFile.name || 'profile-image';
+        const extension = originalName.includes('.') ? originalName.split('.').pop() : 'png';
+        const safeExtension = (extension || 'png').replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'png';
+        const targetPath = `${currentUser?.id || 'user'}/${Date.now()}.${safeExtension}`;
+        const { error: uploadError } = await supabase.storage
+          .from(profileBucket)
+          .upload(targetPath, profilePictureFile, { upsert: true });
+        if (uploadError) {
+          throw new Error(`Profile picture upload failed: ${uploadError.message}`);
+        }
+        const { data: publicData } = supabase.storage.from(profileBucket).getPublicUrl(targetPath);
+        uploadedProfilePictureUrl = publicData?.publicUrl || uploadedProfilePictureUrl;
+      }
 
-    const { data, error } = await supabase.auth.updateUser(attributes);
-    if (error) throw error;
-    setUser(data?.user ?? currentUser ?? null);
-    if (completeInviteOnboarding) {
-      setRequireInviteOnboarding(false);
+      const attributes = {
+        data: {
+          ...existingMetadata,
+          username: resolvedUsername,
+          phone_number: phoneNumber.trim(),
+          profile_picture: uploadedProfilePictureUrl,
+          ...(completeInviteOnboarding ? { invite_onboarding_completed: true } : {}),
+        },
+      };
+      if (newPassword && newPassword.trim()) {
+        attributes.password = newPassword.trim();
+      }
+
+      const { data, error } = await supabase.auth.updateUser(attributes);
+      if (error) throw error;
+      setUser(data?.user ?? currentUser ?? null);
+      if (completeInviteOnboarding) {
+        setRequireInviteOnboarding(false);
+      }
+      return data;
+    } finally {
+      authMutationInFlightRef.current = false;
     }
-    return data;
   };
 
   const updatePassword = async (newPassword) => {
