@@ -187,7 +187,9 @@ export default function AdminPage() {
       });
       const deliveryNote = response.email_sent
         ? 'Invitation email sent.'
-        : `Email delivery is not configured. Temporary password: ${response.generated_password}`;
+        : response.recovery_link
+          ? `Email could not be sent. Share this recovery link: ${response.recovery_link}`
+          : `Email could not be sent. Temporary password: ${response.generated_password}`;
       setInviteMessage(`${deliveryNote} User ${response.email} has been auto-validated.`);
       setInviteEmail('');
       await loadManagedUsersData();
@@ -264,6 +266,27 @@ export default function AdminPage() {
     if (tab === 'users') {
       loadManagedUsersData();
     }
+  }, [tab, user?.id]);
+
+  useEffect(() => {
+    if (tab !== 'users') return undefined;
+    if (!user || user.user_metadata?.role !== 'admin') return undefined;
+
+    const intervalId = window.setInterval(() => {
+      loadManagedUsersData();
+    }, 10000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadManagedUsersData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [tab, user?.id]);
 
   useEffect(() => {
@@ -578,18 +601,30 @@ export default function AdminPage() {
     { key: 'agent', label: 'Admin Agent Chat', icon: Bot },
   ];
 
+  const getManagedUserStatus = (managedUser) => {
+    if (managedUser.blocked) return 'blocked';
+    if (managedUser.validated) return 'validated';
+    return 'pending';
+  };
+
   const userStats = useMemo(() => ({
     total: managedUsers.length,
-    validated: managedUsers.filter((managedUser) => managedUser.validated && !managedUser.blocked).length,
+    validated: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'validated').length,
+    pending: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'pending').length,
     blocked: managedUsers.filter((managedUser) => managedUser.blocked).length,
   }), [managedUsers]);
 
   const filteredUsers = managedUsers.filter((managedUser) => {
-    const matchesSearch = (managedUser.email || '').toLowerCase().includes(userSearch.toLowerCase());
+    const status = getManagedUserStatus(managedUser);
+    const query = userSearch.toLowerCase().trim();
+    const matchesSearch = query === ''
+      || (managedUser.email || '').toLowerCase().includes(query)
+      || (managedUser.username || '').toLowerCase().includes(query)
+      || (managedUser.phone_number || '').toLowerCase().includes(query);
     if (!matchesSearch) return false;
-    if (userFilter === 'validated') return managedUser.validated && !managedUser.blocked;
-    if (userFilter === 'pending') return !managedUser.validated && !managedUser.blocked;
-    if (userFilter === 'blocked') return managedUser.blocked;
+    if (userFilter === 'validated') return status === 'validated';
+    if (userFilter === 'pending') return status === 'pending';
+    if (userFilter === 'blocked') return status === 'blocked';
     return true;
   });
 
@@ -850,10 +885,11 @@ export default function AdminPage() {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 shrink-0" style={{ marginBottom: '16px' }}>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0" style={{ marginBottom: '16px' }}>
                     {[
                       { l: 'Total', v: userStats.total, color: 'var(--color-primary-400)' },
                       { l: 'Validated', v: userStats.validated, color: '#10b981' },
+                      { l: 'Pending', v: userStats.pending, color: '#f59e0b' },
                       { l: 'Blocked', v: userStats.blocked, color: '#ef4444' },
                     ].map((s, i) => (
                       <motion.div key={i} className="rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '18px 30px' }}>
@@ -867,48 +903,66 @@ export default function AdminPage() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="sticky top-0 z-10" style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)', minHeight: '62px' }}>
-                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Email</th>
+                          <th className="text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px', paddingLeft: '28px', paddingRight: '16px' }}>User Info</th>
                           <th className="px-4 text-left text-base font-semibold hidden md:table-cell" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Role</th>
-                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Validated</th>
-                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Blocked</th>
+                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Status</th>
                           <th className="px-4 text-center text-base font-semibold w-40" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredUsers.map((managedUser) => (
+                        {filteredUsers.map((managedUser) => {
+                          const status = getManagedUserStatus(managedUser);
+                          const statusCfg = status === 'validated'
+                            ? { bg: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)', label: 'Validated' }
+                            : status === 'blocked'
+                              ? { bg: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', label: 'Blocked' }
+                              : { bg: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)', label: 'Pending' };
+                          return (
                           <tr key={managedUser.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border-color)', height: '76px' }}>
-                            <td className="px-4 py-4 align-middle">
-                              <div className="min-w-0">
-                                <div className="font-medium truncate max-w-[360px]" style={{ color: 'var(--text-primary)' }}>{managedUser.email}</div>
+                            <td className="py-4 align-middle" style={{ paddingLeft: '28px', paddingRight: '16px' }}>
+                              <div className="flex items-center gap-3 min-w-0" style={{ paddingLeft: '4px' }}>
+                                <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid var(--border-color)' }}>
+                                  {managedUser.profile_picture ? (
+                                    <img src={managedUser.profile_picture} alt="Profile" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <User size={14} style={{ color: 'var(--text-muted)' }} />
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="font-medium truncate max-w-[360px]" style={{ color: 'var(--text-primary)' }}>
+                                    {managedUser.username || 'No username'}
+                                  </div>
+                                  <div className="text-xs truncate max-w-[360px]" style={{ color: 'var(--text-muted)' }}>
+                                    {managedUser.email}
+                                  </div>
+                                  <div className="text-xs truncate max-w-[360px]" style={{ color: 'var(--text-muted)' }}>
+                                    {managedUser.phone_number || 'No phone'}
+                                  </div>
+                                </div>
                               </div>
                             </td>
                             <td className="px-4 py-4 hidden md:table-cell align-middle" style={{ color: 'var(--text-secondary)' }}>{managedUser.role}</td>
                             <td className="px-4 py-4 align-middle">
-                              <span className="inline-flex items-center py-1 rounded-full text-xs font-medium" style={{ background: managedUser.validated ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)', color: managedUser.validated ? '#10b981' : '#f59e0b', border: managedUser.validated ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(245,158,11,0.2)', paddingLeft: '14px', paddingRight: '14px' }}>
-                                {managedUser.validated ? 'Validated' : 'Pending'}
-                              </span>
-                            </td>
-                            <td className="px-4 py-4 align-middle">
-                              <span className="inline-flex items-center py-1 rounded-full text-xs font-medium" style={{ background: managedUser.blocked ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)', color: managedUser.blocked ? '#ef4444' : '#10b981', border: managedUser.blocked ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(16,185,129,0.2)', paddingLeft: '14px', paddingRight: '14px' }}>
-                                {managedUser.blocked ? 'Blocked' : 'Active'}
+                              <span className="inline-flex items-center py-1 rounded-full text-xs font-medium" style={{ background: statusCfg.bg, color: statusCfg.color, border: statusCfg.border, paddingLeft: '14px', paddingRight: '14px' }}>
+                                {statusCfg.label}
                               </span>
                             </td>
                             <td className="px-4 py-4 align-middle w-40">
                               <div className="grid grid-cols-3 justify-items-center items-center gap-2">
-                                {managedUser.blocked || !managedUser.validated ? (
+                                {status !== 'validated' ? (
                                   <button
-                                    onClick={() => (managedUser.blocked ? validateAgain(managedUser) : updateValidation(managedUser))}
+                                    onClick={() => (status === 'blocked' ? validateAgain(managedUser) : updateValidation(managedUser))}
                                     disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin'}
                                     className="p-2.5 rounded-lg hover:bg-success/10 transition-colors disabled:opacity-50"
                                     style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }}
-                                    title={managedUser.blocked ? 'Validate again' : 'Validate user'}
+                                    title={status === 'blocked' ? 'Validate again' : 'Validate user'}
                                   >
                                     <Check size={18} />
                                   </button>
                                 ) : (
                                   <span className="p-2.5 invisible"><Check size={18} /></span>
                                 )}
-                                {!managedUser.blocked ? (
+                                {status !== 'blocked' ? (
                                   <button
                                     onClick={() => updateBlock(managedUser)}
                                     disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin'}
@@ -933,14 +987,14 @@ export default function AdminPage() {
                               </div>
                             </td>
                           </tr>
-                        ))}
+                        )})}
                         {filteredUsers.length === 0 && (
                           <>
                             <tr>
-                              <td colSpan={5} className="px-4 py-3">&nbsp;</td>
+                              <td colSpan={4} className="px-4 py-3">&nbsp;</td>
                             </tr>
                             <tr>
-                              <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
+                              <td colSpan={4} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
                                 <p className="text-lg font-semibold">
                                   {loadingManagedUsers ? 'Loading users...' : 'No users found'}
                                 </p>

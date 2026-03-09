@@ -26,7 +26,10 @@ export default function LoginPage() {
         const role = data?.user?.user_metadata?.role;
         navigate(role === 'admin' ? '/admin' : '/');
       } else {
-        await signUp(email, password);
+        await signUp({
+          email,
+          password,
+        });
         setEmailSent(true);
       }
     } catch (err) {
@@ -224,7 +227,10 @@ export default function LoginPage() {
               <p className="text-center text-sm" style={{ color: 'var(--text-secondary)', marginTop: '22px' }}>
                 {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
                 <button
-                  onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); }}
+                  onClick={() => {
+                    setMode(mode === 'signin' ? 'signup' : 'signin');
+                    setError('');
+                  }}
                   className="font-semibold gradient-text hover:opacity-80 transition-opacity"
                 >
                   {mode === 'signin' ? 'Sign Up' : 'Sign In'}

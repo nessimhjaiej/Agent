@@ -22,7 +22,10 @@ export default function AuthModal({ isOpen, onClose }) {
         await signIn(email, password);
         onClose();
       } else {
-        await signUp(email, password);
+        await signUp({
+          email,
+          password,
+        });
         setEmailSent(true);
       }
     } catch (err) {
