@@ -10,6 +10,8 @@ import {
   Pencil,
   Check,
   X,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -28,6 +30,7 @@ export default function ChatPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editingText, setEditingText] = useState('');
+  const [expandedSources, setExpandedSources] = useState({});
   const [showAuthModal, setShowAuthModal] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -79,6 +82,7 @@ export default function ChatPage() {
       const sources = Array.isArray(payload.citations)
         ? [...new Set(payload.citations.map((item) => item.document_name).filter(Boolean))]
         : [];
+      const citations = Array.isArray(payload.citations) ? payload.citations : [];
 
       const aiResponse = {
         id: (Date.now() + 1).toString(),
@@ -86,6 +90,7 @@ export default function ChatPage() {
         content: payload.answer || 'No answer returned by generation service.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         sources,
+        citations,
       };
       setMessages((prev) => [...prev, aiResponse]);
     } catch (error) {
@@ -270,6 +275,10 @@ export default function ChatPage() {
   const handleStopRecording = () => {
     if (!isRecording) return;
     mediaRecorderRef.current?.stop();
+  };
+
+  const toggleSources = (messageId) => {
+    setExpandedSources((prev) => ({ ...prev, [messageId]: !prev[messageId] }));
   };
 
   const latestUserMessageId = [...messages].reverse().find((message) => message.role === 'user')?.id ?? null;
@@ -510,7 +519,20 @@ export default function ChatPage() {
                   )}
                   {msg.sources && (
                     <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-color)' }}>
-                      <p className="text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>Sources:</p>
+                      <div className="flex items-center justify-between gap-3 mb-1.5">
+                        <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Sources:</p>
+                        {msg.role === 'assistant' && Array.isArray(msg.citations) && msg.citations.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => toggleSources(msg.id)}
+                            className="inline-flex items-center gap-1 text-xs"
+                            style={{ color: 'var(--color-primary-400)' }}
+                          >
+                            {expandedSources[msg.id] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                            {expandedSources[msg.id] ? 'Hide chunks' : 'Show chunks'}
+                          </button>
+                        )}
+                      </div>
                       <div className="flex flex-wrap gap-1.5">
                         {msg.sources.map((src, i) => (
                           <span
@@ -526,6 +548,27 @@ export default function ChatPage() {
                           </span>
                         ))}
                       </div>
+                      {expandedSources[msg.id] && Array.isArray(msg.citations) && msg.citations.length > 0 && (
+                        <div className="mt-3 space-y-3">
+                          {msg.citations.map((citation) => (
+                            <div
+                              key={citation.chunk_id}
+                              className="rounded-xl p-3"
+                              style={{
+                                background: 'rgba(139,92,246,0.06)',
+                                border: '1px solid rgba(139,92,246,0.12)',
+                              }}
+                            >
+                              <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>
+                                {citation.document_name} · {citation.chunk_id}
+                              </p>
+                              <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                                {citation.chunk_text}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                   <p
