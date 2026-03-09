@@ -65,7 +65,17 @@ class GenerationOrchestrator:
                     model_name=model_name,
                     degraded=degraded,
                 )
-            except (GenerationProviderError, GenerationParseError, GenerationValidationError):
+            except GenerationValidationError:
+                try:
+                    return self._to_generation_result_with_fallback_citation(
+                        parsed=parsed,
+                        chunks=selected,
+                        model_name=model_name,
+                        degraded=True,
+                    )
+                except (GenerationParseError, GenerationValidationError):
+                    continue
+            except (GenerationProviderError, GenerationParseError):
                 continue
         return self._fallback_result()
 
@@ -173,6 +183,54 @@ class GenerationOrchestrator:
             raw_citation_ids=citation_ids,
             chunks_by_id=by_chunk_id,
         )
+
+        return GenerationResult(
+            status="degraded" if degraded else "ok",
+            answer=answer.strip(),
+            citations=citations,
+            used_chunk_ids=[item.chunk_id for item in citations],
+            model=model_name,
+        )
+
+    def _to_generation_result_with_fallback_citation(
+        self,
+        parsed: dict,
+        chunks: list[RetrievedChunk],
+        model_name: str,
+        degraded: bool,
+    ) -> GenerationResult:
+        answer = parsed.get("answer")
+        if not isinstance(answer, str) or not answer.strip():
+            raise GenerationParseError("Model output missing non-empty 'answer'")
+        if not chunks:
+            raise GenerationValidationError("No retrieved chunks available for fallback citation")
+
+        by_chunk_id = {chunk.chunk_id: chunk for chunk in chunks}
+        citations_raw = parsed.get("citations", [])
+        citation_ids: list[str] = []
+        if isinstance(citations_raw, list):
+            for item in citations_raw:
+                if not isinstance(item, dict):
+                    continue
+                raw_chunk_id = item.get("chunk_id")
+                if not isinstance(raw_chunk_id, str):
+                    continue
+                chunk_id = raw_chunk_id.strip()
+                if chunk_id and chunk_id in by_chunk_id and chunk_id not in citation_ids:
+                    citation_ids.append(chunk_id)
+
+        if not citation_ids:
+            citation_ids.append(chunks[0].chunk_id)
+
+        citations = [
+            Citation(
+                chunk_id=chunk_id,
+                document_id=by_chunk_id[chunk_id].document_id,
+                document_name=by_chunk_id[chunk_id].document_name,
+                chunk_text=by_chunk_id[chunk_id].chunk_text,
+            )
+            for chunk_id in citation_ids
+        ]
 
         return GenerationResult(
             status="degraded" if degraded else "ok",
