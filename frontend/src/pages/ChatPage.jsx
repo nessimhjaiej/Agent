@@ -11,13 +11,7 @@ import { useTheme } from '../context/ThemeContext';
 import AuthModal from '../components/AuthModal';
 import TypingIndicator from '../components/TypingIndicator';
 import AnimatedPage from '../components/AnimatedPage';
-
-const MOCK_RESPONSES = [
-  "Based on Article 12 of Regulation (EU) 2016/679 (GDPR), the data controller shall take appropriate measures to provide information relating to processing in a concise, transparent, intelligible and easily accessible form, using clear and plain language.",
-  "According to the French Labor Code (Code du travail), Article L1232-1, an employer who intends to dismiss an employee must summon the employee to a preliminary interview before any decision is made.",
-  "Under the ICC Rules of Arbitration (2021), Article 6, the Request for Arbitration shall contain specific information including the nature and circumstances of the dispute, the relief sought, and relevant agreements.",
-  "The Sarbanes-Oxley Act, Section 302, requires the CEO and CFO to certify the accuracy of financial statements filed with the SEC, including that they fairly present the financial condition of the company.",
-];
+import { askGeneration } from '../config/api';
 
 export default function ChatPage() {
   const { user } = useAuth();
@@ -41,27 +35,53 @@ export default function ChatPage() {
     if (!input.trim()) return;
     if (!user) { setShowAuthModal(true); return; }
 
+    const queryText = input.trim();
     const userMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: input,
+      content: queryText,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
+    try {
+      const chatHistory = messages
+        .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
+        .map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        }));
 
-    setTimeout(() => {
+      const response = await askGeneration({
+        query: queryText,
+        chatHistory,
+      });
+
+      const sources = Array.isArray(response?.citations)
+        ? [...new Set(response.citations.map((citation) => citation.document_name).filter(Boolean))]
+        : [];
+
       const aiResponse = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: MOCK_RESPONSES[Math.floor(Math.random() * MOCK_RESPONSES.length)],
+        content: response?.answer || 'No answer returned by generation service.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        sources: ['Article 12, GDPR', 'Regulation (EU) 2016/679'],
+        sources,
       };
       setMessages((prev) => [...prev, aiResponse]);
+    } catch (error) {
+      const aiError = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `Generation request failed: ${error.message}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sources: [],
+      };
+      setMessages((prev) => [...prev, aiError]);
+    } finally {
       setIsTyping(false);
-    }, 1500 + Math.random() * 1500);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -70,13 +90,13 @@ export default function ChatPage() {
 
   return (
     <AnimatedPage className="h-full w-full flex justify-center">
-      <div className="h-full w-full max-w-4xl flex flex-col px-5 md:px-8 relative md:left-20 lg:left-32 xl:left-40 mt-12 md:mt-16" style={{ minHeight: 0 }}>
+      <div className="h-full w-full max-w-5xl mx-auto flex flex-col px-5 md:px-8 mt-12 md:mt-16" style={{ minHeight: 0 }}>
       {/* Messages */}
       <div className="flex-1 w-full" style={{ overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth', minHeight: 0, scrollbarGutter: 'stable', paddingTop: '32px', paddingBottom: '32px' }}>
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center max-w-3xl mx-auto w-full">
+          <div className="h-full flex flex-col items-center justify-center text-center max-w-3xl mx-auto w-full relative md:left-16 lg:left-24 xl:left-32">
             {/* Animated icon */}
-            <div className="relative mb-10">
+            <div className="relative" style={{ marginBottom: '40px' }}>
               <motion.div
                 className="w-24 h-24 rounded-2xl flex items-center justify-center"
                 style={{
@@ -111,14 +131,16 @@ export default function ChatPage() {
               />
             </div>
 
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold font-display mb-4" style={{ color: 'var(--text-primary)' }}>
-              Legal Intelligence at Your{' '}
-              <span className="gradient-text-animated">Fingertips</span>
-            </h2>
-            <p className="text-base md:text-lg max-w-lg mb-12 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              Ask any question about legal regulations, compliance, or regulatory frameworks.
-              Our AI will retrieve and analyze relevant sources.
-            </p>
+            <div className="max-w-3xl mx-auto" style={{ marginBottom: '32px' }}>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold font-display" style={{ color: 'var(--text-primary)', marginBottom: '12px' }}>
+                Legal Intelligence at Your{' '}
+                <span className="gradient-text-animated">Fingertips</span>
+              </h2>
+              <p className="text-base md:text-lg leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                Ask any question about legal regulations, compliance, or regulatory frameworks.
+                Our AI will retrieve and analyze relevant sources.
+              </p>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl mb-8" style={{ marginTop: '32px' }}>
               {[
                 'What are the key GDPR requirements for data controllers?',
@@ -151,7 +173,7 @@ export default function ChatPage() {
             </div>
 
             {/* Input Area - Centered in Welcome */}
-            <div className="w-full max-w-2xl" style={{ marginTop: '32px' }}>
+            <div className="w-full max-w-5xl" style={{ marginTop: '32px', paddingLeft: '44px', paddingRight: '44px' }}>
               <div
                 className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow"
                 style={{
@@ -191,12 +213,12 @@ export default function ChatPage() {
             </div>
           </div>
         ) : (
-          <div className="max-w-2xl mx-auto">
+          <div className="w-full max-w-3xl mx-auto relative md:left-16 lg:left-24 xl:left-32">
             {messages.map((msg) => (
               <motion.div
                 key={msg.id}
                 className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                style={{ marginBottom: '40px' }}
+                style={{ marginBottom: '40px', marginLeft: '20px', marginRight: '20px' }}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35 }}
@@ -274,7 +296,7 @@ export default function ChatPage() {
             ))}
 
             {isTyping && (
-              <motion.div className="flex gap-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.div className="flex gap-4" style={{ marginLeft: '20px', marginRight: '20px' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <div
                   className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
                   style={{
@@ -304,41 +326,43 @@ export default function ChatPage() {
       {/* Input Area - Footer for conversation */}
       {messages.length > 0 && (
       <div className="py-3 w-full" style={{ borderColor: 'var(--border-color)', borderTop: '1px solid var(--border-color)' }}>
-        <div className="max-w-2xl mx-auto">
-          <div
-            className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow"
-            style={{
-              background: 'var(--bg-secondary)',
-              border: '1px solid var(--border-color)',
-            }}
-          >
-            <textarea
-              ref={inputRef}
-              id="chat-input"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={user ? 'Ask about legal regulations, compliance...' : 'Sign in to start a conversation...'}
-              rows={3}
-              className="flex-1 bg-transparent outline-none text-[15px] resize-none max-h-56"
-              style={{ color: 'var(--text-primary)', padding: '16px 24px' }}
-            />
-            <motion.button
-              id="chat-send-btn"
-              onClick={handleSend}
-              disabled={!input.trim() || isTyping}
-              className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+        <div className="w-full flex flex-col items-center">
+          <div style={{ width: '100%', maxWidth: '80rem', paddingLeft: '44px', paddingRight: '44px' }}>
+            <div
+              className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow"
               style={{
-                padding: '16px 22px',
-                marginRight: '8px',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-color)',
               }}
-              whileHover={input.trim() && !isTyping ? { scale: 1.05 } : {}}
-              whileTap={{ scale: 0.95 }}
             >
-              <Send size={18} color={input.trim() && !isTyping ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
-            </motion.button>
+              <textarea
+                ref={inputRef}
+                id="chat-input"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={user ? 'Ask about legal regulations, compliance...' : 'Sign in to start a conversation...'}
+                rows={3}
+                className="flex-1 bg-transparent outline-none text-[15px] resize-none max-h-56"
+                style={{ color: 'var(--text-primary)', padding: '16px 24px' }}
+              />
+              <motion.button
+                id="chat-send-btn"
+                onClick={handleSend}
+                disabled={!input.trim() || isTyping}
+                className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+                style={{
+                  padding: '16px 22px',
+                  marginRight: '8px',
+                }}
+                whileHover={input.trim() && !isTyping ? { scale: 1.05 } : {}}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Send size={18} color={input.trim() && !isTyping ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
+              </motion.button>
+            </div>
           </div>
-          <p className="text-xs text-center mt-3" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-xs text-center mt-3" style={{ color: 'var(--text-muted)', maxWidth: '80rem' }}>
             AI responses are generated from indexed legal documents. Always verify with official sources.
           </p>
         </div>
