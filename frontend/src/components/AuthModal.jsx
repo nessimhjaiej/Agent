@@ -11,7 +11,7 @@ export default function AuthModal({ isOpen, onClose }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const { signIn, signUp, signInWithOAuth } = useAuth();
+  const { signIn, signUp } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,14 +29,6 @@ export default function AuthModal({ isOpen, onClose }) {
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleOAuth = async (provider) => {
-    try {
-      await signInWithOAuth(provider);
-    } catch (err) {
-      setError(err.message || 'OAuth error');
     }
   };
 
@@ -96,9 +88,9 @@ export default function AuthModal({ isOpen, onClose }) {
                   >
                     <CheckCircle className="w-8 h-8 text-success" />
                   </motion.div>
-                  <h3 className="text-xl font-semibold font-display mb-2" style={{ color: 'var(--text-primary)' }}>Check your email</h3>
+                  <h3 className="text-xl font-semibold font-display mb-2" style={{ color: 'var(--text-primary)' }}>Account created</h3>
                   <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-                    We sent a verification link to <strong>{email}</strong>. Please verify to complete registration.
+                    Your signup request for <strong>{email}</strong> is waiting for admin validation.
                   </p>
                   <button onClick={() => { resetForm(); setMode('signin'); }} className="text-sm font-medium gradient-text hover:opacity-80 transition-opacity">
                     Back to Sign In
@@ -114,39 +106,6 @@ export default function AuthModal({ isOpen, onClose }) {
                     <p className="text-sm mt-3" style={{ color: 'var(--text-secondary)' }}>
                       {mode === 'signin' ? 'Sign in to continue your conversation' : 'Sign up to start querying legal content'}
                     </p>
-                  </div>
-
-                  {/* OAuth */}
-                  <div className="flex gap-3" style={{ marginBottom: '24px' }}>
-                    {[
-                      { provider: 'google', label: 'Google', icon: (
-                        <svg className="w-5 h-5" viewBox="0 0 24 24">
-                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                        </svg>
-                      )},
-                    ].map(({ provider, label, icon }) => (
-                      <motion.button
-                        key={provider}
-                        onClick={() => handleOAuth(provider)}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
-                        style={{ border: '1px solid var(--border-color)', color: 'var(--text-primary)', background: 'var(--bg-tertiary)', minHeight: '52px', paddingLeft: '18px', paddingRight: '18px', paddingTop: '14px', paddingBottom: '14px' }}
-                        whileHover={{ borderColor: 'rgba(139,92,246,0.3)', boxShadow: '0 0 15px rgba(139,92,246,0.1)' }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {icon}
-                        {label}
-                      </motion.button>
-                    ))}
-                  </div>
-
-                  {/* Divider */}
-                  <div className="flex items-center gap-3" style={{ marginBottom: '24px' }}>
-                    <div className="flex-1 h-px" style={{ background: 'var(--border-color)' }} />
-                    <span className="text-xs font-medium tracking-wider" style={{ color: 'var(--text-muted)' }}>OR</span>
-                    <div className="flex-1 h-px" style={{ background: 'var(--border-color)' }} />
                   </div>
 
                   {/* Form */}

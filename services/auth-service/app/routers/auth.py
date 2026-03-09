@@ -1,8 +1,4 @@
-"""Auth router — signup, login, password reset, user info.
-
-All authentication is delegated to Supabase built-in Auth.
-Signup sends a verification email automatically.
-"""
+"""Auth router for signup/login/password and admin user management."""
 
 from fastapi import APIRouter, Header, HTTPException
 
@@ -18,6 +14,12 @@ from app.exceptions import (
 )
 from app.models import AuthUser
 from app.schemas import (
+    AdminBlockRequest,
+    AdminInviteRequest,
+    AdminInviteResponse,
+    AdminUserResponse,
+    AdminUsersResponse,
+    AdminValidationRequest,
     LoginRequest,
     MessageResponse,
     PasswordResetRequest,
@@ -36,7 +38,6 @@ def _get_service() -> AuthService:
 
 
 def _extract_token(authorization: str | None) -> str:
-    """Extract JWT from 'Bearer <token>' header."""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
             status_code=401, detail="Missing or invalid Authorization header"
@@ -45,7 +46,6 @@ def _extract_token(authorization: str | None) -> str:
 
 
 def _get_current_user(authorization: str | None) -> AuthUser:
-    """Dependency: extract and verify JWT, return AuthUser."""
     token = _extract_token(authorization)
     service = _get_service()
     try:
@@ -54,20 +54,8 @@ def _get_current_user(authorization: str | None) -> AuthUser:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
-# ── Public endpoints ──────────────────────────────────────────────────
-
-
 @router.post("/signup", response_model=SessionResponse)
 def signup(payload: SignupRequest) -> SessionResponse:
-    """Register a new user.
-
-    Supabase will send a **verification email** automatically.
-    The user must confirm their email before they can log in.
-
-    - **email**: Valid email address
-    - **password**: Min 6 characters
-    - **role**: ``user`` (default) or ``admin``
-    """
     service = _get_service()
     try:
         session = service.signup(payload.email, payload.password, payload.role)
@@ -97,11 +85,6 @@ def signup(payload: SignupRequest) -> SessionResponse:
 
 @router.post("/login", response_model=SessionResponse)
 def login(payload: LoginRequest) -> SessionResponse:
-    """Login with email and password.
-
-    Returns access and refresh tokens.
-    Only works after the user has **confirmed their email**.
-    """
     service = _get_service()
     try:
         session = service.login(payload.email, payload.password)
@@ -109,6 +92,8 @@ def login(payload: LoginRequest) -> SessionResponse:
         raise HTTPException(status_code=429, detail=str(exc))
     except InvalidCredentialsException as exc:
         raise HTTPException(status_code=401, detail=str(exc))
+    except UnauthorizedException as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
 
     return SessionResponse(
         access_token=session.access_token,
@@ -127,10 +112,6 @@ def login(payload: LoginRequest) -> SessionResponse:
 
 @router.post("/password-reset", response_model=MessageResponse)
 def request_password_reset(payload: PasswordResetRequest) -> MessageResponse:
-    """Request a password reset email.
-
-    Supabase will send an email with a reset link.
-    """
     service = _get_service()
     try:
         service.request_password_reset(payload.email)
@@ -148,10 +129,6 @@ def update_password(
     payload: PasswordUpdateRequest,
     authorization: str | None = Header(default=None),
 ) -> MessageResponse:
-    """Update password using a valid access token.
-
-    Use the token from the reset email link or an active session.
-    """
     token = _extract_token(authorization)
     service = _get_service()
     try:
@@ -162,14 +139,9 @@ def update_password(
     return MessageResponse(success=True, message="Password updated successfully.")
 
 
-# ── Protected endpoints ───────────────────────────────────────────────
-
-
 @router.get("/me", response_model=UserResponse)
 def me(authorization: str | None = Header(default=None)) -> UserResponse:
-    """Get current authenticated user info."""
     user = _get_current_user(authorization)
-
     return UserResponse(
         id=user.id,
         email=user.email,
@@ -181,8 +153,92 @@ def me(authorization: str | None = Header(default=None)) -> UserResponse:
 
 @router.post("/logout", response_model=MessageResponse)
 def logout(authorization: str | None = Header(default=None)) -> MessageResponse:
-    """Sign out the current user."""
-    _extract_token(authorization)  # validate header format
+    _extract_token(authorization)
     service = _get_service()
     service.logout()
     return MessageResponse(success=True, message="Logged out successfully.")
+
+
+@router.get("/admin/users", response_model=AdminUsersResponse)
+def list_users(authorization: str | None = Header(default=None)) -> AdminUsersResponse:
+    token = _extract_token(authorization)
+    service = _get_service()
+    try:
+        users = service.list_users(token)
+    except UnauthorizedException as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+    except AuthServiceException as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    return AdminUsersResponse(users=[AdminUserResponse(**user) for user in users])
+
+
+@router.post("/admin/invite", response_model=AdminInviteResponse)
+def invite_user(
+    payload: AdminInviteRequest,
+    authorization: str | None = Header(default=None),
+) -> AdminInviteResponse:
+    token = _extract_token(authorization)
+    service = _get_service()
+    try:
+        result = service.invite_user(token, payload.email, payload.role)
+    except UnauthorizedException as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+    except UserAlreadyExistsException as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except InvalidEmailException as exc:
+        raise HTTPException(status_code=400, detail=f"Email error: {exc}")
+    except AuthServiceException as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    return AdminInviteResponse(**result)
+
+
+@router.post("/admin/users/{user_id}/validate", response_model=AdminUserResponse)
+def set_validation_status(
+    user_id: str,
+    payload: AdminValidationRequest,
+    authorization: str | None = Header(default=None),
+) -> AdminUserResponse:
+    token = _extract_token(authorization)
+    service = _get_service()
+    try:
+        updated = service.set_user_validation(token, user_id, payload.validated)
+    except UnauthorizedException as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+    except AuthServiceException as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    return AdminUserResponse(**updated)
+
+
+@router.post("/admin/users/{user_id}/block", response_model=AdminUserResponse)
+def set_block_status(
+    user_id: str,
+    payload: AdminBlockRequest,
+    authorization: str | None = Header(default=None),
+) -> AdminUserResponse:
+    token = _extract_token(authorization)
+    service = _get_service()
+    try:
+        updated = service.set_user_block(token, user_id, payload.blocked)
+    except UnauthorizedException as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+    except AuthServiceException as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    return AdminUserResponse(**updated)
+
+
+@router.delete("/admin/users/{user_id}", response_model=MessageResponse)
+def delete_user(
+    user_id: str,
+    authorization: str | None = Header(default=None),
+) -> MessageResponse:
+    token = _extract_token(authorization)
+    service = _get_service()
+    try:
+        service.delete_user(token, user_id)
+    except UnauthorizedException as exc:
+        raise HTTPException(status_code=403, detail=str(exc))
+    except AuthServiceException as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    return MessageResponse(success=True, message="User deleted successfully.")

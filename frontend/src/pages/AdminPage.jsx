@@ -18,7 +18,16 @@ import AnimatedPage from '../components/AnimatedPage';
 import TypingIndicator from '../components/TypingIndicator';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { askGeneration, indexDocument, removeDocumentChunks } from '../config/api';
+import {
+  askGeneration,
+  deleteManagedUser,
+  indexDocument,
+  inviteUser,
+  listManagedUsers,
+  removeDocumentChunks,
+  setUserBlock,
+  setUserValidation,
+} from '../config/api';
 
 const DOCS_BUCKET = import.meta.env.VITE_SUPABASE_DOCS_BUCKET || 'documents';
 const DOCS_TABLE = import.meta.env.VITE_SUPABASE_DOCS_TABLE || 'documents';
@@ -68,7 +77,7 @@ function StatusBadge({ status }) {
 
 export default function AdminPage() {
   const { theme } = useTheme();
-  const { supabase, user } = useAuth();
+  const { supabase, user, getAccessToken } = useAuth();
   const fileInputRef = useRef(null);
   const [tab, setTab] = useState('documents');
   const [docs, setDocs] = useState([]);
@@ -95,6 +104,14 @@ export default function AdminPage() {
   const [previewUrl, setPreviewUrl] = useState('');
   const [previewName, setPreviewName] = useState('');
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [managedUsers, setManagedUsers] = useState([]);
+  const [loadingManagedUsers, setLoadingManagedUsers] = useState(false);
+  const [usersError, setUsersError] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviting, setInviting] = useState(false);
+  const [inviteMessage, setInviteMessage] = useState('');
+  const [busyUserIds, setBusyUserIds] = useState(new Set());
+  const [userSearch, setUserSearch] = useState('');
   const dragDepthRef = useRef(0);
   const endRef = useRef(null);
 
@@ -131,9 +148,106 @@ export default function AdminPage() {
     }
   };
 
+  const markUserBusy = (userId, value) => {
+    setBusyUserIds((prev) => {
+      const next = new Set(prev);
+      if (value) next.add(userId);
+      else next.delete(userId);
+      return next;
+    });
+  };
+
+  const loadManagedUsersData = async () => {
+    if (!user || user.user_metadata?.role !== 'admin') return;
+    setLoadingManagedUsers(true);
+    setUsersError('');
+    try {
+      const token = await getAccessToken();
+      const response = await listManagedUsers(token);
+      setManagedUsers(response.users || []);
+    } catch (error) {
+      setUsersError(error.message || 'Failed to load users');
+    } finally {
+      setLoadingManagedUsers(false);
+    }
+  };
+
+  const handleInvite = async () => {
+    if (!inviteEmail.trim()) return;
+    setInviting(true);
+    setInviteMessage('');
+    setUsersError('');
+    try {
+      const token = await getAccessToken();
+      const response = await inviteUser(token, {
+        email: inviteEmail.trim(),
+        role: 'user',
+      });
+      const deliveryNote = response.email_sent
+        ? 'Invitation email sent.'
+        : `Email delivery is not configured. Temporary password: ${response.generated_password}`;
+      setInviteMessage(`${deliveryNote} User ${response.email} has been auto-validated.`);
+      setInviteEmail('');
+      await loadManagedUsersData();
+    } catch (error) {
+      setUsersError(error.message || 'Failed to invite user');
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const updateValidation = async (targetUser) => {
+    markUserBusy(targetUser.id, true);
+    setUsersError('');
+    try {
+      const token = await getAccessToken();
+      await setUserValidation(token, targetUser.id, !targetUser.validated);
+      await loadManagedUsersData();
+    } catch (error) {
+      setUsersError(error.message || 'Failed to update validation');
+    } finally {
+      markUserBusy(targetUser.id, false);
+    }
+  };
+
+  const updateBlock = async (targetUser) => {
+    markUserBusy(targetUser.id, true);
+    setUsersError('');
+    try {
+      const token = await getAccessToken();
+      await setUserBlock(token, targetUser.id, !targetUser.blocked);
+      await loadManagedUsersData();
+    } catch (error) {
+      setUsersError(error.message || 'Failed to update block status');
+    } finally {
+      markUserBusy(targetUser.id, false);
+    }
+  };
+
+  const deleteUser = async (targetUser) => {
+    if (!window.confirm(`Delete user ${targetUser.email}? This cannot be undone.`)) return;
+    markUserBusy(targetUser.id, true);
+    setUsersError('');
+    try {
+      const token = await getAccessToken();
+      await deleteManagedUser(token, targetUser.id);
+      await loadManagedUsersData();
+    } catch (error) {
+      setUsersError(error.message || 'Failed to delete user');
+    } finally {
+      markUserBusy(targetUser.id, false);
+    }
+  };
+
   useEffect(() => {
     loadDocuments();
   }, [supabase, user]);
+
+  useEffect(() => {
+    if (tab === 'users') {
+      loadManagedUsersData();
+    }
+  }, [tab, user?.id]);
 
   useEffect(() => {
     if (!supabase || !user?.id) return undefined;
@@ -443,8 +557,13 @@ export default function AdminPage() {
 
   const tabs = [
     { key: 'documents', label: 'Document Management', icon: FileText },
+    { key: 'users', label: 'User Management', icon: User },
     { key: 'agent', label: 'Admin Agent Chat', icon: Bot },
   ];
+
+  const filteredUsers = managedUsers.filter((managedUser) =>
+    (managedUser.email || '').toLowerCase().includes(userSearch.toLowerCase())
+  );
 
   return (
     <AnimatedPage className="h-full flex flex-col">
@@ -474,7 +593,7 @@ export default function AdminPage() {
 
         <div className="flex gap-0 shrink-0 max-w-[1400px] mx-auto px-5 md:px-8" style={{ marginBottom: '24px' }}>
           {tabs.map(({ key, label, icon: Icon }) => (
-            <button key={key} onClick={() => setTab(key)} className="flex items-center gap-2 px-6 text-sm font-medium transition-all" style={{ background: tab === key ? 'linear-gradient(135deg, #7c3aed, #06b6d4)' : 'var(--bg-secondary)', border: tab === key ? 'none' : '1px solid var(--border-color)', color: tab === key ? 'white' : 'var(--text-secondary)', boxShadow: tab === key ? '0 0 20px rgba(139,92,246,0.3)' : 'none', borderRadius: key === 'documents' ? '12px 0 0 50px' : '0 12px 50px 0', padding: '16px 24px', minHeight: '56px', display: 'flex', alignItems: 'center' }}>
+            <button key={key} onClick={() => setTab(key)} className="flex items-center gap-2 px-6 text-sm font-medium transition-all" style={{ background: tab === key ? 'linear-gradient(135deg, #7c3aed, #06b6d4)' : 'var(--bg-secondary)', border: tab === key ? 'none' : '1px solid var(--border-color)', color: tab === key ? 'white' : 'var(--text-secondary)', boxShadow: tab === key ? '0 0 20px rgba(139,92,246,0.3)' : 'none', borderRadius: key === 'documents' ? '12px 0 0 50px' : key === 'agent' ? '0 12px 50px 0' : '0', padding: '16px 24px', minHeight: '56px', display: 'flex', alignItems: 'center' }}>
               <Icon size={16} /> {label}
             </button>
           ))}
@@ -637,6 +756,111 @@ export default function AdminPage() {
                               </td>
                             </tr>
                           </>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </motion.div>
+            ) : tab === 'users' ? (
+              <motion.div key="users" className="h-full w-full flex justify-center relative" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <div className="h-full w-full max-w-[1200px] flex flex-col px-5 md:px-8 mt-8 md:mt-12 overflow-auto" style={{ minHeight: 0 }}>
+                  <div className="flex flex-col md:flex-row gap-3 md:items-center" style={{ marginBottom: '16px' }}>
+                    <div className="flex-1 flex items-center gap-2 rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minHeight: '48px', paddingLeft: '20px', paddingRight: '20px' }}>
+                      <Search size={16} style={{ color: 'var(--text-muted)' }} />
+                      <input
+                        type="text"
+                        placeholder="Search users by email..."
+                        value={userSearch}
+                        onChange={(event) => setUserSearch(event.target.value)}
+                        className="flex-1 bg-transparent outline-none text-sm"
+                        style={{ color: 'var(--text-primary)' }}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="email"
+                        placeholder="Invite user email"
+                        value={inviteEmail}
+                        onChange={(event) => setInviteEmail(event.target.value)}
+                        className="rounded-xl text-sm outline-none"
+                        style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', minWidth: '260px', paddingLeft: '16px', paddingRight: '16px' }}
+                      />
+                      <motion.button
+                        onClick={handleInvite}
+                        disabled={inviting || !inviteEmail.trim()}
+                        className="flex items-center gap-2 px-6 rounded-xl text-sm font-medium text-white disabled:opacity-50"
+                        style={{ background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', minHeight: '48px' }}
+                      >
+                        {inviting ? 'Inviting...' : 'Invite User'}
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {(usersError || inviteMessage) && (
+                    <div className="rounded-xl px-4 py-3 text-sm" style={{ background: usersError ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.08)', color: usersError ? '#ef4444' : '#10b981', border: usersError ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(16,185,129,0.2)', marginBottom: '12px' }}>
+                      {usersError || inviteMessage}
+                    </div>
+                  )}
+
+                  <div className="overflow-auto rounded-xl" style={{ border: '1px solid var(--border-color)', marginTop: '8px', maxHeight: '62vh' }}>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="sticky top-0 z-10" style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
+                          <th className="px-4 py-3 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)' }}>Email</th>
+                          <th className="px-4 py-3 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)' }}>Role</th>
+                          <th className="px-4 py-3 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)' }}>Validated</th>
+                          <th className="px-4 py-3 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)' }}>Blocked</th>
+                          <th className="px-4 py-3 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredUsers.map((managedUser) => (
+                          <tr key={managedUser.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                            <td className="px-4 py-3" style={{ color: 'var(--text-primary)' }}>{managedUser.email}</td>
+                            <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{managedUser.role}</td>
+                            <td className="px-4 py-3" style={{ color: managedUser.validated ? '#10b981' : '#f59e0b' }}>
+                              {managedUser.validated ? 'Validated' : 'Pending'}
+                            </td>
+                            <td className="px-4 py-3" style={{ color: managedUser.blocked ? '#ef4444' : '#10b981' }}>
+                              {managedUser.blocked ? 'Blocked' : 'Active'}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => updateValidation(managedUser)}
+                                  disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin'}
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
+                                  style={{ background: managedUser.validated ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)', color: managedUser.validated ? '#f59e0b' : '#10b981', border: managedUser.validated ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(16,185,129,0.25)' }}
+                                >
+                                  {managedUser.validated ? 'Set Pending' : 'Validate'}
+                                </button>
+                                <button
+                                  onClick={() => updateBlock(managedUser)}
+                                  disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin'}
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
+                                  style={{ background: managedUser.blocked ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: managedUser.blocked ? '#10b981' : '#ef4444', border: managedUser.blocked ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)' }}
+                                >
+                                  {managedUser.blocked ? 'Unblock' : 'Block'}
+                                </button>
+                                <button
+                                  onClick={() => deleteUser(managedUser)}
+                                  disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin' || managedUser.id === user?.id}
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
+                                  style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {filteredUsers.length === 0 && (
+                          <tr>
+                            <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
+                              {loadingManagedUsers ? 'Loading users...' : 'No users found'}
+                            </td>
+                          </tr>
                         )}
                       </tbody>
                     </table>

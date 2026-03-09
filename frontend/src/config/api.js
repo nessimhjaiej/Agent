@@ -52,6 +52,38 @@ async function postJson(url, body) {
   return parseResponse(response);
 }
 
+async function postJsonWithAuth(url, body, accessToken) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(body),
+  });
+  return parseResponse(response);
+}
+
+async function getJsonWithAuth(url, accessToken) {
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  return parseResponse(response);
+}
+
+async function deleteWithAuth(url, accessToken) {
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  return parseResponse(response);
+}
+
 export async function askGeneration({ query, chatHistory = [] }) {
   return postJson(`${API.generation}/generation/ask`, {
     query,
@@ -69,6 +101,34 @@ export async function indexDocument(payload) {
 
 export async function removeDocumentChunks(payload) {
   return postJson(`${API.ingestion}/ingestion/remove-document-chunks`, payload);
+}
+
+export async function listManagedUsers(accessToken) {
+  return getJsonWithAuth(`${API.auth}/auth/admin/users`, accessToken);
+}
+
+export async function inviteUser(accessToken, payload) {
+  return postJsonWithAuth(`${API.auth}/auth/admin/invite`, payload, accessToken);
+}
+
+export async function setUserValidation(accessToken, userId, validated) {
+  return postJsonWithAuth(
+    `${API.auth}/auth/admin/users/${userId}/validate`,
+    { validated },
+    accessToken
+  );
+}
+
+export async function setUserBlock(accessToken, userId, blocked) {
+  return postJsonWithAuth(
+    `${API.auth}/auth/admin/users/${userId}/block`,
+    { blocked },
+    accessToken
+  );
+}
+
+export async function deleteManagedUser(accessToken, userId) {
+  return deleteWithAuth(`${API.auth}/auth/admin/users/${userId}`, accessToken);
 }
 
 export default API;
