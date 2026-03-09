@@ -85,7 +85,7 @@ async function deleteWithAuth(url, accessToken) {
 }
 
 export async function askGeneration({ query, chatHistory = [] }) {
-  return postJson(`${API.generation}/generation/ask`, {
+  return postJson(`${API.generation}/ask`, {
     query,
     chat_history: chatHistory,
   });
@@ -104,16 +104,16 @@ export async function removeDocumentChunks(payload) {
 }
 
 export async function listManagedUsers(accessToken) {
-  return getJsonWithAuth(`${API.auth}/auth/admin/users`, accessToken);
+  return getJsonWithAuth(`${API.auth}/admin/users`, accessToken);
 }
 
 export async function inviteUser(accessToken, payload) {
-  return postJsonWithAuth(`${API.auth}/auth/admin/invite`, payload, accessToken);
+  return postJsonWithAuth(`${API.auth}/admin/invite`, payload, accessToken);
 }
 
 export async function setUserValidation(accessToken, userId, validated) {
   return postJsonWithAuth(
-    `${API.auth}/auth/admin/users/${userId}/validate`,
+    `${API.auth}/admin/users/${userId}/validate`,
     { validated },
     accessToken
   );
@@ -121,14 +121,14 @@ export async function setUserValidation(accessToken, userId, validated) {
 
 export async function setUserBlock(accessToken, userId, blocked) {
   return postJsonWithAuth(
-    `${API.auth}/auth/admin/users/${userId}/block`,
+    `${API.auth}/admin/users/${userId}/block`,
     { blocked },
     accessToken
   );
 }
 
 export async function deleteManagedUser(accessToken, userId) {
-  return deleteWithAuth(`${API.auth}/auth/admin/users/${userId}`, accessToken);
+  return deleteWithAuth(`${API.auth}/admin/users/${userId}`, accessToken);
 }
 
 export default API;

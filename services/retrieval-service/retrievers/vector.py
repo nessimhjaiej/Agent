@@ -48,12 +48,7 @@ class VectorRetriever(BaseRetriever):
 
             row_embedding_model = row.get("embedding_model")
             if self._enforce_embedding_model_match:
-                if not isinstance(row_embedding_model, str) or not row_embedding_model.strip():
-                    raise RetrievalValidationError(
-                        "Chunk embedding_model is missing; cannot verify query/chunk model consistency. "
-                        "Re-index chunks with embedding_model metadata."
-                    )
-                if row_embedding_model.strip() != self._embedding_model:
+                if isinstance(row_embedding_model, str) and row_embedding_model.strip() and row_embedding_model.strip() != self._embedding_model:
                     raise RetrievalValidationError(
                         "Embedding model mismatch between query and indexed chunk. "
                         f"query_model={self._embedding_model}, chunk_model={row_embedding_model.strip()}"

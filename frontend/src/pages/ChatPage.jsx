@@ -5,13 +5,15 @@ import {
   Bot,
   User,
   Sparkles,
+  Mic,
+  Square,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import AuthModal from '../components/AuthModal';
 import TypingIndicator from '../components/TypingIndicator';
 import AnimatedPage from '../components/AnimatedPage';
-import { askGeneration } from '../config/api';
+import API from '../config/api';
 
 export default function ChatPage() {
   const { user } = useAuth();
@@ -19,9 +21,14 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -31,54 +38,72 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages, isTyping]);
 
+  useEffect(() => () => {
+    mediaRecorderRef.current?.stop?.();
+    mediaStreamRef.current?.getTracks?.().forEach((track) => track.stop());
+  }, []);
+
   const handleSend = async () => {
     if (!input.trim()) return;
     if (!user) { setShowAuthModal(true); return; }
+    const query = input.trim();
 
-    const queryText = input.trim();
     const userMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: queryText,
+      content: query,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
+    const currentMessages = [...messages];
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
-    try {
-      const chatHistory = messages
-        .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
-        .map((msg) => ({
-          role: msg.role,
-          content: msg.content,
-        }));
 
-      const response = await askGeneration({
-        query: queryText,
-        chatHistory,
+    try {
+      const chatHistory = currentMessages.slice(-12).map((msg) => ({
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: msg.content,
+      }));
+
+      const response = await fetch(`${API.generation}/ask`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query,
+          mode: 'hybrid',
+          chat_history: chatHistory,
+        }),
       });
 
-      const sources = Array.isArray(response?.citations)
-        ? [...new Set(response.citations.map((citation) => citation.document_name).filter(Boolean))]
+      const payload = await response.json();
+      if (!response.ok) {
+        const detail = typeof payload?.detail === 'string' ? payload.detail : 'Request failed';
+        throw new Error(detail);
+      }
+
+      const sources = Array.isArray(payload.citations)
+        ? [...new Set(payload.citations.map((item) => item.document_name).filter(Boolean))]
         : [];
 
       const aiResponse = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response?.answer || 'No answer returned by generation service.',
+        content: payload.answer || 'No answer returned by generation service.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         sources,
       };
       setMessages((prev) => [...prev, aiResponse]);
     } catch (error) {
-      const aiError = {
+      const fallback = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `Generation request failed: ${error.message}`,
+        content: `Generation request failed: ${error?.message || 'unknown error'}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         sources: [],
       };
-      setMessages((prev) => [...prev, aiError]);
+      setMessages((prev) => [...prev, fallback]);
     } finally {
       setIsTyping(false);
     }
@@ -88,15 +113,123 @@ export default function ChatPage() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
+  const submitAudioForTranscription = async (file) => {
+    setIsTranscribing(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${API.generation}/transcribe`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        const detail = typeof payload?.detail === 'string' ? payload.detail : 'Transcription failed';
+        throw new Error(detail);
+      }
+
+      const transcript = typeof payload?.text === 'string' ? payload.text.trim() : '';
+      if (!transcript) {
+        throw new Error('No transcript returned');
+      }
+      setInput((prev) => (prev.trim() ? `${prev.trim()}\n${transcript}` : transcript));
+      inputRef.current?.focus();
+    } catch (error) {
+      const fallback = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `Transcription failed: ${error?.message || 'unknown error'}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sources: [],
+      };
+      setMessages((prev) => [...prev, fallback]);
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const resetRecorderState = () => {
+    mediaRecorderRef.current = null;
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
+    audioChunksRef.current = [];
+    setIsRecording(false);
+  };
+
+  const handleRecordAudio = async () => {
+    if (!user) { setShowAuthModal(true); return; }
+    if (isRecording || isTranscribing || isTyping) return;
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : '';
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+
+      mediaStreamRef.current = stream;
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+
+      recorder.addEventListener('dataavailable', (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      });
+
+      recorder.addEventListener('stop', async () => {
+        const recordedType = recorder.mimeType || 'audio/webm';
+        const extension = recordedType.includes('mp4') ? 'm4a' : 'webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: recordedType });
+        resetRecorderState();
+        if (audioBlob.size === 0) {
+          return;
+        }
+        await submitAudioForTranscription(
+          new File([audioBlob], `recording.${extension}`, { type: recordedType }),
+        );
+      });
+
+      recorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      const fallback = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `Microphone access failed: ${error?.message || 'unknown error'}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sources: [],
+      };
+      setMessages((prev) => [...prev, fallback]);
+      resetRecorderState();
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (!isRecording) return;
+    mediaRecorderRef.current?.stop();
+  };
+
+  const recordButtonTitle = isRecording ? 'Stop recording' : 'Record audio for transcription';
+  const recordButtonColor = isRecording
+    ? '#dc2626'
+    : (isTyping || isTranscribing ? (theme === 'dark' ? 'white' : 'black') : '#7c3aed');
+
   return (
     <AnimatedPage className="h-full w-full flex justify-center">
-      <div className="h-full w-full max-w-5xl mx-auto flex flex-col px-5 md:px-8 mt-12 md:mt-16" style={{ minHeight: 0 }}>
+      <div className="h-full w-full max-w-4xl flex flex-col px-5 md:px-8 relative md:left-20 lg:left-32 xl:left-40 mt-12 md:mt-16" style={{ minHeight: 0 }}>
       {/* Messages */}
       <div className="flex-1 w-full" style={{ overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth', minHeight: 0, scrollbarGutter: 'stable', paddingTop: '32px', paddingBottom: '32px' }}>
         {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center max-w-3xl mx-auto w-full relative md:left-16 lg:left-24 xl:left-32">
+          <div className="h-full flex flex-col items-center justify-center text-center max-w-3xl mx-auto w-full">
             {/* Animated icon */}
-            <div className="relative" style={{ marginBottom: '40px' }}>
+            <div className="relative mb-10">
               <motion.div
                 className="w-24 h-24 rounded-2xl flex items-center justify-center"
                 style={{
@@ -131,16 +264,14 @@ export default function ChatPage() {
               />
             </div>
 
-            <div className="max-w-3xl mx-auto" style={{ marginBottom: '32px' }}>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold font-display" style={{ color: 'var(--text-primary)', marginBottom: '12px' }}>
-                Legal Intelligence at Your{' '}
-                <span className="gradient-text-animated">Fingertips</span>
-              </h2>
-              <p className="text-base md:text-lg leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                Ask any question about legal regulations, compliance, or regulatory frameworks.
-                Our AI will retrieve and analyze relevant sources.
-              </p>
-            </div>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold font-display mb-4" style={{ color: 'var(--text-primary)' }}>
+              Legal Intelligence at Your{' '}
+              <span className="gradient-text-animated">Fingertips</span>
+            </h2>
+            <p className="text-base md:text-lg max-w-lg mb-12 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              Ask any question about legal regulations, compliance, or regulatory frameworks.
+              Our AI will retrieve and analyze relevant sources.
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl mb-8" style={{ marginTop: '32px' }}>
               {[
                 'What are the key GDPR requirements for data controllers?',
@@ -173,7 +304,7 @@ export default function ChatPage() {
             </div>
 
             {/* Input Area - Centered in Welcome */}
-            <div className="w-full max-w-5xl" style={{ marginTop: '32px', paddingLeft: '44px', paddingRight: '44px' }}>
+            <div className="w-full max-w-2xl" style={{ marginTop: '32px' }}>
               <div
                 className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow"
                 style={{
@@ -193,9 +324,27 @@ export default function ChatPage() {
                   style={{ color: 'var(--text-primary)', padding: '16px 24px' }}
                 />
                 <motion.button
+                  type="button"
+                  onClick={isRecording ? handleStopRecording : handleRecordAudio}
+                  disabled={isTyping || isTranscribing}
+                  className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+                  style={{
+                    padding: '16px 18px',
+                  }}
+                  whileHover={!isTyping && !isTranscribing ? { scale: 1.05 } : {}}
+                  whileTap={{ scale: 0.95 }}
+                  title={recordButtonTitle}
+                >
+                  {isRecording ? (
+                    <Square size={18} color={recordButtonColor} />
+                  ) : (
+                    <Mic size={18} color={recordButtonColor} />
+                  )}
+                </motion.button>
+                <motion.button
                   id="chat-send-btn"
                   onClick={handleSend}
-                  disabled={!input.trim() || isTyping}
+                  disabled={!input.trim() || isTyping || isTranscribing}
                   className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
                   style={{
                     padding: '16px 22px',
@@ -208,17 +357,21 @@ export default function ChatPage() {
                 </motion.button>
               </div>
               <p className="text-xs text-center mt-3" style={{ color: 'var(--text-muted)' }}>
-                AI responses are generated from indexed legal documents. Always verify with official sources.
+                {isTranscribing
+                  ? 'Transcribing audio with OpenAI...'
+                  : isRecording
+                    ? 'Recording audio... press the square button to stop.'
+                  : 'AI responses are generated from indexed legal documents. Always verify with official sources.'}
               </p>
             </div>
           </div>
         ) : (
-          <div className="w-full max-w-3xl mx-auto relative md:left-16 lg:left-24 xl:left-32">
+          <div className="max-w-2xl mx-auto">
             {messages.map((msg) => (
               <motion.div
                 key={msg.id}
                 className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                style={{ marginBottom: '40px', marginLeft: '20px', marginRight: '20px' }}
+                style={{ marginBottom: '40px' }}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35 }}
@@ -296,7 +449,7 @@ export default function ChatPage() {
             ))}
 
             {isTyping && (
-              <motion.div className="flex gap-4" style={{ marginLeft: '20px', marginRight: '20px' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.div className="flex gap-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <div
                   className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
                   style={{
@@ -326,44 +479,64 @@ export default function ChatPage() {
       {/* Input Area - Footer for conversation */}
       {messages.length > 0 && (
       <div className="py-3 w-full" style={{ borderColor: 'var(--border-color)', borderTop: '1px solid var(--border-color)' }}>
-        <div className="w-full flex flex-col items-center">
-          <div style={{ width: '100%', maxWidth: '80rem', paddingLeft: '44px', paddingRight: '44px' }}>
-            <div
-              className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow"
+        <div className="max-w-2xl mx-auto">
+          <div
+            className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow"
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+            }}
+          >
+            <textarea
+              ref={inputRef}
+              id="chat-input"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={user ? 'Ask about legal regulations, compliance...' : 'Sign in to start a conversation...'}
+              rows={3}
+              className="flex-1 bg-transparent outline-none text-[15px] resize-none max-h-56"
+              style={{ color: 'var(--text-primary)', padding: '16px 24px' }}
+            />
+            <motion.button
+              type="button"
+              onClick={isRecording ? handleStopRecording : handleRecordAudio}
+              disabled={isTyping || isTranscribing}
+              className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
               style={{
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border-color)',
+                padding: '16px 18px',
               }}
+              whileHover={!isTyping && !isTranscribing ? { scale: 1.05 } : {}}
+              whileTap={{ scale: 0.95 }}
+              title={recordButtonTitle}
             >
-              <textarea
-                ref={inputRef}
-                id="chat-input"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={user ? 'Ask about legal regulations, compliance...' : 'Sign in to start a conversation...'}
-                rows={3}
-                className="flex-1 bg-transparent outline-none text-[15px] resize-none max-h-56"
-                style={{ color: 'var(--text-primary)', padding: '16px 24px' }}
-              />
-              <motion.button
-                id="chat-send-btn"
-                onClick={handleSend}
-                disabled={!input.trim() || isTyping}
-                className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
-                style={{
-                  padding: '16px 22px',
-                  marginRight: '8px',
-                }}
-                whileHover={input.trim() && !isTyping ? { scale: 1.05 } : {}}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Send size={18} color={input.trim() && !isTyping ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
-              </motion.button>
-            </div>
+              {isRecording ? (
+                <Square size={18} color={recordButtonColor} />
+              ) : (
+                <Mic size={18} color={recordButtonColor} />
+              )}
+            </motion.button>
+            <motion.button
+              id="chat-send-btn"
+              onClick={handleSend}
+              disabled={!input.trim() || isTyping || isTranscribing}
+              className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+              style={{
+                padding: '16px 22px',
+                marginRight: '8px',
+              }}
+              whileHover={input.trim() && !isTyping ? { scale: 1.05 } : {}}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Send size={18} color={input.trim() && !isTyping ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
+            </motion.button>
           </div>
-          <p className="text-xs text-center mt-3" style={{ color: 'var(--text-muted)', maxWidth: '80rem' }}>
-            AI responses are generated from indexed legal documents. Always verify with official sources.
+          <p className="text-xs text-center mt-3" style={{ color: 'var(--text-muted)' }}>
+            {isTranscribing
+              ? 'Transcribing audio with OpenAI...'
+              : isRecording
+                ? 'Recording audio... press the square button to stop.'
+              : 'AI responses are generated from indexed legal documents. Always verify with official sources.'}
           </p>
         </div>
       </div>
