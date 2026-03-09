@@ -102,9 +102,9 @@ def test_orchestrator_falls_back_when_strict_citation_validation_fails() -> None
     result = orchestrator.generate(ctx)
 
     assert result.status == "degraded"
-    assert result.answer == "This is beyond my scope."
-    assert result.citations == []
-    assert result.used_chunk_ids == []
+    assert result.answer == "Concise answer."
+    assert result.used_chunk_ids == ["doc-1:0"]
+    assert result.citations[0].document_id == "doc-1"
 
 
 def test_orchestrator_uses_fallback_model_when_primary_provider_fails() -> None:
