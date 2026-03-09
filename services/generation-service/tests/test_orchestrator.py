@@ -134,3 +134,24 @@ def test_orchestrator_uses_fallback_model_when_primary_provider_fails() -> None:
     assert result.status == "degraded"
     assert result.answer == "Fallback answer."
     assert result.model == "gpt-4o-mini"
+
+
+def test_orchestrator_instructs_model_to_answer_in_user_language() -> None:
+    llm = _FakeLLMClient(
+        raw_response='{"answer":"Réponse concise.","citations":[{"chunk_id":"doc-1:0"}]}'
+    )
+    orchestrator = GenerationOrchestrator(
+        settings=Settings(openai_key="test-key", generation_model="gpt-4o"),
+        llm_client=llm,  # type: ignore[arg-type]
+        fallback_llm_client=llm,  # type: ignore[arg-type]
+    )
+    ctx = ChatContext(
+        query="Réponds-moi en français: quelles sont les obligations ?",
+        retrieved_chunks=[_chunk("doc-1:0", 0.9)],
+    )
+
+    result = orchestrator.generate(ctx)
+
+    assert result.answer == "Réponse concise."
+    assert "Answer in the same language as the user's latest query" in llm.calls[0]["user_prompt"]
+    assert "answer in the language requested by the user" in llm.calls[0]["system_prompt"].lower()

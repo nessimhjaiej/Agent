@@ -79,3 +79,10 @@ class AskResponse(ChatResponse):
     retrieval_mode: str
     fusion_type: str
     rerank_type: str
+
+
+class TranscriptionResponse(BaseModel):
+    status: str = Field(default="ok", pattern="^(ok)$")
+    text: str = Field(..., min_length=1)
+    model: str = Field(..., min_length=1)
+    filename: str = Field(..., min_length=1)

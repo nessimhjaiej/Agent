@@ -1,5 +1,13 @@
 import os
 from dataclasses import dataclass
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[3]
+load_dotenv(_PROJECT_ROOT / ".env", override=True)
+load_dotenv(_PROJECT_ROOT / ".env.local", override=True)
 
 
 def _parse_int(name: str, default: int) -> int:
@@ -40,6 +48,7 @@ class Settings:
     app_version: str = "0.1.0"
     openai_key: str = ""
     generation_model: str = "gpt-4o"
+    transcription_model: str = "gpt-4o-mini-transcribe"
     retrieval_base_url: str = "http://localhost:8003"
     retrieval_timeout_seconds: float = 20.0
     generation_http_max_retries: int = 2
@@ -65,6 +74,9 @@ class Settings:
             app_version=os.getenv("GENERATION_APP_VERSION", "0.1.0"),
             openai_key=os.getenv("OPENAI_KEY", ""),
             generation_model=os.getenv("GENERATION_MODEL", "gpt-4o"),
+            transcription_model=os.getenv(
+                "TRANSCRIPTION_MODEL", "gpt-4o-mini-transcribe"
+            ),
             retrieval_base_url=os.getenv("RETRIEVAL_BASE_URL", "http://localhost:8003"),
             retrieval_timeout_seconds=_parse_float("RETRIEVAL_TIMEOUT_SECONDS", 20.0),
             generation_http_max_retries=_parse_int("GENERATION_HTTP_MAX_RETRIES", 2),

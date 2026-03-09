@@ -82,6 +82,15 @@ Added `POST /generation/ask` for one-shot flow:
 2. Feeds returned chunks to generation pipeline
 3. Returns final answer + citations + retrieval summary metadata
 
+## Audio Transcription (Implemented)
+
+- Added `POST /generation/transcribe` for multipart audio uploads.
+- Uses the same `OPENAI_KEY` already configured for generation.
+- Optional model override is available through `TRANSCRIPTION_MODEL`
+  with default `gpt-4o-mini-transcribe`.
+- Frontend chat page now includes an audio upload action that appends
+  the transcript into the message box before sending.
+
 ## Ragas Evaluation Reports (Implemented)
 
 Ragas evaluation is available directly inside generation-service.

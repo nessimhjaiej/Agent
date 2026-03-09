@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 _PROJECT_ROOT = (
     Path(__file__).resolve().parents[3]
 )  # auth-service/app/config.py → Agent/
-load_dotenv(_PROJECT_ROOT / ".env")
+load_dotenv(_PROJECT_ROOT / ".env", override=True)
+load_dotenv(_PROJECT_ROOT / ".env.local", override=True)
 
 
 @dataclass(slots=True)

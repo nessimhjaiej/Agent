@@ -164,3 +164,47 @@ def test_ask_endpoint_maps_provider_errors_to_502(monkeypatch) -> None:  # noqa:
     response = client.post("/generation/ask", json=_ask_payload())
 
     assert response.status_code == 502
+
+
+def test_transcribe_endpoint_returns_contract_shape(monkeypatch) -> None:  # noqa: ANN001
+    class _FakeGenerationService(GenerationService):
+        def transcribe(self, filename, content, content_type=None, language=None, prompt=None):  # noqa: ANN001
+            return {
+                "status": "ok",
+                "text": "Transcript text.",
+                "model": "gpt-4o-mini-transcribe",
+                "filename": filename,
+            }
+
+    monkeypatch.setattr(generation_router_module, "GenerationService", _FakeGenerationService)
+
+    app = create_app()
+    client = TestClient(app)
+    response = client.post(
+        "/generation/transcribe",
+        files={"file": ("note.wav", b"audio-bytes", "audio/wav")},
+        data={"language": "en"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["text"] == "Transcript text."
+    assert body["filename"] == "note.wav"
+
+
+def test_transcribe_endpoint_rejects_empty_file(monkeypatch) -> None:  # noqa: ANN001
+    class _FakeGenerationService(GenerationService):
+        def transcribe(self, filename, content, content_type=None, language=None, prompt=None):  # noqa: ANN001
+            raise ValueError("Audio file is empty")
+
+    monkeypatch.setattr(generation_router_module, "GenerationService", _FakeGenerationService)
+
+    app = create_app()
+    client = TestClient(app)
+    response = client.post(
+        "/generation/transcribe",
+        files={"file": ("empty.wav", b"", "audio/wav")},
+    )
+
+    assert response.status_code == 400
