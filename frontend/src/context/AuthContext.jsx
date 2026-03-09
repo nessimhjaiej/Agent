@@ -30,47 +30,60 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      const currentUser = session?.user ?? null;
-      if (currentUser) {
-        const { blocked, validated, role } = getAccountFlags(currentUser);
-        if (blocked || (!validated && role !== 'admin')) {
-          await supabase.auth.signOut();
-          setUser(null);
-          setUserRole(null);
-          setLoading(false);
-          return;
-        }
+    const enforceAccountState = async (sessionUser = null) => {
+      const currentUser = sessionUser ?? (await supabase.auth.getUser()).data?.user ?? null;
+      if (!currentUser) {
+        setUser(null);
+        setUserRole(null);
+        return;
       }
+
+      const { blocked, validated, role } = getAccountFlags(currentUser);
+      if (blocked || (!validated && role !== 'admin')) {
+        await supabase.auth.signOut();
+        setUser(null);
+        setUserRole(null);
+        return;
+      }
+
       setUser(currentUser);
-      if (currentUser) {
-        setUserRole(currentUser.user_metadata?.role || 'user');
-      }
+      setUserRole(role || 'user');
+    };
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      await enforceAccountState(session?.user ?? null);
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        const currentUser = session?.user ?? null;
-        if (currentUser) {
-          const { blocked, validated, role } = getAccountFlags(currentUser);
-          if (blocked || (!validated && role !== 'admin')) {
-            await supabase.auth.signOut();
-            setUser(null);
-            setUserRole(null);
-            return;
-          }
-        }
-        setUser(currentUser);
-        if (currentUser) {
-          setUserRole(currentUser.user_metadata?.role || 'user');
-        } else {
-          setUserRole(null);
-        }
+        await enforceAccountState(session?.user ?? null);
       }
     );
 
-    return () => subscription.unsubscribe();
+    const verifySessionAccountState = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      await enforceAccountState();
+    };
+
+    const intervalId = window.setInterval(() => {
+      verifySessionAccountState();
+    }, 15000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        verifySessionAccountState();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      subscription.unsubscribe();
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const signIn = async (email, password) => {

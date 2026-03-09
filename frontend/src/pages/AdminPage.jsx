@@ -13,6 +13,7 @@ import {
   Upload,
   Eye,
   Trash2,
+  Ban,
 } from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
 import TypingIndicator from '../components/TypingIndicator';
@@ -112,6 +113,7 @@ export default function AdminPage() {
   const [inviteMessage, setInviteMessage] = useState('');
   const [busyUserIds, setBusyUserIds] = useState(new Set());
   const [userSearch, setUserSearch] = useState('');
+  const [userFilter, setUserFilter] = useState('all');
   const dragDepthRef = useRef(0);
   const endRef = useRef(null);
 
@@ -219,6 +221,21 @@ export default function AdminPage() {
       await loadManagedUsersData();
     } catch (error) {
       setUsersError(error.message || 'Failed to update block status');
+    } finally {
+      markUserBusy(targetUser.id, false);
+    }
+  };
+
+  const validateAgain = async (targetUser) => {
+    markUserBusy(targetUser.id, true);
+    setUsersError('');
+    try {
+      const token = await getAccessToken();
+      await setUserValidation(token, targetUser.id, true);
+      await setUserBlock(token, targetUser.id, false);
+      await loadManagedUsersData();
+    } catch (error) {
+      setUsersError(error.message || 'Failed to re-validate user');
     } finally {
       markUserBusy(targetUser.id, false);
     }
@@ -561,9 +578,20 @@ export default function AdminPage() {
     { key: 'agent', label: 'Admin Agent Chat', icon: Bot },
   ];
 
-  const filteredUsers = managedUsers.filter((managedUser) =>
-    (managedUser.email || '').toLowerCase().includes(userSearch.toLowerCase())
-  );
+  const userStats = useMemo(() => ({
+    total: managedUsers.length,
+    validated: managedUsers.filter((managedUser) => managedUser.validated && !managedUser.blocked).length,
+    blocked: managedUsers.filter((managedUser) => managedUser.blocked).length,
+  }), [managedUsers]);
+
+  const filteredUsers = managedUsers.filter((managedUser) => {
+    const matchesSearch = (managedUser.email || '').toLowerCase().includes(userSearch.toLowerCase());
+    if (!matchesSearch) return false;
+    if (userFilter === 'validated') return managedUser.validated && !managedUser.blocked;
+    if (userFilter === 'pending') return !managedUser.validated && !managedUser.blocked;
+    if (userFilter === 'blocked') return managedUser.blocked;
+    return true;
+  });
 
   return (
     <AnimatedPage className="h-full flex flex-col">
@@ -764,9 +792,9 @@ export default function AdminPage() {
               </motion.div>
             ) : tab === 'users' ? (
               <motion.div key="users" className="h-full w-full flex justify-center relative" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div className="h-full w-full max-w-[1200px] flex flex-col px-5 md:px-8 mt-8 md:mt-12 overflow-auto" style={{ minHeight: 0 }}>
-                  <div className="flex flex-col md:flex-row gap-3 md:items-center" style={{ marginBottom: '16px' }}>
-                    <div className="flex-1 flex items-center gap-2 rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minHeight: '48px', paddingLeft: '20px', paddingRight: '20px' }}>
+                <div className="h-full w-full max-w-[1400px] flex flex-col px-5 md:px-8 mt-8 md:mt-12 overflow-auto" style={{ minHeight: 0 }}>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0" style={{ marginBottom: '16px' }}>
+                    <div className="flex-1 w-full sm:w-auto flex items-center gap-2 rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minHeight: '48px', paddingLeft: '24px', paddingRight: '24px' }}>
                       <Search size={16} style={{ color: 'var(--text-muted)' }} />
                       <input
                         type="text"
@@ -777,20 +805,39 @@ export default function AdminPage() {
                         style={{ color: 'var(--text-primary)' }}
                       />
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="relative w-full sm:w-auto">
+                      <select
+                        id="user-status-filter"
+                        value={userFilter}
+                        onChange={(event) => setUserFilter(event.target.value)}
+                        className="rounded-xl text-sm outline-none appearance-none"
+                        style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', minWidth: '200px', width: '100%', paddingLeft: '24px', paddingRight: '48px' }}
+                      >
+                        <option value="all">All Users</option>
+                        <option value="validated">Validated</option>
+                        <option value="pending">Pending</option>
+                        <option value="blocked">Blocked</option>
+                      </select>
+                      <ChevronDown
+                        size={16}
+                        className="pointer-events-none absolute top-1/2 -translate-y-1/2"
+                        style={{ right: '16px', color: 'var(--text-muted)' }}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                       <input
                         type="email"
                         placeholder="Invite user email"
                         value={inviteEmail}
                         onChange={(event) => setInviteEmail(event.target.value)}
                         className="rounded-xl text-sm outline-none"
-                        style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', minWidth: '260px', paddingLeft: '16px', paddingRight: '16px' }}
+                        style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', minWidth: '260px', width: '100%', paddingLeft: '20px', paddingRight: '20px' }}
                       />
                       <motion.button
                         onClick={handleInvite}
                         disabled={inviting || !inviteEmail.trim()}
                         className="flex items-center gap-2 px-6 rounded-xl text-sm font-medium text-white disabled:opacity-50"
-                        style={{ background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', minHeight: '48px' }}
+                        style={{ background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', minHeight: '48px', minWidth: '140px', justifyContent: 'center' }}
                       >
                         {inviting ? 'Inviting...' : 'Invite User'}
                       </motion.button>
@@ -803,64 +850,103 @@ export default function AdminPage() {
                     </div>
                   )}
 
-                  <div className="overflow-auto rounded-xl" style={{ border: '1px solid var(--border-color)', marginTop: '8px', maxHeight: '62vh' }}>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 shrink-0" style={{ marginBottom: '16px' }}>
+                    {[
+                      { l: 'Total', v: userStats.total, color: 'var(--color-primary-400)' },
+                      { l: 'Validated', v: userStats.validated, color: '#10b981' },
+                      { l: 'Blocked', v: userStats.blocked, color: '#ef4444' },
+                    ].map((s, i) => (
+                      <motion.div key={i} className="rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '18px 30px' }}>
+                        <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>{s.l}</p>
+                        <p className="text-2xl font-bold font-display" style={{ color: s.color }}>{s.v}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  <div className="overflow-auto rounded-xl" style={{ border: '1px solid var(--border-color)', marginTop: '16px', minHeight: filteredUsers.length === 0 ? '210px' : 'auto', maxHeight: '58vh' }}>
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="sticky top-0 z-10" style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
-                          <th className="px-4 py-3 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)' }}>Email</th>
-                          <th className="px-4 py-3 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)' }}>Role</th>
-                          <th className="px-4 py-3 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)' }}>Validated</th>
-                          <th className="px-4 py-3 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)' }}>Blocked</th>
-                          <th className="px-4 py-3 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)' }}>Actions</th>
+                        <tr className="sticky top-0 z-10" style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)', minHeight: '62px' }}>
+                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Email</th>
+                          <th className="px-4 text-left text-base font-semibold hidden md:table-cell" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Role</th>
+                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Validated</th>
+                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Blocked</th>
+                          <th className="px-4 text-center text-base font-semibold w-40" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredUsers.map((managedUser) => (
-                          <tr key={managedUser.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                            <td className="px-4 py-3" style={{ color: 'var(--text-primary)' }}>{managedUser.email}</td>
-                            <td className="px-4 py-3" style={{ color: 'var(--text-secondary)' }}>{managedUser.role}</td>
-                            <td className="px-4 py-3" style={{ color: managedUser.validated ? '#10b981' : '#f59e0b' }}>
-                              {managedUser.validated ? 'Validated' : 'Pending'}
+                          <tr key={managedUser.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border-color)', height: '76px' }}>
+                            <td className="px-4 py-4 align-middle">
+                              <div className="min-w-0">
+                                <div className="font-medium truncate max-w-[360px]" style={{ color: 'var(--text-primary)' }}>{managedUser.email}</div>
+                              </div>
                             </td>
-                            <td className="px-4 py-3" style={{ color: managedUser.blocked ? '#ef4444' : '#10b981' }}>
-                              {managedUser.blocked ? 'Blocked' : 'Active'}
+                            <td className="px-4 py-4 hidden md:table-cell align-middle" style={{ color: 'var(--text-secondary)' }}>{managedUser.role}</td>
+                            <td className="px-4 py-4 align-middle">
+                              <span className="inline-flex items-center py-1 rounded-full text-xs font-medium" style={{ background: managedUser.validated ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)', color: managedUser.validated ? '#10b981' : '#f59e0b', border: managedUser.validated ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(245,158,11,0.2)', paddingLeft: '14px', paddingRight: '14px' }}>
+                                {managedUser.validated ? 'Validated' : 'Pending'}
+                              </span>
                             </td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => updateValidation(managedUser)}
-                                  disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin'}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
-                                  style={{ background: managedUser.validated ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)', color: managedUser.validated ? '#f59e0b' : '#10b981', border: managedUser.validated ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(16,185,129,0.25)' }}
-                                >
-                                  {managedUser.validated ? 'Set Pending' : 'Validate'}
-                                </button>
-                                <button
-                                  onClick={() => updateBlock(managedUser)}
-                                  disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin'}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
-                                  style={{ background: managedUser.blocked ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: managedUser.blocked ? '#10b981' : '#ef4444', border: managedUser.blocked ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)' }}
-                                >
-                                  {managedUser.blocked ? 'Unblock' : 'Block'}
-                                </button>
+                            <td className="px-4 py-4 align-middle">
+                              <span className="inline-flex items-center py-1 rounded-full text-xs font-medium" style={{ background: managedUser.blocked ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)', color: managedUser.blocked ? '#ef4444' : '#10b981', border: managedUser.blocked ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(16,185,129,0.2)', paddingLeft: '14px', paddingRight: '14px' }}>
+                                {managedUser.blocked ? 'Blocked' : 'Active'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 align-middle w-40">
+                              <div className="grid grid-cols-3 justify-items-center items-center gap-2">
+                                {managedUser.blocked || !managedUser.validated ? (
+                                  <button
+                                    onClick={() => (managedUser.blocked ? validateAgain(managedUser) : updateValidation(managedUser))}
+                                    disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin'}
+                                    className="p-2.5 rounded-lg hover:bg-success/10 transition-colors disabled:opacity-50"
+                                    style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }}
+                                    title={managedUser.blocked ? 'Validate again' : 'Validate user'}
+                                  >
+                                    <Check size={18} />
+                                  </button>
+                                ) : (
+                                  <span className="p-2.5 invisible"><Check size={18} /></span>
+                                )}
+                                {!managedUser.blocked ? (
+                                  <button
+                                    onClick={() => updateBlock(managedUser)}
+                                    disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin'}
+                                    className="p-2.5 rounded-lg hover:bg-warning/10 transition-colors disabled:opacity-50"
+                                    style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }}
+                                    title="Block user"
+                                  >
+                                    <Ban size={18} />
+                                  </button>
+                                ) : (
+                                  <span className="p-2.5 invisible"><Ban size={18} /></span>
+                                )}
                                 <button
                                   onClick={() => deleteUser(managedUser)}
                                   disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin' || managedUser.id === user?.id}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
-                                  style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
+                                  className="p-2.5 rounded-lg hover:bg-danger/10 transition-colors disabled:opacity-50"
+                                  style={{ color: '#ef4444' }}
+                                  title="Delete user"
                                 >
-                                  Delete
+                                  <Trash2 size={18} />
                                 </button>
                               </div>
                             </td>
                           </tr>
                         ))}
                         {filteredUsers.length === 0 && (
-                          <tr>
-                            <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
-                              {loadingManagedUsers ? 'Loading users...' : 'No users found'}
-                            </td>
-                          </tr>
+                          <>
+                            <tr>
+                              <td colSpan={5} className="px-4 py-3">&nbsp;</td>
+                            </tr>
+                            <tr>
+                              <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
+                                <p className="text-lg font-semibold">
+                                  {loadingManagedUsers ? 'Loading users...' : 'No users found'}
+                                </p>
+                              </td>
+                            </tr>
+                          </>
                         )}
                       </tbody>
                     </table>
