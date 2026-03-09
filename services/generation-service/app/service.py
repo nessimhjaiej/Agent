@@ -1,9 +1,17 @@
+from app.clients.openai_audio_client import OpenAIAudioClient
 from app.clients.retrieval_client import RetrievalClient
 from app.config import Settings
 from app.guardrails import is_prompt_attack_query
 from app.models import ChatContext, ChatTurn, RetrievedChunk
 from app.orchestrator import GenerationOrchestrator
-from app.schemas import AskRequest, AskResponse, ChatRequest, ChatResponse, CitationResponse
+from app.schemas import (
+    AskRequest,
+    AskResponse,
+    ChatRequest,
+    ChatResponse,
+    CitationResponse,
+    TranscriptionResponse,
+)
 
 
 class GenerationService:
@@ -18,6 +26,13 @@ class GenerationService:
         self._retrieval_client = retrieval_client or RetrievalClient(
             base_url=self._settings.retrieval_base_url,
             timeout_seconds=self._settings.retrieval_timeout_seconds,
+            max_retries=self._settings.generation_http_max_retries,
+            retry_base_seconds=self._settings.generation_retry_base_seconds,
+        )
+        self._audio_client = OpenAIAudioClient(
+            api_key=self._settings.openai_key,
+            model=self._settings.transcription_model,
+            timeout_seconds=self._settings.generation_timeout_seconds,
             max_retries=self._settings.generation_http_max_retries,
             retry_base_seconds=self._settings.generation_retry_base_seconds,
         )
@@ -95,6 +110,32 @@ class GenerationService:
             retrieval_mode=str(retrieval_response.get("mode", payload.mode)),
             fusion_type=str(retrieval_response.get("fusion_type", "")),
             rerank_type=str(retrieval_response.get("rerank_type", "")),
+        )
+
+    def transcribe(
+        self,
+        filename: str,
+        content: bytes,
+        content_type: str | None = None,
+        language: str | None = None,
+        prompt: str | None = None,
+    ) -> TranscriptionResponse:
+        if not filename.strip():
+            raise ValueError("Audio filename is required")
+        if not content:
+            raise ValueError("Audio file is empty")
+
+        text = self._audio_client.transcribe(
+            filename=filename,
+            content=content,
+            content_type=content_type or "application/octet-stream",
+            language=language,
+            prompt=prompt,
+        )
+        return TranscriptionResponse(
+            text=text,
+            model=self._settings.transcription_model,
+            filename=filename,
         )
 
     def _to_chat_response(self, result, query: str, session_id: str | None) -> ChatResponse:  # noqa: ANN001

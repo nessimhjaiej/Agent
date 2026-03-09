@@ -93,6 +93,14 @@ class GenerationOrchestrator:
         history = ctx.chat_history[-self._settings.generation_max_history_turns :]
 
         lines: list[str] = []
+        lines.append("Response language rule:")
+        lines.append(
+            "Answer in the same language as the user's latest query unless the user explicitly asks for another language."
+        )
+        lines.append(
+            "The retrieved chunks may be in a different language; translate their meaning in your answer when needed."
+        )
+        lines.append("")
         lines.append("User query:")
         lines.append(ctx.query.strip())
         lines.append("")

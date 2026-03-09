@@ -6,6 +6,7 @@ if str(SERVICE_ROOT) not in sys.path:
     sys.path.insert(0, str(SERVICE_ROOT))
 
 from app.models import Citation, GenerationResult  # noqa: E402
+from app.config import Settings  # noqa: E402
 from app.schemas import AskRequest, ChatRequest  # noqa: E402
 from app.service import GenerationService  # noqa: E402
 
@@ -58,6 +59,30 @@ class _FakeRetrievalClient:
             ],
             "documents": [{"document_id": "doc-7", "chunk_ids": ["doc-7:0"], "hit_count": 1}],
         }
+
+
+class _FakeAudioClient:
+    def __init__(self) -> None:
+        self.calls: list[dict] = []
+
+    def transcribe(
+        self,
+        filename: str,
+        content: bytes,
+        content_type: str = "application/octet-stream",
+        language: str | None = None,
+        prompt: str | None = None,
+    ) -> str:
+        self.calls.append(
+            {
+                "filename": filename,
+                "content": content,
+                "content_type": content_type,
+                "language": language,
+                "prompt": prompt,
+            }
+        )
+        return "Transcribed audio text."
 
 
 def test_service_maps_orchestrator_result_to_api_response() -> None:
@@ -120,7 +145,9 @@ def test_service_ask_calls_retrieval_then_generation() -> None:
 def test_service_blocks_prompt_attack_query_with_scope_fallback() -> None:
     orchestrator = _FakeOrchestrator()
     retrieval_client = _FakeRetrievalClient()
+    settings = Settings(generation_block_prompt_attack_queries=True)
     service = GenerationService(  # type: ignore[arg-type]
+        settings=settings,
         orchestrator=orchestrator,
         retrieval_client=retrieval_client,
     )
@@ -136,3 +163,25 @@ def test_service_blocks_prompt_attack_query_with_scope_fallback() -> None:
     assert response.status == "degraded"
     assert response.answer == "This is beyond my scope."
     assert response.retrieval_count == 0
+
+
+def test_service_transcribe_uses_audio_client() -> None:
+    service = GenerationService()  # type: ignore[call-arg]
+    fake_audio_client = _FakeAudioClient()
+    service._audio_client = fake_audio_client  # type: ignore[attr-defined]
+    service._settings.transcription_model = "gpt-4o-mini-transcribe"  # type: ignore[attr-defined]
+
+    response = service.transcribe(
+        filename="question.wav",
+        content=b"audio-bytes",
+        content_type="audio/wav",
+        language="en",
+    )
+
+    assert len(fake_audio_client.calls) == 1
+    assert fake_audio_client.calls[0]["filename"] == "question.wav"
+    assert fake_audio_client.calls[0]["content_type"] == "audio/wav"
+    assert fake_audio_client.calls[0]["language"] == "en"
+    assert response.text == "Transcribed audio text."
+    assert response.model == "gpt-4o-mini-transcribe"
+    assert response.filename == "question.wav"
