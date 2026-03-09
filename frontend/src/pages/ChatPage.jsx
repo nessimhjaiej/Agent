@@ -7,6 +7,9 @@ import {
   Sparkles,
   Mic,
   Square,
+  Pencil,
+  Check,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -23,6 +26,8 @@ export default function ChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editingText, setEditingText] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -43,24 +48,12 @@ export default function ChatPage() {
     mediaStreamRef.current?.getTracks?.().forEach((track) => track.stop());
   }, []);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    if (!user) { setShowAuthModal(true); return; }
-    const query = input.trim();
-
-    const userMessage = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: query,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-    const currentMessages = [...messages];
-    setMessages((prev) => [...prev, userMessage]);
+  const requestAssistantReply = async ({ query, historyMessages, nextMessages }) => {
+    setMessages(nextMessages);
     setInput('');
     setIsTyping(true);
-
     try {
-      const chatHistory = currentMessages.slice(-12).map((msg) => ({
+      const chatHistory = historyMessages.slice(-12).map((msg) => ({
         role: msg.role === 'assistant' ? 'assistant' : 'user',
         content: msg.content,
       }));
@@ -109,8 +102,71 @@ export default function ChatPage() {
     }
   };
 
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    if (!user) { setShowAuthModal(true); return; }
+    const query = input.trim();
+    const currentMessages = [...messages];
+    const userMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: query,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    await requestAssistantReply({
+      query,
+      historyMessages: currentMessages,
+      nextMessages: [...currentMessages, userMessage],
+    });
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  };
+
+  const startEditingMessage = (message) => {
+    setEditingMessageId(message.id);
+    setEditingText(message.content);
+  };
+
+  const cancelEditingMessage = () => {
+    setEditingMessageId(null);
+    setEditingText('');
+  };
+
+  const saveEditedMessage = () => {
+    const nextContent = editingText.trim();
+    if (!editingMessageId || !nextContent) return;
+    const currentMessages = [...messages];
+    const editedIndex = currentMessages.findIndex((message) => message.id === editingMessageId);
+    if (editedIndex === -1) return;
+
+    const updatedMessage = {
+      ...currentMessages[editedIndex],
+      content: nextContent,
+      edited: true,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    const historyMessages = currentMessages.slice(0, editedIndex);
+    const nextMessages = [...historyMessages, updatedMessage];
+    cancelEditingMessage();
+    requestAssistantReply({
+      query: nextContent,
+      historyMessages,
+      nextMessages,
+    });
+  };
+
+  const handleEditKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      saveEditedMessage();
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelEditingMessage();
+    }
   };
 
   const submitAudioForTranscription = async (file) => {
@@ -216,6 +272,7 @@ export default function ChatPage() {
     mediaRecorderRef.current?.stop();
   };
 
+  const latestUserMessageId = [...messages].reverse().find((message) => message.role === 'user')?.id ?? null;
   const recordButtonTitle = isRecording ? 'Stop recording' : 'Record audio for transcription';
   const recordButtonColor = isRecording
     ? '#dc2626'
@@ -367,7 +424,10 @@ export default function ChatPage() {
           </div>
         ) : (
           <div className="max-w-2xl mx-auto">
-            {messages.map((msg) => (
+            {messages.map((msg) => {
+              const isEditing = editingMessageId === msg.id;
+
+              return (
               <motion.div
                 key={msg.id}
                 className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -407,7 +467,47 @@ export default function ChatPage() {
                         }
                   }
                 >
-                  <p className="text-[15px] leading-relaxed my-2">{msg.content}</p>
+                  {isEditing ? (
+                    <div className="my-2">
+                      <textarea
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        onKeyDown={handleEditKeyDown}
+                        rows={4}
+                        className="w-full bg-transparent outline-none text-[15px] resize-none"
+                        style={{
+                          color: msg.role === 'user' ? 'white' : 'var(--text-primary)',
+                        }}
+                      />
+                      <div className="flex justify-end gap-2 mt-3">
+                        <button
+                          type="button"
+                          onClick={cancelEditingMessage}
+                          className="rounded-lg px-3 py-2 text-xs"
+                          style={{
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            color: msg.role === 'user' ? 'white' : 'var(--text-secondary)',
+                          }}
+                        >
+                          <X size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={saveEditedMessage}
+                          disabled={!editingText.trim()}
+                          className="rounded-lg px-3 py-2 text-xs disabled:opacity-30"
+                          style={{
+                            background: msg.role === 'user' ? 'rgba(255,255,255,0.16)' : 'rgba(124,58,237,0.14)',
+                            color: msg.role === 'user' ? 'white' : 'var(--color-primary-400)',
+                          }}
+                        >
+                          <Check size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[15px] leading-relaxed my-2">{msg.content}</p>
+                  )}
                   {msg.sources && (
                     <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-color)' }}>
                       <p className="text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>Sources:</p>
@@ -432,8 +532,22 @@ export default function ChatPage() {
                     className={`text-xs mt-2 ${msg.role === 'user' ? 'text-white/50' : ''}`}
                     style={msg.role === 'assistant' ? { color: 'var(--text-muted)' } : {}}
                   >
-                    {msg.timestamp}
+                    {msg.timestamp}{msg.edited ? ' • edited' : ''}
                   </p>
+                  {msg.role === 'user' && !isEditing && msg.id === latestUserMessageId && (
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => startEditingMessage(msg)}
+                        disabled={isTyping || isTranscribing || isRecording}
+                        className="inline-flex items-center gap-1 text-xs"
+                        style={{ color: 'rgba(255,255,255,0.7)' }}
+                      >
+                        <Pencil size={12} />
+                        Edit
+                      </button>
+                    </div>
+                  )}
                 </div>
                 {msg.role === 'user' && (
                   <div
@@ -446,7 +560,8 @@ export default function ChatPage() {
                   </div>
                 )}
               </motion.div>
-            ))}
+            );
+            })}
 
             {isTyping && (
               <motion.div className="flex gap-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
