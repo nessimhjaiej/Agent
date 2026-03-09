@@ -1,0 +1,2 @@
+"""ingestion-service application package."""
+

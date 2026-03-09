@@ -61,6 +61,25 @@ body {
   overflow: hidden;
 }
 
+button,
+a[href],
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+select,
+summary,
+label[for] {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+}
+
 /* ─── Light Mode ─── */
 :root {
   --bg-primary: #fafafa;

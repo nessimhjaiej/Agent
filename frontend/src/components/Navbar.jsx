@@ -1,12 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Moon, LogOut, LogIn, Scale } from 'lucide-react';
+import { Sun, Moon, LogOut, LogIn, Scale, KeyRound } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
-  const { user, signOut } = useAuth();
+  const { user, signOut, updatePassword } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -17,6 +17,21 @@ export default function Navbar() {
       case '/security': return 'Security Dashboard';
       case '/login': return 'Sign In';
       default: return 'Agentic RAG';
+    }
+  };
+
+  const changePassword = async () => {
+    const nextPassword = window.prompt('Enter your new password (min 8 characters):');
+    if (!nextPassword) return;
+    if (nextPassword.length < 8) {
+      window.alert('Password must be at least 8 characters long.');
+      return;
+    }
+    try {
+      await updatePassword(nextPassword);
+      window.alert('Password updated successfully.');
+    } catch (error) {
+      window.alert(error.message || 'Failed to update password.');
     }
   };
 
@@ -132,6 +147,16 @@ export default function Navbar() {
                 />
               </div>
               <motion.button
+                onClick={changePassword}
+                className="p-2 rounded-xl transition-colors hover:bg-primary-500/10"
+                style={{ color: 'var(--text-secondary)' }}
+                title="Change password"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <KeyRound size={17} />
+              </motion.button>
+              <motion.button
                 id="sign-out-btn"
                 onClick={async () => {
                   await signOut();
@@ -149,11 +174,17 @@ export default function Navbar() {
             <motion.button
               id="nav-sign-in"
               onClick={() => navigate('/login')}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all"
+              className="flex items-center gap-2 rounded-xl text-sm font-medium transition-all"
               style={{
                 background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
                 color: 'white',
                 boxShadow: '0 0 20px rgba(139,92,246,0.3)',
+                paddingLeft: '24px',
+                paddingRight: '24px',
+                paddingTop: '10px',
+                paddingBottom: '10px',
+                minHeight: '44px',
+                minWidth: '118px',
               }}
               whileHover={{
                 scale: 1.03,

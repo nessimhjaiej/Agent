@@ -4,7 +4,6 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Initialize Supabase client (gracefully handle missing env vars for dev)
 const supabase =
   supabaseUrl && supabaseAnonKey
     ? createClient(supabaseUrl, supabaseAnonKey)
@@ -12,9 +11,17 @@ const supabase =
 
 const AuthContext = createContext(null);
 
+function getAccountFlags(currentUser) {
+  const role = currentUser?.user_metadata?.role || 'user';
+  const appMetadata = currentUser?.app_metadata || {};
+  const blocked = appMetadata.account_blocked === true;
+  const validated = role === 'admin' || appMetadata.account_validated === true;
+  return { role, blocked, validated };
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [userRole, setUserRole] = useState(null); // 'user' | 'admin'
+  const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,9 +30,18 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       const currentUser = session?.user ?? null;
+      if (currentUser) {
+        const { blocked, validated, role } = getAccountFlags(currentUser);
+        if (blocked || (!validated && role !== 'admin')) {
+          await supabase.auth.signOut();
+          setUser(null);
+          setUserRole(null);
+          setLoading(false);
+          return;
+        }
+      }
       setUser(currentUser);
       if (currentUser) {
         setUserRole(currentUser.user_metadata?.role || 'user');
@@ -33,10 +49,18 @@ export function AuthProvider({ children }) {
       setLoading(false);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         const currentUser = session?.user ?? null;
+        if (currentUser) {
+          const { blocked, validated, role } = getAccountFlags(currentUser);
+          if (blocked || (!validated && role !== 'admin')) {
+            await supabase.auth.signOut();
+            setUser(null);
+            setUserRole(null);
+            return;
+          }
+        }
         setUser(currentUser);
         if (currentUser) {
           setUserRole(currentUser.user_metadata?.role || 'user');
@@ -56,6 +80,17 @@ export function AuthProvider({ children }) {
       password,
     });
     if (error) throw error;
+
+    const { blocked, validated } = getAccountFlags(data?.user);
+    if (blocked) {
+      await supabase.auth.signOut();
+      throw new Error('Your account is blocked. Please contact an administrator.');
+    }
+    if (!validated) {
+      await supabase.auth.signOut();
+      throw new Error('Your account is pending admin validation.');
+    }
+
     return data;
   };
 
@@ -64,22 +99,29 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-    });
-    if (error) throw error;
-    // Supabase handles email verification automatically
-    return data;
-  };
-
-  const signInWithOAuth = async (provider) => {
-    if (!supabase) throw new Error('Supabase not configured');
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider,
       options: {
-        redirectTo: window.location.origin,
+        data: {
+          role: 'user',
+        },
       },
     });
     if (error) throw error;
     return data;
+  };
+
+  const updatePassword = async (newPassword) => {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    if (error) throw error;
+    return data;
+  };
+
+  const getAccessToken = async () => {
+    if (!supabase) return '';
+    const { data } = await supabase.auth.getSession();
+    return data?.session?.access_token || '';
   };
 
   const signOut = async () => {
@@ -98,8 +140,9 @@ export function AuthProvider({ children }) {
         loading,
         signIn,
         signUp,
-        signInWithOAuth,
         signOut,
+        updatePassword,
+        getAccessToken,
         supabase,
       }}
     >

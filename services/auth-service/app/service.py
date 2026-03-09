@@ -1,11 +1,13 @@
-"""Auth service — uses Supabase built-in Auth.
+"""Auth service using Supabase built-in Auth."""
 
-Supabase handles:
-  - Password hashing & verification
-  - JWT token creation & validation
-  - Email verification (sends confirmation email on signup)
-  - Password reset emails
-"""
+from __future__ import annotations
+
+import secrets
+import smtplib
+import string
+from datetime import datetime, timezone
+from email.message import EmailMessage
+from typing import Any
 
 from app.config import Settings
 from app.database import SupabaseClient
@@ -22,35 +24,25 @@ from app.models import AuthSession, AuthUser
 
 
 class AuthService:
-    """Authentication service using Supabase built-in Auth.
-
-    Signup sends a confirmation email automatically.
-    Login only works after email is confirmed.
-    """
+    """Authentication service using Supabase built-in Auth."""
 
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
         self._db = SupabaseClient(settings)
 
-    # ── Helpers ────────────────────────────────────────────────────────
-
     @staticmethod
     def _map_user(supabase_user) -> AuthUser:
-        """Map Supabase auth user to our AuthUser model."""
         metadata = supabase_user.user_metadata or {}
         return AuthUser(
             id=supabase_user.id,
             email=supabase_user.email or "",
             role=metadata.get("role", "user"),
             email_confirmed=supabase_user.email_confirmed_at is not None,
-            created_at=str(supabase_user.created_at)
-            if supabase_user.created_at
-            else "",
+            created_at=str(supabase_user.created_at) if supabase_user.created_at else "",
         )
 
     @staticmethod
     def _map_session(session, user: AuthUser) -> AuthSession:
-        """Map Supabase auth session to our AuthSession model."""
         return AuthSession(
             access_token=session.access_token,
             refresh_token=session.refresh_token,
@@ -59,41 +51,36 @@ class AuthService:
             user=user,
         )
 
-    # ── Authentication ────────────────────────────────────────────────
+    @staticmethod
+    def _is_user_validated(supabase_user) -> bool:
+        role = (supabase_user.user_metadata or {}).get("role", "user")
+        app_metadata = supabase_user.app_metadata or {}
+        return role == "admin" or app_metadata.get("account_validated") is True
+
+    @staticmethod
+    def _is_user_blocked(supabase_user) -> bool:
+        app_metadata = supabase_user.app_metadata or {}
+        return app_metadata.get("account_blocked") is True or bool(
+            getattr(supabase_user, "banned_until", None)
+        )
 
     def signup(self, email: str, password: str, role: str = "user") -> AuthSession:
-        """Register a new user via Supabase Auth.
-
-        Supabase will automatically send a confirmation email.
-        The user must confirm their email before they can log in.
-
-        Returns:
-            AuthSession with tokens and user info.
-
-        Raises:
-            UserAlreadyExistsException: If email is already taken.
-            InvalidPasswordException: If password is too weak.
-            AuthServiceException: For any other Supabase error.
-        """
         try:
             response = self._db.auth.sign_up(
                 {
                     "email": email,
                     "password": password,
                     "options": {
-                        "data": {"role": role},
+                        "data": {
+                            "role": role,
+                        },
                     },
                 }
             )
         except Exception as exc:
             error_msg = str(exc).lower()
-            if (
-                "already registered" in error_msg
-                or "already been registered" in error_msg
-            ):
-                raise UserAlreadyExistsException(
-                    "User with this email already exists"
-                ) from exc
+            if "already registered" in error_msg or "already been registered" in error_msg:
+                raise UserAlreadyExistsException("User with this email already exists") from exc
             if "password" in error_msg:
                 raise InvalidPasswordException(str(exc)) from exc
             if "email" in error_msg:
@@ -105,17 +92,14 @@ class AuthService:
 
         user = self._map_user(response.user)
 
-        # Log audit (may fail if audit_logs table doesn't exist yet — non-fatal)
         try:
             self._db.log_audit(user.id, "USER_SIGNUP", {"email": email, "role": role})
         except Exception:
-            pass  # audit is best-effort
+            pass
 
-        # Supabase may or may not return a session depending on email confirmation settings
         if response.session:
             return self._map_session(response.session, user)
 
-        # No session = email confirmation required
         return AuthSession(
             access_token="",
             refresh_token="",
@@ -125,16 +109,6 @@ class AuthService:
         )
 
     def login(self, email: str, password: str) -> AuthSession:
-        """Authenticate user via Supabase Auth.
-
-        Returns:
-            AuthSession with tokens and user info.
-
-        Raises:
-            AccountLockedException: Too many failed attempts.
-            InvalidCredentialsException: Bad email/password.
-        """
-        # Check rate limiting
         failed_attempts = self._db.get_failed_login_count(
             email, self._settings.lockout_duration_minutes
         )
@@ -158,6 +132,16 @@ class AuthService:
             self._db.record_login_attempt(email, False)
             raise InvalidCredentialsException("Invalid email or password")
 
+        if self._is_user_blocked(response.user):
+            self._db.record_login_attempt(email, False)
+            self._db.auth.sign_out()
+            raise UnauthorizedException("Account is blocked by an administrator")
+
+        if not self._is_user_validated(response.user):
+            self._db.record_login_attempt(email, False)
+            self._db.auth.sign_out()
+            raise UnauthorizedException("Account pending admin validation")
+
         self._db.record_login_attempt(email, True)
 
         user = self._map_user(response.user)
@@ -168,14 +152,7 @@ class AuthService:
 
         return self._map_session(response.session, user)
 
-    # ── Session management ────────────────────────────────────────────
-
     def get_current_user(self, access_token: str) -> AuthUser:
-        """Get the currently authenticated user from a JWT token.
-
-        Raises:
-            UnauthorizedException: If token is invalid/expired.
-        """
         try:
             response = self._db.auth.get_user(access_token)
         except Exception as exc:
@@ -186,21 +163,253 @@ class AuthService:
 
         return self._map_user(response.user)
 
+    def _require_admin_token(self, access_token: str) -> AuthUser:
+        try:
+            response = self._db.auth.get_user(access_token)
+        except Exception as exc:
+            raise UnauthorizedException("Invalid or expired token") from exc
+
+        if not response.user:
+            raise UnauthorizedException("Invalid or expired token")
+
+        requester = self._map_user(response.user)
+        if requester.role != "admin":
+            raise UnauthorizedException("Admin access required")
+        return requester
+
+    @staticmethod
+    def _map_admin_user(supabase_user) -> dict[str, Any]:
+        user_metadata = supabase_user.user_metadata or {}
+        app_metadata = supabase_user.app_metadata or {}
+        role = user_metadata.get("role", "user")
+        return {
+            "id": supabase_user.id,
+            "email": supabase_user.email or "",
+            "role": role,
+            "created_at": str(supabase_user.created_at) if supabase_user.created_at else "",
+            "email_confirmed": supabase_user.email_confirmed_at is not None,
+            "validated": role == "admin" or app_metadata.get("account_validated") is True,
+            "blocked": app_metadata.get("account_blocked") is True
+            or bool(getattr(supabase_user, "banned_until", None)),
+            "invited": app_metadata.get("invited_by_admin") is True,
+            "invited_at": str(app_metadata.get("invited_at") or ""),
+            "last_sign_in_at": str(getattr(supabase_user, "last_sign_in_at", "") or ""),
+        }
+
+    def list_users(self, access_token: str) -> list[dict[str, Any]]:
+        self._require_admin_token(access_token)
+        try:
+            users = self._db.auth.admin.list_users()
+        except Exception as exc:
+            raise AuthServiceException(f"Unable to list users: {exc}") from exc
+        return [self._map_admin_user(user) for user in users]
+
+    @staticmethod
+    def _generate_password(length: int = 14) -> str:
+        letters = string.ascii_letters
+        digits = string.digits
+        specials = "!@#$%^&*()_+-=[]{}|;:,.<>?"
+
+        required = [
+            secrets.choice(string.ascii_uppercase),
+            secrets.choice(string.ascii_lowercase),
+            secrets.choice(digits),
+            secrets.choice(specials),
+        ]
+        remaining = [secrets.choice(letters + digits + specials) for _ in range(max(0, length - 4))]
+        chars = required + remaining
+        secrets.SystemRandom().shuffle(chars)
+        return "".join(chars)
+
+    def _send_invite_email(self, recipient_email: str, generated_password: str) -> bool:
+        login_url = (
+            f"{self._settings.frontend_url.rstrip('/')}/login"
+            if self._settings.frontend_url
+            else ""
+        )
+
+        if (
+            not self._settings.smtp_host
+            or not self._settings.smtp_username
+            or not self._settings.smtp_password
+            or not self._settings.smtp_from_email
+        ):
+            # Fallback: use Supabase built-in reset email so invitees can set a password.
+            options = {"redirect_to": login_url} if login_url else None
+            self._db.auth.reset_password_email(recipient_email, options)
+            return True
+
+        msg = EmailMessage()
+        msg["Subject"] = "Your ICC Agent account invitation"
+        msg["From"] = f"{self._settings.smtp_from_name} <{self._settings.smtp_from_email}>"
+        msg["To"] = recipient_email
+        lines = [
+            "You have been invited to ICC Agent.",
+            "",
+            f"Email: {recipient_email}",
+            f"Temporary password: {generated_password}",
+            "",
+            "Please sign in and change your password immediately.",
+        ]
+        if login_url:
+            lines.extend(["", f"Login URL: {login_url}"])
+        msg.set_content("\n".join(lines))
+
+        with smtplib.SMTP(self._settings.smtp_host, self._settings.smtp_port, timeout=20) as smtp:
+            if self._settings.smtp_use_tls:
+                smtp.starttls()
+            smtp.login(self._settings.smtp_username, self._settings.smtp_password)
+            smtp.send_message(msg)
+
+        return True
+
+    def invite_user(self, access_token: str, email: str, role: str = "user") -> dict[str, Any]:
+        admin_user = self._require_admin_token(access_token)
+        generated_password = self._generate_password()
+
+        try:
+            response = self._db.auth.admin.create_user(
+                {
+                    "email": email,
+                    "password": generated_password,
+                    "email_confirm": True,
+                    "user_metadata": {"role": role},
+                    "app_metadata": {
+                        "account_validated": True,
+                        "account_blocked": False,
+                        "invited_by_admin": True,
+                        "invited_by": admin_user.id,
+                        "invited_at": datetime.now(timezone.utc).isoformat(),
+                    },
+                }
+            )
+        except Exception as exc:
+            error_msg = str(exc).lower()
+            if "already registered" in error_msg or "already been registered" in error_msg:
+                raise UserAlreadyExistsException("User with this email already exists") from exc
+            if "email" in error_msg:
+                raise InvalidEmailException(str(exc)) from exc
+            raise AuthServiceException(f"Invitation failed: {exc}") from exc
+
+        if not response.user:
+            raise AuthServiceException("Invitation failed: no user returned")
+
+        email_sent = False
+        try:
+            email_sent = self._send_invite_email(email, generated_password)
+        except Exception:
+            email_sent = False
+
+        try:
+            self._db.log_audit(
+                admin_user.id,
+                "USER_INVITE",
+                {"target_email": email, "target_user_id": response.user.id, "email_sent": email_sent},
+            )
+        except Exception:
+            pass
+
+        return {
+            "success": True,
+            "message": "Invitation created",
+            "user_id": response.user.id,
+            "email": email,
+            "generated_password": generated_password,
+            "email_sent": email_sent,
+        }
+
+    def set_user_validation(self, access_token: str, user_id: str, validated: bool) -> dict[str, Any]:
+        admin_user = self._require_admin_token(access_token)
+
+        try:
+            current = self._db.auth.admin.get_user_by_id(user_id)
+            current_app_metadata = current.user.app_metadata or {}
+            current_app_metadata["account_validated"] = validated
+            updated = self._db.auth.admin.update_user_by_id(
+                user_id,
+                {
+                    "app_metadata": current_app_metadata,
+                },
+            )
+        except Exception as exc:
+            raise AuthServiceException(f"Failed to update validation: {exc}") from exc
+
+        try:
+            self._db.log_audit(
+                admin_user.id,
+                "USER_VALIDATE_TOGGLE",
+                {"target_user_id": user_id, "validated": validated},
+            )
+        except Exception:
+            pass
+
+        return self._map_admin_user(updated.user)
+
+    def set_user_block(self, access_token: str, user_id: str, blocked: bool) -> dict[str, Any]:
+        admin_user = self._require_admin_token(access_token)
+
+        try:
+            current = self._db.auth.admin.get_user_by_id(user_id)
+            current_app_metadata = current.user.app_metadata or {}
+            current_app_metadata["account_blocked"] = blocked
+            updated = self._db.auth.admin.update_user_by_id(
+                user_id,
+                {
+                    "app_metadata": current_app_metadata,
+                    "ban_duration": "876000h" if blocked else "none",
+                },
+            )
+        except Exception as exc:
+            raise AuthServiceException(f"Failed to update block status: {exc}") from exc
+
+        try:
+            self._db.log_audit(
+                admin_user.id,
+                "USER_BLOCK_TOGGLE",
+                {"target_user_id": user_id, "blocked": blocked},
+            )
+        except Exception:
+            pass
+
+        return self._map_admin_user(updated.user)
+
+    def delete_user(self, access_token: str, user_id: str) -> bool:
+        admin_user = self._require_admin_token(access_token)
+
+        if admin_user.id == user_id:
+            raise UnauthorizedException("Admin cannot delete their own account")
+
+        try:
+            target_user = self._db.auth.admin.get_user_by_id(user_id)
+            target_role = (target_user.user.user_metadata or {}).get("role", "user")
+            if target_role == "admin":
+                raise UnauthorizedException("Admin accounts cannot be deleted here")
+
+            self._db.auth.admin.delete_user(user_id, should_soft_delete=False)
+        except UnauthorizedException:
+            raise
+        except Exception as exc:
+            raise AuthServiceException(f"Failed to delete user: {exc}") from exc
+
+        try:
+            self._db.log_audit(
+                admin_user.id,
+                "USER_DELETE",
+                {"target_user_id": user_id},
+            )
+        except Exception:
+            pass
+
+        return True
+
     def logout(self) -> bool:
-        """Sign out the current user."""
         try:
             self._db.auth.sign_out()
             return True
         except Exception:
             return False
 
-    # ── Password management ───────────────────────────────────────────
-
     def request_password_reset(self, email: str) -> bool:
-        """Send a password reset email.
-
-        Supabase sends an email with a reset link automatically.
-        """
         try:
             self._db.auth.reset_password_email(email)
             return True
@@ -208,10 +417,6 @@ class AuthService:
             raise AuthServiceException(f"Password reset failed: {exc}") from exc
 
     def update_password(self, access_token: str, new_password: str) -> bool:
-        """Update password for the authenticated user.
-
-        Requires a valid access token (from reset link or active session).
-        """
         try:
             self._db.auth.update_user(
                 jwt=access_token,
@@ -220,8 +425,6 @@ class AuthService:
             return True
         except Exception as exc:
             raise InvalidPasswordException(f"Password update failed: {exc}") from exc
-
-    # ── Authorization helpers ─────────────────────────────────────────
 
     @staticmethod
     def has_admin_role(user: AuthUser) -> bool:

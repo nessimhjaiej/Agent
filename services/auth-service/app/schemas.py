@@ -3,9 +3,6 @@
 from pydantic import BaseModel, Field
 
 
-# ── Requests ──────────────────────────────────────────────────────────
-
-
 class SignupRequest(BaseModel):
     email: str = Field(..., min_length=1)
     password: str = Field(..., min_length=6)
@@ -25,7 +22,17 @@ class PasswordUpdateRequest(BaseModel):
     new_password: str = Field(..., min_length=6)
 
 
-# ── Responses ─────────────────────────────────────────────────────────
+class AdminInviteRequest(BaseModel):
+    email: str = Field(..., min_length=1)
+    role: str = Field(default="user", pattern=r"^(user|admin)$")
+
+
+class AdminValidationRequest(BaseModel):
+    validated: bool
+
+
+class AdminBlockRequest(BaseModel):
+    blocked: bool
 
 
 class UserResponse(BaseModel):
@@ -47,6 +54,32 @@ class SessionResponse(BaseModel):
 class MessageResponse(BaseModel):
     success: bool
     message: str
+
+
+class AdminUserResponse(BaseModel):
+    id: str
+    email: str
+    role: str
+    created_at: str
+    email_confirmed: bool
+    validated: bool
+    blocked: bool
+    invited: bool
+    invited_at: str = ""
+    last_sign_in_at: str = ""
+
+
+class AdminUsersResponse(BaseModel):
+    users: list[AdminUserResponse]
+
+
+class AdminInviteResponse(BaseModel):
+    success: bool
+    message: str
+    user_id: str
+    email: str
+    generated_password: str
+    email_sent: bool
 
 
 class HealthResponse(BaseModel):
