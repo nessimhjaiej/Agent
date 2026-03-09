@@ -30,6 +30,15 @@ export function AuthProvider({ children }) {
       return;
     }
 
+    const forceSignOut = async ({ redirectHome = false } = {}) => {
+      await supabase.auth.signOut();
+      setUser(null);
+      setUserRole(null);
+      if (redirectHome) {
+        window.location.replace('/');
+      }
+    };
+
     const enforceAccountState = async (sessionUser = null) => {
       const currentUser = sessionUser ?? (await supabase.auth.getUser()).data?.user ?? null;
       if (!currentUser) {
@@ -40,9 +49,7 @@ export function AuthProvider({ children }) {
 
       const { blocked, validated, role } = getAccountFlags(currentUser);
       if (blocked || (!validated && role !== 'admin')) {
-        await supabase.auth.signOut();
-        setUser(null);
-        setUserRole(null);
+        await forceSignOut({ redirectHome: true });
         return;
       }
 
