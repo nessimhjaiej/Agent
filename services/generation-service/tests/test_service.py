@@ -142,6 +142,38 @@ def test_service_ask_calls_retrieval_then_generation() -> None:
     assert response.rerank_type == "cross_encoder"
 
 
+def test_service_ask_enriches_short_follow_up_queries_with_chat_history() -> None:
+    orchestrator = _FakeOrchestrator()
+    retrieval_client = _FakeRetrievalClient()
+    service = GenerationService(  # type: ignore[arg-type]
+        orchestrator=orchestrator,
+        retrieval_client=retrieval_client,
+    )
+    payload = AskRequest(
+        query="explique en français si c'est possible ?",
+        mode="hybrid",
+        chat_history=[
+            {
+                "role": "user",
+                "content": "How do nations manage cybersecurity progress according to the ICC brief?",
+            },
+            {
+                "role": "assistant",
+                "content": "The brief emphasizes capacity-building, legal frameworks, and information sharing.",
+            },
+        ],
+    )
+
+    response = service.ask(payload)
+
+    assert len(retrieval_client.calls) == 1
+    assert "Previous user topic:" in retrieval_client.calls[0]["query"]
+    assert "How do nations manage cybersecurity progress" in retrieval_client.calls[0]["query"]
+    assert "Current follow-up request: explique en français si c'est possible ?" in retrieval_client.calls[0]["query"]
+    assert orchestrator.calls == 1
+    assert response.status == "ok"
+
+
 def test_service_blocks_prompt_attack_query_with_scope_fallback() -> None:
     orchestrator = _FakeOrchestrator()
     retrieval_client = _FakeRetrievalClient()

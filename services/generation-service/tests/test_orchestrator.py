@@ -155,3 +155,22 @@ def test_orchestrator_instructs_model_to_answer_in_user_language() -> None:
     assert result.answer == "Réponse concise."
     assert "Answer in the same language as the user's latest query" in llm.calls[0]["user_prompt"]
     assert "answer in the language requested by the user" in llm.calls[0]["system_prompt"].lower()
+def test_orchestrator_instructs_model_to_explain_without_chunk_availability_wording() -> None:
+    llm = _FakeLLMClient(
+        raw_response='{"answer":"Concise answer.","citations":[{"chunk_id":"doc-1:0"}]}'
+    )
+    orchestrator = GenerationOrchestrator(
+        settings=Settings(openai_key="test-key", generation_model="gpt-4o"),
+        llm_client=llm,  # type: ignore[arg-type]
+        fallback_llm_client=llm,  # type: ignore[arg-type]
+    )
+    ctx = ChatContext(
+        query="Please explain this more clearly.",
+        retrieved_chunks=[_chunk("doc-1:0", 0.9)],
+    )
+
+    orchestrator.generate(ctx)
+
+    assert "do not say that the information is \"not available in the retrieved chunks\"" in llm.calls[0][
+        "system_prompt"
+    ].lower()

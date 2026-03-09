@@ -389,38 +389,39 @@ export default function ChatPage() {
                   className="flex-1 bg-transparent outline-none text-[15px] resize-none max-h-56"
                   style={{ color: 'var(--text-primary)', padding: '16px 24px' }}
                 />
-                <motion.button
-                  type="button"
-                  onClick={isRecording ? handleStopRecording : handleRecordAudio}
-                  disabled={isTyping || isTranscribing}
-                  className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
-                  style={{
-                    padding: '16px 18px',
-                  }}
-                  whileHover={!isTyping && !isTranscribing ? { scale: 1.05 } : {}}
-                  whileTap={{ scale: 0.95 }}
-                  title={recordButtonTitle}
-                >
-                  {isRecording ? (
-                    <Square size={18} color={recordButtonColor} />
-                  ) : (
-                    <Mic size={18} color={recordButtonColor} />
-                  )}
-                </motion.button>
-                <motion.button
-                  id="chat-send-btn"
-                  onClick={handleSend}
-                  disabled={!input.trim() || isTyping || isTranscribing}
-                  className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
-                  style={{
-                    padding: '16px 22px',
-                    marginRight: '8px',
-                  }}
-                  whileHover={input.trim() && !isTyping ? { scale: 1.05 } : {}}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Send size={18} color={input.trim() && !isTyping ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
-                </motion.button>
+                <div className="flex items-end gap-1 shrink-0">
+                  <motion.button
+                    type="button"
+                    onClick={isRecording ? handleStopRecording : handleRecordAudio}
+                    disabled={isTyping || isTranscribing}
+                    className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+                    style={{
+                      padding: '16px 18px',
+                    }}
+                    whileHover={!isTyping && !isTranscribing ? { scale: 1.05 } : {}}
+                    whileTap={{ scale: 0.95 }}
+                    title={recordButtonTitle}
+                  >
+                    {isRecording ? (
+                      <Square size={18} color={recordButtonColor} />
+                    ) : (
+                      <Mic size={18} color={recordButtonColor} />
+                    )}
+                  </motion.button>
+                  <motion.button
+                    id="chat-send-btn"
+                    onClick={handleSend}
+                    disabled={!input.trim() || isTyping || isTranscribing}
+                    className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+                    style={{
+                      padding: '16px 22px',
+                    }}
+                    whileHover={input.trim() && !isTyping ? { scale: 1.05 } : {}}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Send size={18} color={input.trim() && !isTyping ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
+                  </motion.button>
+                </div>
               </div>
               <p className="text-xs text-center mt-3" style={{ color: 'var(--text-muted)' }}>
                 {isTranscribing
@@ -656,38 +657,39 @@ export default function ChatPage() {
               className="flex-1 bg-transparent outline-none text-[15px] resize-none max-h-56"
               style={{ color: 'var(--text-primary)', padding: '16px 24px' }}
             />
-            <motion.button
-              type="button"
-              onClick={isRecording ? handleStopRecording : handleRecordAudio}
-              disabled={isTyping || isTranscribing}
-              className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
-              style={{
-                padding: '16px 18px',
-              }}
-              whileHover={!isTyping && !isTranscribing ? { scale: 1.05 } : {}}
-              whileTap={{ scale: 0.95 }}
-              title={recordButtonTitle}
-            >
-              {isRecording ? (
-                <Square size={18} color={recordButtonColor} />
-              ) : (
-                <Mic size={18} color={recordButtonColor} />
-              )}
-            </motion.button>
-            <motion.button
-              id="chat-send-btn"
-              onClick={handleSend}
-              disabled={!input.trim() || isTyping || isTranscribing}
-              className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
-              style={{
-                padding: '16px 22px',
-                marginRight: '8px',
-              }}
-              whileHover={input.trim() && !isTyping ? { scale: 1.05 } : {}}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Send size={18} color={input.trim() && !isTyping ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
-            </motion.button>
+            <div className="flex items-end gap-1 shrink-0">
+              <motion.button
+                type="button"
+                onClick={isRecording ? handleStopRecording : handleRecordAudio}
+                disabled={isTyping || isTranscribing}
+                className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+                style={{
+                  padding: '16px 18px',
+                }}
+                whileHover={!isTyping && !isTranscribing ? { scale: 1.05 } : {}}
+                whileTap={{ scale: 0.95 }}
+                title={recordButtonTitle}
+              >
+                {isRecording ? (
+                  <Square size={18} color={recordButtonColor} />
+                ) : (
+                  <Mic size={18} color={recordButtonColor} />
+                )}
+              </motion.button>
+              <motion.button
+                id="chat-send-btn"
+                onClick={handleSend}
+                disabled={!input.trim() || isTyping || isTranscribing}
+                className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+                style={{
+                  padding: '16px 22px',
+                }}
+                whileHover={input.trim() && !isTyping ? { scale: 1.05 } : {}}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Send size={18} color={input.trim() && !isTyping ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
+              </motion.button>
+            </div>
           </div>
           <p className="text-xs text-center mt-3" style={{ color: 'var(--text-muted)' }}>
             {isTranscribing

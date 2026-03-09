@@ -85,7 +85,7 @@ class GenerationService:
             )
 
         retrieval_request = {
-            "query": payload.query,
+            "query": self._build_retrieval_query(payload.query, payload.chat_history),
             "mode": payload.mode,
             "top_k_retrieve": payload.top_k_retrieve,
             "top_k_return": payload.top_k_return,
@@ -172,3 +172,77 @@ class GenerationService:
         if not self._settings.generation_block_prompt_attack_queries:
             return False
         return is_prompt_attack_query(query)
+
+    def _build_retrieval_query(self, query: str, chat_history: list[ChatTurn]) -> str:
+        cleaned_query = query.strip()
+        if not cleaned_query or not chat_history:
+            return cleaned_query
+        if not self._is_contextual_follow_up(cleaned_query):
+            return cleaned_query
+
+        previous_user = ""
+        previous_assistant = ""
+        for turn in reversed(chat_history):
+            content = turn.content.strip()
+            if not content:
+                continue
+            if turn.role == "user" and not previous_user:
+                previous_user = content
+            if turn.role == "assistant" and not previous_assistant:
+                previous_assistant = content
+            if previous_user and previous_assistant:
+                break
+
+        context_parts = []
+        if previous_user:
+            context_parts.append(f"Previous user topic: {self._trim_text(previous_user, 400)}")
+        if previous_assistant:
+            context_parts.append(
+                f"Previous assistant answer: {self._trim_text(previous_assistant, 500)}"
+            )
+        context_parts.append(f"Current follow-up request: {cleaned_query}")
+        return "\n".join(context_parts)
+
+    def _is_contextual_follow_up(self, query: str) -> bool:
+        lowered = query.lower()
+        word_count = len(query.split())
+        clarification_markers = (
+            "explain",
+            "clarify",
+            "clarification",
+            "elaborate",
+            "rephrase",
+            "summarize",
+            "translate",
+            "in french",
+            "in english",
+            "in arabic",
+            "in spanish",
+            "in simple terms",
+            "what does that mean",
+            "can you explain",
+            "can you clarify",
+            "peux-tu expliquer",
+            "explique",
+            "explique en",
+            "précise",
+            "precise",
+            "clarifie",
+            "résume",
+            "resume",
+            "traduis",
+            "en français",
+            "en francais",
+        )
+        referential_markers = ("this", "that", "it", "they", "ceci", "cela", "ça", "ca", "le", "la")
+        return (
+            word_count <= 12
+            or any(marker in lowered for marker in clarification_markers)
+            or lowered in referential_markers
+        )
+
+    def _trim_text(self, value: str, max_chars: int) -> str:
+        text = value.strip()
+        if len(text) <= max_chars:
+            return text
+        return f"{text[: max_chars - 3].rstrip()}..."
