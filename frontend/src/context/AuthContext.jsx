@@ -39,8 +39,11 @@ export function AuthProvider({ children }) {
       }
     };
 
-    const enforceAccountState = async (sessionUser = null) => {
-      const currentUser = sessionUser ?? (await supabase.auth.getUser()).data?.user ?? null;
+    const enforceAccountState = async (sessionUser) => {
+      const hasExplicitSessionUser = sessionUser !== undefined;
+      const currentUser = hasExplicitSessionUser
+        ? sessionUser
+        : (await supabase.auth.getUser()).data?.user ?? null;
       if (!currentUser) {
         setUser(null);
         setUserRole(null);
@@ -70,8 +73,7 @@ export function AuthProvider({ children }) {
 
     const verifySessionAccountState = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-      await enforceAccountState();
+      await enforceAccountState(session?.user ?? null);
     };
 
     const intervalId = window.setInterval(() => {

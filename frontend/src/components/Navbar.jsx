@@ -160,7 +160,7 @@ export default function Navbar() {
                 id="sign-out-btn"
                 onClick={async () => {
                   await signOut();
-                  navigate('/');
+                  navigate('/', { replace: true });
                 }}
                 className="p-2 rounded-xl transition-colors hover:bg-danger/10 text-danger"
                 title="Sign out"
