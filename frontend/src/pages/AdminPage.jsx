@@ -14,13 +14,14 @@ import {
   Eye,
   Trash2,
   Ban,
+  AlertTriangle,
 } from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
 import TypingIndicator from '../components/TypingIndicator';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import {
-  askGeneration,
+  askAdminAgent,
   deleteManagedUser,
   indexDocument,
   inviteUser,
@@ -94,7 +95,7 @@ export default function AdminPage() {
       id: '0',
       role: 'assistant',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      content: 'Documents now track embedded state in Supabase. Validate to index once, then it is skipped.',
+      content: 'Alert: this admin chat has advanced privileges and can trigger high-risk operations across the system. Review requests carefully before confirming any action.',
       sources: [],
     },
   ]);
@@ -547,26 +548,71 @@ export default function AdminPage() {
     setAgentInput('');
     setTyping(true);
     try {
-      const normalized = userText.toLowerCase();
-      let content = '';
-      let sources = [];
-      if (normalized.includes('embed validated')) {
-        await embedAllValidated();
-        content = 'Embedding triggered for validated non-embedded documents.';
-      } else if (normalized.includes('refresh') || normalized.includes('status')) {
-        await loadDocuments();
-        content = `Documents loaded. total=${docs.length}, embedded=${docs.filter((d) => d.embedded).length}.`;
-      } else {
-        const history = agentMsgs.filter((m) => m.role === 'user' || m.role === 'assistant').map((m) => ({ role: m.role, content: m.content }));
-        const response = await askGeneration({ query: userText, chatHistory: history });
-        content = response.answer || 'No answer returned by generation service.';
-        sources = Array.isArray(response?.citations)
-          ? [...new Set(response.citations.map((citation) => citation.document_name).filter(Boolean))]
-          : [];
-      }
-      setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources }]);
+      const token = await getAccessToken();
+      const history = agentMsgs
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => ({ role: m.role, content: m.content }));
+      const response = await askAdminAgent(token, {
+        message: userText,
+        sessionId: 'admin-agent',
+        chatHistory: history,
+      });
+      const content = response.answer || 'No answer returned by admin service.';
+      const citations = Array.isArray(response?.citations) ? response.citations : [];
+      const sources = [...new Set(citations.map((citation) => citation.document_name).filter(Boolean))];
+      setAgentMsgs((prev) => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sources,
+        citations,
+        pendingAction: response.pending_action || null,
+        requiresConfirmation: response.requires_confirmation === true,
+        mode: response.mode || 'qa',
+      }]);
     } catch (error) {
       setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: `Request failed: ${error.message}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources: [] }]);
+    } finally {
+      setTyping(false);
+    }
+  };
+
+  const confirmAgentAction = async (messageId, pendingAction) => {
+    if (!pendingAction || typing) return;
+    setTyping(true);
+    setAgentMsgs((prev) => prev.map((msg) => (
+      msg.id === messageId
+        ? { ...msg, requiresConfirmation: false }
+        : msg
+    )));
+    try {
+      const token = await getAccessToken();
+      const history = agentMsgs
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => ({ role: m.role, content: m.content }));
+      const response = await askAdminAgent(token, {
+        message: `Confirm action ${pendingAction.intent}`,
+        sessionId: 'admin-agent',
+        confirm: true,
+        pendingAction,
+        chatHistory: history,
+      });
+      const citations = Array.isArray(response?.citations) ? response.citations : [];
+      const sources = [...new Set(citations.map((citation) => citation.document_name).filter(Boolean))];
+      setAgentMsgs((prev) => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response.answer || 'Admin action completed.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sources,
+        citations,
+        pendingAction: response.pending_action || null,
+        requiresConfirmation: response.requires_confirmation === true,
+        mode: response.mode || 'tool_call',
+      }]);
+    } catch (error) {
+      setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: `Confirmation failed: ${error.message}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources: [] }]);
     } finally {
       setTyping(false);
     }
@@ -960,8 +1006,29 @@ export default function AdminPage() {
                     <div className="max-w-5xl md:-ml-24 lg:-ml-32 xl:-ml-40" style={{ marginLeft: '0', marginRight: 'auto' }}>
                       {agentMsgs.map((msg) => (
                         <motion.div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`} style={{ marginBottom: '32px' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                          {msg.role === 'assistant' && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', boxShadow: '0 0 12px rgba(245,158,11,0.3)' }}><Bot size={15} className="text-white" /></div>}
-                          <div className={`max-w-[80%] rounded-2xl ${msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'}`} style={msg.role === 'user' ? { background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', color: 'white', boxShadow: '0 4px 15px rgba(139,92,246,0.2)', padding: '16px 24px' } : { background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '16px 24px' }}>
+                          {msg.role === 'assistant' && (msg.id === '0' ? (
+                            <div
+                              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1"
+                              style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)', boxShadow: '0 0 14px rgba(220,38,38,0.35)' }}
+                            >
+                              <AlertTriangle size={15} className="text-white" />
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', boxShadow: '0 0 12px rgba(245,158,11,0.3)' }}><Bot size={15} className="text-white" /></div>
+                          ))}
+                          <div
+                            className={`max-w-[80%] rounded-2xl ${msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'}`}
+                            style={msg.role === 'user'
+                              ? { background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', color: 'white', boxShadow: '0 4px 15px rgba(139,92,246,0.2)', padding: '16px 24px' }
+                              : msg.id === '0'
+                                ? {
+                                    background: 'linear-gradient(135deg, rgba(127,29,29,0.96), rgba(185,28,28,0.92))',
+                                    color: '#fee2e2',
+                                    border: '1px solid rgba(252,165,165,0.28)',
+                                    boxShadow: '0 10px 30px rgba(127,29,29,0.22)',
+                                    padding: '16px 24px',
+                                  }
+                                : { background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '16px 24px' }}>
                             <p className="text-sm leading-relaxed whitespace-pre-line my-2">{msg.content}</p>
                             {msg.sources && msg.sources.length > 0 && (
                               <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-color)' }}>
@@ -973,6 +1040,23 @@ export default function AdminPage() {
                                     </span>
                                   ))}
                                 </div>
+                              </div>
+                            )}
+                            {msg.role === 'assistant' && msg.requiresConfirmation && msg.pendingAction && (
+                              <div className="mt-3 flex justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => confirmAgentAction(msg.id, msg.pendingAction)}
+                                  disabled={typing}
+                                  className="inline-flex items-center rounded-lg px-3 py-2 text-xs font-medium disabled:opacity-40"
+                                  style={{
+                                    background: 'rgba(124,58,237,0.14)',
+                                    color: 'var(--color-primary-400)',
+                                    border: '1px solid rgba(124,58,237,0.2)',
+                                  }}
+                                >
+                                  Confirm
+                                </button>
                               </div>
                             )}
                             <p className={`text-xs mt-2 ${msg.role === 'user' ? 'text-white/50' : ''}`} style={msg.role === 'assistant' ? { color: 'var(--text-muted)' } : {}}>{msg.timestamp}</p>

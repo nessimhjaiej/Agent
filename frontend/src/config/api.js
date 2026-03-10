@@ -8,6 +8,7 @@
  * - retrieval-service: 8003
  * - generation-service: 8004
  * - ingestion-service: 8005
+ * - admin-service: 8006
  */
 
 const API = {
@@ -17,6 +18,7 @@ const API = {
   retrieval: '/api/retrieval',
   generation: '/api/generation',
   ingestion: '/api/ingestion',
+  admin: '/api/admin',
 };
 
 async function parseResponse(response) {
@@ -129,6 +131,22 @@ export async function setUserBlock(accessToken, userId, blocked) {
 
 export async function deleteManagedUser(accessToken, userId) {
   return deleteWithAuth(`${API.auth}/admin/users/${userId}`, accessToken);
+}
+
+export async function askAdminAgent(accessToken, {
+  message,
+  sessionId = null,
+  confirm = false,
+  pendingAction = null,
+  chatHistory = [],
+}) {
+  return postJsonWithAuth(`${API.admin}/admin/chat`, {
+    message,
+    session_id: sessionId,
+    confirm,
+    pending_action: pendingAction,
+    chat_history: chatHistory,
+  }, accessToken);
 }
 
 export default API;

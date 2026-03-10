@@ -78,4 +78,4 @@ docker compose down
 
 admin pass : 
 jmemsaif07@gmail.com
-+183461Saif
++Admin123

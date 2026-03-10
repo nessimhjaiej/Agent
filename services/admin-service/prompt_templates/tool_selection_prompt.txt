@@ -1,0 +1,80 @@
+Supported executable tools:
+
+1. `get_pipeline_status`
+Arguments: {}
+Use when the admin asks for service health, stack status, or pipeline availability.
+
+2. `get_embedding_config`
+Arguments: {}
+Use when the admin asks for the current embedding model or embedding configuration.
+
+3. `update_embedding_model`
+Arguments: {"embedding_model": "<model name>"}
+Use when the admin explicitly asks to change the embedding model.
+Usually this should be part of a multi-step plan that also cleans and reindexes the validated corpus.
+This is high risk and must require confirmation.
+
+4. `get_chunking_config`
+Arguments: {}
+Use when the admin asks for the current chunking strategy, chunk size, or chunk overlap.
+
+5. `update_chunking_config`
+Arguments: {"chunk_strategy": "<overlap|semantic|late|sentence>", "chunk_size": 800, "chunk_overlap": 120}
+Use when the admin explicitly asks to change chunking settings.
+Usually this should be part of a multi-step plan that also cleans and reindexes the validated corpus.
+This is high risk and must require confirmation.
+
+6. `get_reranker_config`
+Arguments: {}
+Use when the admin asks for the current reranker or ranker settings.
+
+7. `update_reranker_config`
+Arguments: {"default_ranker": "<none|cross_encoder|llm_batch>", "rerank_top_n": 20}
+Use when the admin explicitly asks to change reranker settings.
+This is high risk and must require confirmation.
+
+8. `delete_document`
+Arguments: {"target_relative_path": "<document path or name>"}
+Use when the admin explicitly asks to delete or remove a single document from the indexed knowledge base.
+This is high risk and must require confirmation.
+
+9. `delete_validated_documents`
+Arguments: {}
+Use when the admin needs a clean rebuild of the validated corpus and old indexed chunks must be removed first.
+This is high risk and must require confirmation.
+
+10. `embed_document`
+Arguments: {"target_relative_path": "<document path or name>"}
+Use when the admin explicitly asks to embed or index one specific document.
+This is high risk and must require confirmation.
+
+11. `embed_validated_documents`
+Arguments: {}
+Use when the admin explicitly asks to embed or index all validated documents.
+This is high risk and must require confirmation.
+
+12. `reindex_corpus`
+Arguments: {}
+Use when the admin explicitly asks to perform a clean corpus rebuild.
+This should usually become a multi-step plan: delete old validated chunks, then embed validated documents.
+This is high risk and must require confirmation.
+
+13. `run_rag_evaluation`
+Arguments: {"dataset_path": "evals/sample_eval_dataset.json"}
+Use when the admin explicitly asks to run a RAG evaluation job.
+This is high risk and must require confirmation.
+
+14. `get_evaluation_report`
+Arguments: {"report_path": "<optional json report path>"}
+Use when the admin asks to fetch the latest evaluation report or a specific report by path.
+
+15. `restart_services`
+Arguments: {"services": ["retrieval-service", "generation-service"], "delay_seconds": 2}
+Use when the admin explicitly asks to restart one or more local backend services.
+This is high risk and must require confirmation.
+
+Planning rule:
+- If a request requires multiple operational steps, return `mode="tool_call"` with a `steps` array.
+- Each `steps[]` item must be a supported executable tool.
+- Use a high-level `tool` label only for the overall action when helpful, for example `apply_chunking_change`.
+- If the request is ambiguous, informational, or better answered conversationally, choose `mode="qa"` and do not invent a tool call.
