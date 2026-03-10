@@ -190,7 +190,7 @@ export default function AdminPage() {
         : response.recovery_link
           ? `Email could not be sent. Share this recovery link: ${response.recovery_link}`
           : `Email could not be sent. Temporary password: ${response.generated_password}`;
-      setInviteMessage(`${deliveryNote} User ${response.email} has been auto-validated.`);
+      setInviteMessage(`${deliveryNote} ${response.message} for ${response.email}. User status remains invited until account setup is completed.`);
       setInviteEmail('');
       await loadManagedUsersData();
     } catch (error) {
@@ -602,7 +602,9 @@ export default function AdminPage() {
   ];
 
   const getManagedUserStatus = (managedUser) => {
+    if (managedUser.status) return managedUser.status;
     if (managedUser.blocked) return 'blocked';
+    if (managedUser.invited) return 'invited';
     if (managedUser.validated) return 'validated';
     return 'pending';
   };
@@ -610,6 +612,7 @@ export default function AdminPage() {
   const userStats = useMemo(() => ({
     total: managedUsers.length,
     validated: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'validated').length,
+    invited: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'invited').length,
     pending: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'pending').length,
     blocked: managedUsers.filter((managedUser) => managedUser.blocked).length,
   }), [managedUsers]);
@@ -623,6 +626,7 @@ export default function AdminPage() {
       || (managedUser.phone_number || '').toLowerCase().includes(query);
     if (!matchesSearch) return false;
     if (userFilter === 'validated') return status === 'validated';
+    if (userFilter === 'invited') return status === 'invited';
     if (userFilter === 'pending') return status === 'pending';
     if (userFilter === 'blocked') return status === 'blocked';
     return true;
@@ -847,12 +851,13 @@ export default function AdminPage() {
                         onChange={(event) => setUserFilter(event.target.value)}
                         className="rounded-xl text-sm outline-none appearance-none"
                         style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', minWidth: '200px', width: '100%', paddingLeft: '24px', paddingRight: '48px' }}
-                      >
-                        <option value="all">All Users</option>
-                        <option value="validated">Validated</option>
-                        <option value="pending">Pending</option>
-                        <option value="blocked">Blocked</option>
-                      </select>
+                        >
+                          <option value="all">All Users</option>
+                          <option value="validated">Validated</option>
+                          <option value="invited">Invited</option>
+                          <option value="pending">Pending</option>
+                          <option value="blocked">Blocked</option>
+                        </select>
                       <ChevronDown
                         size={16}
                         className="pointer-events-none absolute top-1/2 -translate-y-1/2"
@@ -885,10 +890,11 @@ export default function AdminPage() {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 shrink-0" style={{ marginBottom: '16px' }}>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0" style={{ marginBottom: '16px' }}>
                     {[
                       { l: 'Total', v: userStats.total, color: 'var(--color-primary-400)' },
                       { l: 'Validated', v: userStats.validated, color: '#10b981' },
+                      { l: 'Invited', v: userStats.invited, color: '#38bdf8' },
                       { l: 'Pending', v: userStats.pending, color: '#f59e0b' },
                       { l: 'Blocked', v: userStats.blocked, color: '#ef4444' },
                     ].map((s, i) => (
@@ -914,6 +920,8 @@ export default function AdminPage() {
                           const status = getManagedUserStatus(managedUser);
                           const statusCfg = status === 'validated'
                             ? { bg: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)', label: 'Validated' }
+                            : status === 'invited'
+                              ? { bg: 'rgba(56,189,248,0.12)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.25)', label: 'Invited' }
                             : status === 'blocked'
                               ? { bg: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', label: 'Blocked' }
                               : { bg: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)', label: 'Pending' };
@@ -949,7 +957,7 @@ export default function AdminPage() {
                             </td>
                             <td className="px-4 py-4 align-middle w-40">
                               <div className="grid grid-cols-3 justify-items-center items-center gap-2">
-                                {status !== 'validated' ? (
+                                {status !== 'validated' && status !== 'invited' ? (
                                   <button
                                     onClick={() => (status === 'blocked' ? validateAgain(managedUser) : updateValidation(managedUser))}
                                     disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin'}

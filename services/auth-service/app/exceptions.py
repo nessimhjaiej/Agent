@@ -35,3 +35,7 @@ class TokenExpiredException(AuthServiceException):
 
 class AccountLockedException(AuthServiceException):
     """Raised when user account is locked due to too many failed login attempts."""
+
+
+class InvalidUserStateException(AuthServiceException):
+    """Raised when an operation is not allowed for the user's current state."""

@@ -68,6 +68,7 @@ class AdminUserResponse(BaseModel):
     validated: bool
     blocked: bool
     invited: bool
+    status: str
     invited_at: str = ""
     last_sign_in_at: str = ""
 

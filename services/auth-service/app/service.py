@@ -17,6 +17,7 @@ from app.exceptions import (
     InvalidCredentialsException,
     InvalidEmailException,
     InvalidPasswordException,
+    InvalidUserStateException,
     UnauthorizedException,
     UserAlreadyExistsException,
 )
@@ -67,6 +68,47 @@ class AuthService:
         return app_metadata.get("account_blocked") is True or bool(
             getattr(supabase_user, "banned_until", None)
         )
+
+    @staticmethod
+    def _is_invited_pending(supabase_user) -> bool:
+        app_metadata = getattr(supabase_user, "app_metadata", None) or {}
+        user_metadata = getattr(supabase_user, "user_metadata", None) or {}
+        invite_completed = user_metadata.get("invite_onboarding_completed") is True
+        has_signed_in_after_invite = bool(getattr(supabase_user, "last_sign_in_at", None))
+        return (
+            app_metadata.get("invited_by_admin") is True
+            and not invite_completed
+            and not has_signed_in_after_invite
+        )
+
+    def _list_auth_users(self) -> list[Any]:
+        all_users: list[Any] = []
+        page = 1
+        per_page = 200
+
+        while True:
+            users = self._db.auth.admin.list_users(page=page, per_page=per_page)
+            if hasattr(users, "users"):
+                batch = list(getattr(users, "users") or [])
+            elif isinstance(users, list):
+                batch = users
+            else:
+                batch = list(users)
+
+            all_users.extend(batch)
+
+            if len(batch) < per_page:
+                break
+            page += 1
+
+        return all_users
+
+    def _find_user_by_email(self, email: str):
+        normalized_email = email.strip().casefold()
+        for user in self._list_auth_users():
+            if (getattr(user, "email", "") or "").strip().casefold() == normalized_email:
+                return user
+        return None
 
     def _kick_user_sessions(self, user_id: str) -> bool:
         try:
@@ -202,11 +244,17 @@ class AuthService:
             raise UnauthorizedException("Admin access required")
         return requester
 
-    @staticmethod
-    def _map_admin_user(supabase_user) -> dict[str, Any]:
+    @classmethod
+    def _map_admin_user(cls, supabase_user) -> dict[str, Any]:
         user_metadata = supabase_user.user_metadata or {}
         app_metadata = supabase_user.app_metadata or {}
         role = user_metadata.get("role", "user")
+        invited = cls._is_invited_pending(supabase_user)
+        blocked = app_metadata.get("account_blocked") is True or bool(
+            getattr(supabase_user, "banned_until", None)
+        )
+        validated = role == "admin" or app_metadata.get("account_validated") is True
+        status = "blocked" if blocked else "invited" if invited else "validated" if validated else "pending"
         return {
             "id": supabase_user.id,
             "email": supabase_user.email or "",
@@ -216,10 +264,10 @@ class AuthService:
             "role": role,
             "created_at": str(supabase_user.created_at) if supabase_user.created_at else "",
             "email_confirmed": supabase_user.email_confirmed_at is not None,
-            "validated": role == "admin" or app_metadata.get("account_validated") is True,
-            "blocked": app_metadata.get("account_blocked") is True
-            or bool(getattr(supabase_user, "banned_until", None)),
-            "invited": app_metadata.get("invited_by_admin") is True,
+            "validated": validated and not invited,
+            "blocked": blocked,
+            "invited": invited,
+            "status": status,
             "invited_at": str(app_metadata.get("invited_at") or ""),
             "last_sign_in_at": str(getattr(supabase_user, "last_sign_in_at", "") or ""),
         }
@@ -227,7 +275,7 @@ class AuthService:
     def list_users(self, access_token: str) -> list[dict[str, Any]]:
         self._require_admin_token(access_token)
         try:
-            users = self._db.auth.admin.list_users()
+            users = self._list_auth_users()
         except Exception as exc:
             raise AuthServiceException(f"Unable to list users: {exc}") from exc
         return [self._map_admin_user(user) for user in users]
@@ -249,14 +297,11 @@ class AuthService:
         secrets.SystemRandom().shuffle(chars)
         return "".join(chars)
 
-    def _generate_recovery_link(
-        self, recipient_email: str, generated_password: str, login_url: str
-    ) -> str:
+    def _generate_recovery_link(self, recipient_email: str, login_url: str) -> str:
         options = {"redirect_to": login_url} if login_url else {}
         params = {
             "type": "recovery",
             "email": recipient_email,
-            "password": generated_password,
             "options": options,
         }
         response = self._db.auth.admin.generate_link(params)
@@ -264,8 +309,16 @@ class AuthService:
         if action_link:
             return str(action_link)
         properties = getattr(response, "properties", None)
-        if isinstance(properties, dict):
-            return str(properties.get("action_link") or "")
+        if properties:
+            nested_action_link = getattr(properties, "action_link", None)
+            if nested_action_link:
+                return str(nested_action_link)
+            if isinstance(properties, dict):
+                return str(properties.get("action_link") or "")
+        nested_user = getattr(response, "user", None)
+        user_action_link = getattr(nested_user, "action_link", None)
+        if user_action_link:
+            return str(user_action_link)
         return ""
 
     def _send_invite_email(
@@ -277,6 +330,15 @@ class AuthService:
             else ""
         )
         options = {"redirect_to": login_url} if login_url else None
+        recovery_link = ""
+
+        try:
+            recovery_link = self._generate_recovery_link(
+                recipient_email=recipient_email,
+                login_url=login_url,
+            )
+        except Exception:
+            recovery_link = ""
 
         if (
             not self._settings.smtp_host
@@ -289,35 +351,38 @@ class AuthService:
                 self._db.auth.reset_password_email(recipient_email, options)
                 return True, ""
             except Exception:
-                try:
-                    recovery_link = self._generate_recovery_link(
-                        recipient_email=recipient_email,
-                        generated_password=generated_password,
-                        login_url=login_url,
-                    )
-                    if recovery_link:
-                        return False, recovery_link
-                except Exception:
-                    pass
+                if recovery_link:
+                    return False, recovery_link
+                return False, ""
+
+        if not recovery_link:
+            try:
+                self._db.auth.reset_password_email(recipient_email, options)
+                return True, ""
+            except Exception:
                 return False, ""
 
         msg = EmailMessage()
-        msg["Subject"] = "Your ICC Agent account invitation"
+        msg["Subject"] = "Welcome to ICC Agent"
         msg["From"] = f"{self._settings.smtp_from_name} <{self._settings.smtp_from_email}>"
         msg["To"] = recipient_email
         lines = [
-            "You have been invited to ICC Agent.",
+            "Welcome to ICC Agent.",
             "",
-            f"Email: {recipient_email}",
-            f"Temporary password: {generated_password}",
+            f"Hello {recipient_email},",
             "",
-            "Please sign in and complete your account setup:",
-            "- set your username (required)",
-            "- set your own password (required)",
+            "You have been invited to join the platform.",
+            "To complete your sign up, please set your password using the secure link below:",
+            "",
+            recovery_link,
+            "",
+            "After opening the link, complete your account setup:",
+            "- set your password",
+            "- set your username",
             "- phone number and profile picture are optional.",
         ]
         if login_url:
-            lines.extend(["", f"Login URL: {login_url}"])
+            lines.extend(["", f"Login page: {login_url}"])
         msg.set_content("\n".join(lines))
 
         try:
@@ -333,45 +398,53 @@ class AuthService:
                 self._db.auth.reset_password_email(recipient_email, options)
                 return True, ""
             except Exception:
-                try:
-                    recovery_link = self._generate_recovery_link(
-                        recipient_email=recipient_email,
-                        generated_password=generated_password,
-                        login_url=login_url,
-                    )
-                    if recovery_link:
-                        return False, recovery_link
-                except Exception:
-                    pass
+                if recovery_link:
+                    return False, recovery_link
                 return False, ""
 
     def invite_user(self, access_token: str, email: str, role: str = "user") -> dict[str, Any]:
         admin_user = self._require_admin_token(access_token)
         generated_password = self._generate_password()
+        existing_user = self._find_user_by_email(email)
+        message = "Invitation created"
 
         try:
-            response = self._db.auth.admin.create_user(
-                {
-                    "email": email,
-                    "password": generated_password,
-                    "email_confirm": True,
-                    "user_metadata": {
-                        "role": role,
-                        "username": "",
-                        "phone_number": "",
-                        "profile_picture": "",
-                        "invite_onboarding_completed": False,
+            payload = {
+                "email": email,
+                "password": generated_password,
+                "email_confirm": True,
+                "user_metadata": {
+                    "role": role,
+                    "username": "",
+                    "phone_number": "",
+                    "profile_picture": "",
+                    "invite_onboarding_completed": False,
+                },
+                "app_metadata": {
+                    "account_validated": True,
+                    "account_blocked": False,
+                    "invited_by_admin": True,
+                    "invited_by": admin_user.id,
+                    "invited_at": datetime.now(timezone.utc).isoformat(),
+                },
+            }
+
+            if existing_user:
+                if not self._is_invited_pending(existing_user):
+                    raise UserAlreadyExistsException("User with this email already exists")
+                response = self._db.auth.admin.update_user_by_id(
+                    existing_user.id,
+                    {
+                        **payload,
+                        "ban_duration": "none",
                     },
-                    "app_metadata": {
-                        "account_validated": True,
-                        "account_blocked": False,
-                        "invited_by_admin": True,
-                        "invited_by": admin_user.id,
-                        "invited_at": datetime.now(timezone.utc).isoformat(),
-                    },
-                }
-            )
+                )
+                message = "Invitation refreshed"
+            else:
+                response = self._db.auth.admin.create_user(payload)
         except Exception as exc:
+            if isinstance(exc, UserAlreadyExistsException):
+                raise
             error_msg = str(exc).lower()
             if "already registered" in error_msg or "already been registered" in error_msg:
                 raise UserAlreadyExistsException("User with this email already exists") from exc
@@ -401,7 +474,7 @@ class AuthService:
 
         return {
             "success": True,
-            "message": "Invitation created",
+            "message": message,
             "user_id": response.user.id,
             "email": email,
             "generated_password": generated_password,
@@ -414,6 +487,10 @@ class AuthService:
 
         try:
             current = self._db.auth.admin.get_user_by_id(user_id)
+            if validated and self._is_invited_pending(current.user):
+                raise InvalidUserStateException(
+                    "Invited users must complete account setup before they can be validated."
+                )
             current_app_metadata = current.user.app_metadata or {}
             current_app_metadata["account_validated"] = validated
             updated = self._db.auth.admin.update_user_by_id(
@@ -422,6 +499,8 @@ class AuthService:
                     "app_metadata": current_app_metadata,
                 },
             )
+        except InvalidUserStateException:
+            raise
         except Exception as exc:
             raise AuthServiceException(f"Failed to update validation: {exc}") from exc
 
