@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, Eye, EyeOff, KeyRound, CheckCircle } from 'lucide-react';
+import { getPasswordChecks, PASSWORD_POLICY_MESSAGE } from '../utils/passwordPolicy';
 
 export default function ChangePasswordModal({ isOpen, onClose, onSubmit }) {
   const [nextPassword, setNextPassword] = useState('');
@@ -12,12 +13,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSubmit }) {
   const [success, setSuccess] = useState('');
 
   const passwordChecks = useMemo(
-    () => ({
-      minLength: nextPassword.length >= 8,
-      hasUpper: /[A-Z]/.test(nextPassword),
-      hasLower: /[a-z]/.test(nextPassword),
-      hasDigit: /\d/.test(nextPassword),
-    }),
+    () => getPasswordChecks(nextPassword),
     [nextPassword]
   );
 
@@ -45,7 +41,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSubmit }) {
     setSuccess('');
 
     if (!isStrongPassword) {
-      setError('Password must include at least 8 chars, upper/lower case, and a number.');
+      setError(PASSWORD_POLICY_MESSAGE);
       return;
     }
     if (!passwordsMatch) {
@@ -122,15 +118,15 @@ export default function ChangePasswordModal({ isOpen, onClose, onSubmit }) {
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="flex flex-col gap-3" style={{ marginTop: '4px' }}>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4" style={{ marginTop: '12px' }}>
                 <div
                   className="flex items-center gap-3 rounded-xl transition-all input-glow"
                   style={{
                     border: '1px solid var(--border-color)',
                     background: 'var(--bg-tertiary)',
                     minHeight: '52px',
-                    paddingLeft: '16px',
-                    paddingRight: '16px',
+                    paddingLeft: '20px',
+                    paddingRight: '20px',
                   }}
                 >
                   <Lock size={16} style={{ color: 'var(--text-muted)' }} />
@@ -160,8 +156,8 @@ export default function ChangePasswordModal({ isOpen, onClose, onSubmit }) {
                     border: '1px solid var(--border-color)',
                     background: 'var(--bg-tertiary)',
                     minHeight: '52px',
-                    paddingLeft: '16px',
-                    paddingRight: '16px',
+                    paddingLeft: '20px',
+                    paddingRight: '20px',
                   }}
                 >
                   <Lock size={16} style={{ color: 'var(--text-muted)' }} />
@@ -200,6 +196,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSubmit }) {
                     <p style={{ color: passwordChecks.hasUpper ? '#10b981' : 'var(--text-secondary)' }}>One uppercase letter</p>
                     <p style={{ color: passwordChecks.hasLower ? '#10b981' : 'var(--text-secondary)' }}>One lowercase letter</p>
                     <p style={{ color: passwordChecks.hasDigit ? '#10b981' : 'var(--text-secondary)' }}>One number</p>
+                    <p style={{ color: passwordChecks.hasSpecial ? '#10b981' : 'var(--text-secondary)' }}>One special character</p>
                   </div>
                 </div>
 
@@ -241,6 +238,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSubmit }) {
                       color: 'var(--text-secondary)',
                       border: '1px solid var(--border-color)',
                       minHeight: '44px',
+                      minWidth: '140px',
                     }}
                   >
                     Cancel

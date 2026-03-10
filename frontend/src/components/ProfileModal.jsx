@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, User, Phone, Mail, Lock, CheckCircle } from 'lucide-react';
+import { isPasswordStrong, PASSWORD_POLICY_MESSAGE } from '../utils/passwordPolicy';
 
 export default function ProfileModal({
   isOpen,
@@ -55,8 +56,8 @@ export default function ProfileModal({
       setError('Username is required.');
       return;
     }
-    if (requirePassword && newPassword.trim().length < 8) {
-      setError('Password is required and must be at least 8 characters.');
+    if ((requirePassword || newPassword.trim()) && !isPasswordStrong(newPassword.trim())) {
+      setError(PASSWORD_POLICY_MESSAGE);
       return;
     }
 
@@ -242,10 +243,15 @@ export default function ProfileModal({
                 )}
 
                 {(requirePassword || lockUntilComplete) && (
-                  <div className="flex items-center gap-3 rounded-xl" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', minHeight: '52px', paddingLeft: '16px', paddingRight: '16px' }}>
-                    <Lock size={16} style={{ color: 'var(--text-muted)' }} />
-                    <input id="profile-password" type="password" placeholder={lockUntilComplete ? 'Set password (required)' : 'New password (optional)'} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={requirePassword ? 8 : 0} required={requirePassword} className="flex-1 bg-transparent outline-none text-sm" style={{ color: 'var(--text-primary)' }} />
-                  </div>
+                  <>
+                    <div className="flex items-center gap-3 rounded-xl" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', minHeight: '52px', paddingLeft: '16px', paddingRight: '16px' }}>
+                      <Lock size={16} style={{ color: 'var(--text-muted)' }} />
+                      <input id="profile-password" type="password" placeholder={lockUntilComplete ? 'Set password (required)' : 'New password (optional)'} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={8} required={requirePassword} className="flex-1 bg-transparent outline-none text-sm" style={{ color: 'var(--text-primary)' }} />
+                    </div>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      Password must be at least 8 characters and include uppercase, lowercase, number, and special character.
+                    </p>
+                  </>
                 )}
 
                 {error && (

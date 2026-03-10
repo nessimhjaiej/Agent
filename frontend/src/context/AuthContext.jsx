@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { isPasswordStrong, PASSWORD_POLICY_MESSAGE } from '../utils/passwordPolicy';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -190,6 +191,9 @@ export function AuthProvider({ children }) {
 
   const signUp = async ({ email, password, phoneNumber = '' }) => {
     if (!supabase) throw new Error('Supabase not configured');
+    if (!isPasswordStrong(password)) {
+      throw new Error(PASSWORD_POLICY_MESSAGE);
+    }
     const username = deriveUsernameFromEmail(email);
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -258,6 +262,9 @@ export function AuthProvider({ children }) {
         },
       };
       if (newPassword && newPassword.trim()) {
+        if (!isPasswordStrong(newPassword.trim())) {
+          throw new Error(PASSWORD_POLICY_MESSAGE);
+        }
         attributes.password = newPassword.trim();
       }
 
@@ -275,6 +282,9 @@ export function AuthProvider({ children }) {
 
   const updatePassword = async (newPassword) => {
     if (!supabase) throw new Error('Supabase not configured');
+    if (!isPasswordStrong(newPassword)) {
+      throw new Error(PASSWORD_POLICY_MESSAGE);
+    }
     const { data, error } = await supabase.auth.updateUser({
       password: newPassword,
     });

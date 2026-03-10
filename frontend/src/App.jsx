@@ -21,6 +21,7 @@ export default function App() {
   const { loading, user, userRole } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const authenticatedHome = userRole === 'admin' ? '/admin' : '/';
 
   // Splash screen timer
   useEffect(() => {
@@ -56,6 +57,10 @@ export default function App() {
 
   // Login page has its own layout
   if (location.pathname === '/login') {
+    if (user) {
+      return <Navigate to={authenticatedHome} replace />;
+    }
+
     return (
       <AnimatePresence mode="wait">
         <LoginPage key="login" />

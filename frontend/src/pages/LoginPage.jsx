@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Scale, CheckCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AnimatedPage from '../components/AnimatedPage';
+import { isPasswordStrong, PASSWORD_POLICY_MESSAGE } from '../utils/passwordPolicy';
 
 export default function LoginPage() {
   const [mode, setMode] = useState('signin');
@@ -26,6 +27,9 @@ export default function LoginPage() {
         const role = data?.user?.user_metadata?.role;
         navigate(role === 'admin' ? '/admin' : '/');
       } else {
+        if (!isPasswordStrong(password)) {
+          throw new Error(PASSWORD_POLICY_MESSAGE);
+        }
         await signUp({
           email,
           password,
@@ -188,6 +192,12 @@ export default function LoginPage() {
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+
+                {mode === 'signup' && (
+                  <p className="text-xs px-1" style={{ color: 'var(--text-secondary)' }}>
+                    Password must be at least 8 characters and include uppercase, lowercase, number, and special character.
+                  </p>
+                )}
 
                 {error && (
                   <motion.p
