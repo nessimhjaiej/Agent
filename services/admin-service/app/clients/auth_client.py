@@ -16,7 +16,12 @@ class AuthClient(BaseHttpClient):
 
     def require_admin(self, access_token: str) -> dict:
         if self._supabase_url and self._supabase_key:
-            return self._require_admin_via_supabase(access_token)
+            try:
+                return self._require_admin_via_supabase(access_token)
+            except UpstreamServiceError as exc:
+                if self._should_fallback_to_auth_service(str(exc)):
+                    return self._require_admin_via_auth_service(access_token)
+                raise
         return self._require_admin_via_auth_service(access_token)
 
     def _require_admin_via_supabase(self, access_token: str) -> dict:
@@ -55,6 +60,10 @@ class AuthClient(BaseHttpClient):
             "email": str(payload.get("email", "")),
             "role": role,
         }
+
+    def _should_fallback_to_auth_service(self, message: str) -> bool:
+        lowered = message.lower()
+        return "session_not_found" in lowered or "session from session_id claim in jwt does not exist" in lowered
 
     def _require_admin_via_auth_service(self, access_token: str) -> dict:
         try:

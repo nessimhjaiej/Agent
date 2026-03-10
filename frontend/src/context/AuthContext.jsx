@@ -143,7 +143,19 @@ export function AuthProvider({ children }) {
   const getAccessToken = async () => {
     if (!supabase) return '';
     const { data } = await supabase.auth.getSession();
-    return data?.session?.access_token || '';
+    let session = data?.session ?? null;
+    if (!session) return '';
+
+    const expiresAt = typeof session.expires_at === 'number' ? session.expires_at : 0;
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (expiresAt !== 0 && expiresAt - nowSeconds <= 60) {
+      const { data: refreshData, error } = await supabase.auth.refreshSession();
+      if (!error && refreshData?.session) {
+        session = refreshData.session;
+      }
+    }
+
+    return session?.access_token || '';
   };
 
   const signOut = async () => {

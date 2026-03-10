@@ -142,6 +142,34 @@ def test_get_evaluation_report_tool_loads_latest_report(tmp_path: Path) -> None:
     assert response.status == "ok"
     assert response.result["sample_count"] == 3
     assert response.result["summary"]["faithfulness"] == 0.8
+    assert "Overall" in response.answer
+    assert "Metrics" in response.answer
+
+
+def test_get_evaluation_report_tool_falls_back_to_any_json_report(tmp_path: Path) -> None:
+    generation_dir = tmp_path / "services" / "generation-service"
+    reports_dir = generation_dir / "evaluation_reports"
+    reports_dir.mkdir(parents=True)
+    report_path = reports_dir / "ragas report sample.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "generated_at_utc": "2026-03-10T12:00:00+00:00",
+                "dataset_path": "evals/sample_eval_dataset.json",
+                "sample_count": 1,
+                "summary": {"faithfulness": 0.7},
+                "records": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    tool = GetEvaluationReportTool(report_store=EvaluationReportStore(project_root=tmp_path))
+    response = tool.execute({})
+
+    assert response.status == "ok"
+    assert response.result["sample_count"] == 1
+    assert "Faithfulness" in response.answer
 
 
 def test_restart_services_tool_schedules_script(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001

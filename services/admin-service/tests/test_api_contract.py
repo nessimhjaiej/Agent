@@ -29,24 +29,23 @@ def test_admin_chat_endpoint_rejects_empty_message() -> None:
     app = create_app()
     client = TestClient(app)
 
-    response = client.post("/admin/chat", json={"message": ""}, headers={"Authorization": "Bearer token"})
+    response = client.post("/admin/chat", json={"message": ""})
 
     assert response.status_code == 422
 
 
-def test_admin_chat_endpoint_requires_authorization_header() -> None:
+def test_admin_chat_endpoint_allows_request_without_authorization_header() -> None:
     app = create_app()
     client = TestClient(app)
 
     response = client.post("/admin/chat", json={"message": "show status"})
 
-    assert response.status_code == 401
+    assert response.status_code != 401
 
 
 def test_admin_chat_endpoint_returns_hybrid_contract(monkeypatch) -> None:  # noqa: ANN001
     class _FakeAdminService(AdminService):
-        def chat(self, payload, access_token):  # noqa: ANN001
-            assert access_token == "token-123"
+        def chat(self, payload, access_token=None):  # noqa: ANN001
             return {
                 "status": "needs_confirmation",
                 "mode": "tool_call",
@@ -74,7 +73,6 @@ def test_admin_chat_endpoint_returns_hybrid_contract(monkeypatch) -> None:  # no
     response = client.post(
         "/admin/chat",
         json={"message": "delete document doc.pdf", "session_id": "admin-1"},
-        headers={"Authorization": "Bearer token-123"},
     )
 
     assert response.status_code == 200

@@ -18,7 +18,11 @@ from app.tools.config_tools import (
     UpdateEmbeddingModelTool,
     UpdateRerankerConfigTool,
 )
-from app.tools.evaluation_tools import GetEvaluationReportTool, RunRagEvaluationTool
+from app.tools.evaluation_tools import (
+    EvaluationReportSummarizer,
+    GetEvaluationReportTool,
+    RunRagEvaluationTool,
+)
 from app.tools.knowledge_tools import (
     DeleteDocumentTool,
     DeleteDocumentsBatchTool,
@@ -45,6 +49,15 @@ class AdminOrchestrator:
         self._selector = selector or ToolSelector(settings)
         self._security_client = security_client or SecurityClient(settings)
         ingestion_client = IngestionClient(settings)
+        summarizer = (
+            EvaluationReportSummarizer(
+                api_key=settings.openai_key,
+                model=settings.planner_model,
+                timeout_seconds=settings.http_timeout_seconds,
+            )
+            if settings.openai_key
+            else None
+        )
         self._registry = registry or ToolRegistry(
             tools=[
                 GetPipelineStatusTool(
@@ -66,8 +79,8 @@ class AdminOrchestrator:
                 EmbedDocumentTool(ingestion_client=ingestion_client),
                 EmbedValidatedDocumentsTool(ingestion_client=ingestion_client),
                 ReindexCorpusTool(ingestion_client=ingestion_client),
-                RunRagEvaluationTool(),
-                GetEvaluationReportTool(),
+                RunRagEvaluationTool(summarizer=summarizer),
+                GetEvaluationReportTool(summarizer=summarizer),
                 RestartServicesTool(),
             ]
         )
