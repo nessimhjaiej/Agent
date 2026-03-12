@@ -7,6 +7,7 @@ if str(SERVICE_ROOT) not in sys.path:
 
 from app.config import Settings  # noqa: E402
 from app.models import AdminChatTurn, AdminRequestContext, PlanStep, PlannedAction, PendingAction  # noqa: E402
+from app.operation_history import AdminOperationHistoryStore  # noqa: E402
 from app.orchestrator import AdminOrchestrator  # noqa: E402
 
 
@@ -71,6 +72,36 @@ class _FakeGenerationClient:
         }
 
 
+class _FakeExplainerClient:
+    def complete_text(self, system_prompt: str, user_prompt: str) -> str:
+        assert "Previous assistant response to explain" in user_prompt
+        return "It means the setting was written, but the rest of the operational follow-up did not run yet."
+
+
+class _FakeRetrievalClient:
+    def __init__(self, payload: dict) -> None:
+        self._payload = payload
+
+    def search(
+        self,
+        query: str,
+        mode: str = "hybrid",
+        top_k_retrieve: int = 12,
+        top_k_return: int = 12,
+        filters: dict | None = None,
+    ) -> dict:
+        assert query
+        return self._payload
+
+
+class _FakeSupabaseDocumentsClient:
+    def __init__(self, documents: list[dict] | None = None) -> None:
+        self._documents = documents or []
+
+    def list_documents(self) -> list[dict]:
+        return list(self._documents)
+
+
 def test_orchestrator_requires_confirmation_for_delete_document() -> None:
     security_client = _FakeSecurityClient()
     orchestrator = AdminOrchestrator(
@@ -90,15 +121,18 @@ def test_orchestrator_requires_confirmation_for_delete_document() -> None:
         ),
         security_client=security_client,  # type: ignore[arg-type]
         generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
     )
 
-    response = orchestrator.handle(AdminRequestContext(message="delete document doc.pdf"))
+    response = orchestrator.handle(AdminRequestContext(message="delete document doc.pdf", selected_mode="plan"))
 
     assert response.status == "needs_confirmation"
     assert response.mode == "tool_call"
     assert response.executed is False
     assert response.pending_action is not None
     assert response.pending_action.tool == "delete_document"
+    assert response.thinking_summary
+    assert response.activity[0].phase == "planning"
 
 
 def test_orchestrator_executes_confirmed_pending_action() -> None:
@@ -120,11 +154,13 @@ def test_orchestrator_executes_confirmed_pending_action() -> None:
         ),
         security_client=security_client,  # type: ignore[arg-type]
         generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
     )
 
     response = orchestrator.handle(
         AdminRequestContext(
             message="Confirm deletion",
+            selected_mode="plan",
             confirm=True,
             pending_action=PendingAction(
                 intent="delete_document",
@@ -138,6 +174,7 @@ def test_orchestrator_executes_confirmed_pending_action() -> None:
     assert response.mode == "tool_call"
     assert response.executed is True
     assert response.answer == "Document deleted."
+    assert response.activity[1].tool == "delete_document"
 
 
 def test_orchestrator_routes_qa_requests_to_generation_service() -> None:
@@ -149,11 +186,13 @@ def test_orchestrator_routes_qa_requests_to_generation_service() -> None:
         registry=_FakeRegistry({}),
         security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
         generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
     )
 
     response = orchestrator.handle(
         AdminRequestContext(
             message="Explain the current setup.",
+            selected_mode="qa",
             chat_history=[AdminChatTurn(role="user", content="Previous admin question")],
         )
     )
@@ -162,6 +201,7 @@ def test_orchestrator_routes_qa_requests_to_generation_service() -> None:
     assert response.mode == "qa"
     assert response.answer == "Here is the explanation."
     assert response.citations[0].document_name == "doc-1.pdf"
+    assert response.activity[0].phase == "planning"
 
 
 def test_orchestrator_executes_multi_step_plan_after_confirmation() -> None:
@@ -192,11 +232,13 @@ def test_orchestrator_executes_multi_step_plan_after_confirmation() -> None:
         ),
         security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
         generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
     )
 
     response = orchestrator.handle(
         AdminRequestContext(
             message="Confirm chunking change",
+            selected_mode="plan",
             confirm=True,
             pending_action=PendingAction(
                 intent="apply_chunking_change",
@@ -216,3 +258,234 @@ def test_orchestrator_executes_multi_step_plan_after_confirmation() -> None:
     assert response.executed is True
     assert response.result["step_count"] == 3
     assert response.result["steps"][0]["tool"] == "update_chunking_config"
+    assert response.activity[1].tool == "update_chunking_config"
+
+
+def test_orchestrator_in_qa_mode_uses_generation_flow_for_follow_up_text() -> None:
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(
+            PlannedAction(
+                mode="qa",
+                intent="explain_last_agent_response",
+                tool_name=None,
+                arguments={"assistant_message": "Updated chunking configuration in '.env.local'."},
+            )
+        ),
+        registry=_FakeRegistry({}),
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        explainer_client=_FakeExplainerClient(),  # type: ignore[arg-type]
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    response = orchestrator.handle(
+        AdminRequestContext(
+            message="Explain the current setup.",
+            selected_mode="qa",
+            chat_history=[AdminChatTurn(role="user", content="Previous admin question")],
+        )
+    )
+
+    assert response.status == "ok"
+    assert response.intent == "qa"
+    assert response.answer == "Here is the explanation."
+
+
+def test_orchestrator_uses_semantic_search_to_prepare_batch_delete() -> None:
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(
+            PlannedAction(
+                mode="tool_call",
+                intent="delete_document",
+                tool_name="delete_document",
+                arguments={
+                    "target_relative_path": "UNKNOWN_DOCUMENT",
+                    "document_query": "delete files that contain information from 2023 and are pdf",
+                },
+                answer="Deleting document 'UNKNOWN_DOCUMENT' will remove its indexed chunks. Confirm to proceed.",
+                requires_confirmation=True,
+            )
+        ),
+        registry=_FakeRegistry({}),
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        retrieval_client=_FakeRetrievalClient(
+            {
+                "chunks": [
+                    {
+                        "chunk_id": "a:0",
+                        "document_id": "a",
+                        "chunk_text": "This 2023 cybersecurity brief covers resilience.",
+                        "metadata": {
+                            "source_uri": "/shared/raw_data/supabase/validated/user/2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf"
+                        },
+                    },
+                    {
+                        "chunk_id": "b:0",
+                        "document_id": "b",
+                        "chunk_text": "The 2023 paper discusses non-cyber topics.",
+                        "metadata": {
+                            "source_uri": "/shared/raw_data/supabase/validated/user/2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf"
+                        },
+                    },
+                ]
+            }
+        ),  # type: ignore[arg-type]
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    response = orchestrator.handle(
+        AdminRequestContext(message="delete files that contain information from 2023 and are pdf", selected_mode="plan")
+    )
+
+    assert response.status == "needs_confirmation"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "delete_documents_batch"
+    assert len(response.pending_action.arguments["target_relative_paths"]) == 2
+    assert "2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf" in response.answer
+
+
+def test_orchestrator_year_filter_prefers_document_title_over_chunk_mentions() -> None:
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(
+            PlannedAction(
+                mode="tool_call",
+                intent="delete_document",
+                tool_name="delete_document",
+                arguments={
+                    "target_relative_path": "UNKNOWN_DOCUMENT",
+                    "document_query": "delete only the document from 2021",
+                },
+                answer="Deleting document 'UNKNOWN_DOCUMENT' will remove its indexed chunks. Confirm to proceed.",
+                requires_confirmation=True,
+            )
+        ),
+        registry=_FakeRegistry({}),
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        retrieval_client=_FakeRetrievalClient(
+            {
+                "chunks": [
+                    {
+                        "chunk_id": "a:0",
+                        "document_id": "a",
+                        "chunk_text": "This 2023 file references 2021 in passing.",
+                        "metadata": {
+                            "source_uri": "/shared/raw_data/supabase/validated/user/ICC_PolicyPrimer_NonPersonalData_October2023.pdf"
+                        },
+                    },
+                    {
+                        "chunk_id": "b:0",
+                        "document_id": "b",
+                        "chunk_text": "This issue brief is from 2021.",
+                        "metadata": {
+                            "source_uri": "/shared/raw_data/supabase/validated/user/2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf"
+                        },
+                    },
+                ]
+            }
+        ),  # type: ignore[arg-type]
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    response = orchestrator.handle(
+        AdminRequestContext(message="delete only the document from 2021", selected_mode="plan")
+    )
+
+    assert response.status == "needs_confirmation"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "delete_document"
+    assert response.pending_action.arguments["target_relative_path"] == "supabase/validated/user/2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf"
+
+
+def test_orchestrator_builds_revert_plan_from_session_history(tmp_path: Path) -> None:
+    history_store = AdminOperationHistoryStore(history_path=tmp_path / "history.json")
+    history_store.append(
+        {
+            "session_id": "admin-1",
+            "tool_name": "update_reranker_config",
+            "arguments": {"default_ranker": "cross_encoder", "restart_services": ["retrieval-service"]},
+            "rollback": {
+                "tool": "update_reranker_config",
+                "arguments": {"default_ranker": "none", "rerank_top_n": 20},
+            },
+            "reversible": True,
+            "restart_services": ["retrieval-service", "generation-service", "admin-service"],
+        }
+    )
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(
+            PlannedAction(
+                mode="tool_call",
+                intent="revert_changes",
+                tool_name="revert_changes",
+                arguments={"count": 1, "tool_names": ["update_reranker_config"]},
+                requires_confirmation=True,
+            )
+        ),
+        registry=_FakeRegistry({}),
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        history_store=history_store,
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    response = orchestrator.handle(
+        AdminRequestContext(
+            message="revert the last reranker change",
+            selected_mode="plan",
+            session_id="admin-1",
+        )
+    )
+
+    assert response.status == "needs_confirmation"
+    assert response.pending_action is not None
+    assert response.pending_action.steps[0].tool == "update_reranker_config"
+    assert response.pending_action.steps[-1].tool == "restart_services"
+
+
+def test_orchestrator_in_qa_mode_routes_directly_to_generation_service() -> None:
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(PlannedAction(mode="tool_call", intent="get_pipeline_status", tool_name="get_pipeline_status")),
+        registry=_FakeRegistry({}),
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    response = orchestrator.handle(
+        AdminRequestContext(message="Explain the current setup.", selected_mode="qa", chat_history=[AdminChatTurn(role="user", content="Previous admin question")])
+    )
+
+    assert response.status == "ok"
+    assert response.mode == "qa"
+    assert response.executed is True
+    assert response.answer == "Here is the explanation."
+
+
+def test_orchestrator_in_plan_mode_instructs_switch_for_informational_request() -> None:
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(
+            PlannedAction(mode="qa", intent="qa", tool_name=None, arguments={})
+        ),
+        registry=_FakeRegistry({}),
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    response = orchestrator.handle(
+        AdminRequestContext(message="Explain the current setup.", selected_mode="plan")
+    )
+
+    assert response.status == "ok"
+    assert response.mode == "qa"
+    assert response.executed is False
+    assert response.result["suggested_mode"] == "qa"
+    assert "Switch to Q&A mode" in response.answer

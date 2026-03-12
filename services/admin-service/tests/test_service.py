@@ -12,6 +12,7 @@ class _FakeOrchestrator:
         return {
             "status": "ok",
             "mode": "qa",
+            "selected_mode": "qa",
             "session_id": context.session_id,
             "message": context.message,
             "answer": "Admin answer.",
@@ -22,16 +23,19 @@ class _FakeOrchestrator:
             "executed": True,
             "pending_action": None,
             "citations": [],
+            "thinking_summary": "Handled as admin Q&A.",
+            "activity": [],
             "result": {},
         }
 
 def test_service_maps_request_to_orchestrator_response() -> None:
     service = AdminService(orchestrator=_FakeOrchestrator())  # type: ignore[arg-type]
-    payload = AdminChatRequest(message="show pipeline status", session_id="session-1")
+    payload = AdminChatRequest(message="show pipeline status", selected_mode="qa", session_id="session-1")
 
     response = service.chat(payload)
 
     assert response["status"] == "ok"
     assert response["mode"] == "qa"
+    assert response["selected_mode"] == "qa"
     assert response["session_id"] == "session-1"
     assert response["intent"] == "qa"

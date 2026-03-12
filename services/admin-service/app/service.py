@@ -14,8 +14,17 @@ class AdminService:
         self._orchestrator = orchestrator or AdminOrchestrator(settings=self._settings)
 
     def chat(self, payload: AdminChatRequest, access_token: str | None = None) -> AdminChatResponse:
+        context = self._build_context(payload)
+        return self._orchestrator.handle(context)
+
+    def stream_chat(self, payload: AdminChatRequest):
+        context = self._build_context(payload)
+        return self._orchestrator.stream(context)
+
+    def _build_context(self, payload: AdminChatRequest) -> AdminRequestContext:
         context = AdminRequestContext(
             message=payload.message,
+            selected_mode=payload.selected_mode,
             session_id=payload.session_id,
             confirm=payload.confirm,
             actor=None,
@@ -36,4 +45,4 @@ class AdminService:
                 AdminChatTurn(role=item.role, content=item.content) for item in payload.chat_history
             ],
         )
-        return self._orchestrator.handle(context)
+        return context

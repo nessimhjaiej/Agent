@@ -11,11 +11,22 @@ if str(SERVICE_ROOT) not in sys.path:
 
 from app.planner.confirmation import needs_confirmation  # noqa: E402
 from app.planner.intent_parser import IntentParser  # noqa: E402
-from app.tools.config_tools import UpdateChunkingConfigTool, UpdateEmbeddingModelTool  # noqa: E402
+from app.planner.tool_selector import ToolSelector  # noqa: E402
+from app.models import AdminRequestContext, PlanStep, PlannedAction  # noqa: E402
+from app.tools.config_tools import UpdateChunkingConfigTool, UpdateEmbeddingModelTool, UpdateRerankerConfigTool  # noqa: E402
+from app.tools.base import ToolMetadata  # noqa: E402
 from app.tools.env_store import EnvConfigStore  # noqa: E402
 from app.tools.evaluation_tools import EvaluationReportStore, GetEvaluationReportTool  # noqa: E402
-from app.tools.knowledge_tools import DeleteValidatedDocumentsTool, EmbedDocumentTool  # noqa: E402
+from app.tools.knowledge_tools import (
+    DeleteDocumentTool,
+    DeleteValidatedDocumentsTool,
+    EmbedDocumentTool,
+    resolve_synced_supabase_reference,
+    resolve_supabase_document_reference,
+)  # noqa: E402
+from app.tools.registry import ToolRegistry  # noqa: E402
 from app.tools.restart_tools import RestartServicesTool  # noqa: E402
+from app.config import Settings  # noqa: E402
 
 
 class _FakeIngestionClient:
@@ -49,6 +60,49 @@ class _FakeIngestionClient:
         }
 
 
+class _FakeSupabaseDocumentsClient:
+    def __init__(self, documents: list[dict] | None = None) -> None:
+        self._documents = documents or []
+        self.deleted_storage_paths: list[str] = []
+
+    def list_documents(self) -> list[dict]:
+        return list(self._documents)
+
+    def delete_document(self, storage_path: str) -> dict:
+        self.deleted_storage_paths.append(storage_path)
+        return {
+            "storage_path": storage_path,
+            "documents_deleted": 1,
+            "document": next(
+                (item for item in self._documents if item.get("storage_path") == storage_path),
+                {"storage_path": storage_path},
+            ),
+        }
+
+
+class _PlannerOnlyTool:
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.metadata = ToolMetadata(
+            name=name,
+            description=f"Tool {name}",
+            arguments_schema={"value": {"type": "string", "required": False}},
+            output_description="returns a status payload",
+            requires_confirmation=name.startswith("update"),
+        )
+
+    def execute(self, arguments: dict):  # noqa: ANN001
+        raise AssertionError("Not used in these tests")
+
+
+class _FakeLLMPlanner:
+    def __init__(self, planned_action: PlannedAction | None) -> None:
+        self._planned_action = planned_action
+
+    def plan(self, context: AdminRequestContext) -> PlannedAction | None:
+        return self._planned_action
+
+
 def test_embed_document_tool_indexes_target_path() -> None:
     client = _FakeIngestionClient()
     tool = EmbedDocumentTool(ingestion_client=client)  # type: ignore[arg-type]
@@ -58,6 +112,63 @@ def test_embed_document_tool_indexes_target_path() -> None:
     assert response.status == "ok"
     assert client.index_calls[0]["target_relative_path"] == "supabase/validated/u/doc.pdf"
     assert response.result["indexed_count"] == 4
+
+
+def test_resolve_supabase_document_reference_matches_documents_table_rows() -> None:
+    resolution = resolve_supabase_document_reference(
+        "delete the cybersecurity document",
+        documents=[
+            {
+                "original_name": "cybersecurity-policy.pdf",
+                "storage_path": "validated/user/cybersecurity-policy.pdf",
+            }
+        ],
+    )
+
+    assert resolution["status"] == "resolved"
+    assert resolution["storage_path"] == "validated/user/cybersecurity-policy.pdf"
+
+
+def test_resolve_synced_supabase_reference_matches_local_mirror(tmp_path: Path) -> None:
+    mirrored = tmp_path / "shared" / "raw_data" / "supabase" / "validated" / "user"
+    mirrored.mkdir(parents=True)
+    (mirrored / "2023-cybersecurity-policy.pdf").write_text("x", encoding="utf-8")
+
+    resolution = resolve_synced_supabase_reference(
+        "delete the 2023 cybersecurity document",
+        raw_root=str(tmp_path / "shared" / "raw_data" / "supabase"),
+        local_root=str(tmp_path / "shared" / "raw_data"),
+    )
+
+    assert resolution["status"] == "resolved"
+    assert resolution["target_relative_path"] == "supabase/validated/user/2023-cybersecurity-policy.pdf"
+
+
+def test_delete_document_tool_deletes_supabase_document_and_chunks() -> None:
+    client = _FakeIngestionClient()
+    supabase_client = _FakeSupabaseDocumentsClient(
+        documents=[
+            {
+                "original_name": "cybersecurity-policy.pdf",
+                "storage_path": "validated/user/cybersecurity-policy.pdf",
+            }
+        ]
+    )
+    tool = DeleteDocumentTool(  # type: ignore[arg-type]
+        ingestion_client=client,
+        supabase_documents_client=supabase_client,
+    )
+
+    response = tool.execute(
+        {
+            "target_relative_path": "supabase/validated/user/cybersecurity-policy.pdf",
+            "cleanup_index": True,
+        }
+    )
+
+    assert response.status == "ok"
+    assert client.delete_calls[0] == ["supabase/validated/user/cybersecurity-policy.pdf"]
+    assert supabase_client.deleted_storage_paths == ["validated/user/cybersecurity-policy.pdf"]
 
 
 def test_delete_validated_documents_tool_discovers_and_deletes_paths(tmp_path: Path) -> None:
@@ -95,6 +206,7 @@ def test_update_embedding_model_tool_writes_env_local(tmp_path: Path) -> None:
 
     assert response.status == "ok"
     assert "text-embedding-3-large" in (tmp_path / ".env.local").read_text(encoding="utf-8")
+    assert response.result["rollback"]["tool"] == "update_embedding_model"
 
 
 def test_update_chunking_config_validates_overlap_less_than_size(tmp_path: Path) -> None:
@@ -116,6 +228,26 @@ def test_update_chunking_config_validates_overlap_less_than_size(tmp_path: Path)
         assert "chunk_overlap must be smaller than chunk_size" in str(exc)
     else:
         raise AssertionError("Expected ValueError for invalid chunking config")
+
+
+def test_update_reranker_config_returns_previous_values_for_rollback(tmp_path: Path) -> None:
+    env_path = tmp_path / ".env"
+    env_path.write_text(
+        "RETRIEVAL_DEFAULT_RANKER=none\nRETRIEVAL_DEFAULT_RERANK_TOP_N=20\n",
+        encoding="utf-8",
+    )
+    store = EnvConfigStore(
+        project_root=tmp_path,
+        env_path=env_path,
+        env_local_path=tmp_path / ".env.local",
+    )
+    tool = UpdateRerankerConfigTool(store=store)
+
+    response = tool.execute({"default_ranker": "cross_encoder", "rerank_top_n": 10})
+
+    assert response.status == "ok"
+    assert response.result["rollback"]["tool"] == "update_reranker_config"
+    assert response.result["rollback"]["arguments"]["default_ranker"] == "none"
 
 
 def test_get_evaluation_report_tool_loads_latest_report(tmp_path: Path) -> None:
@@ -232,14 +364,62 @@ def test_restart_services_tool_supports_docker_compose_runtime(monkeypatch, tmp_
     assert response.result["runtime"] == "docker_compose"
 
 
-def test_intent_parser_routes_composite_requests_and_leaves_ambiguous_to_qa() -> None:
+def test_intent_parser_is_conservative_fallback() -> None:
     parser = IntentParser()
 
     planned = parser.parse("change chunk size to 400 and restart preprocessing")
+    status = parser.parse("show pipeline status")
     qa = parser.parse("Should we reindex the corpus or just explain the risks?")
+    revert = parser.parse("revert the last two reranker changes")
 
-    assert planned.tool_name == "update_chunking_config"
-    assert planned.arguments["chunk_size"] == 400
-    assert planned.arguments["restart_services"] == ["preprocessing-service", "ingestion-service"]
-    assert needs_confirmation(planned.tool_name or "", True) is True
+    assert planned.mode == "qa"
+    assert status.tool_name == "get_pipeline_status"
     assert qa.mode == "qa"
+    assert revert.intent == "revert_changes"
+    assert revert.arguments["count"] == 2
+    assert revert.arguments["tool_names"] == ["update_reranker_config"]
+    assert needs_confirmation(status.tool_name or "", True) is False
+
+
+def test_tool_registry_exposes_structured_planning_metadata() -> None:
+    registry = ToolRegistry(
+        [
+            _PlannerOnlyTool("get_pipeline_status"),
+            _PlannerOnlyTool("update_chunking_config"),
+        ]
+    )
+
+    planning_tools = registry.planning_tools()
+
+    assert [tool.name for tool in planning_tools] == [
+        "get_pipeline_status",
+        "update_chunking_config",
+    ]
+    assert planning_tools[1].requires_confirmation is True
+    assert planning_tools[1].arguments_schema["value"]["type"] == "string"
+
+
+def test_tool_selector_prefers_llm_plan_and_filters_unknown_tools() -> None:
+    registry = ToolRegistry([_PlannerOnlyTool("update_chunking_config")])
+    selector = ToolSelector(
+        settings=Settings(planner_enabled=False),
+        registry=registry,
+        llm_planner=_FakeLLMPlanner(
+            PlannedAction(
+                mode="tool_call",
+                intent="apply_chunking_change",
+                tool_name="apply_chunking_change",
+                arguments={"chunk_size": 400},
+                steps=[
+                    PlanStep(tool_name="update_chunking_config", arguments={"chunk_size": 400}),
+                    PlanStep(tool_name="unknown_tool", arguments={}),
+                ],
+            )
+        ),  # type: ignore[arg-type]
+    )
+
+    planned = selector.select(AdminRequestContext(message="change chunk size to 400"))
+
+    assert planned.tool_name == "apply_chunking_change"
+    assert planned.steps[0].tool_name == "update_chunking_config"
+    assert len(planned.steps) == 1

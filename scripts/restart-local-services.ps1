@@ -1,5 +1,4 @@
 param(
-    [Parameter(Mandatory = $true)]
     [string[]]$Services,
     [int]$DelaySeconds = 2
 )
@@ -30,10 +29,26 @@ $serviceMap = @{
         Path = Join-Path $repoRoot "services/generation-service"
         Port = 8004
     }
+    "ingestion-service" = @{
+        Path = Join-Path $repoRoot "services/ingestion-service"
+        Port = 8005
+    }
     "admin-service" = @{
         Path = Join-Path $repoRoot "services/admin-service"
         Port = 8006
     }
+}
+
+if (-not $Services -or $Services.Count -eq 0) {
+    $Services = @(
+        "auth-service",
+        "preprocessing-service",
+        "embedding-service",
+        "retrieval-service",
+        "generation-service",
+        "ingestion-service",
+        "admin-service"
+    )
 }
 
 Start-Sleep -Seconds $DelaySeconds

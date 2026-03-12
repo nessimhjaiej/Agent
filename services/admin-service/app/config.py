@@ -40,6 +40,10 @@ class Settings:
     auth_base_url: str = "http://localhost:8001"
     auth_supabase_url: str = ""
     auth_supabase_key: str = ""
+    supabase_url: str = ""
+    supabase_key: str = ""
+    supabase_docs_bucket: str = "documents"
+    supabase_docs_table: str = "documents"
     embedding_base_url: str = "http://localhost:8002"
     retrieval_base_url: str = "http://localhost:8003"
     generation_base_url: str = "http://localhost:8004"
@@ -48,7 +52,7 @@ class Settings:
     evaluation_base_url: str = "http://localhost:8004"
     http_timeout_seconds: float = 20.0
     embedding_model: str = "text-embedding-3-small"
-    planner_model: str = "gpt-4.1-mini"
+    planner_model: str = "gpt-5-mini"
     planner_enabled: bool = True
     planner_temperature: float = 0.0
     planner_http_max_retries: int = 2
@@ -65,6 +69,19 @@ class Settings:
             auth_base_url=os.getenv("ADMIN_AUTH_BASE_URL", "http://localhost:8001").strip(),
             auth_supabase_url=os.getenv("AUTH_SUPABASE_URL", "").strip(),
             auth_supabase_key=os.getenv("AUTH_SUPABASE_KEY", "").strip(),
+            supabase_url=os.getenv("ADMIN_SUPABASE_URL", os.getenv("AUTH_SUPABASE_URL", "")).strip(),
+            supabase_key=os.getenv(
+                "ADMIN_SUPABASE_KEY",
+                os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("AUTH_SUPABASE_KEY", "")),
+            ).strip(),
+            supabase_docs_bucket=os.getenv(
+                "ADMIN_SUPABASE_DOCS_BUCKET",
+                os.getenv("VITE_SUPABASE_DOCS_BUCKET", "documents"),
+            ).strip(),
+            supabase_docs_table=os.getenv(
+                "ADMIN_SUPABASE_DOCS_TABLE",
+                os.getenv("VITE_SUPABASE_DOCS_TABLE", "documents"),
+            ).strip(),
             embedding_base_url=os.getenv("ADMIN_EMBEDDING_BASE_URL", "http://localhost:8002").strip(),
             retrieval_base_url=os.getenv("ADMIN_RETRIEVAL_BASE_URL", "http://localhost:8003").strip(),
             generation_base_url=os.getenv("ADMIN_GENERATION_BASE_URL", "http://localhost:8004").strip(),
@@ -73,7 +90,7 @@ class Settings:
             evaluation_base_url=os.getenv("ADMIN_EVALUATION_BASE_URL", "http://localhost:8004").strip(),
             http_timeout_seconds=_parse_float("ADMIN_HTTP_TIMEOUT_SECONDS", 20.0),
             embedding_model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-small").strip(),
-            planner_model=os.getenv("ADMIN_PLANNER_MODEL", "gpt-4.1-mini").strip(),
+            planner_model=os.getenv("ADMIN_PLANNER_MODEL", "gpt-5-mini").strip(),
             planner_enabled=_parse_bool("ADMIN_PLANNER_ENABLED", True),
             planner_temperature=_parse_float("ADMIN_PLANNER_TEMPERATURE", 0.0),
             planner_http_max_retries=int(os.getenv("ADMIN_PLANNER_HTTP_MAX_RETRIES", "2")),

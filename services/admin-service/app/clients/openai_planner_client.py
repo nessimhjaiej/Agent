@@ -29,6 +29,63 @@ class OpenAIPlannerClient:
         )
 
     def complete_json(self, system_prompt: str, user_prompt: str) -> str:
+        try:
+            return self._complete_json_responses(system_prompt, user_prompt)
+        except UpstreamServiceError:
+            if self._model.startswith("gpt-5") or self._model.startswith("o"):
+                raise
+        return self._complete_json_chat_completions(system_prompt, user_prompt)
+
+    def complete_text(self, system_prompt: str, user_prompt: str) -> str:
+        try:
+            return self._complete_text_responses(system_prompt, user_prompt)
+        except UpstreamServiceError:
+            if self._model.startswith("gpt-5") or self._model.startswith("o"):
+                raise
+        return self._complete_text_chat_completions(system_prompt, user_prompt)
+
+    def _complete_json_responses(self, system_prompt: str, user_prompt: str) -> str:
+        body = {
+            "model": self._model,
+            "reasoning": {
+                "effort": "medium",
+                "summary": "auto",
+            },
+            "input": [
+                {
+                    "role": "developer",
+                    "content": [{"type": "input_text", "text": system_prompt}],
+                },
+                {
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": user_prompt}],
+                },
+            ],
+        }
+        payload = self._post_with_retries("/responses", body)
+        content = payload.get("output_text")
+        if isinstance(content, str) and content.strip():
+            return content
+
+        output = payload.get("output")
+        if isinstance(output, list):
+            fragments: list[str] = []
+            for item in output:
+                if not isinstance(item, dict):
+                    continue
+                for block in item.get("content", []):
+                    if not isinstance(block, dict):
+                        continue
+                    if block.get("type") == "output_text":
+                        text = block.get("text")
+                        if isinstance(text, str) and text.strip():
+                            fragments.append(text)
+            joined = "\n".join(fragment for fragment in fragments if fragment.strip()).strip()
+            if joined:
+                return joined
+        raise UpstreamServiceError("OpenAI planner response missing output_text")
+
+    def _complete_json_chat_completions(self, system_prompt: str, user_prompt: str) -> str:
         body = {
             "model": self._model,
             "temperature": self._temperature,
@@ -38,12 +95,79 @@ class OpenAIPlannerClient:
                 {"role": "user", "content": user_prompt},
             ],
         }
+        payload = self._post_with_retries("/chat/completions", body)
+        choices = payload.get("choices")
+        if not isinstance(choices, list) or not choices:
+            raise UpstreamServiceError("OpenAI planner response missing choices")
+
+        first = choices[0]
+        if not isinstance(first, dict):
+            raise UpstreamServiceError("OpenAI planner choice format invalid")
+
+        message = first.get("message")
+        if not isinstance(message, dict):
+            raise UpstreamServiceError("OpenAI planner message format invalid")
+
+        content = message.get("content")
+        if not isinstance(content, str) or not content.strip():
+            raise UpstreamServiceError("OpenAI planner content missing or empty")
+        return content
+
+    def _complete_text_responses(self, system_prompt: str, user_prompt: str) -> str:
+        body = {
+            "model": self._model,
+            "reasoning": {
+                "effort": "medium",
+                "summary": "auto",
+            },
+            "input": [
+                {
+                    "role": "developer",
+                    "content": [{"type": "input_text", "text": system_prompt}],
+                },
+                {
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": user_prompt}],
+                },
+            ],
+        }
+        payload = self._post_with_retries("/responses", body)
+        content = payload.get("output_text")
+        if isinstance(content, str) and content.strip():
+            return content.strip()
+        raise UpstreamServiceError("OpenAI text response missing output_text")
+
+    def _complete_text_chat_completions(self, system_prompt: str, user_prompt: str) -> str:
+        body = {
+            "model": self._model,
+            "temperature": self._temperature,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+        }
+        payload = self._post_with_retries("/chat/completions", body)
+        choices = payload.get("choices")
+        if not isinstance(choices, list) or not choices:
+            raise UpstreamServiceError("OpenAI planner response missing choices")
+        first = choices[0]
+        if not isinstance(first, dict):
+            raise UpstreamServiceError("OpenAI planner choice format invalid")
+        message = first.get("message")
+        if not isinstance(message, dict):
+            raise UpstreamServiceError("OpenAI planner message format invalid")
+        content = message.get("content")
+        if not isinstance(content, str) or not content.strip():
+            raise UpstreamServiceError("OpenAI planner content missing or empty")
+        return content.strip()
+
+    def _post_with_retries(self, path: str, body: dict) -> dict:
         retryable_statuses = {429, 500, 502, 503, 504}
         last_error: Exception | None = None
         response: httpx.Response | None = None
         for attempt in range(self._max_retries + 1):
             try:
-                response = self._client.post("/chat/completions", json=body)
+                response = self._client.post(path, json=body)
             except httpx.HTTPError as exc:
                 last_error = exc
                 if attempt < self._max_retries:
@@ -62,21 +186,4 @@ class OpenAIPlannerClient:
 
         if response is None:
             raise UpstreamServiceError(f"OpenAI planner request failed: {last_error}")
-
-        payload = response.json()
-        choices = payload.get("choices")
-        if not isinstance(choices, list) or not choices:
-            raise UpstreamServiceError("OpenAI planner response missing choices")
-
-        first = choices[0]
-        if not isinstance(first, dict):
-            raise UpstreamServiceError("OpenAI planner choice format invalid")
-
-        message = first.get("message")
-        if not isinstance(message, dict):
-            raise UpstreamServiceError("OpenAI planner message format invalid")
-
-        content = message.get("content")
-        if not isinstance(content, str) or not content.strip():
-            raise UpstreamServiceError("OpenAI planner content missing or empty")
-        return content
+        return response.json()

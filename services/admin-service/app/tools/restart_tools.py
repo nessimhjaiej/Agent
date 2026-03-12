@@ -4,10 +4,36 @@ import subprocess
 from pathlib import Path
 
 from app.models import ToolExecutionResult
+from app.tools.base import ToolMetadata
 
 
 class RestartServicesTool:
     name = "restart_services"
+    metadata = ToolMetadata(
+        name=name,
+        description="Restart one or more backend services either in the local process setup or with Docker Compose.",
+        arguments_schema={
+            "services": {
+                "type": "array",
+                "required": True,
+                "items": {"type": "string"},
+                "description": "Service names to restart.",
+            },
+            "delay_seconds": {
+                "type": "integer",
+                "required": False,
+                "description": "Delay before the local restart script runs.",
+            },
+            "runtime": {
+                "type": "string",
+                "required": False,
+                "enum": ["local", "docker_compose"],
+                "description": "Runtime used to restart services.",
+            },
+        },
+        output_description="Returns the selected runtime, services scheduled for restart, and script or compose path details.",
+        requires_confirmation=True,
+    )
 
     def __init__(self, project_root: Path | None = None) -> None:
         self._project_root = project_root or Path(__file__).resolve().parents[4]

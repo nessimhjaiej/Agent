@@ -86,10 +86,11 @@ async function deleteWithAuth(url, accessToken) {
   return parseResponse(response);
 }
 
-export async function askGeneration({ query, chatHistory = [] }) {
+export async function askGeneration({ query, chatHistory = [], sessionId = null }) {
   return postJson(`${API.generation}/ask`, {
     query,
     chat_history: chatHistory,
+    session_id: sessionId,
   });
 }
 
@@ -135,6 +136,7 @@ export async function deleteManagedUser(accessToken, userId) {
 
 export async function askAdminAgent(accessToken, {
   message,
+  selectedMode = 'qa',
   sessionId = null,
   confirm = false,
   pendingAction = null,
@@ -142,11 +144,91 @@ export async function askAdminAgent(accessToken, {
 }) {
   return postJsonWithAuth(`${API.admin}/admin/chat`, {
     message,
+    selected_mode: selectedMode,
     session_id: sessionId,
     confirm,
     pending_action: pendingAction,
     chat_history: chatHistory,
   }, accessToken);
+}
+
+export async function streamAdminAgent(accessToken, {
+  message,
+  selectedMode = 'qa',
+  sessionId = null,
+  confirm = false,
+  pendingAction = null,
+  chatHistory = [],
+}, { onEvent } = {}) {
+  const response = await fetch(`${API.admin}/admin/chat/stream`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      message,
+      selected_mode: selectedMode,
+      session_id: sessionId,
+      confirm,
+      pending_action: pendingAction,
+      chat_history: chatHistory,
+    }),
+  });
+
+  if (!response.ok || !response.body) {
+    return parseResponse(response);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let finalResponse = null;
+
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      const event = JSON.parse(line);
+      if (typeof onEvent === 'function') {
+        onEvent(event);
+      }
+      if (event.type === 'final') {
+        finalResponse = event.response || null;
+      }
+      if (event.type === 'error') {
+        throw new Error(event.detail || 'Admin stream failed');
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  if (buffer.trim()) {
+    const event = JSON.parse(buffer.trim());
+    if (typeof onEvent === 'function') {
+      onEvent(event);
+    }
+    if (event.type === 'final') {
+      finalResponse = event.response || null;
+    }
+    if (event.type === 'error') {
+      throw new Error(event.detail || 'Admin stream failed');
+    }
+  }
+
+  if (!finalResponse) {
+    throw new Error('Admin stream ended without a final response');
+  }
+  return finalResponse;
 }
 
 export default API;

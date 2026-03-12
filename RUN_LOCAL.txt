@@ -5,6 +5,8 @@ Option A) Start backend services with Docker Compose
 ----------------------------------------------------
 cd C:\Users\NESSIM\Desktop\agentic
 docker compose up -d weaviate auth-service preprocessing-service embedding-service retrieval-service generation-service
+For admin operations such as reindexing, also start:
+docker compose up -d ingestion-service admin-service
 
 Optional: rebuild images before starting
 docker compose build auth-service preprocessing-service embedding-service retrieval-service generation-service
@@ -44,6 +46,14 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8003 --reload
 cd C:\Users\NESSIM\Desktop\agentic\services\generation-service
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8004 --reload
 
+7. Start ingestion-service
+cd C:\Users\NESSIM\Desktop\agentic\services\ingestion-service
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload
+
+8. Start admin-service
+cd C:\Users\NESSIM\Desktop\agentic\services\admin-service
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8006 --reload
+
 Check backend service health
 ----------------------------
 curl.exe http://localhost:8000/health
@@ -51,6 +61,8 @@ curl.exe http://localhost:8001/health
 curl.exe http://localhost:8002/health
 curl.exe http://localhost:8003/health
 curl.exe http://localhost:8004/health
+curl.exe http://localhost:8005/health
+curl.exe http://localhost:8006/health
 curl.exe http://localhost:8080/v1/.well-known/ready
 
 Start frontend (new terminal)
@@ -79,3 +91,11 @@ docker compose down
 admin pass : 
 jmemsaif07@gmail.com
 +Admin123
+
+powershell -ExecutionPolicy Bypass -File .\scripts\restart-local-services.ps1
+Restart all local backend services:
+powershell -ExecutionPolicy Bypass -File .\scripts\restart-local-services.ps1
+
+Restart only specific services:
+powershell -ExecutionPolicy Bypass -File .\scripts\restart-local-services.ps1 -Services admin-service
+powershell -ExecutionPolicy Bypass -File .\scripts\restart-local-services.ps1 -Services admin-service,ingestion-service

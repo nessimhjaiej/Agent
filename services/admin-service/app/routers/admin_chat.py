@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 
 from app.config import Settings
 from app.errors import (
@@ -29,3 +30,12 @@ def admin_chat(payload: AdminChatRequest) -> AdminChatResponse:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except AdminServiceError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/chat/stream")
+def admin_chat_stream(payload: AdminChatRequest) -> StreamingResponse:
+    service = AdminService(settings=Settings.from_env())
+    return StreamingResponse(
+        service.stream_chat(payload),
+        media_type="application/x-ndjson",
+    )

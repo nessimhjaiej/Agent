@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Protocol
 
 from app.models import AdminRequestContext, PlanStep, PlannedAction
+from app.tools.base import ToolMetadata
 
 
 class PlannerClient(Protocol):
@@ -10,19 +11,34 @@ class PlannerClient(Protocol):
 
 
 class LLMPlanner:
-    def __init__(self, client: PlannerClient) -> None:
+    def __init__(self, client: PlannerClient, tool_catalog: list[ToolMetadata]) -> None:
         self._client = client
+        self._tool_catalog = tool_catalog
         prompt_dir = Path(__file__).resolve().parents[2] / "prompt_templates"
         self._system_prompt = (prompt_dir / "system_prompt.txt").read_text(encoding="utf-8").strip()
-        self._tool_prompt = (prompt_dir / "tool_selection_prompt.txt").read_text(encoding="utf-8").strip()
 
     def plan(self, context: AdminRequestContext) -> PlannedAction | None:
         history = "\n".join(
             f"- {turn.role}: {turn.content.strip()}" for turn in context.chat_history[-8:] if turn.content.strip()
         )
+        tool_catalog = json.dumps(
+            [
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "arguments_schema": tool.arguments_schema,
+                    "output_description": tool.output_description,
+                    "requires_confirmation": tool.requires_confirmation,
+                }
+                for tool in self._tool_catalog
+            ],
+            ensure_ascii=True,
+            indent=2,
+        )
         user_prompt = "\n".join(
             [
-                self._tool_prompt,
+                "Available admin tools:",
+                tool_catalog,
                 "",
                 "Conversation history:",
                 history or "- (none)",

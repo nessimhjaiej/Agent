@@ -8,6 +8,7 @@ import {
   Search,
   Send,
   ChevronDown,
+  ChevronUp,
   Bot,
   User,
   Upload,
@@ -17,11 +18,10 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
-import TypingIndicator from '../components/TypingIndicator';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import {
-  askAdminAgent,
+  askGeneration,
   deleteManagedUser,
   indexDocument,
   inviteUser,
@@ -29,10 +29,114 @@ import {
   removeDocumentChunks,
   setUserBlock,
   setUserValidation,
+  streamAdminAgent,
 } from '../config/api';
 
 const DOCS_BUCKET = import.meta.env.VITE_SUPABASE_DOCS_BUCKET || 'documents';
 const DOCS_TABLE = import.meta.env.VITE_SUPABASE_DOCS_TABLE || 'documents';
+
+function createAdminAlertMessage(selectedMode = 'qa') {
+  return {
+    id: '0',
+    role: 'assistant',
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    content: `Alert: this admin chat has advanced privileges. You are currently in ${selectedMode === 'plan' ? 'Plan' : 'Q&A'} mode. Use Q&A for informational questions and Plan for operational or configuration requests.`,
+    sources: [],
+  };
+}
+
+function buildAdminChatSessionId(userId) {
+  return `admin-chat-${userId || 'admin'}`;
+}
+
+function buildLivePlanningActivity(selectedMode) {
+  return [
+    {
+      phase: 'planning',
+      status: 'in_progress',
+      title: 'Using Plan mode',
+      detail: 'Preparing an executable admin plan.',
+    },
+    {
+      phase: 'planning',
+      status: 'pending',
+      title: 'Preparing tool plan',
+      detail: 'Resolving tool steps, arguments, and confirmation requirements.',
+    },
+  ];
+}
+
+function buildLiveExecutionActivity(pendingAction) {
+  const steps = Array.isArray(pendingAction?.steps) ? pendingAction.steps : [];
+  const queuedSteps = steps.map((step, index) => ({
+    phase: 'execution',
+    status: index === 0 ? 'in_progress' : 'pending',
+    title: `Queued step ${index + 1}: ${step.tool}`,
+    detail: 'Waiting for the confirmed admin plan to complete.',
+    tool: step.tool,
+    arguments: step.arguments || {},
+  }));
+  return [
+    {
+      phase: 'planning',
+      status: 'completed',
+      title: 'Confirmed admin plan',
+      detail: `Executing ${steps.length || 1} confirmed step${steps.length === 1 ? '' : 's'}.`,
+    },
+    ...queuedSteps,
+  ];
+}
+
+function upsertActivityItems(currentItems, incomingItems) {
+  const nextItems = [...currentItems];
+  incomingItems.forEach((item) => {
+    const index = nextItems.findIndex(
+      (existing) => existing.title === item.title && (existing.tool || '') === (item.tool || '')
+    );
+    if (index >= 0) {
+      nextItems[index] = { ...nextItems[index], ...item };
+    } else {
+      nextItems.push(item);
+    }
+  });
+  return nextItems;
+}
+
+function getActivityStatusStyles(status) {
+  if (status === 'completed') {
+    return {
+      badgeBg: 'rgba(16,185,129,0.12)',
+      badgeText: '#10b981',
+      border: 'rgba(16,185,129,0.2)',
+    };
+  }
+  if (status === 'failed') {
+    return {
+      badgeBg: 'rgba(239,68,68,0.12)',
+      badgeText: '#ef4444',
+      border: 'rgba(239,68,68,0.2)',
+    };
+  }
+  if (status === 'in_progress') {
+    return {
+      badgeBg: 'rgba(245,158,11,0.12)',
+      badgeText: '#f59e0b',
+      border: 'rgba(245,158,11,0.2)',
+    };
+  }
+  if (status === 'skipped') {
+    return {
+      badgeBg: 'rgba(107,114,128,0.12)',
+      badgeText: '#6b7280',
+      border: 'rgba(107,114,128,0.2)',
+    };
+  }
+  return {
+    badgeBg: 'rgba(59,130,246,0.12)',
+    badgeText: '#3b82f6',
+    border: 'rgba(59,130,246,0.2)',
+  };
+}
 
 function formatBytes(bytes) {
   if (!bytes || Number.isNaN(bytes)) return '-';
@@ -90,17 +194,13 @@ export default function AdminPage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [selectedDocIds, setSelectedDocIds] = useState(new Set());
-  const [agentMsgs, setAgentMsgs] = useState([
-    {
-      id: '0',
-      role: 'assistant',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      content: 'Alert: this admin chat has advanced privileges and can trigger high-risk operations across the system. Review requests carefully before confirming any action.',
-      sources: [],
-    },
-  ]);
+  const [agentMsgs, setAgentMsgs] = useState([]);
+  const [adminChatSessionId, setAdminChatSessionId] = useState(null);
   const [agentInput, setAgentInput] = useState('');
+  const [agentMode, setAgentMode] = useState('qa');
   const [typing, setTyping] = useState(false);
+  const [agentActivity, setAgentActivity] = useState([]);
+  const [expandedSources, setExpandedSources] = useState({});
   const [isDragging, setIsDragging] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -294,6 +394,11 @@ export default function AdminPage() {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [agentMsgs, typing]);
+
+  useEffect(() => {
+    setAgentMsgs([createAdminAlertMessage(agentMode)]);
+    setAdminChatSessionId(buildAdminChatSessionId(user?.id));
+  }, [user?.id, agentMode]);
 
   const filtered = useMemo(
     () =>
@@ -548,15 +653,32 @@ export default function AdminPage() {
     setAgentInput('');
     setTyping(true);
     try {
-      const token = await getAccessToken();
       const history = agentMsgs
         .filter((m) => m.role === 'user' || m.role === 'assistant')
         .map((m) => ({ role: m.role, content: m.content }));
-      const response = await askAdminAgent(token, {
-        message: userText,
-        sessionId: 'admin-agent',
-        chatHistory: history,
-      });
+      let response;
+      if (agentMode === 'qa') {
+        response = await askGeneration({
+          query: userText,
+          chatHistory: history,
+          sessionId: adminChatSessionId,
+        });
+      } else {
+        const token = await getAccessToken();
+        setAgentActivity(buildLivePlanningActivity(agentMode));
+        response = await streamAdminAgent(token, {
+          message: userText,
+          selectedMode: agentMode,
+          sessionId: adminChatSessionId,
+          chatHistory: history,
+        }, {
+          onEvent: (event) => {
+            if (event.type === 'activity' && Array.isArray(event.activity)) {
+              setAgentActivity((prev) => upsertActivityItems(prev, event.activity));
+            }
+          },
+        });
+      }
       const content = response.answer || 'No answer returned by admin service.';
       const citations = Array.isArray(response?.citations) ? response.citations : [];
       const sources = [...new Set(citations.map((citation) => citation.document_name).filter(Boolean))];
@@ -567,13 +689,17 @@ export default function AdminPage() {
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         sources,
         citations,
-        pendingAction: response.pending_action || null,
-        requiresConfirmation: response.requires_confirmation === true,
-        mode: response.mode || 'qa',
+        pendingAction: agentMode === 'plan' ? response.pending_action || null : null,
+        requiresConfirmation: agentMode === 'plan' && response.requires_confirmation === true,
+        mode: agentMode === 'plan' ? (response.mode || 'tool_call') : 'qa',
+        selectedMode: agentMode === 'plan' ? (response.selected_mode || agentMode) : 'qa',
+        thinkingSummary: agentMode === 'plan' ? (response.thinking_summary || '') : '',
+        activity: agentMode === 'plan' && Array.isArray(response.activity) ? response.activity : [],
       }]);
     } catch (error) {
       setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: `Request failed: ${error.message}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources: [] }]);
     } finally {
+      setAgentActivity([]);
       setTyping(false);
     }
   };
@@ -581,6 +707,7 @@ export default function AdminPage() {
   const confirmAgentAction = async (messageId, pendingAction) => {
     if (!pendingAction || typing) return;
     setTyping(true);
+    setAgentActivity(buildLiveExecutionActivity(pendingAction));
     setAgentMsgs((prev) => prev.map((msg) => (
       msg.id === messageId
         ? { ...msg, requiresConfirmation: false }
@@ -591,12 +718,19 @@ export default function AdminPage() {
       const history = agentMsgs
         .filter((m) => m.role === 'user' || m.role === 'assistant')
         .map((m) => ({ role: m.role, content: m.content }));
-      const response = await askAdminAgent(token, {
+      const response = await streamAdminAgent(token, {
         message: `Confirm action ${pendingAction.intent}`,
-        sessionId: 'admin-agent',
+        selectedMode: 'plan',
+        sessionId: adminChatSessionId,
         confirm: true,
         pendingAction,
         chatHistory: history,
+      }, {
+        onEvent: (event) => {
+          if (event.type === 'activity' && Array.isArray(event.activity)) {
+            setAgentActivity((prev) => upsertActivityItems(prev, event.activity));
+          }
+        },
       });
       const citations = Array.isArray(response?.citations) ? response.citations : [];
       const sources = [...new Set(citations.map((citation) => citation.document_name).filter(Boolean))];
@@ -610,10 +744,14 @@ export default function AdminPage() {
         pendingAction: response.pending_action || null,
         requiresConfirmation: response.requires_confirmation === true,
         mode: response.mode || 'tool_call',
+        selectedMode: response.selected_mode || 'plan',
+        thinkingSummary: response.thinking_summary || '',
+        activity: Array.isArray(response.activity) ? response.activity : [],
       }]);
     } catch (error) {
       setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: `Confirmation failed: ${error.message}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources: [] }]);
     } finally {
+      setAgentActivity([]);
       setTyping(false);
     }
   };
@@ -638,6 +776,10 @@ export default function AdminPage() {
     if (userFilter === 'blocked') return managedUser.blocked;
     return true;
   });
+
+  const toggleSources = (messageId) => {
+    setExpandedSources((prev) => ({ ...prev, [messageId]: !prev[messageId] }));
+  };
 
   return (
     <AnimatedPage className="h-full flex flex-col">
@@ -1002,6 +1144,40 @@ export default function AdminPage() {
             ) : (
               <motion.div key="agent" className="h-full w-full flex justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <div className="h-full w-full max-w-5xl flex flex-col px-5 md:px-8 mt-12 md:mt-16" style={{ minHeight: 0 }}>
+                  <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--text-muted)' }}>Admin Chat Mode</p>
+                      <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        {agentMode === 'qa'
+                          ? 'Q&A mode answers informational questions only. Configuration and operational requests should be sent in Plan mode.'
+                          : 'Plan mode is for executable admin requests only. Questions and explanations should be asked in Q&A mode.'}
+                      </p>
+                    </div>
+                    <div
+                      className="inline-flex rounded-2xl p-1 self-start"
+                      style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
+                    >
+                      {[
+                        { key: 'qa', label: 'Q&A Mode' },
+                        { key: 'plan', label: 'Plan Mode' },
+                      ].map((option) => (
+                        <button
+                          key={option.key}
+                          type="button"
+                          onClick={() => setAgentMode(option.key)}
+                          disabled={typing}
+                          className="rounded-xl px-4 py-2 text-sm font-medium transition-all disabled:opacity-50"
+                          style={{
+                            background: agentMode === option.key ? 'linear-gradient(135deg, #7c3aed, #06b6d4)' : 'transparent',
+                            color: agentMode === option.key ? '#ffffff' : 'var(--text-secondary)',
+                            boxShadow: agentMode === option.key ? '0 0 16px rgba(139,92,246,0.22)' : 'none',
+                          }}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="flex-1 w-full" style={{ overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth', minHeight: 0, scrollbarGutter: 'stable', paddingTop: '32px', paddingBottom: '32px' }}>
                     <div className="max-w-5xl md:-ml-24 lg:-ml-32 xl:-ml-40" style={{ marginLeft: '0', marginRight: 'auto' }}>
                       {agentMsgs.map((msg) => (
@@ -1030,9 +1206,74 @@ export default function AdminPage() {
                                   }
                                 : { background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '16px 24px' }}>
                             <p className="text-sm leading-relaxed whitespace-pre-line my-2">{msg.content}</p>
+                            {msg.role === 'assistant' && msg.thinkingSummary && (
+                              <div
+                                className="mt-3 rounded-xl"
+                                style={{
+                                  background: 'rgba(15,23,42,0.04)',
+                                  border: '1px solid var(--border-color)',
+                                  padding: '12px 14px',
+                                }}
+                              >
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--text-muted)' }}>Reasoning Summary</p>
+                                <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{msg.thinkingSummary}</p>
+                              </div>
+                            )}
+                            {msg.role === 'assistant' && Array.isArray(msg.activity) && msg.activity.length > 0 && (
+                              <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-color)' }}>
+                                <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Agent Activity</p>
+                                <div className="space-y-2">
+                                  {msg.activity.map((item, index) => {
+                                    const styles = getActivityStatusStyles(item.status);
+                                    return (
+                                      <div
+                                        key={`${msg.id}-activity-${index}`}
+                                        className="rounded-xl"
+                                        style={{
+                                          border: `1px solid ${styles.border}`,
+                                          background: 'rgba(255,255,255,0.02)',
+                                          padding: '10px 12px',
+                                        }}
+                                      >
+                                        <div className="flex items-center justify-between gap-3">
+                                          <p className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{item.title}</p>
+                                          <span
+                                            className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase"
+                                            style={{ background: styles.badgeBg, color: styles.badgeText }}
+                                          >
+                                            {item.status.replace('_', ' ')}
+                                          </span>
+                                        </div>
+                                        {item.detail && (
+                                          <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{item.detail}</p>
+                                        )}
+                                        {item.tool && (
+                                          <p className="mt-2 text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                                            Tool: <span style={{ color: 'var(--text-primary)' }}>{item.tool}</span>
+                                          </p>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                             {msg.sources && msg.sources.length > 0 && (
                               <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-color)' }}>
-                                <p className="text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>Sources:</p>
+                                <div className="flex items-center justify-between gap-3 mb-1.5">
+                                  <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Sources:</p>
+                                  {Array.isArray(msg.citations) && msg.citations.length > 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleSources(msg.id)}
+                                      className="inline-flex items-center gap-1 text-xs"
+                                      style={{ color: 'var(--color-primary-400)' }}
+                                    >
+                                      {expandedSources[msg.id] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                      {expandedSources[msg.id] ? 'Hide chunks' : 'Show chunks'}
+                                    </button>
+                                  )}
+                                </div>
                                 <div className="flex flex-wrap gap-1.5">
                                   {msg.sources.map((src, i) => (
                                     <span key={i} className="text-xs px-2.5 py-0.5 rounded-full" style={{ background: 'rgba(139,92,246,0.08)', color: 'var(--color-primary-400)', border: '1px solid rgba(139,92,246,0.15)' }}>
@@ -1040,6 +1281,27 @@ export default function AdminPage() {
                                     </span>
                                   ))}
                                 </div>
+                                {expandedSources[msg.id] && Array.isArray(msg.citations) && msg.citations.length > 0 && (
+                                  <div className="mt-3 space-y-3">
+                                    {msg.citations.map((citation) => (
+                                      <div
+                                        key={citation.chunk_id}
+                                        className="rounded-xl p-3"
+                                        style={{
+                                          background: 'rgba(139,92,246,0.06)',
+                                          border: '1px solid rgba(139,92,246,0.12)',
+                                        }}
+                                      >
+                                        <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>
+                                          {citation.document_name} · {citation.chunk_id}
+                                        </p>
+                                        <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                                          {citation.chunk_text}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             )}
                             {msg.role === 'assistant' && msg.requiresConfirmation && msg.pendingAction && (
@@ -1064,7 +1326,43 @@ export default function AdminPage() {
                           {msg.role === 'user' && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1" style={{ background: 'linear-gradient(135deg, #52525b, #27272a)' }}><User size={15} className="text-white" /></div>}
                         </motion.div>
                       ))}
-                      {typing && <motion.div className="flex gap-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}><div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', boxShadow: '0 0 12px rgba(245,158,11,0.3)' }}><Bot size={15} className="text-white" /></div><div className="rounded-2xl rounded-bl-md" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', padding: '16px 24px' }}><TypingIndicator /></div></motion.div>}
+                      {typing && (
+                        <motion.div className="flex gap-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', boxShadow: '0 0 12px rgba(245,158,11,0.3)' }}><Bot size={15} className="text-white" /></div>
+                          <div className="rounded-2xl rounded-bl-md" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', padding: '16px 24px', minWidth: '320px' }}>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--text-muted)' }}>Admin Agent Activity</p>
+                            <div className="mt-3 space-y-2">
+                              {agentActivity.map((item, index) => {
+                                const styles = getActivityStatusStyles(item.status);
+                                return (
+                                  <div
+                                    key={`live-activity-${index}`}
+                                    className="rounded-xl"
+                                    style={{
+                                      border: `1px solid ${styles.border}`,
+                                      background: 'rgba(255,255,255,0.02)',
+                                      padding: '10px 12px',
+                                    }}
+                                  >
+                                    <div className="flex items-center justify-between gap-3">
+                                      <p className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{item.title}</p>
+                                      <span
+                                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase"
+                                        style={{ background: styles.badgeBg, color: styles.badgeText }}
+                                      >
+                                        {item.status.replace('_', ' ')}
+                                      </span>
+                                    </div>
+                                    {item.detail && (
+                                      <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{item.detail}</p>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
                       <div ref={endRef} />
                     </div>
                   </div>
@@ -1072,7 +1370,7 @@ export default function AdminPage() {
                     <div className="max-w-5xl md:-ml-24 lg:-ml-32 xl:-ml-40" style={{ marginLeft: '0', marginRight: 'auto' }}>
                       <div className="w-full" style={{ paddingLeft: '44px', paddingRight: '44px' }}>
                         <div className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-                          <textarea id="admin-agent-input" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }} placeholder='Try: "refresh status" or "embed validated"' rows={3} className="flex-1 bg-transparent outline-none text-sm resize-none max-h-56" style={{ color: 'var(--text-primary)', padding: '16px 24px' }} />
+                          <textarea id="admin-agent-input" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }} placeholder={agentMode === 'qa' ? 'Try: "Explain the current retrieval setup"' : 'Try: "Restart retrieval-service" or "update chunk size to 400"'} rows={3} className="flex-1 bg-transparent outline-none text-sm resize-none max-h-56" style={{ color: 'var(--text-primary)', padding: '16px 24px' }} />
                           <motion.button id="admin-send" onClick={sendAgent} disabled={!agentInput.trim() || typing} className="rounded-xl disabled:opacity-20 shrink-0" style={{ padding: '16px 22px', marginRight: '8px' }}>
                             <Send size={16} color={agentInput.trim() && !typing ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
                           </motion.button>

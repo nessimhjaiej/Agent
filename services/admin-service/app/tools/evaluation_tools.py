@@ -8,6 +8,7 @@ from pathlib import Path
 import httpx
 
 from app.models import ToolExecutionResult
+from app.tools.base import ToolMetadata
 
 
 class EvaluationReportStore:
@@ -213,6 +214,19 @@ def _fallback_summary(report: dict) -> str:
 
 class RunRagEvaluationTool:
     name = "run_rag_evaluation"
+    metadata = ToolMetadata(
+        name=name,
+        description="Run an offline RAG evaluation job and summarize the resulting report.",
+        arguments_schema={
+            "dataset_path": {
+                "type": "string",
+                "required": False,
+                "description": "Path to the evaluation dataset JSON file.",
+            }
+        },
+        output_description="Returns the dataset path, generated report path, generation timestamp, sample count, and metric summary.",
+        requires_confirmation=True,
+    )
 
     def __init__(
         self,
@@ -253,6 +267,19 @@ class RunRagEvaluationTool:
 
 class GetEvaluationReportTool:
     name = "get_evaluation_report"
+    metadata = ToolMetadata(
+        name=name,
+        description="Load the latest evaluation report or a specific report by path and summarize it.",
+        arguments_schema={
+            "report_path": {
+                "type": "string",
+                "required": False,
+                "description": "Optional path to a specific evaluation report JSON file.",
+            }
+        },
+        output_description="Returns report metadata, summary metrics, and the report records payload.",
+        requires_confirmation=False,
+    )
 
     def __init__(
         self,

@@ -20,10 +20,15 @@ import TypingIndicator from '../components/TypingIndicator';
 import AnimatedPage from '../components/AnimatedPage';
 import API from '../config/api';
 
+function buildUserChatSessionId(userId) {
+  return `user-chat-${userId || 'guest'}`;
+}
+
 export default function ChatPage() {
   const { user } = useAuth();
   const { theme } = useTheme();
   const [messages, setMessages] = useState([]);
+  const [chatSessionId, setChatSessionId] = useState(null);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -45,6 +50,11 @@ export default function ChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  useEffect(() => {
+    setMessages([]);
+    setChatSessionId(buildUserChatSessionId(user?.id));
+  }, [user?.id]);
 
   useEffect(() => () => {
     mediaRecorderRef.current?.stop?.();
@@ -70,6 +80,7 @@ export default function ChatPage() {
           query,
           mode: 'hybrid',
           chat_history: chatHistory,
+          session_id: chatSessionId,
         }),
       });
 

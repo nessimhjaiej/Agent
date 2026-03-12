@@ -7,6 +7,7 @@ from app.clients.ingestion_client import IngestionClient
 from app.clients.retrieval_client import RetrievalClient
 from app.config import Settings
 from app.models import ToolExecutionResult
+from app.tools.base import ToolMetadata
 from app.tools.env_store import EnvConfigStore
 
 
@@ -29,6 +30,13 @@ def _normalize_text(raw: object, field_name: str) -> str:
 
 class GetPipelineStatusTool:
     name = "get_pipeline_status"
+    metadata = ToolMetadata(
+        name=name,
+        description="Check the health and availability of the backend pipeline services.",
+        arguments_schema={},
+        output_description="Returns per-service health details keyed by service name.",
+        requires_confirmation=False,
+    )
 
     def __init__(
         self,
@@ -64,6 +72,13 @@ class GetPipelineStatusTool:
 
 class GetEmbeddingConfigTool:
     name = "get_embedding_config"
+    metadata = ToolMetadata(
+        name=name,
+        description="Read the current embedding configuration and active embedding service endpoint.",
+        arguments_schema={},
+        output_description="Returns embedding model, optional dimensions, batch size, and service base URL.",
+        requires_confirmation=False,
+    )
 
     def __init__(self, settings: Settings, store: EnvConfigStore | None = None) -> None:
         self._settings = settings
@@ -88,12 +103,32 @@ class GetEmbeddingConfigTool:
 
 class UpdateEmbeddingModelTool:
     name = "update_embedding_model"
+    metadata = ToolMetadata(
+        name=name,
+        description="Change the configured embedding model used across the stack.",
+        arguments_schema={
+            "embedding_model": {
+                "type": "string",
+                "required": True,
+                "description": "The embedding model identifier to persist in environment config.",
+            },
+            "restart_services": {
+                "type": "array",
+                "required": False,
+                "items": {"type": "string"},
+                "description": "Optional services that should be restarted after the config change.",
+            },
+        },
+        output_description="Returns the updated embedding model, previous model, config file path, and rollback payload.",
+        requires_confirmation=True,
+    )
 
     def __init__(self, store: EnvConfigStore | None = None) -> None:
         self._store = store or EnvConfigStore()
 
     def execute(self, arguments: dict) -> ToolExecutionResult:
         embedding_model = _normalize_text(arguments.get("embedding_model", ""), "embedding_model")
+        previous_embedding_model = self._store.get("EMBEDDING_MODEL", "")
         path = self._store.set_many({"EMBEDDING_MODEL": embedding_model})
         return ToolExecutionResult(
             status="ok",
@@ -101,12 +136,27 @@ class UpdateEmbeddingModelTool:
                 f"Updated the embedding model to '{embedding_model}' in '{path.name}'. "
                 "The new value will be picked up by services that reload settings on each request."
             ),
-            result={"embedding_model": embedding_model, "config_path": str(path)},
+            result={
+                "embedding_model": embedding_model,
+                "previous_embedding_model": previous_embedding_model,
+                "config_path": str(path),
+                "rollback": {
+                    "tool": "update_embedding_model",
+                    "arguments": {"embedding_model": previous_embedding_model},
+                },
+            },
         )
 
 
 class GetChunkingConfigTool:
     name = "get_chunking_config"
+    metadata = ToolMetadata(
+        name=name,
+        description="Read the current preprocessing chunking strategy and chunk size settings.",
+        arguments_schema={},
+        output_description="Returns chunk strategy, chunk size, and chunk overlap.",
+        requires_confirmation=False,
+    )
 
     def __init__(self, store: EnvConfigStore | None = None) -> None:
         self._store = store or EnvConfigStore()
@@ -132,6 +182,36 @@ class GetChunkingConfigTool:
 
 class UpdateChunkingConfigTool:
     name = "update_chunking_config"
+    metadata = ToolMetadata(
+        name=name,
+        description="Update preprocessing chunking settings used during ingestion.",
+        arguments_schema={
+            "chunk_strategy": {
+                "type": "string",
+                "required": False,
+                "enum": ["overlap", "semantic", "late", "sentence"],
+                "description": "Chunking strategy to use during preprocessing.",
+            },
+            "chunk_size": {
+                "type": "integer",
+                "required": False,
+                "description": "Maximum chunk size in tokens or characters depending on the strategy.",
+            },
+            "chunk_overlap": {
+                "type": "integer",
+                "required": False,
+                "description": "Overlap size between adjacent chunks.",
+            },
+            "restart_services": {
+                "type": "array",
+                "required": False,
+                "items": {"type": "string"},
+                "description": "Optional services that should be restarted after the change.",
+            },
+        },
+        output_description="Returns the new chunking config, previous values, config file path, and rollback payload.",
+        requires_confirmation=True,
+    )
 
     def __init__(self, store: EnvConfigStore | None = None) -> None:
         self._store = store or EnvConfigStore()
@@ -147,6 +227,7 @@ class UpdateChunkingConfigTool:
             "chunk_size": current_size,
             "chunk_overlap": int(self._store.get("PREPROCESSING_CHUNK_OVERLAP", "120") or "120"),
         }
+        previous_result = dict(result)
 
         if "chunk_strategy" in arguments:
             strategy = _normalize_text(arguments["chunk_strategy"], "chunk_strategy").lower()
@@ -176,12 +257,27 @@ class UpdateChunkingConfigTool:
                 "Updated chunking configuration in "
                 f"'{path.name}'. The new value will be picked up on the next preprocessing request."
             ),
-            result={**result, "config_path": str(path)},
+            result={
+                **result,
+                "previous": previous_result,
+                "config_path": str(path),
+                "rollback": {
+                    "tool": "update_chunking_config",
+                    "arguments": previous_result,
+                },
+            },
         )
 
 
 class GetRerankerConfigTool:
     name = "get_reranker_config"
+    metadata = ToolMetadata(
+        name=name,
+        description="Read the current retrieval reranker configuration.",
+        arguments_schema={},
+        output_description="Returns default reranker, rerank top N, and configured reranker model names.",
+        requires_confirmation=False,
+    )
 
     def __init__(self, store: EnvConfigStore | None = None) -> None:
         self._store = store or EnvConfigStore()
@@ -210,6 +306,41 @@ class GetRerankerConfigTool:
 
 class UpdateRerankerConfigTool:
     name = "update_reranker_config"
+    metadata = ToolMetadata(
+        name=name,
+        description="Update the default reranker configuration used by retrieval and generation.",
+        arguments_schema={
+            "default_ranker": {
+                "type": "string",
+                "required": False,
+                "enum": ["none", "cross_encoder", "llm_batch"],
+                "description": "Default reranker strategy.",
+            },
+            "rerank_top_n": {
+                "type": "integer",
+                "required": False,
+                "description": "How many retrieved items to rerank.",
+            },
+            "cross_encoder_model": {
+                "type": "string",
+                "required": False,
+                "description": "Cross-encoder model name when cross-encoder reranking is used.",
+            },
+            "llm_rerank_model": {
+                "type": "string",
+                "required": False,
+                "description": "LLM model name when LLM batch reranking is used.",
+            },
+            "restart_services": {
+                "type": "array",
+                "required": False,
+                "items": {"type": "string"},
+                "description": "Optional services that should be restarted after the change.",
+            },
+        },
+        output_description="Returns the updated reranker config, previous values, config file path, and rollback payload.",
+        requires_confirmation=True,
+    )
 
     def __init__(self, store: EnvConfigStore | None = None) -> None:
         self._store = store or EnvConfigStore()
@@ -227,6 +358,7 @@ class UpdateRerankerConfigTool:
             ),
             "llm_rerank_model": self._store.get("RETRIEVAL_LLM_RERANK_MODEL", "gpt-4.1-mini"),
         }
+        previous_result = dict(result)
         updates: dict[str, str] = {}
 
         if "default_ranker" in arguments:
@@ -258,5 +390,13 @@ class UpdateRerankerConfigTool:
                 f"Updated reranker configuration in '{path.name}'. "
                 "The new value will be picked up on the next retrieval or generation request."
             ),
-            result={**result, "config_path": str(path)},
+            result={
+                **result,
+                "previous": previous_result,
+                "config_path": str(path),
+                "rollback": {
+                    "tool": "update_reranker_config",
+                    "arguments": previous_result,
+                },
+            },
         )
