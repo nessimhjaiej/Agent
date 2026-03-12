@@ -15,6 +15,14 @@ export default function Navbar() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const homeRoute = user?.user_metadata?.role === 'admin' ? '/admin' : '/';
+  const handleLogoClick = () => {
+    if (location.pathname === '/' && homeRoute === '/') {
+      window.location.reload();
+      return;
+    }
+
+    navigate(homeRoute);
+  };
 
   const getPageTitle = () => {
     switch (location.pathname) {
@@ -74,7 +82,7 @@ export default function Navbar() {
               boxShadow: '0 0 20px rgba(139,92,246,0.3)',
             }}
             whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(139,92,246,0.5)' }}
-            onClick={() => navigate(homeRoute)}
+            onClick={handleLogoClick}
           >
             <Scale className="w-4.5 h-4.5 text-white" />
           </motion.div>

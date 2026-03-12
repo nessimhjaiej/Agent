@@ -20,6 +20,32 @@ import TypingIndicator from '../components/TypingIndicator';
 import AnimatedPage from '../components/AnimatedPage';
 import API from '../config/api';
 
+const VOICE_WAVEFORM_BAR_COUNT = 33;
+
+function VoiceWaveform({ isRecording, samples }) {
+  const isActive = isRecording && samples.some((sample) => sample > 0.05);
+
+  return (
+    <div className={`voice-waveform ${isActive ? 'is-active' : ''}`} aria-hidden="true">
+      {samples.map((sample, index) => {
+        const activity = isRecording ? Math.max(0.06, sample) : 0.04;
+
+        return (
+          <motion.span
+            key={index}
+            className="voice-waveform__bar"
+            animate={{
+              scaleY: Math.min(1, activity),
+              opacity: isRecording ? Math.max(0.18, 0.2 + sample * 0.8) : 0.16,
+            }}
+            transition={{ duration: 0.11, ease: 'easeOut' }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ChatPage() {
   const { user } = useAuth();
   const { theme } = useTheme();
@@ -37,6 +63,13 @@ export default function ChatPage() {
   const mediaRecorderRef = useRef(null);
   const mediaStreamRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const sourceNodeRef = useRef(null);
+  const [waveformSamples, setWaveformSamples] = useState(
+    () => Array.from({ length: VOICE_WAVEFORM_BAR_COUNT }, () => 0),
+  );
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -47,9 +80,77 @@ export default function ChatPage() {
   }, [messages, isTyping]);
 
   useEffect(() => () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    sourceNodeRef.current?.disconnect?.();
+    analyserRef.current?.disconnect?.();
+    audioContextRef.current?.close?.();
     mediaRecorderRef.current?.stop?.();
     mediaStreamRef.current?.getTracks?.().forEach((track) => track.stop());
   }, []);
+
+  const stopAudioLevelTracking = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    sourceNodeRef.current?.disconnect?.();
+    analyserRef.current?.disconnect?.();
+    sourceNodeRef.current = null;
+    analyserRef.current = null;
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+    setWaveformSamples(Array.from({ length: VOICE_WAVEFORM_BAR_COUNT }, () => 0));
+  };
+
+  const startAudioLevelTracking = async (stream) => {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    stopAudioLevelTracking();
+
+    const audioContext = new AudioContextClass();
+    const analyser = audioContext.createAnalyser();
+    const sourceNode = audioContext.createMediaStreamSource(stream);
+
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.72;
+    sourceNode.connect(analyser);
+
+    const dataArray = new Uint8Array(analyser.fftSize);
+
+    const updateLevel = () => {
+      analyser.getByteTimeDomainData(dataArray);
+      let sumSquares = 0;
+
+      for (let i = 0; i < dataArray.length; i += 1) {
+        const normalized = (dataArray[i] - 128) / 128;
+        sumSquares += normalized * normalized;
+      }
+
+      const rms = Math.sqrt(sumSquares / dataArray.length);
+      const boostedLevel = Math.min(1, Math.pow(rms * 8, 0.9));
+      const smoothedLevel = Math.min(1, boostedLevel * 0.82);
+      setWaveformSamples((prev) => {
+        const nextSample = smoothedLevel > 0.06 ? smoothedLevel : 0;
+        return [...prev.slice(1), nextSample];
+      });
+      animationFrameRef.current = requestAnimationFrame(updateLevel);
+    };
+
+    audioContextRef.current = audioContext;
+    analyserRef.current = analyser;
+    sourceNodeRef.current = sourceNode;
+
+    if (audioContext.state === 'suspended') {
+      await audioContext.resume();
+    }
+
+    updateLevel();
+  };
 
   const requestAssistantReply = async ({ query, historyMessages, nextMessages }) => {
     setMessages(nextMessages);
@@ -212,6 +313,7 @@ export default function ChatPage() {
   };
 
   const resetRecorderState = () => {
+    stopAudioLevelTracking();
     mediaRecorderRef.current = null;
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -237,6 +339,7 @@ export default function ChatPage() {
       mediaStreamRef.current = stream;
       mediaRecorderRef.current = recorder;
       audioChunksRef.current = [];
+      await startAudioLevelTracking(stream);
 
       recorder.addEventListener('dataavailable', (event) => {
         if (event.data && event.data.size > 0) {
@@ -282,18 +385,46 @@ export default function ChatPage() {
   };
 
   const latestUserMessageId = [...messages].reverse().find((message) => message.role === 'user')?.id ?? null;
+  const hasMessages = messages.length > 0;
+  const contentAlignmentClass = 'md:translate-x-8 lg:translate-x-12 xl:translate-x-16';
   const recordButtonTitle = isRecording ? 'Stop recording' : 'Record audio for transcription';
   const recordButtonColor = isRecording
     ? '#dc2626'
     : (isTyping || isTranscribing ? (theme === 'dark' ? 'white' : 'black') : '#7c3aed');
+  const renderRecordButton = () => (
+    <motion.button
+      type="button"
+      onClick={isRecording ? handleStopRecording : handleRecordAudio}
+      disabled={isTyping || isTranscribing}
+      className={`voice-waveform-button rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0 ${isRecording ? 'is-recording' : 'is-idle'}`}
+      style={{
+        padding: isRecording ? '10px 14px 10px 28px' : '12px 14px',
+      }}
+      whileHover={!isTyping && !isTranscribing ? { scale: 1.03 } : {}}
+      whileTap={{ scale: 0.97 }}
+      title={recordButtonTitle}
+    >
+      {isRecording ? (
+        <>
+          <span className="voice-waveform-button__dot" aria-hidden="true" />
+          <VoiceWaveform isRecording={isRecording} samples={waveformSamples} />
+          <span className="voice-waveform-button__stop" aria-hidden="true">
+            <Square size={12} color={recordButtonColor} fill={recordButtonColor} />
+          </span>
+        </>
+      ) : (
+        <Mic size={18} color={recordButtonColor} />
+      )}
+    </motion.button>
+  );
 
   return (
     <AnimatedPage className="h-full w-full flex justify-center">
-      <div className="h-full w-full max-w-4xl flex flex-col px-5 md:px-8 relative md:left-20 lg:left-32 xl:left-40 mt-12 md:mt-16" style={{ minHeight: 0 }}>
+      <div className="h-full w-full max-w-4xl flex flex-col px-5 md:px-8 mt-12 md:mt-16" style={{ minHeight: 0 }}>
       {/* Messages */}
       <div className="flex-1 w-full" style={{ overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth', minHeight: 0, scrollbarGutter: 'stable', paddingTop: '32px', paddingBottom: '32px' }}>
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center max-w-3xl mx-auto w-full">
+        {!hasMessages ? (
+          <div className={`h-full flex flex-col items-center justify-center text-center max-w-3xl mx-auto w-full ${contentAlignmentClass}`}>
             {/* Animated icon */}
             <div className="relative mb-10">
               <motion.div
@@ -372,7 +503,7 @@ export default function ChatPage() {
             {/* Input Area - Centered in Welcome */}
             <div className="w-full max-w-2xl" style={{ marginTop: '32px' }}>
               <div
-                className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow"
+                className="flex flex-col gap-4 rounded-2xl p-6 transition-all input-glow"
                 style={{
                   background: 'var(--bg-secondary)',
                   border: '1px solid var(--border-color)',
@@ -386,28 +517,11 @@ export default function ChatPage() {
                   onKeyDown={handleKeyDown}
                   placeholder={user ? 'Ask about legal regulations, compliance...' : 'Sign in to start a conversation...'}
                   rows={3}
-                  className="flex-1 bg-transparent outline-none text-[15px] resize-none max-h-56"
-                  style={{ color: 'var(--text-primary)', padding: '16px 24px' }}
+                  className="w-full bg-transparent outline-none text-[15px] resize-none max-h-56"
+                  style={{ color: 'var(--text-primary)', padding: '16px 8px 8px' }}
                 />
-                <div className="flex items-end gap-1 shrink-0">
-                  <motion.button
-                    type="button"
-                    onClick={isRecording ? handleStopRecording : handleRecordAudio}
-                    disabled={isTyping || isTranscribing}
-                    className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
-                    style={{
-                      padding: '16px 18px',
-                    }}
-                    whileHover={!isTyping && !isTranscribing ? { scale: 1.05 } : {}}
-                    whileTap={{ scale: 0.95 }}
-                    title={recordButtonTitle}
-                  >
-                    {isRecording ? (
-                      <Square size={18} color={recordButtonColor} />
-                    ) : (
-                      <Mic size={18} color={recordButtonColor} />
-                    )}
-                  </motion.button>
+                <div className="flex w-full items-center justify-end gap-2 shrink-0">
+                  {renderRecordButton()}
                   <motion.button
                     id="chat-send-btn"
                     onClick={handleSend}
@@ -433,7 +547,7 @@ export default function ChatPage() {
             </div>
           </div>
         ) : (
-          <div className="max-w-2xl mx-auto">
+          <div className={`max-w-3xl mx-auto w-full ${contentAlignmentClass}`}>
             {messages.map((msg) => {
               const isEditing = editingMessageId === msg.id;
 
@@ -636,11 +750,11 @@ export default function ChatPage() {
       </div>
 
       {/* Input Area - Footer for conversation */}
-      {messages.length > 0 && (
-      <div className="py-3 w-full" style={{ borderColor: 'var(--border-color)', borderTop: '1px solid var(--border-color)' }}>
-        <div className="max-w-2xl mx-auto">
+      {hasMessages && (
+      <div className="py-3 w-full">
+        <div className={`max-w-3xl mx-auto w-full ${contentAlignmentClass}`}>
           <div
-            className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow"
+            className="flex flex-col gap-4 rounded-2xl p-6 transition-all input-glow"
             style={{
               background: 'var(--bg-secondary)',
               border: '1px solid var(--border-color)',
@@ -654,28 +768,11 @@ export default function ChatPage() {
               onKeyDown={handleKeyDown}
               placeholder={user ? 'Ask about legal regulations, compliance...' : 'Sign in to start a conversation...'}
               rows={3}
-              className="flex-1 bg-transparent outline-none text-[15px] resize-none max-h-56"
-              style={{ color: 'var(--text-primary)', padding: '16px 24px' }}
+              className="w-full bg-transparent outline-none text-[15px] resize-none max-h-56"
+              style={{ color: 'var(--text-primary)', padding: '16px 8px 8px' }}
             />
-            <div className="flex items-end gap-1 shrink-0">
-              <motion.button
-                type="button"
-                onClick={isRecording ? handleStopRecording : handleRecordAudio}
-                disabled={isTyping || isTranscribing}
-                className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
-                style={{
-                  padding: '16px 18px',
-                }}
-                whileHover={!isTyping && !isTranscribing ? { scale: 1.05 } : {}}
-                whileTap={{ scale: 0.95 }}
-                title={recordButtonTitle}
-              >
-                {isRecording ? (
-                  <Square size={18} color={recordButtonColor} />
-                ) : (
-                  <Mic size={18} color={recordButtonColor} />
-                )}
-              </motion.button>
+            <div className="flex w-full items-center justify-end gap-2 shrink-0">
+              {renderRecordButton()}
               <motion.button
                 id="chat-send-btn"
                 onClick={handleSend}
