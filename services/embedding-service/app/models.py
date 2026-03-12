@@ -32,3 +32,23 @@ class IndexChunkResult:
     chunk_id: str
     indexed: bool
     reason: str | None = None
+
+
+@dataclass(slots=True)
+class IndexDocumentResult:
+    status: str
+    document_id: str
+    storage_path: str
+    chunks_count: int
+    indexed_count: int
+    embedded: bool
+    message: str | None = None
+
+
+@dataclass(slots=True)
+class RemoveDocumentResult:
+    status: str
+    document_id: str
+    storage_path: str
+    matched_objects_count: int
+    deleted_count: int

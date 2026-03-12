@@ -4,11 +4,15 @@ from time import perf_counter
 from fastapi import APIRouter, HTTPException
 
 from app.config import Settings
-from app.errors import EmbeddingProviderError, EmbeddingServiceError, VectorStoreError
+from app.errors import ConfigurationError, EmbeddingProviderError, EmbeddingServiceError, VectorStoreError
 from app.schemas import (
+    IndexDocumentRequest,
+    IndexDocumentResponse,
     IndexChunksRequest,
     IndexedChunkResponse,
     IndexChunksResponse,
+    RemoveDocumentRequest,
+    RemoveDocumentResponse,
 )
 from app.service import EmbeddingService
 
@@ -77,4 +81,59 @@ def index_chunks(payload: IndexChunksRequest) -> IndexChunksResponse:
         total_count=len(response_items),
         indexed_count=indexed_count,
         results=response_items,
+    )
+
+
+@router.post("/index-document", response_model=IndexDocumentResponse)
+def index_document(payload: IndexDocumentRequest) -> IndexDocumentResponse:
+    try:
+        settings = Settings.from_env()
+        result = EmbeddingService(settings=settings).index_document(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ConfigurationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except VectorStoreError as exc:
+        logger.exception("embedding.index_document.vector_store_error")
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except EmbeddingProviderError as exc:
+        logger.exception("embedding.index_document.embedding_provider_error")
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except EmbeddingServiceError as exc:
+        logger.exception("embedding.index_document.internal_error")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return IndexDocumentResponse(
+        status=result.status,
+        document_id=result.document_id,
+        storage_path=result.storage_path,
+        chunks_count=result.chunks_count,
+        indexed_count=result.indexed_count,
+        embedded=result.embedded,
+        message=result.message,
+    )
+
+
+@router.post("/remove-document", response_model=RemoveDocumentResponse)
+def remove_document(payload: RemoveDocumentRequest) -> RemoveDocumentResponse:
+    try:
+        settings = Settings.from_env()
+        result = EmbeddingService(settings=settings).remove_document(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ConfigurationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except VectorStoreError as exc:
+        logger.exception("embedding.remove_document.vector_store_error")
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except EmbeddingServiceError as exc:
+        logger.exception("embedding.remove_document.internal_error")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return RemoveDocumentResponse(
+        status=result.status,
+        document_id=result.document_id,
+        storage_path=result.storage_path,
+        matched_objects_count=result.matched_objects_count,
+        deleted_count=result.deleted_count,
     )

@@ -61,6 +61,13 @@ class Settings:
     weaviate_batch_size: int = 100
     weaviate_startup_timeout_seconds: float = 20.0
     fail_if_collection_missing: bool = True
+    preprocessing_base_url: str = "http://localhost:8000"
+    http_timeout_seconds: float = 120.0
+    shared_raw_dir: str = "/shared/raw_data"
+    supabase_url: str = ""
+    supabase_key: str = ""
+    supabase_docs_bucket: str = "documents"
+    supabase_docs_table: str = "documents"
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -89,6 +96,16 @@ class Settings:
             weaviate_batch_size=_parse_int("WEAVIATE_BATCH_SIZE", 100),
             weaviate_startup_timeout_seconds=_parse_float("WEAVIATE_STARTUP_TIMEOUT_SECONDS", 20.0),
             fail_if_collection_missing=_parse_bool("WEAVIATE_FAIL_IF_COLLECTION_MISSING", True),
+            preprocessing_base_url=os.getenv(
+                "EMBEDDING_PREPROCESSING_BASE_URL",
+                os.getenv("PREPROCESSING_BASE_URL", "http://localhost:8000"),
+            ).strip(),
+            http_timeout_seconds=_parse_float("EMBEDDING_HTTP_TIMEOUT_SECONDS", 120.0),
+            shared_raw_dir=os.getenv("EMBEDDING_SHARED_RAW_DIR", "/shared/raw_data").strip(),
+            supabase_url=os.getenv("EMBEDDING_SUPABASE_URL", os.getenv("AUTH_SUPABASE_URL", "")).strip(),
+            supabase_key=os.getenv("EMBEDDING_SUPABASE_KEY", os.getenv("AUTH_SUPABASE_KEY", "")).strip(),
+            supabase_docs_bucket=os.getenv("EMBEDDING_SUPABASE_DOCS_BUCKET", os.getenv("VITE_SUPABASE_DOCS_BUCKET", "documents")).strip(),
+            supabase_docs_table=os.getenv("EMBEDDING_SUPABASE_DOCS_TABLE", os.getenv("VITE_SUPABASE_DOCS_TABLE", "documents")).strip(),
         )
         settings.validate()
         return settings
@@ -120,3 +137,17 @@ class Settings:
             raise ValueError("WEAVIATE_BATCH_SIZE must be > 0")
         if self.weaviate_startup_timeout_seconds <= 0:
             raise ValueError("WEAVIATE_STARTUP_TIMEOUT_SECONDS must be > 0")
+        if not self.preprocessing_base_url:
+            raise ValueError("EMBEDDING_PREPROCESSING_BASE_URL is required")
+        if self.http_timeout_seconds <= 0:
+            raise ValueError("EMBEDDING_HTTP_TIMEOUT_SECONDS must be > 0")
+        if not self.shared_raw_dir:
+            raise ValueError("EMBEDDING_SHARED_RAW_DIR is required")
+        if not self.supabase_url:
+            raise ValueError("EMBEDDING_SUPABASE_URL or AUTH_SUPABASE_URL is required")
+        if not self.supabase_key:
+            raise ValueError("EMBEDDING_SUPABASE_KEY or AUTH_SUPABASE_KEY is required")
+        if not self.supabase_docs_bucket:
+            raise ValueError("EMBEDDING_SUPABASE_DOCS_BUCKET is required")
+        if not self.supabase_docs_table:
+            raise ValueError("EMBEDDING_SUPABASE_DOCS_TABLE is required")
