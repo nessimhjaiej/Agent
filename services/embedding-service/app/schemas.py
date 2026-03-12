@@ -106,3 +106,30 @@ class IndexChunksResponse(BaseModel):
             }
         }
     }
+
+
+class IndexDocumentRequest(BaseModel):
+    document_id: str = Field(..., min_length=1, description="Supabase document row id.")
+    skip_if_embedded: bool = Field(default=True, description="Skip work if the document is already marked embedded.")
+
+
+class IndexDocumentResponse(BaseModel):
+    status: str
+    document_id: str
+    storage_path: str
+    chunks_count: int
+    indexed_count: int
+    embedded: bool
+    message: str | None = None
+
+
+class RemoveDocumentRequest(BaseModel):
+    document_id: str = Field(..., min_length=1, description="Supabase document row id.")
+
+
+class RemoveDocumentResponse(BaseModel):
+    status: str
+    document_id: str
+    storage_path: str
+    matched_objects_count: int
+    deleted_count: int

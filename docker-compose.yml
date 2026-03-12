@@ -50,10 +50,15 @@ services:
     environment:
       WEAVIATE_HTTP_URL: http://weaviate:8080
       WEAVIATE_GRPC_HOST: weaviate
+      EMBEDDING_PREPROCESSING_BASE_URL: http://preprocessing-service:8000
+      EMBEDDING_SHARED_RAW_DIR: /shared/raw_data
     ports:
       - "8002:8002"
     depends_on:
       - weaviate
+      - preprocessing-service
+    volumes:
+      - ./shared:/shared
     restart: unless-stopped
 
   retrieval-service:
@@ -94,21 +99,8 @@ services:
     container_name: ingestion-service
     env_file:
       - .env
-    environment:
-      INGESTION_PREPROCESSING_BASE_URL: http://preprocessing-service:8000
-      INGESTION_EMBEDDING_BASE_URL: http://embedding-service:8002
-      INGESTION_RAW_DIR: /shared/raw_data
-      INGESTION_SOURCE_ROOT_IN_PREPROCESSING: /shared/raw_data
-      WEAVIATE_HTTP_URL: http://weaviate:8080
-      WEAVIATE_COLLECTION: Chunk
     ports:
       - "8005:8005"
-    depends_on:
-      - preprocessing-service
-      - embedding-service
-    volumes:
-      - ./shared:/shared
-      - ./shared/raw_data:/shared/raw-data:ro
     restart: unless-stopped
 
 volumes:

@@ -21,16 +21,20 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import {
   askGeneration,
+  deleteDocumentRecord,
   deleteManagedUser,
+  getDocumentSignedUrl,
   indexDocument,
   inviteUser,
+  listDocuments,
   listManagedUsers,
   removeDocumentChunks,
   setUserBlock,
   setUserValidation,
+  updateDocumentStatus,
+  uploadDocument,
 } from '../config/api';
 
-const DOCS_BUCKET = import.meta.env.VITE_SUPABASE_DOCS_BUCKET || 'documents';
 const DOCS_TABLE = import.meta.env.VITE_SUPABASE_DOCS_TABLE || 'documents';
 
 function formatBytes(bytes) {
@@ -127,24 +131,19 @@ export default function AdminPage() {
   };
 
   const loadDocuments = async () => {
-    if (!supabase || !user) return;
+    if (!user) return;
     setLoadingDocs(true);
     setDocsError('');
     try {
-      const { data, error } = await supabase
-        .from(DOCS_TABLE)
-        .select('id, user_id, original_name, storage_path, status, embedded, size_bytes, created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      const mapped = (data || []).map(mapRow);
+      const response = await listDocuments(user.id);
+      const mapped = (response.documents || []).map(mapRow);
       setDocs(mapped);
       setSelectedDocIds((prev) => {
         const allowed = new Set(mapped.map((doc) => doc.id));
         return new Set([...prev].filter((id) => allowed.has(id)));
       });
     } catch (error) {
-      setDocsError(`Failed to load from Supabase table '${DOCS_TABLE}': ${error.message}`);
+      setDocsError(error.message || 'Failed to load documents');
     } finally {
       setLoadingDocs(false);
     }
@@ -351,24 +350,12 @@ export default function AdminPage() {
   };
 
   const uploadFiles = async (files) => {
-    if (!supabase || !user || !files?.length) return;
+    if (!user || !files?.length) return;
     setDocsError('');
     try {
       for (const file of files) {
-        const sanitized = file.name.replace(/\s+/g, '_');
-        const storagePath = `pending/${user.id}/${Date.now()}-${sanitized}`;
-        const { error: upErr } = await supabase.storage.from(DOCS_BUCKET).upload(storagePath, file, { upsert: false });
-        if (upErr) throw upErr;
-
-        const { error: rowErr } = await supabase.from(DOCS_TABLE).insert({
-          user_id: user.id,
-          original_name: file.name,
-          storage_path: storagePath,
-          status: 'pending',
-          embedded: false,
-          size_bytes: file.size,
-        });
-        if (rowErr) throw rowErr;
+        // eslint-disable-next-line no-await-in-loop
+        await uploadDocument({ userId: user.id, file });
       }
       await loadDocuments();
     } catch (error) {
@@ -411,35 +398,14 @@ export default function AdminPage() {
   };
 
   const moveDocument = async (doc, targetStatus) => {
-    if (!supabase || !user) throw new Error('Supabase not configured');
-    const filename = doc.storagePath.split('/').pop();
-    const targetPath = `${targetStatus}/${user.id}/${filename}`;
-
-    if (doc.storagePath !== targetPath) {
-      const { error: moveErr } = await supabase.storage.from(DOCS_BUCKET).move(doc.storagePath, targetPath);
-      if (moveErr) throw moveErr;
-    }
-
-    const { error: updErr } = await supabase
-      .from(DOCS_TABLE)
-      .update({
-        storage_path: targetPath,
-        status: targetStatus,
-        embedded: targetStatus === 'validated' ? doc.embedded : false,
-      })
-      .eq('id', doc.id);
-    if (updErr) throw updErr;
-    return targetPath;
+    const updated = await updateDocumentStatus(doc.id, { target_status: targetStatus });
+    return updated.storage_path;
   };
 
-  const indexValidatedDoc = async (storagePath) => {
-    if (!supabase) throw new Error('Supabase not configured');
-    const { data: signedData, error: signedErr } = await supabase.storage.from(DOCS_BUCKET).createSignedUrl(storagePath, 3600);
-    if (signedErr) throw signedErr;
+  const indexValidatedDoc = async (docId) => {
     return indexDocument({
-      source_url: signedData.signedUrl,
-      target_relative_path: `supabase/${storagePath}`,
-      skip_if_exists: true,
+      document_id: docId,
+      skip_if_embedded: true,
     });
   };
 
@@ -447,16 +413,11 @@ export default function AdminPage() {
     markBusy(doc.id, true);
     setDocsError('');
     try {
-      const validatedPath = doc.status === 'validated' ? doc.storagePath : await moveDocument(doc, 'validated');
+      if (doc.status !== 'validated') {
+        await moveDocument(doc, 'validated');
+      }
       if (!doc.embedded) {
-        const result = await indexValidatedDoc(validatedPath);
-        if (result.status === 'indexed' || result.status === 'already_exists') {
-          const { error: updErr } = await supabase.from(DOCS_TABLE).update({
-            embedded: true,
-            embedded_at: new Date().toISOString(),
-          }).eq('id', doc.id);
-          if (updErr) throw updErr;
-        }
+        await indexValidatedDoc(doc.id);
       }
       await loadDocuments();
     } catch (error) {
@@ -480,23 +441,14 @@ export default function AdminPage() {
   };
 
   const removeDocument = async (doc) => {
-    if (!supabase) return;
     markBusy(doc.id, true);
     setDocsError('');
     try {
-      const candidateRelativePaths = [`supabase/${doc.storagePath}`];
-      if (!doc.storagePath.startsWith('validated/')) {
-        const validatedPath = doc.storagePath.replace(/^(pending|rejected)\//, 'validated/');
-        if (validatedPath !== doc.storagePath) {
-          candidateRelativePaths.push(`supabase/${validatedPath}`);
-        }
+      if (doc.embedded || doc.status === 'validated') {
+        // Best effort vector cleanup before removing the Supabase document record.
+        await removeDocumentChunks({ document_id: doc.id });
       }
-      await removeDocumentChunks({ target_relative_paths: [...new Set(candidateRelativePaths)] });
-
-      const { error: rmErr } = await supabase.storage.from(DOCS_BUCKET).remove([doc.storagePath]);
-      if (rmErr) throw rmErr;
-      const { error: delErr } = await supabase.from(DOCS_TABLE).delete().eq('id', doc.id);
-      if (delErr) throw delErr;
+      await deleteDocumentRecord(doc.id);
       await loadDocuments();
     } catch (error) {
       setDocsError(error.message);
@@ -506,14 +458,12 @@ export default function AdminPage() {
   };
 
   const viewDocument = async (doc) => {
-    if (!supabase) return;
     markBusy(doc.id, true);
     setDocsError('');
     setPreviewLoading(true);
     try {
-      const { data, error } = await supabase.storage.from(DOCS_BUCKET).createSignedUrl(doc.storagePath, 3600);
-      if (error) throw error;
-      setPreviewUrl(data.signedUrl);
+      const data = await getDocumentSignedUrl(doc.id, 3600);
+      setPreviewUrl(data.signed_url);
       setPreviewName(doc.name);
       setPreviewOpen(true);
     } catch (error) {
