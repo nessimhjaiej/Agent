@@ -7,80 +7,36 @@ class HealthResponse(BaseModel):
     version: str
 
 
-class RunIngestionRequest(BaseModel):
-    raw_dir: str | None = Field(default=None, min_length=1)
-    source_root_in_preprocessing: str | None = Field(default=None, min_length=1)
-    preprocessing_base_url: str | None = Field(default=None, min_length=1)
-    embedding_base_url: str | None = Field(default=None, min_length=1)
-    embedding_batch_size: int | None = Field(default=None, gt=0)
-    recursive: bool | None = None
-    patterns: list[str] | None = None
-    dry_run: bool = False
-
-
-class IngestionDocumentResponse(BaseModel):
-    file_path: str
-    source_path: str
-    chunks_count: int
-    indexed_count: int
+class DocumentResponse(BaseModel):
+    id: str
+    user_id: str
+    original_name: str
+    storage_path: str
     status: str
-    error: str | None = None
+    embedded: bool
+    size_bytes: int
+    created_at: str
+    embedded_at: str | None = None
 
 
-class RunIngestionResponse(BaseModel):
+class ListDocumentsResponse(BaseModel):
     status: str = "ok"
-    documents_processed: int
-    documents_failed: int
-    chunks_total: int
-    chunks_indexed: int
-    failed_files: list[str]
-    results: list[IngestionDocumentResponse]
+    documents: list[DocumentResponse]
 
 
-class IndexDocumentRequest(BaseModel):
-    source_url: str | None = Field(default=None, min_length=1)
-    source_path: str | None = Field(default=None, min_length=1)
-    target_relative_path: str = Field(..., min_length=1)
-    source_root_in_preprocessing: str | None = Field(default=None, min_length=1)
-    preprocessing_base_url: str | None = Field(default=None, min_length=1)
-    embedding_base_url: str | None = Field(default=None, min_length=1)
-    embedding_batch_size: int | None = Field(default=None, gt=0)
-    skip_if_exists: bool = True
+class UpdateDocumentStatusRequest(BaseModel):
+    target_status: str = Field(..., pattern="^(pending|validated|rejected)$")
 
 
-class IndexDocumentResponse(BaseModel):
-    status: str
-    source_path: str
-    exists_in_weaviate: bool
-    indexed: bool
-    chunks_count: int
-    indexed_count: int
-    message: str | None = None
-
-
-class RemoveDocumentChunksRequest(BaseModel):
-    target_relative_paths: list[str] = Field(..., min_length=1)
-
-
-class RemoveDocumentChunksResponse(BaseModel):
-    status: str
-    requested_count: int
-    matched_objects_count: int
-    deleted_count: int
-
-
-class CheckDocumentsRequest(BaseModel):
-    target_relative_paths: list[str] = Field(..., min_length=1)
-
-
-class CheckDocumentResult(BaseModel):
-    target_relative_path: str
-    source_path: str
-    exists_in_weaviate: bool
-
-
-class CheckDocumentsResponse(BaseModel):
+class SignedUrlResponse(BaseModel):
     status: str = "ok"
-    total_count: int
-    exists_count: int
-    results: list[CheckDocumentResult]
+    document_id: str
+    storage_path: str
+    signed_url: str
+    expires_in: int
+
+
+class DeleteDocumentResponse(BaseModel):
+    status: str
+    document_id: str
+    storage_path: str

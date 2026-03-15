@@ -1,8 +1,10 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { isPasswordStrong, PASSWORD_POLICY_MESSAGE } from '../utils/passwordPolicy';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const profileBucket = import.meta.env.VITE_SUPABASE_PROFILE_BUCKET || 'profiles';
 
 const supabase =
   supabaseUrl && supabaseAnonKey
@@ -11,57 +13,124 @@ const supabase =
 
 const AuthContext = createContext(null);
 
+function deriveUsernameFromEmail(email) {
+  const localPart = (email || '').split('@')[0].trim().toLowerCase();
+  if (!localPart) return 'user';
+  return localPart.replace(/[^a-z0-9._-]/g, '_').slice(0, 32) || 'user';
+}
+
 function getAccountFlags(currentUser) {
   const role = currentUser?.user_metadata?.role || 'user';
   const appMetadata = currentUser?.app_metadata || {};
   const blocked = appMetadata.account_blocked === true;
   const validated = role === 'admin' || appMetadata.account_validated === true;
-  return { role, blocked, validated };
+  const username = (currentUser?.user_metadata?.username || '').trim();
+  const invited = appMetadata.invited_by_admin === true;
+  const inviteOnboardingCompleted =
+    currentUser?.user_metadata?.invite_onboarding_completed === true;
+  const requireInviteOnboarding = invited && !inviteOnboardingCompleted;
+  return {
+    role,
+    blocked,
+    validated,
+    username,
+    requireInviteOnboarding,
+  };
 }
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [requireInviteOnboarding, setRequireInviteOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);
+  const authMutationInFlightRef = useRef(false);
 
   useEffect(() => {
     if (!supabase) {
       setLoading(false);
       return;
     }
+    let isUnmounted = false;
+    let isEnforcing = false;
+    let hasQueuedEnforcement = false;
+    let queuedSessionUser = null;
+    let isSigningOut = false;
 
     const forceSignOut = async ({ redirectHome = false } = {}) => {
-      await supabase.auth.signOut();
-      setUser(null);
-      setUserRole(null);
-      if (redirectHome) {
-        window.location.replace('/');
-      }
-    };
-
-    const enforceAccountState = async (sessionUser) => {
-      const hasExplicitSessionUser = sessionUser !== undefined;
-      const currentUser = hasExplicitSessionUser
-        ? sessionUser
-        : (await supabase.auth.getUser()).data?.user ?? null;
-      if (!currentUser) {
+      if (isSigningOut) return;
+      isSigningOut = true;
+      try {
+        await supabase.auth.signOut();
         setUser(null);
         setUserRole(null);
-        return;
+        setRequireInviteOnboarding(false);
+        if (redirectHome) {
+          window.location.replace('/');
+        }
+      } finally {
+        isSigningOut = false;
       }
-
-      const { blocked, validated, role } = getAccountFlags(currentUser);
-      if (blocked || (!validated && role !== 'admin')) {
-        await forceSignOut({ redirectHome: true });
-        return;
-      }
-
-      setUser(currentUser);
-      setUserRole(role || 'user');
     };
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      await enforceAccountState(session?.user ?? null);
+    const enforceAccountState = async (sessionUser = undefined) => {
+      if (authMutationInFlightRef.current) return;
+      if (isEnforcing) {
+        hasQueuedEnforcement = true;
+        queuedSessionUser = sessionUser ?? null;
+        return;
+      }
+      isEnforcing = true;
+
+      let currentUser = sessionUser;
+      try {
+        if (currentUser === undefined) {
+          const { data, error } = await supabase.auth.getUser();
+          currentUser = !error ? (data?.user ?? null) : null;
+        } else if (currentUser) {
+          // Refresh with latest server-side metadata when we already have a session user.
+          try {
+            const { data, error } = await supabase.auth.getUser();
+            if (!error && data?.user) {
+              currentUser = data.user;
+            }
+          } catch {
+            // Keep session user if live fetch fails.
+          }
+        }
+
+        if (!currentUser) {
+          if (!isUnmounted) {
+            setUser(null);
+            setUserRole(null);
+            setRequireInviteOnboarding(false);
+          }
+          return;
+        }
+
+        const { blocked, validated, role, requireInviteOnboarding: requiresOnboarding } =
+          getAccountFlags(currentUser);
+        if (blocked || (!validated && role !== 'admin')) {
+          await forceSignOut({ redirectHome: true });
+          return;
+        }
+
+        if (!isUnmounted) {
+          setUser(currentUser);
+          setUserRole(role || 'user');
+          setRequireInviteOnboarding(requiresOnboarding);
+        }
+      } finally {
+        isEnforcing = false;
+        if (hasQueuedEnforcement) {
+          const nextSessionUser = queuedSessionUser;
+          hasQueuedEnforcement = false;
+          queuedSessionUser = null;
+          void enforceAccountState(nextSessionUser);
+        }
+      }
+    };
+
+    enforceAccountState(undefined).then(() => {
       setLoading(false);
     });
 
@@ -71,24 +140,22 @@ export function AuthProvider({ children }) {
       }
     );
 
-    const verifySessionAccountState = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      await enforceAccountState(session?.user ?? null);
-    };
+    const verifySessionAccountState = async () => enforceAccountState(undefined);
 
     const intervalId = window.setInterval(() => {
-      verifySessionAccountState();
+      void verifySessionAccountState();
     }, 15000);
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        verifySessionAccountState();
+        void verifySessionAccountState();
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
+      isUnmounted = true;
       subscription.unsubscribe();
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -101,7 +168,13 @@ export function AuthProvider({ children }) {
       email,
       password,
     });
-    if (error) throw error;
+    if (error) {
+      const rawMessage = (error.message || '').toLowerCase();
+      if (rawMessage.includes('email not confirmed') || rawMessage.includes('email_not_confirmed')) {
+        throw new Error('Your account is validated but your email is not confirmed. Please check your inbox and validate your email first.');
+      }
+      throw error;
+    }
 
     const { blocked, validated } = getAccountFlags(data?.user);
     if (blocked) {
@@ -116,14 +189,22 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const signUp = async (email, password) => {
+  const signUp = async ({ email, password, phoneNumber = '' }) => {
     if (!supabase) throw new Error('Supabase not configured');
+    if (!isPasswordStrong(password)) {
+      throw new Error(PASSWORD_POLICY_MESSAGE);
+    }
+    const username = deriveUsernameFromEmail(email);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           role: 'user',
+          username,
+          phone_number: phoneNumber.trim(),
+          profile_picture: '',
+          invite_onboarding_completed: true,
         },
       },
     });
@@ -131,8 +212,79 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const updateProfile = async ({
+    username,
+    phoneNumber = '',
+    profilePictureFile = null,
+    removeProfilePicture = false,
+    newPassword = '',
+    completeInviteOnboarding = false,
+  }) => {
+    if (!supabase) throw new Error('Supabase not configured');
+    authMutationInFlightRef.current = true;
+    try {
+      const { data: currentData } = await supabase.auth.getUser();
+      const currentUser = currentData?.user;
+      const existingMetadata = currentUser?.user_metadata || {};
+      const resolvedUsername = (username || '').trim()
+        || (existingMetadata.username || '').trim()
+        || deriveUsernameFromEmail(currentUser?.email || '');
+
+      if (!resolvedUsername) {
+        throw new Error('Username is required.');
+      }
+      let uploadedProfilePictureUrl = removeProfilePicture
+        ? ''
+        : (existingMetadata.profile_picture || '').trim();
+
+      if (profilePictureFile instanceof File) {
+        const originalName = profilePictureFile.name || 'profile-image';
+        const extension = originalName.includes('.') ? originalName.split('.').pop() : 'png';
+        const safeExtension = (extension || 'png').replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'png';
+        const targetPath = `${currentUser?.id || 'user'}/${Date.now()}.${safeExtension}`;
+        const { error: uploadError } = await supabase.storage
+          .from(profileBucket)
+          .upload(targetPath, profilePictureFile, { upsert: true });
+        if (uploadError) {
+          throw new Error(`Profile picture upload failed: ${uploadError.message}`);
+        }
+        const { data: publicData } = supabase.storage.from(profileBucket).getPublicUrl(targetPath);
+        uploadedProfilePictureUrl = publicData?.publicUrl || uploadedProfilePictureUrl;
+      }
+
+      const attributes = {
+        data: {
+          ...existingMetadata,
+          username: resolvedUsername,
+          phone_number: phoneNumber.trim(),
+          profile_picture: uploadedProfilePictureUrl,
+          ...(completeInviteOnboarding ? { invite_onboarding_completed: true } : {}),
+        },
+      };
+      if (newPassword && newPassword.trim()) {
+        if (!isPasswordStrong(newPassword.trim())) {
+          throw new Error(PASSWORD_POLICY_MESSAGE);
+        }
+        attributes.password = newPassword.trim();
+      }
+
+      const { data, error } = await supabase.auth.updateUser(attributes);
+      if (error) throw error;
+      setUser(data?.user ?? currentUser ?? null);
+      if (completeInviteOnboarding) {
+        setRequireInviteOnboarding(false);
+      }
+      return data;
+    } finally {
+      authMutationInFlightRef.current = false;
+    }
+  };
+
   const updatePassword = async (newPassword) => {
     if (!supabase) throw new Error('Supabase not configured');
+    if (!isPasswordStrong(newPassword)) {
+      throw new Error(PASSWORD_POLICY_MESSAGE);
+    }
     const { data, error } = await supabase.auth.updateUser({
       password: newPassword,
     });
@@ -171,11 +323,13 @@ export function AuthProvider({ children }) {
       value={{
         user,
         userRole,
+        requireInviteOnboarding,
         loading,
         signIn,
         signUp,
         signOut,
         updatePassword,
+        updateProfile,
         getAccessToken,
         supabase,
       }}

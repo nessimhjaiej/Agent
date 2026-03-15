@@ -86,7 +86,25 @@ async function deleteWithAuth(url, accessToken) {
   return parseResponse(response);
 }
 
-export async function askGeneration({ query, chatHistory = [], sessionId = null }) {
+async function getJson(url) {
+  const response = await fetch(url, { method: 'GET' });
+  return parseResponse(response);
+}
+
+async function postForm(url, formData) {
+  const response = await fetch(url, {
+    method: 'POST',
+    body: formData,
+  });
+  return parseResponse(response);
+}
+
+async function deleteJson(url) {
+  const response = await fetch(url, { method: 'DELETE' });
+  return parseResponse(response);
+}
+
+export async function askGeneration({ query, chatHistory = [] }) {
   return postJson(`${API.generation}/ask`, {
     query,
     chat_history: chatHistory,
@@ -94,16 +112,36 @@ export async function askGeneration({ query, chatHistory = [], sessionId = null 
   });
 }
 
-export async function runIngestion(payload = {}) {
-  return postJson(`${API.ingestion}/ingestion/run`, payload);
+export async function listDocuments(userId) {
+  const query = new URLSearchParams({ user_id: userId });
+  return getJson(`${API.ingestion}/ingestion/documents?${query.toString()}`);
+}
+
+export async function uploadDocument({ userId, file }) {
+  const formData = new FormData();
+  formData.append('user_id', userId);
+  formData.append('file', file);
+  return postForm(`${API.ingestion}/ingestion/documents/upload`, formData);
+}
+
+export async function updateDocumentStatus(documentId, payload) {
+  return postJson(`${API.ingestion}/ingestion/documents/${documentId}/status`, payload);
+}
+
+export async function getDocumentSignedUrl(documentId, expiresIn = 3600) {
+  return getJson(`${API.ingestion}/ingestion/documents/${documentId}/signed-url?expires_in=${expiresIn}`);
+}
+
+export async function deleteDocumentRecord(documentId) {
+  return deleteJson(`${API.ingestion}/ingestion/documents/${documentId}`);
 }
 
 export async function indexDocument(payload) {
-  return postJson(`${API.ingestion}/ingestion/index-document`, payload);
+  return postJson(`${API.embedding}/index-document`, payload);
 }
 
 export async function removeDocumentChunks(payload) {
-  return postJson(`${API.ingestion}/ingestion/remove-document-chunks`, payload);
+  return postJson(`${API.embedding}/remove-document`, payload);
 }
 
 export async function listManagedUsers(accessToken) {

@@ -59,12 +59,16 @@ class MessageResponse(BaseModel):
 class AdminUserResponse(BaseModel):
     id: str
     email: str
+    username: str = ""
+    phone_number: str = ""
+    profile_picture: str = ""
     role: str
     created_at: str
     email_confirmed: bool
     validated: bool
     blocked: bool
     invited: bool
+    status: str
     invited_at: str = ""
     last_sign_in_at: str = ""
 
@@ -80,6 +84,7 @@ class AdminInviteResponse(BaseModel):
     email: str
     generated_password: str
     email_sent: bool
+    recovery_link: str = ""
 
 
 class HealthResponse(BaseModel):

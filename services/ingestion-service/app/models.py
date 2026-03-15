@@ -1,66 +1,44 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(slots=True)
-class IngestionRunParams:
-    raw_dir: str
-    source_root_in_preprocessing: str
-    preprocessing_base_url: str
-    embedding_base_url: str
-    embedding_batch_size: int
-    recursive: bool
-    patterns: list[str]
-    dry_run: bool = False
-
-
-@dataclass(slots=True)
-class IngestionDocumentResult:
-    file_path: str
-    source_path: str
-    chunks_count: int
-    indexed_count: int
+class DocumentRecord:
+    id: str
+    user_id: str
+    original_name: str
+    storage_path: str
     status: str
-    error: str | None = None
+    embedded: bool
+    size_bytes: int
+    created_at: str
+    embedded_at: str | None = None
 
 
 @dataclass(slots=True)
-class IngestionRunResult:
-    documents_processed: int
-    documents_failed: int
-    chunks_total: int
-    chunks_indexed: int
-    failed_files: list[str]
-    results: list[IngestionDocumentResult] = field(default_factory=list)
+class UploadDocumentParams:
+    user_id: str
+    original_name: str
+    content: bytes
+    content_type: str
+    size_bytes: int
 
 
 @dataclass(slots=True)
-class IndexDocumentParams:
-    source_url: str | None
-    source_path: str | None
-    target_relative_path: str
-    source_root_in_preprocessing: str
-    preprocessing_base_url: str
-    embedding_base_url: str
-    embedding_batch_size: int
-    weaviate_http_url: str
-    weaviate_collection: str
-    skip_if_exists: bool = True
+class UpdateDocumentStatusParams:
+    document_id: str
+    target_status: str
 
 
 @dataclass(slots=True)
-class IndexDocumentResult:
+class SignedUrlResult:
+    document_id: str
+    storage_path: str
+    signed_url: str
+    expires_in: int
+
+
+@dataclass(slots=True)
+class DeleteDocumentResult:
     status: str
-    source_path: str
-    exists_in_weaviate: bool
-    indexed: bool
-    chunks_count: int
-    indexed_count: int
-    message: str | None = None
-
-
-@dataclass(slots=True)
-class RemoveDocumentChunksResult:
-    status: str
-    requested_count: int
-    matched_objects_count: int
-    deleted_count: int
+    document_id: str
+    storage_path: str

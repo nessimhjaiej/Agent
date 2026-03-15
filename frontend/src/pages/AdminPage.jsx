@@ -22,9 +22,12 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import {
   askGeneration,
+  deleteDocumentRecord,
   deleteManagedUser,
+  getDocumentSignedUrl,
   indexDocument,
   inviteUser,
+  listDocuments,
   listManagedUsers,
   removeDocumentChunks,
   setUserBlock,
@@ -32,7 +35,6 @@ import {
   streamAdminAgent,
 } from '../config/api';
 
-const DOCS_BUCKET = import.meta.env.VITE_SUPABASE_DOCS_BUCKET || 'documents';
 const DOCS_TABLE = import.meta.env.VITE_SUPABASE_DOCS_TABLE || 'documents';
 
 function createAdminAlertMessage(selectedMode = 'qa') {
@@ -228,24 +230,19 @@ export default function AdminPage() {
   };
 
   const loadDocuments = async () => {
-    if (!supabase || !user) return;
+    if (!user) return;
     setLoadingDocs(true);
     setDocsError('');
     try {
-      const { data, error } = await supabase
-        .from(DOCS_TABLE)
-        .select('id, user_id, original_name, storage_path, status, embedded, size_bytes, created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      const mapped = (data || []).map(mapRow);
+      const response = await listDocuments(user.id);
+      const mapped = (response.documents || []).map(mapRow);
       setDocs(mapped);
       setSelectedDocIds((prev) => {
         const allowed = new Set(mapped.map((doc) => doc.id));
         return new Set([...prev].filter((id) => allowed.has(id)));
       });
     } catch (error) {
-      setDocsError(`Failed to load from Supabase table '${DOCS_TABLE}': ${error.message}`);
+      setDocsError(error.message || 'Failed to load documents');
     } finally {
       setLoadingDocs(false);
     }
@@ -288,8 +285,10 @@ export default function AdminPage() {
       });
       const deliveryNote = response.email_sent
         ? 'Invitation email sent.'
-        : `Email delivery is not configured. Temporary password: ${response.generated_password}`;
-      setInviteMessage(`${deliveryNote} User ${response.email} has been auto-validated.`);
+        : response.recovery_link
+          ? `Email could not be sent. Share this recovery link: ${response.recovery_link}`
+          : `Email could not be sent. Temporary password: ${response.generated_password}`;
+      setInviteMessage(`${deliveryNote} ${response.message} for ${response.email}. User status remains invited until account setup is completed.`);
       setInviteEmail('');
       await loadManagedUsersData();
     } catch (error) {
@@ -368,6 +367,27 @@ export default function AdminPage() {
   }, [tab, user?.id]);
 
   useEffect(() => {
+    if (tab !== 'users') return undefined;
+    if (!user || user.user_metadata?.role !== 'admin') return undefined;
+
+    const intervalId = window.setInterval(() => {
+      loadManagedUsersData();
+    }, 10000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadManagedUsersData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [tab, user?.id]);
+
+  useEffect(() => {
     if (!supabase || !user?.id) return undefined;
 
     const channel = supabase
@@ -434,24 +454,12 @@ export default function AdminPage() {
   };
 
   const uploadFiles = async (files) => {
-    if (!supabase || !user || !files?.length) return;
+    if (!user || !files?.length) return;
     setDocsError('');
     try {
       for (const file of files) {
-        const sanitized = file.name.replace(/\s+/g, '_');
-        const storagePath = `pending/${user.id}/${Date.now()}-${sanitized}`;
-        const { error: upErr } = await supabase.storage.from(DOCS_BUCKET).upload(storagePath, file, { upsert: false });
-        if (upErr) throw upErr;
-
-        const { error: rowErr } = await supabase.from(DOCS_TABLE).insert({
-          user_id: user.id,
-          original_name: file.name,
-          storage_path: storagePath,
-          status: 'pending',
-          embedded: false,
-          size_bytes: file.size,
-        });
-        if (rowErr) throw rowErr;
+        // eslint-disable-next-line no-await-in-loop
+        await uploadDocument({ userId: user.id, file });
       }
       await loadDocuments();
     } catch (error) {
@@ -494,35 +502,14 @@ export default function AdminPage() {
   };
 
   const moveDocument = async (doc, targetStatus) => {
-    if (!supabase || !user) throw new Error('Supabase not configured');
-    const filename = doc.storagePath.split('/').pop();
-    const targetPath = `${targetStatus}/${user.id}/${filename}`;
-
-    if (doc.storagePath !== targetPath) {
-      const { error: moveErr } = await supabase.storage.from(DOCS_BUCKET).move(doc.storagePath, targetPath);
-      if (moveErr) throw moveErr;
-    }
-
-    const { error: updErr } = await supabase
-      .from(DOCS_TABLE)
-      .update({
-        storage_path: targetPath,
-        status: targetStatus,
-        embedded: targetStatus === 'validated' ? doc.embedded : false,
-      })
-      .eq('id', doc.id);
-    if (updErr) throw updErr;
-    return targetPath;
+    const updated = await updateDocumentStatus(doc.id, { target_status: targetStatus });
+    return updated.storage_path;
   };
 
-  const indexValidatedDoc = async (storagePath) => {
-    if (!supabase) throw new Error('Supabase not configured');
-    const { data: signedData, error: signedErr } = await supabase.storage.from(DOCS_BUCKET).createSignedUrl(storagePath, 3600);
-    if (signedErr) throw signedErr;
+  const indexValidatedDoc = async (docId) => {
     return indexDocument({
-      source_url: signedData.signedUrl,
-      target_relative_path: `supabase/${storagePath}`,
-      skip_if_exists: true,
+      document_id: docId,
+      skip_if_embedded: true,
     });
   };
 
@@ -530,16 +517,11 @@ export default function AdminPage() {
     markBusy(doc.id, true);
     setDocsError('');
     try {
-      const validatedPath = doc.status === 'validated' ? doc.storagePath : await moveDocument(doc, 'validated');
+      if (doc.status !== 'validated') {
+        await moveDocument(doc, 'validated');
+      }
       if (!doc.embedded) {
-        const result = await indexValidatedDoc(validatedPath);
-        if (result.status === 'indexed' || result.status === 'already_exists') {
-          const { error: updErr } = await supabase.from(DOCS_TABLE).update({
-            embedded: true,
-            embedded_at: new Date().toISOString(),
-          }).eq('id', doc.id);
-          if (updErr) throw updErr;
-        }
+        await indexValidatedDoc(doc.id);
       }
       await loadDocuments();
     } catch (error) {
@@ -563,23 +545,14 @@ export default function AdminPage() {
   };
 
   const removeDocument = async (doc) => {
-    if (!supabase) return;
     markBusy(doc.id, true);
     setDocsError('');
     try {
-      const candidateRelativePaths = [`supabase/${doc.storagePath}`];
-      if (!doc.storagePath.startsWith('validated/')) {
-        const validatedPath = doc.storagePath.replace(/^(pending|rejected)\//, 'validated/');
-        if (validatedPath !== doc.storagePath) {
-          candidateRelativePaths.push(`supabase/${validatedPath}`);
-        }
+      if (doc.embedded || doc.status === 'validated') {
+        // Best effort vector cleanup before removing the Supabase document record.
+        await removeDocumentChunks({ document_id: doc.id });
       }
-      await removeDocumentChunks({ target_relative_paths: [...new Set(candidateRelativePaths)] });
-
-      const { error: rmErr } = await supabase.storage.from(DOCS_BUCKET).remove([doc.storagePath]);
-      if (rmErr) throw rmErr;
-      const { error: delErr } = await supabase.from(DOCS_TABLE).delete().eq('id', doc.id);
-      if (delErr) throw delErr;
+      await deleteDocumentRecord(doc.id);
       await loadDocuments();
     } catch (error) {
       setDocsError(error.message);
@@ -589,14 +562,12 @@ export default function AdminPage() {
   };
 
   const viewDocument = async (doc) => {
-    if (!supabase) return;
     markBusy(doc.id, true);
     setDocsError('');
     setPreviewLoading(true);
     try {
-      const { data, error } = await supabase.storage.from(DOCS_BUCKET).createSignedUrl(doc.storagePath, 3600);
-      if (error) throw error;
-      setPreviewUrl(data.signedUrl);
+      const data = await getDocumentSignedUrl(doc.id, 3600);
+      setPreviewUrl(data.signed_url);
       setPreviewName(doc.name);
       setPreviewOpen(true);
     } catch (error) {
@@ -762,18 +733,34 @@ export default function AdminPage() {
     { key: 'agent', label: 'Admin Agent Chat', icon: Bot },
   ];
 
+  const getManagedUserStatus = (managedUser) => {
+    if (managedUser.status) return managedUser.status;
+    if (managedUser.blocked) return 'blocked';
+    if (managedUser.invited) return 'invited';
+    if (managedUser.validated) return 'validated';
+    return 'pending';
+  };
+
   const userStats = useMemo(() => ({
     total: managedUsers.length,
-    validated: managedUsers.filter((managedUser) => managedUser.validated && !managedUser.blocked).length,
+    validated: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'validated').length,
+    invited: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'invited').length,
+    pending: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'pending').length,
     blocked: managedUsers.filter((managedUser) => managedUser.blocked).length,
   }), [managedUsers]);
 
   const filteredUsers = managedUsers.filter((managedUser) => {
-    const matchesSearch = (managedUser.email || '').toLowerCase().includes(userSearch.toLowerCase());
+    const status = getManagedUserStatus(managedUser);
+    const query = userSearch.toLowerCase().trim();
+    const matchesSearch = query === ''
+      || (managedUser.email || '').toLowerCase().includes(query)
+      || (managedUser.username || '').toLowerCase().includes(query)
+      || (managedUser.phone_number || '').toLowerCase().includes(query);
     if (!matchesSearch) return false;
-    if (userFilter === 'validated') return managedUser.validated && !managedUser.blocked;
-    if (userFilter === 'pending') return !managedUser.validated && !managedUser.blocked;
-    if (userFilter === 'blocked') return managedUser.blocked;
+    if (userFilter === 'validated') return status === 'validated';
+    if (userFilter === 'invited') return status === 'invited';
+    if (userFilter === 'pending') return status === 'pending';
+    if (userFilter === 'blocked') return status === 'blocked';
     return true;
   });
 
@@ -1000,12 +987,13 @@ export default function AdminPage() {
                         onChange={(event) => setUserFilter(event.target.value)}
                         className="rounded-xl text-sm outline-none appearance-none"
                         style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', minWidth: '200px', width: '100%', paddingLeft: '24px', paddingRight: '48px' }}
-                      >
-                        <option value="all">All Users</option>
-                        <option value="validated">Validated</option>
-                        <option value="pending">Pending</option>
-                        <option value="blocked">Blocked</option>
-                      </select>
+                        >
+                          <option value="all">All Users</option>
+                          <option value="validated">Validated</option>
+                          <option value="invited">Invited</option>
+                          <option value="pending">Pending</option>
+                          <option value="blocked">Blocked</option>
+                        </select>
                       <ChevronDown
                         size={16}
                         className="pointer-events-none absolute top-1/2 -translate-y-1/2"
@@ -1038,10 +1026,12 @@ export default function AdminPage() {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 shrink-0" style={{ marginBottom: '16px' }}>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0" style={{ marginBottom: '16px' }}>
                     {[
                       { l: 'Total', v: userStats.total, color: 'var(--color-primary-400)' },
                       { l: 'Validated', v: userStats.validated, color: '#10b981' },
+                      { l: 'Invited', v: userStats.invited, color: '#38bdf8' },
+                      { l: 'Pending', v: userStats.pending, color: '#f59e0b' },
                       { l: 'Blocked', v: userStats.blocked, color: '#ef4444' },
                     ].map((s, i) => (
                       <motion.div key={i} className="rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '18px 30px' }}>
@@ -1055,48 +1045,68 @@ export default function AdminPage() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="sticky top-0 z-10" style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)', minHeight: '62px' }}>
-                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Email</th>
+                          <th className="text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px', paddingLeft: '28px', paddingRight: '16px' }}>User Info</th>
                           <th className="px-4 text-left text-base font-semibold hidden md:table-cell" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Role</th>
-                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Validated</th>
-                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Blocked</th>
+                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Status</th>
                           <th className="px-4 text-center text-base font-semibold w-40" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredUsers.map((managedUser) => (
+                        {filteredUsers.map((managedUser) => {
+                          const status = getManagedUserStatus(managedUser);
+                          const statusCfg = status === 'validated'
+                            ? { bg: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)', label: 'Validated' }
+                            : status === 'invited'
+                              ? { bg: 'rgba(56,189,248,0.12)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.25)', label: 'Invited' }
+                            : status === 'blocked'
+                              ? { bg: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', label: 'Blocked' }
+                              : { bg: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)', label: 'Pending' };
+                          return (
                           <tr key={managedUser.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border-color)', height: '76px' }}>
-                            <td className="px-4 py-4 align-middle">
-                              <div className="min-w-0">
-                                <div className="font-medium truncate max-w-[360px]" style={{ color: 'var(--text-primary)' }}>{managedUser.email}</div>
+                            <td className="py-4 align-middle" style={{ paddingLeft: '28px', paddingRight: '16px' }}>
+                              <div className="flex items-center gap-3 min-w-0" style={{ paddingLeft: '4px' }}>
+                                <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid var(--border-color)' }}>
+                                  {managedUser.profile_picture ? (
+                                    <img src={managedUser.profile_picture} alt="Profile" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <User size={14} style={{ color: 'var(--text-muted)' }} />
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="font-medium truncate max-w-[360px]" style={{ color: 'var(--text-primary)' }}>
+                                    {managedUser.username || 'No username'}
+                                  </div>
+                                  <div className="text-xs truncate max-w-[360px]" style={{ color: 'var(--text-muted)' }}>
+                                    {managedUser.email}
+                                  </div>
+                                  <div className="text-xs truncate max-w-[360px]" style={{ color: 'var(--text-muted)' }}>
+                                    {managedUser.phone_number || 'No phone'}
+                                  </div>
+                                </div>
                               </div>
                             </td>
                             <td className="px-4 py-4 hidden md:table-cell align-middle" style={{ color: 'var(--text-secondary)' }}>{managedUser.role}</td>
                             <td className="px-4 py-4 align-middle">
-                              <span className="inline-flex items-center py-1 rounded-full text-xs font-medium" style={{ background: managedUser.validated ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)', color: managedUser.validated ? '#10b981' : '#f59e0b', border: managedUser.validated ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(245,158,11,0.2)', paddingLeft: '14px', paddingRight: '14px' }}>
-                                {managedUser.validated ? 'Validated' : 'Pending'}
-                              </span>
-                            </td>
-                            <td className="px-4 py-4 align-middle">
-                              <span className="inline-flex items-center py-1 rounded-full text-xs font-medium" style={{ background: managedUser.blocked ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)', color: managedUser.blocked ? '#ef4444' : '#10b981', border: managedUser.blocked ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(16,185,129,0.2)', paddingLeft: '14px', paddingRight: '14px' }}>
-                                {managedUser.blocked ? 'Blocked' : 'Active'}
+                              <span className="inline-flex items-center py-1 rounded-full text-xs font-medium" style={{ background: statusCfg.bg, color: statusCfg.color, border: statusCfg.border, paddingLeft: '14px', paddingRight: '14px' }}>
+                                {statusCfg.label}
                               </span>
                             </td>
                             <td className="px-4 py-4 align-middle w-40">
                               <div className="grid grid-cols-3 justify-items-center items-center gap-2">
-                                {managedUser.blocked || !managedUser.validated ? (
+                                {status !== 'validated' && status !== 'invited' ? (
                                   <button
-                                    onClick={() => (managedUser.blocked ? validateAgain(managedUser) : updateValidation(managedUser))}
+                                    onClick={() => (status === 'blocked' ? validateAgain(managedUser) : updateValidation(managedUser))}
                                     disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin'}
                                     className="p-2.5 rounded-lg hover:bg-success/10 transition-colors disabled:opacity-50"
                                     style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }}
-                                    title={managedUser.blocked ? 'Validate again' : 'Validate user'}
+                                    title={status === 'blocked' ? 'Validate again' : 'Validate user'}
                                   >
                                     <Check size={18} />
                                   </button>
                                 ) : (
                                   <span className="p-2.5 invisible"><Check size={18} /></span>
                                 )}
-                                {!managedUser.blocked ? (
+                                {status !== 'blocked' ? (
                                   <button
                                     onClick={() => updateBlock(managedUser)}
                                     disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin'}
@@ -1121,14 +1131,14 @@ export default function AdminPage() {
                               </div>
                             </td>
                           </tr>
-                        ))}
+                        )})}
                         {filteredUsers.length === 0 && (
                           <>
                             <tr>
-                              <td colSpan={5} className="px-4 py-3">&nbsp;</td>
+                              <td colSpan={4} className="px-4 py-3">&nbsp;</td>
                             </tr>
                             <tr>
-                              <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
+                              <td colSpan={4} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
                                 <p className="text-lg font-semibold">
                                   {loadingManagedUsers ? 'Loading users...' : 'No users found'}
                                 </p>

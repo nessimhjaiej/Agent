@@ -21,6 +21,7 @@ export default function App() {
   const { loading, user, userRole } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const authenticatedHome = userRole === 'admin' ? '/admin' : '/';
 
   // Splash screen timer
   useEffect(() => {
@@ -32,8 +33,16 @@ export default function App() {
 
   // Redirect after login based on role
   useEffect(() => {
-    if (!loading && user && location.pathname === '/login') {
-      navigate(userRole === 'admin' ? '/admin' : '/');
+    if (loading || !user) return;
+    const isAdmin = userRole === 'admin';
+
+    if (isAdmin && (location.pathname === '/' || location.pathname === '/login')) {
+      navigate('/admin', { replace: true });
+      return;
+    }
+
+    if (!isAdmin && (location.pathname === '/admin' || location.pathname === '/security' || location.pathname === '/login')) {
+      navigate('/', { replace: true });
     }
   }, [user, loading, location.pathname, userRole, navigate]);
 
@@ -48,6 +57,10 @@ export default function App() {
 
   // Login page has its own layout
   if (location.pathname === '/login') {
+    if (user) {
+      return <Navigate to={authenticatedHome} replace />;
+    }
+
     return (
       <AnimatePresence mode="wait">
         <LoginPage key="login" />

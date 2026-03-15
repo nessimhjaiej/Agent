@@ -9,6 +9,7 @@ from app.exceptions import (
     InvalidCredentialsException,
     InvalidEmailException,
     InvalidPasswordException,
+    InvalidUserStateException,
     UnauthorizedException,
     UserAlreadyExistsException,
 )
@@ -186,6 +187,8 @@ def invite_user(
         raise HTTPException(status_code=403, detail=str(exc))
     except UserAlreadyExistsException as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+    except InvalidUserStateException as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     except InvalidEmailException as exc:
         raise HTTPException(status_code=400, detail=f"Email error: {exc}")
     except AuthServiceException as exc:
@@ -206,6 +209,8 @@ def set_validation_status(
         updated = service.set_user_validation(token, user_id, payload.validated)
     except UnauthorizedException as exc:
         raise HTTPException(status_code=403, detail=str(exc))
+    except InvalidUserStateException as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     except AuthServiceException as exc:
         raise HTTPException(status_code=500, detail=str(exc))
     return AdminUserResponse(**updated)

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, Eye, EyeOff, CheckCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { isPasswordStrong, PASSWORD_POLICY_MESSAGE } from '../utils/passwordPolicy';
 
 export default function AuthModal({ isOpen, onClose }) {
   const [mode, setMode] = useState('signin');
@@ -22,7 +23,13 @@ export default function AuthModal({ isOpen, onClose }) {
         await signIn(email, password);
         onClose();
       } else {
-        await signUp(email, password);
+        if (!isPasswordStrong(password)) {
+          throw new Error(PASSWORD_POLICY_MESSAGE);
+        }
+        await signUp({
+          email,
+          password,
+        });
         setEmailSent(true);
       }
     } catch (err) {
@@ -122,6 +129,12 @@ export default function AuthModal({ isOpen, onClose }) {
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
+
+                    {mode === 'signup' && (
+                      <p className="text-xs px-1" style={{ color: 'var(--text-secondary)' }}>
+                        Password must be at least 8 characters and include uppercase, lowercase, number, and special character.
+                      </p>
+                    )}
 
                     {error && (
                       <motion.p className="text-sm text-danger bg-danger/10 rounded-lg px-3 py-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>

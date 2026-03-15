@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Scale, CheckCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AnimatedPage from '../components/AnimatedPage';
+import { isPasswordStrong, PASSWORD_POLICY_MESSAGE } from '../utils/passwordPolicy';
 
 export default function LoginPage() {
   const [mode, setMode] = useState('signin');
@@ -26,7 +27,13 @@ export default function LoginPage() {
         const role = data?.user?.user_metadata?.role;
         navigate(role === 'admin' ? '/admin' : '/');
       } else {
-        await signUp(email, password);
+        if (!isPasswordStrong(password)) {
+          throw new Error(PASSWORD_POLICY_MESSAGE);
+        }
+        await signUp({
+          email,
+          password,
+        });
         setEmailSent(true);
       }
     } catch (err) {
@@ -186,6 +193,12 @@ export default function LoginPage() {
                   </button>
                 </div>
 
+                {mode === 'signup' && (
+                  <p className="text-xs px-1" style={{ color: 'var(--text-secondary)' }}>
+                    Password must be at least 8 characters and include uppercase, lowercase, number, and special character.
+                  </p>
+                )}
+
                 {error && (
                   <motion.p
                     className="text-sm text-danger bg-danger/10 rounded-lg px-4 py-3"
@@ -224,7 +237,10 @@ export default function LoginPage() {
               <p className="text-center text-sm" style={{ color: 'var(--text-secondary)', marginTop: '22px' }}>
                 {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
                 <button
-                  onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); }}
+                  onClick={() => {
+                    setMode(mode === 'signin' ? 'signup' : 'signin');
+                    setError('');
+                  }}
                   className="font-semibold gradient-text hover:opacity-80 transition-opacity"
                 >
                   {mode === 'signin' ? 'Sign Up' : 'Sign In'}

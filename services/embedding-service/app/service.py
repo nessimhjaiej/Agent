@@ -1,7 +1,7 @@
 from app.config import Settings
-from app.models import Chunk, ChunkMetadata, IndexChunkResult
+from app.models import Chunk, ChunkMetadata, IndexChunkResult, IndexDocumentResult, RemoveDocumentResult
 from app.orchestrator import EmbeddingOrchestrator
-from app.schemas import ChunkInput
+from app.schemas import ChunkInput, IndexDocumentRequest, RemoveDocumentRequest
 
 
 class EmbeddingService:
@@ -12,6 +12,15 @@ class EmbeddingService:
     def index_chunks(self, chunks: list[ChunkInput]) -> list[IndexChunkResult]:
         domain_chunks = [self._to_domain_chunk(chunk) for chunk in chunks]
         return self._orchestrator.index_chunks(domain_chunks)
+
+    def index_document(self, payload: IndexDocumentRequest) -> IndexDocumentResult:
+        return self._orchestrator.index_document(
+            document_id=payload.document_id,
+            skip_if_embedded=payload.skip_if_embedded,
+        )
+
+    def remove_document(self, payload: RemoveDocumentRequest) -> RemoveDocumentResult:
+        return self._orchestrator.remove_document(payload.document_id)
 
     def _to_domain_chunk(self, chunk: ChunkInput) -> Chunk:
         return Chunk(
