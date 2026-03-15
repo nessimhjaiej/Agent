@@ -19,3 +19,4 @@ node_modules/
 dist/
 .cache/
 *.local
+.local-backend-pids.json
