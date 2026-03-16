@@ -1,14 +1,17 @@
 from pathlib import Path
 import sys
+import json
 
 SERVICE_ROOT = Path(__file__).resolve().parents[1]
 if str(SERVICE_ROOT) not in sys.path:
     sys.path.insert(0, str(SERVICE_ROOT))
 
 from app.config import Settings  # noqa: E402
+from app.agent.memory import AgentRunStateStore  # noqa: E402
 from app.models import AdminChatTurn, AdminRequestContext, PlanStep, PlannedAction, PendingAction  # noqa: E402
 from app.operation_history import AdminOperationHistoryStore  # noqa: E402
 from app.orchestrator import AdminOrchestrator  # noqa: E402
+from app.tools.base import ToolMetadata  # noqa: E402
 
 
 class _FakeTool:
@@ -25,12 +28,121 @@ class _FakeTool:
         )
 
 
+class _FakeUpdateRerankerConfigTool:
+    name = "update_reranker_config"
+    metadata = ToolMetadata(
+        name=name,
+        description="Update reranker config",
+        output_description="updated config",
+        requires_confirmation=True,
+    )
+
+    def __init__(self, result: dict) -> None:
+        self._result = result
+
+    def execute(self, arguments: dict):  # noqa: ANN001
+        from app.models import ToolExecutionResult
+
+        return ToolExecutionResult(
+            status="ok",
+            answer=self._result["answer"],
+            result=self._result["result"],
+        )
+
+
+class _FakeUpdateChunkingConfigTool:
+    name = "update_chunking_config"
+    metadata = ToolMetadata(
+        name=name,
+        description="Update chunking config",
+        output_description="updated config",
+        requires_confirmation=True,
+    )
+
+    def __init__(self, result: dict) -> None:
+        self._result = result
+
+    def execute(self, arguments: dict):  # noqa: ANN001
+        from app.models import ToolExecutionResult
+
+        return ToolExecutionResult(
+            status="ok",
+            answer=self._result["answer"],
+            result=self._result["result"],
+        )
+
+
+class _FakeAgentCatalogTool:
+    name = "get_reranker_strategy_catalog"
+    metadata = ToolMetadata(name=name, description="Reranker catalog", output_description="catalog")
+
+    def execute(self, arguments: dict):  # noqa: ANN001
+        from app.models import ToolExecutionResult
+
+        return ToolExecutionResult(
+            status="ok",
+            answer="Supported reranker strategies loaded.",
+            result={
+                "subject": "reranker",
+                "current_config": {"default_ranker": "none", "rerank_top_n": 20},
+                "options": [
+                    {"name": "none", "description": "No reranking."},
+                    {"name": "cross_encoder", "description": "Cross-encoder reranking."},
+                    {"name": "llm_batch", "description": "LLM batch reranking."},
+                ],
+            },
+        )
+
+
+class _FakeEvaluationReportTool:
+    name = "get_evaluation_report"
+    metadata = ToolMetadata(name=name, description="Evaluation report", output_description="report")
+
+    def execute(self, arguments: dict):  # noqa: ANN001
+        from app.models import ToolExecutionResult
+
+        return ToolExecutionResult(
+            status="ok",
+            answer="Loaded the latest evaluation report.",
+            result={
+                "report_path": "evaluation_reports/baseline.json",
+                "generated_at_utc": "2026-03-16T10:00:00+00:00",
+                "summary": {"faithfulness": 0.7, "factual_correctness(mode=f1)": 0.6},
+            },
+        )
+
+
+class _FakeRunEvaluationTool:
+    name = "run_rag_evaluation"
+    metadata = ToolMetadata(name=name, description="Run evaluation", output_description="evaluation", requires_confirmation=True)
+
+    def execute(self, arguments: dict):  # noqa: ANN001
+        from app.models import ToolExecutionResult
+
+        return ToolExecutionResult(
+            status="ok",
+            answer="Evaluation rerun completed.",
+            result={
+                "report_path": "evaluation_reports/latest.json",
+                "dataset_path": arguments.get("dataset_path", "evals/sample_eval_dataset.json"),
+                "sample_count": 4,
+                "summary": {"faithfulness": 0.82, "factual_correctness(mode=f1)": 0.68},
+            },
+        )
+
+
 class _FakeRegistry:
     def __init__(self, tools: dict) -> None:
         self._tools = tools
 
     def get(self, tool_name: str):  # noqa: ANN001
         return self._tools[tool_name]
+
+    def planning_tools(self):  # noqa: ANN001
+        result = []
+        for name, tool in self._tools.items():
+            result.append(getattr(tool, "metadata", ToolMetadata(name=name, description=name)))
+        return result
 
 
 class _FakeSelector:
@@ -76,6 +188,53 @@ class _FakeExplainerClient:
     def complete_text(self, system_prompt: str, user_prompt: str) -> str:
         assert "Previous assistant response to explain" in user_prompt
         return "It means the setting was written, but the rest of the operational follow-up did not run yet."
+
+
+class _QueuedPlannerClient:
+    def __init__(self, payloads: list[str]) -> None:
+        self._payloads = payloads
+        self._index = 0
+
+    def complete_json(self, system_prompt: str, user_prompt: str) -> str:
+        payload = self._payloads[min(self._index, len(self._payloads) - 1)]
+        self._index += 1
+        return payload
+
+    def complete_text(self, system_prompt: str, user_prompt: str) -> str:
+        return "ok"
+
+
+class _FakeChunkingCatalogTool:
+    name = "get_chunking_strategy_catalog"
+    metadata = ToolMetadata(name=name, description="Chunking catalog", output_description="catalog")
+
+    def execute(self, arguments: dict):  # noqa: ANN001
+        from app.models import ToolExecutionResult
+
+        return ToolExecutionResult(
+            status="ok",
+            answer="Supported chunking strategies loaded.",
+            result={
+                "subject": "chunking",
+                "current_config": {"chunk_strategy": "late", "chunk_size": 800, "chunk_overlap": 120},
+                "options": [
+                    {"name": "overlap", "description": "Sliding overlap chunks."},
+                    {"name": "semantic", "description": "Semantic chunks."},
+                    {"name": "late", "description": "Late chunking."},
+                    {"name": "sentence", "description": "Sentence chunks."},
+                ],
+            },
+        )
+
+
+class _FakeDeleteDocumentTool:
+    name = "delete_document"
+    metadata = ToolMetadata(name=name, description="Delete document", output_description="delete", requires_confirmation=True)
+
+    def execute(self, arguments: dict):  # noqa: ANN001
+        from app.models import ToolExecutionResult
+
+        return ToolExecutionResult(status="ok", answer="Deleted.", result={})
 
 
 class _FakeRetrievalClient:
@@ -489,3 +648,742 @@ def test_orchestrator_in_plan_mode_instructs_switch_for_informational_request() 
     assert response.executed is False
     assert response.result["suggested_mode"] == "qa"
     assert "Switch to Q&A mode" in response.answer
+
+
+def test_orchestrator_uses_recursive_reranker_agent_for_plan_recommendation(tmp_path: Path) -> None:
+    state_store = AgentRunStateStore(state_path=tmp_path / "agent_run_states.json")
+    planner_client = _QueuedPlannerClient(
+        payloads=[
+            """
+            {
+              "action_type": "call_tool",
+              "message": "Inspect the available reranker strategies first.",
+              "tool_name": "get_reranker_strategy_catalog",
+              "arguments": {},
+              "reason": "Need grounded reranker options before recommending one.",
+              "expected_observation": "Current reranker config and available strategies.",
+              "goal_subject": "reranking",
+              "proposed_steps": []
+            }
+            """,
+            """
+            {
+              "action_type": "respond",
+              "message": "Cross-encoder reranking is the best balanced option here because it improves ranking quality without the heavier cost profile of llm_batch.",
+              "tool_name": null,
+              "arguments": {},
+              "reason": "Grounded recommendation from the reranker catalog.",
+              "expected_observation": "",
+              "goal_subject": "reranking",
+              "proposed_steps": [
+                {
+                  "tool": "update_reranker_config",
+                  "arguments": {
+                    "default_ranker": "cross_encoder",
+                    "rerank_top_n": 10
+                  }
+                }
+              ]
+            }
+            """,
+        ]
+    )
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(PlannedAction(mode="qa", intent="qa", tool_name=None)),
+        registry=_FakeRegistry(
+            {
+                "get_reranker_strategy_catalog": _FakeAgentCatalogTool(),
+                "update_reranker_config": _FakeUpdateRerankerConfigTool(
+                    {
+                        "answer": "Updated reranker configuration.",
+                        "result": {"default_ranker": "cross_encoder", "rerank_top_n": 10},
+                    }
+                ),
+            }
+        ),
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        explainer_client=planner_client,  # type: ignore[arg-type]
+        agent_state_store=state_store,
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    response = orchestrator.handle(
+        AdminRequestContext(
+            message="I want good reranking without wasting too many resources.",
+            selected_mode="plan",
+            session_id="admin-1",
+        )
+    )
+
+    assert response.status == "ok"
+    assert response.mode == "advisory"
+    assert response.intent == "recursive_plan_agent"
+    assert "Cross-encoder" in response.answer
+    assert response.agent_run is not None
+    assert response.agent_run.goal is not None
+    assert response.agent_run.goal.subject == "reranking"
+    assert response.result["proposed_steps"][0]["tool"] == "update_reranker_config"
+
+
+def test_orchestrator_resumes_recursive_reranker_run_after_confirmation(tmp_path: Path) -> None:
+    state_store = AgentRunStateStore(state_path=tmp_path / "agent_run_states.json")
+    planner_client = _QueuedPlannerClient(
+        payloads=[
+            """
+            {
+              "action_type": "call_tool",
+              "message": "Inspect the reranker strategies first.",
+              "tool_name": "get_reranker_strategy_catalog",
+              "arguments": {},
+              "reason": "Need the grounded options before choosing a mutation.",
+              "expected_observation": "Current config and supported reranker strategies.",
+              "goal_subject": "reranking",
+              "proposed_steps": []
+            }
+            """,
+            """
+            {
+              "action_type": "request_confirmation",
+              "message": "LLM batch reranking is the strongest quality-first option. Confirm to apply it.",
+              "tool_name": "update_reranker_config",
+              "arguments": {
+                "default_ranker": "llm_batch",
+                "rerank_top_n": 10
+              },
+              "reason": "This applies the quality-first reranker choice.",
+              "expected_observation": "Updated reranker config.",
+              "goal_subject": "reranking",
+              "proposed_steps": [
+                {
+                  "tool": "update_reranker_config",
+                  "arguments": {
+                    "default_ranker": "llm_batch",
+                    "rerank_top_n": 10
+                  }
+                }
+              ]
+            }
+            """,
+        ]
+    )
+    registry = _FakeRegistry(
+        {
+            "get_reranker_strategy_catalog": _FakeAgentCatalogTool(),
+            "update_reranker_config": _FakeUpdateRerankerConfigTool(
+                {
+                    "answer": "Updated reranker configuration.",
+                    "result": {"default_ranker": "llm_batch", "rerank_top_n": 10},
+                }
+            ),
+        }
+    )
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(PlannedAction(mode="qa", intent="qa", tool_name=None)),
+        registry=registry,
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        explainer_client=planner_client,  # type: ignore[arg-type]
+        agent_state_store=state_store,
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    first_response = orchestrator.handle(
+        AdminRequestContext(
+            message="Apply the best quality reranker even if it costs more.",
+            selected_mode="plan",
+            session_id="admin-1",
+        )
+    )
+
+    assert first_response.status == "needs_confirmation"
+    assert first_response.pending_action is not None
+    assert first_response.pending_action.tool == "update_reranker_config"
+
+    confirmed_response = orchestrator.handle(
+        AdminRequestContext(
+            message="Confirm the reranker change.",
+            selected_mode="plan",
+            session_id="admin-1",
+            confirm=True,
+            pending_action=PendingAction(
+                intent=first_response.pending_action.intent,
+                tool_name=first_response.pending_action.tool,
+                arguments=first_response.pending_action.arguments,
+                steps=[
+                    PlanStep(tool_name=step.tool, arguments=step.arguments)
+                    for step in first_response.pending_action.steps
+                ],
+            ),
+        )
+    )
+
+    assert confirmed_response.status == "ok"
+    assert confirmed_response.mode == "tool_call"
+    assert confirmed_response.executed is True
+    assert confirmed_response.answer == "Updated reranker configuration."
+    assert confirmed_response.agent_run is not None
+    assert confirmed_response.agent_run.stop_reason == "confirmed_and_executed"
+
+
+def test_orchestrator_routes_generic_apply_follow_up_back_into_recursive_reranker_run(tmp_path: Path) -> None:
+    state_store = AgentRunStateStore(state_path=tmp_path / "agent_run_states.json")
+    planner_client = _QueuedPlannerClient(
+        payloads=[
+            """
+            {
+              "action_type": "call_tool",
+              "message": "Inspect the reranker strategies first.",
+              "tool_name": "get_reranker_strategy_catalog",
+              "arguments": {},
+              "reason": "Need grounded reranker options before recommending one.",
+              "expected_observation": "Current reranker config and available strategies.",
+              "goal_subject": "reranking",
+              "proposed_steps": []
+            }
+            """,
+            """
+            {
+              "action_type": "respond",
+              "message": "Cross-encoder reranking is the best balanced choice. I can apply it if you want.",
+              "tool_name": null,
+              "arguments": {},
+              "reason": "Grounded recommendation from the reranker catalog.",
+              "expected_observation": "",
+              "goal_subject": "reranking",
+              "proposed_steps": [
+                {
+                  "tool": "update_reranker_config",
+                  "arguments": {
+                    "default_ranker": "cross_encoder",
+                    "rerank_top_n": 10
+                  }
+                }
+              ]
+            }
+            """,
+            """
+            {
+              "action_type": "request_confirmation",
+              "message": "Confirm and I will apply the stored cross-encoder recommendation.",
+              "tool_name": "update_reranker_config",
+              "arguments": {
+                "default_ranker": "cross_encoder",
+                "rerank_top_n": 10
+              },
+              "reason": "This applies the existing grounded recommendation.",
+              "expected_observation": "Updated reranker config.",
+              "goal_subject": "reranking",
+              "proposed_steps": [
+                {
+                  "tool": "update_reranker_config",
+                  "arguments": {
+                    "default_ranker": "cross_encoder",
+                    "rerank_top_n": 10
+                  }
+                }
+              ]
+            }
+            """,
+        ]
+    )
+    registry = _FakeRegistry(
+        {
+            "get_reranker_strategy_catalog": _FakeAgentCatalogTool(),
+            "update_reranker_config": _FakeUpdateRerankerConfigTool(
+                {
+                    "answer": "Updated reranker configuration.",
+                    "result": {"default_ranker": "cross_encoder", "rerank_top_n": 10},
+                }
+            ),
+        }
+    )
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(PlannedAction(mode="qa", intent="qa", tool_name=None)),
+        registry=registry,
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        explainer_client=planner_client,  # type: ignore[arg-type]
+        agent_state_store=state_store,
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    first_response = orchestrator.handle(
+        AdminRequestContext(
+            message="I want good reranking without wasting too many resources.",
+            selected_mode="plan",
+            session_id="admin-1",
+        )
+    )
+
+    assert first_response.status == "ok"
+    assert first_response.intent == "recursive_plan_agent"
+
+    follow_up_response = orchestrator.handle(
+        AdminRequestContext(
+            message="Apply your recommendation",
+            selected_mode="plan",
+            session_id="admin-1",
+        )
+    )
+
+    assert follow_up_response.status == "needs_confirmation"
+    assert follow_up_response.intent == "recursive_plan_agent"
+    assert follow_up_response.pending_action is not None
+    assert follow_up_response.pending_action.tool == "update_reranker_config"
+
+
+def test_orchestrator_runs_evaluation_after_confirmed_reranker_change_when_requested(tmp_path: Path) -> None:
+    state_store = AgentRunStateStore(state_path=tmp_path / "agent_run_states.json")
+    planner_client = _QueuedPlannerClient(
+        payloads=[
+            """
+            {
+              "action_type": "call_tool",
+              "message": "Inspect the reranker strategies first.",
+              "tool_name": "get_reranker_strategy_catalog",
+              "arguments": {},
+              "reason": "Need grounded reranker options before choosing a change.",
+              "expected_observation": "Current reranker config and supported strategies.",
+              "goal_subject": "reranking",
+              "proposed_steps": []
+            }
+            """,
+            """
+            {
+              "action_type": "request_confirmation",
+              "message": "Cross-encoder reranking is the best balanced improvement here. Confirm to apply it and run evaluation afterward.",
+              "tool_name": "update_reranker_config",
+              "arguments": {
+                "default_ranker": "cross_encoder",
+                "rerank_top_n": 10
+              },
+              "reason": "This applies the reranker change and then evaluates the result.",
+              "expected_observation": "Updated reranker config and a fresh evaluation report.",
+              "goal_subject": "reranking",
+              "proposed_steps": [
+                {
+                  "tool": "update_reranker_config",
+                  "arguments": {
+                    "default_ranker": "cross_encoder",
+                    "rerank_top_n": 10
+                  }
+                },
+                {
+                  "tool": "run_rag_evaluation",
+                  "arguments": {
+                    "dataset_path": "evals/sample_eval_dataset.json"
+                  }
+                }
+              ]
+            }
+            """,
+        ]
+    )
+    registry = _FakeRegistry(
+        {
+            "get_reranker_strategy_catalog": _FakeAgentCatalogTool(),
+            "update_reranker_config": _FakeUpdateRerankerConfigTool(
+                {
+                    "answer": "Updated reranker configuration.",
+                    "result": {"default_ranker": "cross_encoder", "rerank_top_n": 10},
+                }
+            ),
+            "get_evaluation_report": _FakeEvaluationReportTool(),
+            "run_rag_evaluation": _FakeRunEvaluationTool(),
+        }
+    )
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(PlannedAction(mode="qa", intent="qa", tool_name=None)),
+        registry=registry,
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        explainer_client=planner_client,  # type: ignore[arg-type]
+        agent_state_store=state_store,
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    first_response = orchestrator.handle(
+        AdminRequestContext(
+            message="Apply a better reranker and evaluate the result with metrics.",
+            selected_mode="plan",
+            session_id="admin-1",
+        )
+    )
+
+    assert first_response.status == "needs_confirmation"
+    assert first_response.result["should_run_evaluation"] is True
+    assert len(first_response.pending_action.steps) == 2
+    assert first_response.pending_action.steps[1].tool == "run_rag_evaluation"
+
+    confirmed_response = orchestrator.handle(
+        AdminRequestContext(
+            message="Confirm the reranker change and evaluation.",
+            selected_mode="plan",
+            session_id="admin-1",
+            confirm=True,
+            pending_action=PendingAction(
+                intent=first_response.pending_action.intent,
+                tool_name=first_response.pending_action.tool,
+                arguments=first_response.pending_action.arguments,
+                steps=[
+                    PlanStep(tool_name=step.tool, arguments=step.arguments)
+                    for step in first_response.pending_action.steps
+                ],
+            ),
+        )
+    )
+
+    assert confirmed_response.status == "ok"
+    assert confirmed_response.result["step_count"] == 2
+    assert confirmed_response.result["steps"][1]["tool"] == "run_rag_evaluation"
+    assert "evaluation_comparison" in confirmed_response.result
+    assert confirmed_response.result["evaluation_comparison"]["deltas"]["faithfulness"] == 0.12
+
+
+def test_orchestrator_uses_recursive_agent_for_multilingual_chunking_request(tmp_path: Path) -> None:
+    state_store = AgentRunStateStore(state_path=tmp_path / "agent_run_states.json")
+    registry = _FakeRegistry({"get_chunking_strategy_catalog": _FakeChunkingCatalogTool()})
+    registry = _FakeRegistry(
+        {
+            "get_chunking_strategy_catalog": _FakeChunkingCatalogTool(),
+            "update_chunking_config": _FakeUpdateChunkingConfigTool(
+                {
+                    "answer": "Updated chunking configuration.",
+                    "result": {"chunk_strategy": "late", "chunk_size": 800, "chunk_overlap": 120},
+                }
+            ),
+        }
+    )
+    planner_client = _QueuedPlannerClient(
+        payloads=[
+            """
+            {
+              "action_type": "call_tool",
+              "message": "Je vais d'abord inspecter les strategies de chunking disponibles.",
+              "tool_name": "get_chunking_strategy_catalog",
+              "arguments": {},
+              "reason": "Il faut connaitre les options de chunking supportees avant de recommander une strategie.",
+              "expected_observation": "Configuration actuelle et options de chunking.",
+              "goal_subject": "chunking",
+              "proposed_steps": []
+            }
+            """,
+            """
+            {
+              "action_type": "respond",
+              "message": "Pour reduire le cout tout en gardant une bonne structure, la strategie 'late' reste un bon point de depart. Je peux aussi proposer un changement explicite si vous voulez l'appliquer.",
+              "tool_name": null,
+              "arguments": {},
+              "reason": "Recommendation grounded in the chunking catalog.",
+              "expected_observation": "",
+              "goal_subject": "chunking",
+              "proposed_steps": [
+                {
+                  "tool": "update_chunking_config",
+                  "arguments": {
+                    "chunk_strategy": "late",
+                    "chunk_size": 800,
+                    "chunk_overlap": 120
+                  }
+                }
+              ]
+            }
+            """,
+        ]
+    )
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(PlannedAction(mode="qa", intent="qa", tool_name=None)),
+        registry=registry,
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        explainer_client=planner_client,  # type: ignore[arg-type]
+        agent_state_store=state_store,
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    response = orchestrator.handle(
+        AdminRequestContext(
+            message="Quelle strategie de chunking dois-je choisir pour reduire le cout ?",
+            selected_mode="plan",
+            session_id="admin-1",
+        )
+    )
+
+    assert response.status == "ok"
+    assert response.intent == "recursive_plan_agent"
+    assert "late" in response.answer
+    assert response.agent_run is not None
+    assert response.agent_run.goal is not None
+    assert response.agent_run.goal.subject == "chunking"
+
+
+def test_orchestrator_falls_back_to_legacy_planner_for_delete_document_requests(tmp_path: Path) -> None:
+    state_store = AgentRunStateStore(state_path=tmp_path / "agent_run_states.json")
+    registry = _FakeRegistry({"delete_document": _FakeDeleteDocumentTool()})
+    planner_client = _QueuedPlannerClient(
+        payloads=[
+            """
+            {
+              "action_type": "stop",
+              "message": "",
+              "tool_name": null,
+              "arguments": {},
+              "reason": "fallback_legacy_planner",
+              "expected_observation": "",
+              "goal_subject": "documents",
+              "proposed_steps": []
+            }
+            """
+        ]
+    )
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(
+            PlannedAction(
+                mode="tool_call",
+                intent="delete_document",
+                tool_name="delete_document",
+                arguments={"target_relative_path": "doc.pdf"},
+                answer="Are you sure you want to delete doc.pdf?",
+                requires_confirmation=True,
+            )
+        ),
+        registry=registry,
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        explainer_client=planner_client,  # type: ignore[arg-type]
+        agent_state_store=state_store,
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    response = orchestrator.handle(
+        AdminRequestContext(
+            message="Delete document doc.pdf",
+            selected_mode="plan",
+            session_id="admin-1",
+        )
+    )
+
+    assert response.status == "needs_confirmation"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "delete_document"
+
+
+def test_orchestrator_stream_emits_progress_events_before_final(tmp_path: Path) -> None:
+    state_store = AgentRunStateStore(state_path=tmp_path / "agent_run_states.json")
+    planner_client = _QueuedPlannerClient(
+        payloads=[
+            """
+            {
+              "action_type": "call_tool",
+              "message": "Inspect the chunking catalog first.",
+              "tool_name": "get_chunking_strategy_catalog",
+              "arguments": {},
+              "reason": "Need a grounded read-only inspection.",
+              "expected_observation": "Current chunking config and supported strategies.",
+              "goal_subject": "chunking",
+              "proposed_steps": []
+            }
+            """,
+            """
+            {
+              "action_type": "respond",
+              "message": "The current chunking setup was inspected successfully.",
+              "tool_name": null,
+              "arguments": {},
+              "reason": "We have enough grounded information for a first response.",
+              "expected_observation": "",
+              "goal_subject": "chunking",
+              "proposed_steps": []
+            }
+            """,
+        ]
+    )
+    registry = _FakeRegistry({"get_chunking_strategy_catalog": _FakeChunkingCatalogTool()})
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(PlannedAction(mode="qa", intent="qa", tool_name=None)),
+        registry=registry,
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        explainer_client=planner_client,  # type: ignore[arg-type]
+        agent_state_store=state_store,
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    events = [
+        json.loads(line)
+        for line in orchestrator.stream(
+            AdminRequestContext(
+                message="show current chunking information",
+                selected_mode="plan",
+                session_id="stream-1",
+            )
+        )
+    ]
+
+    assert len(events) >= 2
+    assert events[-1]["type"] == "final"
+    assert any(event["type"] == "agent_decision" for event in events[:-1])
+    assert any(event["type"] == "agent_observation" for event in events[:-1])
+
+
+def test_orchestrator_soft_fallback_uses_grounded_observations_instead_of_mode_switch(tmp_path: Path) -> None:
+    state_store = AgentRunStateStore(state_path=tmp_path / "agent_run_states.json")
+    planner_client = _QueuedPlannerClient(
+        payloads=[
+            """
+            {
+              "action_type": "call_tool",
+              "message": "Inspect the chunking catalog first.",
+              "tool_name": "get_chunking_strategy_catalog",
+              "arguments": {},
+              "reason": "Ground the answer with a real tool output first.",
+              "expected_observation": "Current chunking config and options.",
+              "goal_subject": "chunking",
+              "proposed_steps": []
+            }
+            """,
+            """
+            {
+              "action_type": "stop",
+              "message": "",
+              "tool_name": null,
+              "arguments": {},
+              "reason": "fallback_legacy_planner",
+              "expected_observation": "",
+              "goal_subject": "chunking",
+              "proposed_steps": [
+                {
+                  "tool": "update_chunking_config",
+                  "arguments": {
+                    "chunk_strategy": "late",
+                    "chunk_size": 800,
+                    "chunk_overlap": 120
+                  }
+                }
+              ]
+            }
+            """,
+        ]
+    )
+    registry = _FakeRegistry(
+        {
+            "get_chunking_strategy_catalog": _FakeChunkingCatalogTool(),
+            "update_chunking_config": _FakeUpdateChunkingConfigTool(
+                {
+                    "answer": "Updated chunking configuration.",
+                    "result": {"chunk_strategy": "late", "chunk_size": 800, "chunk_overlap": 120},
+                }
+            ),
+        }
+    )
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(PlannedAction(mode="qa", intent="qa", tool_name=None)),
+        registry=registry,
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        explainer_client=planner_client,  # type: ignore[arg-type]
+        agent_state_store=state_store,
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    response = orchestrator.handle(
+        AdminRequestContext(
+            message="quelle strategie de chunking est active ?",
+            selected_mode="plan",
+            session_id="soft-fallback",
+        )
+    )
+
+    assert response.status == "ok"
+    assert response.mode == "advisory"
+    assert "Switch to Q&A mode" not in response.answer
+    assert response.agent_run is not None
+    assert response.agent_run.stop_reason == "soft_fallback_responded"
+
+
+def test_orchestrator_starts_fresh_run_for_new_non_follow_up_message(tmp_path: Path) -> None:
+    state_store = AgentRunStateStore(state_path=tmp_path / "agent_run_states.json")
+    planner_client = _QueuedPlannerClient(
+        payloads=[
+            """
+            {
+              "action_type": "respond",
+              "message": "First answer with a proposed reranker change.",
+              "tool_name": null,
+              "arguments": {},
+              "reason": "Initial answer.",
+              "expected_observation": "",
+              "goal_subject": "reranking",
+              "proposed_steps": [
+                {
+                  "tool": "update_reranker_config",
+                  "arguments": {
+                    "default_ranker": "cross_encoder",
+                    "rerank_top_n": 10
+                  }
+                }
+              ]
+            }
+            """,
+            """
+            {
+              "action_type": "respond",
+              "message": "Fresh answer for a different question.",
+              "tool_name": null,
+              "arguments": {},
+              "reason": "New top-level request.",
+              "expected_observation": "",
+              "goal_subject": "system_information",
+              "proposed_steps": []
+            }
+            """,
+        ]
+    )
+    registry = _FakeRegistry(
+        {
+            "update_reranker_config": _FakeUpdateRerankerConfigTool(
+                {
+                    "answer": "Updated reranker configuration.",
+                    "result": {"default_ranker": "cross_encoder", "rerank_top_n": 10},
+                }
+            )
+        }
+    )
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(PlannedAction(mode="qa", intent="qa", tool_name=None)),
+        registry=registry,
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        explainer_client=planner_client,  # type: ignore[arg-type]
+        agent_state_store=state_store,
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    first_response = orchestrator.handle(
+        AdminRequestContext(
+            message="Recommend a reranker",
+            selected_mode="plan",
+            session_id="same-session",
+        )
+    )
+    second_response = orchestrator.handle(
+        AdminRequestContext(
+            message="what are the current system informations",
+            selected_mode="plan",
+            session_id="same-session",
+        )
+    )
+
+    assert first_response.result["proposed_steps"]
+    assert second_response.answer == "Fresh answer for a different question."
+    assert second_response.result["proposed_steps"] == []

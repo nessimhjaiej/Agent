@@ -104,7 +104,7 @@ async function deleteJson(url) {
   return parseResponse(response);
 }
 
-export async function askGeneration({ query, chatHistory = [] }) {
+export async function askGeneration({ query, chatHistory = [], sessionId = null }) {
   return postJson(`${API.generation}/ask`, {
     query,
     chat_history: chatHistory,

@@ -21,6 +21,7 @@ import AnimatedPage from '../components/AnimatedPage';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import {
+  askAdminAgent,
   askGeneration,
   deleteDocumentRecord,
   deleteManagedUser,
@@ -33,6 +34,8 @@ import {
   setUserBlock,
   setUserValidation,
   streamAdminAgent,
+  updateDocumentStatus,
+  uploadDocument,
 } from '../config/api';
 
 const DOCS_TABLE = import.meta.env.VITE_SUPABASE_DOCS_TABLE || 'documents';
@@ -57,7 +60,9 @@ function buildLivePlanningActivity(selectedMode) {
       phase: 'planning',
       status: 'in_progress',
       title: 'Using Plan mode',
-      detail: 'Preparing an executable admin plan.',
+      detail: selectedMode === 'plan'
+        ? 'Running a recursive admin agent that can inspect, recommend, and prepare execution.'
+        : 'Preparing an executable admin plan.',
     },
     {
       phase: 'planning',
@@ -66,6 +71,13 @@ function buildLivePlanningActivity(selectedMode) {
       detail: 'Resolving tool steps, arguments, and confirmation requirements.',
     },
   ];
+}
+
+function formatMetricDelta(value) {
+  const numeric = Number(value);
+  if (Number.isNaN(numeric)) return String(value);
+  const sign = numeric > 0 ? '+' : '';
+  return `${sign}${numeric.toFixed(3)}`;
 }
 
 function buildLiveExecutionActivity(pendingAction) {
@@ -102,6 +114,45 @@ function upsertActivityItems(currentItems, incomingItems) {
     }
   });
   return nextItems;
+}
+
+function mapStreamEventToActivityItems(event) {
+  if (!event || typeof event !== 'object') return [];
+  if (event.type === 'activity' && Array.isArray(event.activity)) {
+    return event.activity;
+  }
+  if (event.type === 'agent_decision' && event.decision) {
+    const decision = event.decision;
+    return [{
+      phase: 'planning',
+      status: 'in_progress',
+      title: `Iteration ${event.iteration}: ${String(decision.action_type || 'decision').replaceAll('_', ' ')}`,
+      detail: decision.message || decision.reason || 'The agent selected the next action.',
+      tool: decision.tool_name || undefined,
+      arguments: decision.arguments || {},
+    }];
+  }
+  if (event.type === 'agent_tool_call') {
+    return [{
+      phase: 'execution',
+      status: 'in_progress',
+      title: `Calling tool: ${event.tool_name}`,
+      detail: 'The agent is executing a tool call.',
+      tool: event.tool_name,
+      arguments: event.arguments || {},
+    }];
+  }
+  if (event.type === 'agent_observation' && event.observation) {
+    return [{
+      phase: 'observation',
+      status: 'completed',
+      title: `Observed: ${event.observation.source || 'tool output'}`,
+      detail: event.observation.content || 'The agent received an observation.',
+      tool: event.observation.source || undefined,
+      arguments: {},
+    }];
+  }
+  return [];
 }
 
 function getActivityStatusStyles(status) {
@@ -644,8 +695,9 @@ export default function AdminPage() {
           chatHistory: history,
         }, {
           onEvent: (event) => {
-            if (event.type === 'activity' && Array.isArray(event.activity)) {
-              setAgentActivity((prev) => upsertActivityItems(prev, event.activity));
+            const items = mapStreamEventToActivityItems(event);
+            if (items.length > 0) {
+              setAgentActivity((prev) => upsertActivityItems(prev, items));
             }
           },
         });
@@ -666,6 +718,8 @@ export default function AdminPage() {
         selectedMode: agentMode === 'plan' ? (response.selected_mode || agentMode) : 'qa',
         thinkingSummary: agentMode === 'plan' ? (response.thinking_summary || '') : '',
         activity: agentMode === 'plan' && Array.isArray(response.activity) ? response.activity : [],
+        agentRun: agentMode === 'plan' ? (response.agent_run || null) : null,
+        result: agentMode === 'plan' ? (response.result || {}) : {},
       }]);
     } catch (error) {
       setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: `Request failed: ${error.message}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources: [] }]);
@@ -689,19 +743,13 @@ export default function AdminPage() {
       const history = agentMsgs
         .filter((m) => m.role === 'user' || m.role === 'assistant')
         .map((m) => ({ role: m.role, content: m.content }));
-      const response = await streamAdminAgent(token, {
+      const response = await askAdminAgent(token, {
         message: `Confirm action ${pendingAction.intent}`,
         selectedMode: 'plan',
         sessionId: adminChatSessionId,
         confirm: true,
         pendingAction,
         chatHistory: history,
-      }, {
-        onEvent: (event) => {
-          if (event.type === 'activity' && Array.isArray(event.activity)) {
-            setAgentActivity((prev) => upsertActivityItems(prev, event.activity));
-          }
-        },
       });
       const citations = Array.isArray(response?.citations) ? response.citations : [];
       const sources = [...new Set(citations.map((citation) => citation.document_name).filter(Boolean))];
@@ -718,6 +766,8 @@ export default function AdminPage() {
         selectedMode: response.selected_mode || 'plan',
         thinkingSummary: response.thinking_summary || '',
         activity: Array.isArray(response.activity) ? response.activity : [],
+        agentRun: response.agent_run || null,
+        result: response.result || {},
       }]);
     } catch (error) {
       setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: `Confirmation failed: ${error.message}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources: [] }]);
@@ -1160,7 +1210,7 @@ export default function AdminPage() {
                       <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
                         {agentMode === 'qa'
                           ? 'Q&A mode answers informational questions only. Configuration and operational requests should be sent in Plan mode.'
-                          : 'Plan mode is for executable admin requests only. Questions and explanations should be asked in Q&A mode.'}
+                          : 'Plan mode runs a recursive admin agent: it can inspect system state, explain tradeoffs, recommend changes, and execute confirmed actions.'}
                       </p>
                     </div>
                     <div
@@ -1216,10 +1266,46 @@ export default function AdminPage() {
                                   }
                                 : { background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '16px 24px' }}>
                             <p className="text-sm leading-relaxed whitespace-pre-line my-2">{msg.content}</p>
-                            {msg.role === 'assistant' && msg.thinkingSummary && (
-                              <div
-                                className="mt-3 rounded-xl"
-                                style={{
+                          {msg.role === 'assistant' && msg.agentRun?.goal && (
+                            <div
+                              className="mt-3 rounded-xl"
+                              style={{
+                                background: 'rgba(245,158,11,0.06)',
+                                border: '1px solid rgba(245,158,11,0.16)',
+                                padding: '12px 14px',
+                              }}
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--text-muted)' }}>Agent Run</p>
+                                <span
+                                  className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase"
+                                  style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b' }}
+                                >
+                                  {String(msg.agentRun.status || 'running').replaceAll('_', ' ')}
+                                </span>
+                              </div>
+                              <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                                Goal: {msg.agentRun.goal.message}
+                              </p>
+                              {msg.agentRun.goal.constraints?.length > 0 && (
+                                <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                                  Constraints: {msg.agentRun.goal.constraints.join(', ')}
+                                </p>
+                              )}
+                              <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                                Iterations: {msg.agentRun.iteration_count} · Tool calls: {msg.agentRun.tool_call_count}
+                              </p>
+                              {msg.agentRun.stop_reason && (
+                                <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                                  Stop reason: {String(msg.agentRun.stop_reason).replaceAll('_', ' ')}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          {msg.role === 'assistant' && msg.thinkingSummary && (
+                            <div
+                              className="mt-3 rounded-xl"
+                              style={{
                                   background: 'rgba(15,23,42,0.04)',
                                   border: '1px solid var(--border-color)',
                                   padding: '12px 14px',
@@ -1227,6 +1313,60 @@ export default function AdminPage() {
                               >
                                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--text-muted)' }}>Reasoning Summary</p>
                                 <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{msg.thinkingSummary}</p>
+                              </div>
+                            )}
+                            {msg.role === 'assistant' && Array.isArray(msg.result?.proposed_steps) && msg.result.proposed_steps.length > 0 && (
+                              <div
+                                className="mt-3 rounded-xl"
+                                style={{
+                                  background: 'rgba(59,130,246,0.05)',
+                                  border: '1px solid rgba(59,130,246,0.12)',
+                                  padding: '12px 14px',
+                                }}
+                              >
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--text-muted)' }}>Proposed Steps</p>
+                                <div className="mt-2 space-y-2">
+                                  {msg.result.proposed_steps.map((step, index) => (
+                                    <div key={`${msg.id}-step-${index}`} className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                                      <span style={{ color: 'var(--text-primary)' }}>{index + 1}. {step.tool}</span>
+                                      {step.arguments && Object.keys(step.arguments).length > 0 && (
+                                        <span> {JSON.stringify(step.arguments)}</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {msg.role === 'assistant' && msg.result?.evaluation_comparison && (
+                              <div
+                                className="mt-3 rounded-xl"
+                                style={{
+                                  background: 'rgba(16,185,129,0.06)',
+                                  border: '1px solid rgba(16,185,129,0.16)',
+                                  padding: '12px 14px',
+                                }}
+                              >
+                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--text-muted)' }}>Evaluation Follow-up</p>
+                                <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                                  {msg.result.evaluation_comparison.summary_text}
+                                </p>
+                                {msg.result.evaluation_comparison.deltas && Object.keys(msg.result.evaluation_comparison.deltas).length > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-2">
+                                    {Object.entries(msg.result.evaluation_comparison.deltas).map(([metric, delta]) => (
+                                      <span
+                                        key={`${msg.id}-${metric}`}
+                                        className="text-[11px] px-2.5 py-1 rounded-full"
+                                        style={{
+                                          background: 'rgba(16,185,129,0.08)',
+                                          color: 'var(--text-primary)',
+                                          border: '1px solid rgba(16,185,129,0.16)',
+                                        }}
+                                      >
+                                        {metric}: {formatMetricDelta(delta)}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             )}
                             {msg.role === 'assistant' && Array.isArray(msg.activity) && msg.activity.length > 0 && (

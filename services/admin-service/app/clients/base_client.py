@@ -34,3 +34,15 @@ class BaseHttpClient:
         if not isinstance(payload, dict):
             raise UpstreamServiceError(f"POST {path} returned invalid JSON object")
         return payload
+
+    def _delete_json(self, path: str, headers: dict | None = None) -> dict:
+        try:
+            response = self._client.delete(path, headers=headers)
+        except httpx.HTTPError as exc:
+            raise UpstreamServiceError(f"HTTP request failed for DELETE {path}: {exc}") from exc
+        if response.status_code >= 400:
+            raise UpstreamServiceError(f"DELETE {path} failed {response.status_code}: {response.text}")
+        payload = response.json()
+        if not isinstance(payload, dict):
+            raise UpstreamServiceError(f"DELETE {path} returned invalid JSON object")
+        return payload

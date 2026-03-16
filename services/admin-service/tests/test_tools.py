@@ -13,7 +13,14 @@ from app.planner.confirmation import needs_confirmation  # noqa: E402
 from app.planner.intent_parser import IntentParser  # noqa: E402
 from app.planner.tool_selector import ToolSelector  # noqa: E402
 from app.models import AdminRequestContext, PlanStep, PlannedAction  # noqa: E402
-from app.tools.config_tools import UpdateChunkingConfigTool, UpdateEmbeddingModelTool, UpdateRerankerConfigTool  # noqa: E402
+from app.tools.config_tools import (  # noqa: E402
+    GetChunkingStrategyCatalogTool,
+    GetEmbeddingCapabilityCatalogTool,
+    GetRerankerStrategyCatalogTool,
+    UpdateChunkingConfigTool,
+    UpdateEmbeddingModelTool,
+    UpdateRerankerConfigTool,
+)
 from app.tools.base import ToolMetadata  # noqa: E402
 from app.tools.env_store import EnvConfigStore  # noqa: E402
 from app.tools.evaluation_tools import EvaluationReportStore, GetEvaluationReportTool  # noqa: E402
@@ -21,6 +28,8 @@ from app.tools.knowledge_tools import (
     DeleteDocumentTool,
     DeleteValidatedDocumentsTool,
     EmbedDocumentTool,
+    EmbedValidatedDocumentsTool,
+    ReindexCorpusTool,
     resolve_synced_supabase_reference,
     resolve_supabase_document_reference,
 )  # noqa: E402
@@ -31,52 +40,53 @@ from app.config import Settings  # noqa: E402
 
 class _FakeIngestionClient:
     def __init__(self) -> None:
-        self.index_calls: list[dict] = []
-        self.delete_calls: list[list[str]] = []
+        self.delete_calls: list[str] = []
 
-    def index_document(self, target_relative_path: str, skip_if_exists: bool = True) -> dict:
-        self.index_calls.append(
-            {
-                "target_relative_path": target_relative_path,
-                "skip_if_exists": skip_if_exists,
-            }
-        )
-        return {
-            "status": "indexed",
-            "source_path": f"/shared/raw_data/{target_relative_path}",
-            "exists_in_weaviate": False,
-            "indexed": True,
-            "chunks_count": 4,
-            "indexed_count": 4,
-        }
-
-    def remove_document_chunks(self, target_relative_paths: list[str]) -> dict:
-        self.delete_calls.append(target_relative_paths)
+    def delete_document(self, document_id: str) -> dict:
+        self.delete_calls.append(document_id)
         return {
             "status": "ok",
-            "requested_count": len(target_relative_paths),
-            "matched_objects_count": len(target_relative_paths),
-            "deleted_count": len(target_relative_paths) * 3,
+            "document_id": document_id,
+            "storage_path": f"validated/user/{document_id}.pdf",
         }
 
 
 class _FakeSupabaseDocumentsClient:
     def __init__(self, documents: list[dict] | None = None) -> None:
         self._documents = documents or []
-        self.deleted_storage_paths: list[str] = []
-
     def list_documents(self) -> list[dict]:
         return list(self._documents)
 
-    def delete_document(self, storage_path: str) -> dict:
-        self.deleted_storage_paths.append(storage_path)
+
+class _FakeEmbeddingClient:
+    def __init__(self) -> None:
+        self.index_calls: list[dict] = []
+        self.remove_calls: list[str] = []
+
+    def index_document(self, document_id: str, skip_if_embedded: bool = True) -> dict:
+        self.index_calls.append(
+            {
+                "document_id": document_id,
+                "skip_if_embedded": skip_if_embedded,
+            }
+        )
         return {
-            "storage_path": storage_path,
-            "documents_deleted": 1,
-            "document": next(
-                (item for item in self._documents if item.get("storage_path") == storage_path),
-                {"storage_path": storage_path},
-            ),
+            "status": "indexed",
+            "document_id": document_id,
+            "storage_path": f"validated/user/{document_id}.pdf",
+            "chunks_count": 4,
+            "indexed_count": 4,
+            "embedded": True,
+        }
+
+    def remove_document(self, document_id: str) -> dict:
+        self.remove_calls.append(document_id)
+        return {
+            "status": "ok",
+            "document_id": document_id,
+            "storage_path": f"validated/user/{document_id}.pdf",
+            "matched_objects_count": 1,
+            "deleted_count": 3,
         }
 
 
@@ -104,13 +114,27 @@ class _FakeLLMPlanner:
 
 
 def test_embed_document_tool_indexes_target_path() -> None:
-    client = _FakeIngestionClient()
-    tool = EmbedDocumentTool(ingestion_client=client)  # type: ignore[arg-type]
+    embedding_client = _FakeEmbeddingClient()
+    supabase_client = _FakeSupabaseDocumentsClient(
+        documents=[
+            {
+                "id": "doc-1",
+                "original_name": "doc.pdf",
+                "storage_path": "validated/u/doc.pdf",
+                "status": "validated",
+                "embedded": False,
+            }
+        ]
+    )
+    tool = EmbedDocumentTool(  # type: ignore[arg-type]
+        embedding_client=embedding_client,
+        supabase_documents_client=supabase_client,
+    )
 
     response = tool.execute({"target_relative_path": "supabase/validated/u/doc.pdf"})
 
     assert response.status == "ok"
-    assert client.index_calls[0]["target_relative_path"] == "supabase/validated/u/doc.pdf"
+    assert embedding_client.index_calls[0]["document_id"] == "doc-1"
     assert response.result["indexed_count"] == 4
 
 
@@ -145,17 +169,22 @@ def test_resolve_synced_supabase_reference_matches_local_mirror(tmp_path: Path) 
 
 
 def test_delete_document_tool_deletes_supabase_document_and_chunks() -> None:
-    client = _FakeIngestionClient()
+    ingestion_client = _FakeIngestionClient()
+    embedding_client = _FakeEmbeddingClient()
     supabase_client = _FakeSupabaseDocumentsClient(
         documents=[
             {
+                "id": "doc-1",
                 "original_name": "cybersecurity-policy.pdf",
                 "storage_path": "validated/user/cybersecurity-policy.pdf",
+                "status": "validated",
+                "embedded": True,
             }
         ]
     )
     tool = DeleteDocumentTool(  # type: ignore[arg-type]
-        ingestion_client=client,
+        ingestion_client=ingestion_client,
+        embedding_client=embedding_client,
         supabase_documents_client=supabase_client,
     )
 
@@ -167,31 +196,75 @@ def test_delete_document_tool_deletes_supabase_document_and_chunks() -> None:
     )
 
     assert response.status == "ok"
-    assert client.delete_calls[0] == ["supabase/validated/user/cybersecurity-policy.pdf"]
-    assert supabase_client.deleted_storage_paths == ["validated/user/cybersecurity-policy.pdf"]
+    assert embedding_client.remove_calls == ["doc-1"]
+    assert ingestion_client.delete_calls == ["doc-1"]
 
 
-def test_delete_validated_documents_tool_discovers_and_deletes_paths(tmp_path: Path) -> None:
-    raw_dir = tmp_path / "shared" / "raw_data" / "supabase" / "validated" / "user"
-    raw_dir.mkdir(parents=True)
-    (raw_dir / "doc-a.pdf").write_text("a", encoding="utf-8")
-    (raw_dir / "doc-b.md").write_text("b", encoding="utf-8")
-
-    client = _FakeIngestionClient()
-    tool = DeleteValidatedDocumentsTool(ingestion_client=client)  # type: ignore[arg-type]
-
-    response = tool.execute(
-        {
-            "raw_dir": str(tmp_path / "shared" / "raw_data" / "supabase" / "validated"),
-            "local_root": str(tmp_path / "shared" / "raw_data"),
-        }
+def test_delete_validated_documents_tool_removes_indexed_vectors_for_validated_docs() -> None:
+    embedding_client = _FakeEmbeddingClient()
+    supabase_client = _FakeSupabaseDocumentsClient(
+        documents=[
+            {"id": "a", "storage_path": "validated/user/doc-a.pdf", "status": "validated", "embedded": True},
+            {"id": "b", "storage_path": "validated/user/doc-b.md", "status": "validated", "embedded": False},
+            {"id": "c", "storage_path": "pending/user/doc-c.pdf", "status": "pending", "embedded": False},
+        ]
+    )
+    tool = DeleteValidatedDocumentsTool(  # type: ignore[arg-type]
+        embedding_client=embedding_client,
+        supabase_documents_client=supabase_client,
     )
 
+    response = tool.execute({})
+
     assert response.status == "ok"
-    assert client.delete_calls[0] == [
-        "supabase/validated/user/doc-a.pdf",
-        "supabase/validated/user/doc-b.md",
+    assert embedding_client.remove_calls == ["a", "b"]
+
+
+def test_embed_validated_documents_tool_indexes_validated_documents() -> None:
+    embedding_client = _FakeEmbeddingClient()
+    supabase_client = _FakeSupabaseDocumentsClient(
+        documents=[
+            {"id": "a", "storage_path": "validated/user/doc-a.pdf", "status": "validated", "embedded": False},
+            {"id": "b", "storage_path": "validated/user/doc-b.md", "status": "validated", "embedded": True},
+        ]
+    )
+    tool = EmbedValidatedDocumentsTool(  # type: ignore[arg-type]
+        embedding_client=embedding_client,
+        supabase_documents_client=supabase_client,
+    )
+
+    response = tool.execute({})
+
+    assert response.status == "ok"
+    assert embedding_client.index_calls == [
+        {"document_id": "a", "skip_if_embedded": True},
+        {"document_id": "b", "skip_if_embedded": True},
     ]
+    assert response.result["documents_processed"] == 2
+
+
+def test_reindex_corpus_tool_removes_then_indexes_validated_documents() -> None:
+    embedding_client = _FakeEmbeddingClient()
+    supabase_client = _FakeSupabaseDocumentsClient(
+        documents=[
+            {"id": "a", "storage_path": "validated/user/doc-a.pdf", "status": "validated", "embedded": True},
+            {"id": "b", "storage_path": "validated/user/doc-b.md", "status": "validated", "embedded": False},
+        ]
+    )
+    tool = ReindexCorpusTool(  # type: ignore[arg-type]
+        embedding_client=embedding_client,
+        supabase_documents_client=supabase_client,
+    )
+
+    response = tool.execute({})
+
+    assert response.status == "ok"
+    assert embedding_client.remove_calls == ["a", "b"]
+    assert embedding_client.index_calls == [
+        {"document_id": "a", "skip_if_embedded": False},
+        {"document_id": "b", "skip_if_embedded": False},
+    ]
+    assert response.result["deleted_count"] == 6
 
 
 def test_update_embedding_model_tool_writes_env_local(tmp_path: Path) -> None:
@@ -248,6 +321,77 @@ def test_update_reranker_config_returns_previous_values_for_rollback(tmp_path: P
     assert response.status == "ok"
     assert response.result["rollback"]["tool"] == "update_reranker_config"
     assert response.result["rollback"]["arguments"]["default_ranker"] == "none"
+
+
+def test_get_reranker_strategy_catalog_returns_supported_options(tmp_path: Path) -> None:
+    env_path = tmp_path / ".env"
+    env_path.write_text(
+        "RETRIEVAL_DEFAULT_RANKER=cross_encoder\nRETRIEVAL_DEFAULT_RERANK_TOP_N=12\n",
+        encoding="utf-8",
+    )
+    store = EnvConfigStore(
+        project_root=tmp_path,
+        env_path=env_path,
+        env_local_path=tmp_path / ".env.local",
+    )
+    tool = GetRerankerStrategyCatalogTool(store=store)
+
+    response = tool.execute({})
+
+    assert response.status == "ok"
+    assert response.result["subject"] == "reranker"
+    assert response.result["current_config"]["default_ranker"] == "cross_encoder"
+    assert [item["name"] for item in response.result["options"]] == ["none", "cross_encoder", "llm_batch"]
+
+
+def test_get_chunking_strategy_catalog_returns_supported_options(tmp_path: Path) -> None:
+    env_path = tmp_path / ".env"
+    env_path.write_text(
+        "PREPROCESSING_CHUNK_STRATEGY=semantic\nPREPROCESSING_CHUNK_SIZE=900\nPREPROCESSING_CHUNK_OVERLAP=100\n",
+        encoding="utf-8",
+    )
+    store = EnvConfigStore(
+        project_root=tmp_path,
+        env_path=env_path,
+        env_local_path=tmp_path / ".env.local",
+    )
+    tool = GetChunkingStrategyCatalogTool(store=store)
+
+    response = tool.execute({})
+
+    assert response.status == "ok"
+    assert response.result["subject"] == "chunking"
+    assert response.result["current_config"]["chunk_strategy"] == "semantic"
+    assert [item["name"] for item in response.result["options"]] == [
+        "overlap",
+        "semantic",
+        "late",
+        "sentence",
+    ]
+
+
+def test_get_embedding_capability_catalog_returns_current_settings(tmp_path: Path) -> None:
+    env_path = tmp_path / ".env"
+    env_path.write_text(
+        "EMBEDDING_MODEL=text-embedding-3-large\nEMBEDDING_BATCH_SIZE=32\n",
+        encoding="utf-8",
+    )
+    store = EnvConfigStore(
+        project_root=tmp_path,
+        env_path=env_path,
+        env_local_path=tmp_path / ".env.local",
+    )
+    tool = GetEmbeddingCapabilityCatalogTool(
+        settings=Settings(embedding_base_url="http://localhost:8002"),
+        store=store,
+    )
+
+    response = tool.execute({})
+
+    assert response.status == "ok"
+    assert response.result["subject"] == "embedding"
+    assert response.result["current_config"]["embedding_model"] == "text-embedding-3-large"
+    assert "embedding_model" in response.result["capabilities"]["supported_controls"]
 
 
 def test_get_evaluation_report_tool_loads_latest_report(tmp_path: Path) -> None:

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Send,
@@ -21,6 +21,10 @@ import AnimatedPage from '../components/AnimatedPage';
 import API from '../config/api';
 
 const VOICE_WAVEFORM_BAR_COUNT = 33;
+
+function buildUserChatSessionId(userId) {
+  return `user-chat-${userId || 'guest'}`;
+}
 
 function VoiceWaveform({ isRecording, samples }) {
   const isActive = isRecording && samples.some((sample) => sample > 0.05);

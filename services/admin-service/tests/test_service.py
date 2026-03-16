@@ -26,6 +26,7 @@ class _FakeOrchestrator:
             "thinking_summary": "Handled as admin Q&A.",
             "activity": [],
             "result": {},
+            "agent_run": None,
         }
 
 def test_service_maps_request_to_orchestrator_response() -> None:

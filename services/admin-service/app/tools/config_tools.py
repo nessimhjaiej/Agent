@@ -28,6 +28,247 @@ def _normalize_text(raw: object, field_name: str) -> str:
     return value
 
 
+class GetRerankerStrategyCatalogTool:
+    name = "get_reranker_strategy_catalog"
+    metadata = ToolMetadata(
+        name=name,
+        description="Describe the supported retrieval reranker strategies, tradeoffs, and current active reranker settings.",
+        arguments_schema={},
+        output_description="Returns the current reranker configuration and a grounded catalog of supported reranker options.",
+        requires_confirmation=False,
+    )
+
+    def __init__(self, store: EnvConfigStore | None = None) -> None:
+        self._store = store or EnvConfigStore()
+
+    def execute(self, arguments: dict) -> ToolExecutionResult:
+        current_config = {
+            "default_ranker": self._store.get("RETRIEVAL_DEFAULT_RANKER", "none"),
+            "rerank_top_n": _parse_positive_int(
+                self._store.get("RETRIEVAL_DEFAULT_RERANK_TOP_N", "20"),
+                "RETRIEVAL_DEFAULT_RERANK_TOP_N",
+            ),
+            "cross_encoder_model": self._store.get(
+                "RETRIEVAL_CROSS_ENCODER_MODEL",
+                "cross-encoder/ms-marco-MiniLM-L-6-v2",
+            ),
+            "llm_rerank_model": self._store.get("RETRIEVAL_LLM_RERANK_MODEL", "gpt-4.1-mini"),
+        }
+        options = [
+            {
+                "name": "none",
+                "label": "No reranking",
+                "description": "Keep the fused retrieval order without an extra reranking pass.",
+                "quality": "baseline",
+                "latency": "low",
+                "cost": "low",
+                "best_for": ["maximum speed", "minimal resource usage"],
+                "tunable_fields": [],
+            },
+            {
+                "name": "cross_encoder",
+                "label": "Cross-encoder reranking",
+                "description": "Score each query-chunk pair with a dedicated cross-encoder model for strong relevance ordering.",
+                "quality": "high",
+                "latency": "medium",
+                "cost": "medium",
+                "best_for": ["balanced quality and efficiency", "resource-sensitive quality improvements"],
+                "tunable_fields": ["rerank_top_n", "cross_encoder_model"],
+            },
+            {
+                "name": "llm_batch",
+                "label": "LLM batch reranking",
+                "description": "Use an LLM to evaluate candidate chunks in batches for more nuanced ranking decisions.",
+                "quality": "high",
+                "latency": "high",
+                "cost": "high",
+                "best_for": ["quality-first ranking", "complex relevance judgments"],
+                "tunable_fields": ["rerank_top_n", "llm_rerank_model"],
+            },
+        ]
+        return ToolExecutionResult(
+            status="ok",
+            answer=(
+                f"Supported reranker strategies: none, cross_encoder, llm_batch. "
+                f"The current default is '{current_config['default_ranker']}' with top_n={current_config['rerank_top_n']}."
+            ),
+            result={
+                "subject": "reranker",
+                "current_config": current_config,
+                "options": options,
+            },
+        )
+
+
+class GetChunkingStrategyCatalogTool:
+    name = "get_chunking_strategy_catalog"
+    metadata = ToolMetadata(
+        name=name,
+        description="Describe the supported preprocessing chunking strategies, tradeoffs, and current active chunking settings.",
+        arguments_schema={},
+        output_description="Returns the current chunking configuration and a grounded catalog of supported chunking options.",
+        requires_confirmation=False,
+    )
+
+    def __init__(self, store: EnvConfigStore | None = None) -> None:
+        self._store = store or EnvConfigStore()
+
+    def execute(self, arguments: dict) -> ToolExecutionResult:
+        current_config = {
+            "chunk_strategy": self._store.get("PREPROCESSING_CHUNK_STRATEGY", "late"),
+            "chunk_size": _parse_positive_int(
+                self._store.get("PREPROCESSING_CHUNK_SIZE", "800"),
+                "PREPROCESSING_CHUNK_SIZE",
+            ),
+            "chunk_overlap": int(self._store.get("PREPROCESSING_CHUNK_OVERLAP", "120") or "120"),
+        }
+        options = [
+            {
+                "name": "overlap",
+                "label": "Sliding overlap chunks",
+                "description": "Create fixed-size overlapping chunks for predictable coverage and simple tuning.",
+                "quality": "stable",
+                "latency": "low",
+                "cost": "low",
+                "best_for": ["simple ingestion pipelines", "predictable chunk counts"],
+                "tunable_fields": ["chunk_size", "chunk_overlap"],
+            },
+            {
+                "name": "semantic",
+                "label": "Semantic chunks",
+                "description": "Split content around semantic boundaries to preserve meaning across chunk edges.",
+                "quality": "high",
+                "latency": "medium",
+                "cost": "medium",
+                "best_for": ["meaning-preserving retrieval", "documents with uneven structure"],
+                "tunable_fields": ["chunk_size", "chunk_overlap"],
+            },
+            {
+                "name": "late",
+                "label": "Late chunking",
+                "description": "Use a larger first pass and derive retrieval-sized chunks later for better context retention.",
+                "quality": "high",
+                "latency": "medium",
+                "cost": "medium",
+                "best_for": ["long dense documents", "richer retrieval context"],
+                "tunable_fields": ["chunk_size", "chunk_overlap"],
+            },
+            {
+                "name": "sentence",
+                "label": "Sentence chunks",
+                "description": "Build chunks around sentence boundaries for high readability and precise citations.",
+                "quality": "targeted",
+                "latency": "low",
+                "cost": "low",
+                "best_for": ["citation-sensitive outputs", "short-form documents"],
+                "tunable_fields": ["chunk_size", "chunk_overlap"],
+            },
+        ]
+        return ToolExecutionResult(
+            status="ok",
+            answer=(
+                f"Supported chunking strategies: overlap, semantic, late, sentence. "
+                f"The current strategy is '{current_config['chunk_strategy']}' with size={current_config['chunk_size']} "
+                f"and overlap={current_config['chunk_overlap']}."
+            ),
+            result={
+                "subject": "chunking",
+                "current_config": current_config,
+                "options": options,
+            },
+        )
+
+
+class GetEmbeddingCapabilityCatalogTool:
+    name = "get_embedding_capability_catalog"
+    metadata = ToolMetadata(
+        name=name,
+        description="Describe the current embedding configuration, available embedding controls, and the embedding service endpoint.",
+        arguments_schema={},
+        output_description="Returns the current embedding settings and the tunable embedding capabilities exposed by the stack.",
+        requires_confirmation=False,
+    )
+
+    def __init__(self, settings: Settings, store: EnvConfigStore | None = None) -> None:
+        self._settings = settings
+        self._store = store or EnvConfigStore()
+
+    def execute(self, arguments: dict) -> ToolExecutionResult:
+        current_config = {
+            "embedding_model": self._store.get("EMBEDDING_MODEL", self._settings.embedding_model),
+            "embedding_dimensions": self._store.get("EMBEDDING_DIMENSIONS", "") or None,
+            "embedding_batch_size": self._store.get("EMBEDDING_BATCH_SIZE", "64"),
+            "embedding_service_base_url": self._settings.embedding_base_url,
+        }
+        capabilities = {
+            "supported_controls": [
+                "embedding_model",
+                "embedding_dimensions",
+                "embedding_batch_size",
+            ],
+            "service_endpoint": self._settings.embedding_base_url,
+            "operational_notes": [
+                "Changing the embedding model affects future indexing behavior.",
+                "Reindexing is typically required when switching embedding space.",
+            ],
+        }
+        return ToolExecutionResult(
+            status="ok",
+            answer=(
+                f"The embedding service is '{self._settings.embedding_base_url}' and the current model is "
+                f"'{current_config['embedding_model']}'."
+            ),
+            result={
+                "subject": "embedding",
+                "current_config": current_config,
+                "capabilities": capabilities,
+            },
+        )
+
+
+class GetEvaluationCapabilityCatalogTool:
+    name = "get_evaluation_capability_catalog"
+    metadata = ToolMetadata(
+        name=name,
+        description="Describe the evaluation capabilities available to the admin agent, including report access and RAG evaluation execution.",
+        arguments_schema={},
+        output_description="Returns the evaluation endpoint, report location, and supported evaluation operations.",
+        requires_confirmation=False,
+    )
+
+    def __init__(self, settings: Settings) -> None:
+        self._settings = settings
+
+    def execute(self, arguments: dict) -> ToolExecutionResult:
+        operations = [
+            {
+                "name": "run_rag_evaluation",
+                "description": "Execute the generation-service Ragas evaluation runner against a dataset.",
+                "risk": "medium",
+            },
+            {
+                "name": "get_evaluation_report",
+                "description": "Read and summarize the latest available evaluation report.",
+                "risk": "low",
+            },
+        ]
+        return ToolExecutionResult(
+            status="ok",
+            answer=(
+                f"Evaluation operations are available through '{self._settings.evaluation_base_url}', "
+                "with report reading and evaluation execution supported."
+            ),
+            result={
+                "subject": "evaluation",
+                "current_config": {
+                    "evaluation_base_url": self._settings.evaluation_base_url,
+                    "report_directory": "services/generation-service/evaluation_reports",
+                },
+                "operations": operations,
+            },
+        )
+
+
 class GetPipelineStatusTool:
     name = "get_pipeline_status"
     metadata = ToolMetadata(

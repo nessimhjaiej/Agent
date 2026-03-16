@@ -109,3 +109,82 @@ def test_admin_chat_stream_endpoint_returns_final_event(monkeypatch) -> None:  #
     assert response.status_code == 200
     assert '"type":"activity"' in response.text
     assert '"type":"final"' in response.text
+
+
+def test_admin_chat_response_allows_agent_run_state() -> None:
+    app = create_app()
+    client = TestClient(app)
+
+    class _FakeAdminService(AdminService):
+        def chat(self, payload, access_token=None):  # noqa: ANN001
+            return {
+                "status": "ok",
+                "mode": "advisory",
+                "selected_mode": "plan",
+                "session_id": payload.session_id,
+                "message": payload.message,
+                "answer": "I inspected the current reranker setup and prepared a recommendation.",
+                "intent": "recommend_reranker",
+                "tool": None,
+                "arguments": {},
+                "requires_confirmation": False,
+                "executed": False,
+                "pending_action": None,
+                "citations": [],
+                "thinking_summary": "The agent gathered state but did not execute a mutation.",
+                "activity": [],
+                "result": {},
+                "agent_run": {
+                    "run_id": "run-1",
+                    "goal": {
+                        "message": payload.message,
+                        "subject": "reranking",
+                        "desired_outcome": "recommend a reranker",
+                        "constraints": ["low resource usage"],
+                        "success_criteria": ["return a grounded recommendation"],
+                    },
+                    "status": "running",
+                    "iteration_count": 1,
+                    "tool_call_count": 1,
+                    "max_iterations": 25,
+                    "max_tool_calls": 10,
+                    "facts": {"default_ranker": "cross_encoder"},
+                    "observations": [
+                        {
+                            "source": "get_reranker_config",
+                            "content": "Read the current reranker configuration.",
+                            "data": {"default_ranker": "cross_encoder"},
+                        }
+                    ],
+                    "decision_history": [
+                        {
+                            "action_type": "call_tool",
+                            "message": "Inspect current reranker configuration.",
+                            "tool_name": "get_reranker_config",
+                            "arguments": {},
+                            "reason": "Need current state before recommending a change.",
+                            "expected_observation": "Current reranker and top_n values.",
+                        }
+                    ],
+                    "proposed_steps": [],
+                    "pending_confirmation": None,
+                    "final_answer": "",
+                    "stop_reason": "",
+                },
+            }
+
+    admin_chat_router_module.AdminService = _FakeAdminService
+    response = client.post(
+        "/admin/chat",
+        json={
+            "message": "Recommend a reranker for good quality with low resource usage.",
+            "selected_mode": "plan",
+            "session_id": "admin-1",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["mode"] == "advisory"
+    assert body["agent_run"]["goal"]["subject"] == "reranking"
+    assert body["agent_run"]["observations"][0]["source"] == "get_reranker_config"

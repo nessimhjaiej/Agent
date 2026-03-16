@@ -12,35 +12,5 @@ class IngestionClient(BaseHttpClient):
     def health(self) -> dict:
         return self._get_json("/health")
 
-    def remove_document_chunks(self, target_relative_paths: list[str]) -> dict:
-        return self._post_json(
-            "/ingestion/remove-document-chunks",
-            {"target_relative_paths": target_relative_paths},
-        )
-
-    def index_document(self, target_relative_path: str, skip_if_exists: bool = True) -> dict:
-        return self._post_json(
-            "/ingestion/index-document",
-            {
-                "target_relative_path": target_relative_path,
-                "skip_if_exists": skip_if_exists,
-            },
-        )
-
-    def run_ingestion(
-        self,
-        raw_dir: str,
-        source_root_in_preprocessing: str,
-        recursive: bool = True,
-        patterns: list[str] | None = None,
-        dry_run: bool = False,
-    ) -> dict:
-        payload = {
-            "raw_dir": raw_dir,
-            "source_root_in_preprocessing": source_root_in_preprocessing,
-            "recursive": recursive,
-            "dry_run": dry_run,
-        }
-        if patterns:
-            payload["patterns"] = patterns
-        return self._post_json("/ingestion/run", payload)
+    def delete_document(self, document_id: str) -> dict:
+        return self._delete_json(f"/ingestion/documents/{document_id}")

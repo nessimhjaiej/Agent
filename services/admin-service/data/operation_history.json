@@ -16,5 +16,65 @@
     "reversible": true,
     "restart_services": [],
     "recorded_at_utc": "2026-03-12T10:07:32.773826+00:00"
+  },
+  {
+    "session_id": "admin-1",
+    "tool_name": "update_reranker_config",
+    "arguments": {
+      "default_ranker": "cross_encoder",
+      "rerank_top_n": 10
+    },
+    "rollback": {
+      "tool": "update_reranker_config",
+      "arguments": {
+        "default_ranker": "none",
+        "rerank_top_n": 20,
+        "cross_encoder_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+        "llm_rerank_model": "gpt-4.1-mini"
+      }
+    },
+    "reversible": true,
+    "restart_services": [],
+    "recorded_at_utc": "2026-03-16T10:24:57.017191+00:00"
+  },
+  {
+    "session_id": "admin-1",
+    "tool_name": "update_reranker_config",
+    "arguments": {
+      "default_ranker": "cross_encoder",
+      "rerank_top_n": 10
+    },
+    "rollback": {
+      "tool": "update_reranker_config",
+      "arguments": {
+        "default_ranker": "cross_encoder",
+        "rerank_top_n": 10,
+        "cross_encoder_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+        "llm_rerank_model": "gpt-4.1-mini"
+      }
+    },
+    "reversible": true,
+    "restart_services": [],
+    "recorded_at_utc": "2026-03-16T10:25:08.886643+00:00"
+  },
+  {
+    "session_id": "admin-chat-bdcae110-faf5-47f7-b50e-e51616c048d7",
+    "tool_name": "update_reranker_config",
+    "arguments": {
+      "default_ranker": "cross_encoder",
+      "rerank_top_n": 10
+    },
+    "rollback": {
+      "tool": "update_reranker_config",
+      "arguments": {
+        "default_ranker": "cross_encoder",
+        "rerank_top_n": 10,
+        "cross_encoder_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+        "llm_rerank_model": "gpt-4.1-mini"
+      }
+    },
+    "reversible": true,
+    "restart_services": [],
+    "recorded_at_utc": "2026-03-16T10:35:07.983361+00:00"
   }
 ]
