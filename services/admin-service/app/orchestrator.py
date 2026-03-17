@@ -21,9 +21,11 @@ from app.clients.retrieval_client import RetrievalClient
 from app.clients.security_client import SecurityClient
 from app.clients.supabase_documents_client import SupabaseDocumentsClient
 from app.config import Settings
+from app.fast_path_service import FastPathPlanService
 from app.legacy_plan_service import LegacyPlanService
 from app.models import AdminRequestContext, PlanStep, PlannedAction
 from app.operation_history import AdminOperationHistoryStore
+from app.plan_router import SemanticPlanRouter
 from app.planner.tool_selector import ToolSelector
 from app.response_factory import AdminResponseFactory
 from app.schemas import (
@@ -69,6 +71,34 @@ class AdminOrchestrator:
         agent_state_store: AgentRunStateStore | None = None,
         recursive_agent_controller: RecursiveAgentController | None = None,
     ) -> None:
+        self._fast_read_only_bundles = {
+            "system_overview": {
+                "description": "Current system status and major active retrieval/indexing controls.",
+                "tools": [
+                    "get_pipeline_status",
+                    "get_embedding_config",
+                    "get_chunking_config",
+                    "get_reranker_config",
+                    "get_evaluation_capability_catalog",
+                ],
+            },
+            "chunking_review": {
+                "description": "Current chunking setup and available chunking strategies.",
+                "tools": ["get_chunking_config", "get_chunking_strategy_catalog"],
+            },
+            "reranking_review": {
+                "description": "Current reranker setup and available reranking strategies.",
+                "tools": ["get_reranker_config", "get_reranker_strategy_catalog"],
+            },
+            "embedding_review": {
+                "description": "Current embedding setup and embedding capabilities.",
+                "tools": ["get_embedding_config", "get_embedding_capability_catalog"],
+            },
+            "evaluation_review": {
+                "description": "Latest evaluation information and evaluation capabilities.",
+                "tools": ["get_evaluation_report", "get_evaluation_capability_catalog"],
+            },
+        }
         self._settings = settings
         self._generation_client = generation_client or GenerationClient(settings)
         self._security_client = security_client or SecurityClient(settings)
@@ -163,6 +193,17 @@ class AdminOrchestrator:
             response_factory=self._response_factory,
             emit=self._emit,
         )
+        self._semantic_plan_router = SemanticPlanRouter(
+            client=self._explainer_client,
+            bundle_catalog=self._fast_read_only_bundles,
+        )
+        self._fast_path_plan_service = FastPathPlanService(
+            registry=self._registry,
+            explainer_client=self._explainer_client,
+            response_factory=self._response_factory,
+            bundle_catalog=self._fast_read_only_bundles,
+            emit=self._emit,
+        )
         recursive_tool_names = {
             "get_pipeline_status",
             "get_embedding_config",
@@ -225,6 +266,21 @@ class AdminOrchestrator:
         context: AdminRequestContext,
         progress_callback: Callable[[dict], None] | None = None,
     ) -> AdminChatResponse:
+        if self._should_continue_existing_recursive_run(context):
+            return self._handle_recursive_plan(context, progress_callback=progress_callback)
+        route = self._semantic_plan_router.route(context)
+        if route.route == "fast_read_only" and route.bundle_id:
+            return self._fast_path_plan_service.handle(
+                context,
+                bundle_id=route.bundle_id,
+                subject=route.subject,
+                reason=route.reason,
+                progress_callback=progress_callback,
+            )
+        if route.route == "legacy_planner":
+            return self._legacy_plan_service.handle(context, progress_callback=progress_callback)
+        if route.route == "qa":
+            return self._handle_qa(context, progress_callback=progress_callback)
         if self._should_handle_recursive_plan_request(context):
             return self._handle_recursive_plan(context, progress_callback=progress_callback)
         return self._legacy_plan_service.handle(context, progress_callback=progress_callback)
@@ -567,6 +623,14 @@ class AdminOrchestrator:
         if stored_state is not None:
             return True
         return any(token in lowered for token in ("rerank", "reranker", "ranker", "cross_encoder", "llm_batch"))
+
+    def _should_continue_existing_recursive_run(self, context: AdminRequestContext) -> bool:
+        stored_state = self._agent_state_store.load(context.session_id or "")
+        if stored_state is None:
+            return False
+        if stored_state.pending_confirmation is not None:
+            return True
+        return self._is_follow_up_agent_message(context.message)
 
     def _should_handle_recursive_confirmation(self, context: AdminRequestContext) -> bool:
         if not context.confirm or context.pending_action is None:

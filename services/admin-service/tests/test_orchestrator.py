@@ -28,6 +28,13 @@ class _FakeTool:
         )
 
 
+class _FailingTool:
+    metadata = ToolMetadata(name="get_pipeline_status", description="Pipeline status", output_description="status")
+
+    def execute(self, arguments: dict):  # noqa: ANN001
+        raise RuntimeError("upstream unavailable")
+
+
 class _FakeUpdateRerankerConfigTool:
     name = "update_reranker_config"
     metadata = ToolMetadata(
@@ -191,17 +198,21 @@ class _FakeExplainerClient:
 
 
 class _QueuedPlannerClient:
-    def __init__(self, payloads: list[str]) -> None:
+    def __init__(self, payloads: list[str], route_payload: str | None = None, text_response: str = "ok") -> None:
         self._payloads = payloads
         self._index = 0
+        self._route_payload = route_payload or '{"route":"recursive_agent","subject":"","bundle_id":"","reason":"default test route"}'
+        self._text_response = text_response
 
     def complete_json(self, system_prompt: str, user_prompt: str) -> str:
+        if "route plan-mode admin requests semantically" in system_prompt:
+            return self._route_payload
         payload = self._payloads[min(self._index, len(self._payloads) - 1)]
         self._index += 1
         return payload
 
     def complete_text(self, system_prompt: str, user_prompt: str) -> str:
-        return "ok"
+        return self._text_response
 
 
 class _FakeChunkingCatalogTool:
@@ -1173,6 +1184,182 @@ def test_orchestrator_falls_back_to_legacy_planner_for_delete_document_requests(
     assert response.status == "needs_confirmation"
     assert response.pending_action is not None
     assert response.pending_action.tool == "delete_document"
+
+
+def test_orchestrator_uses_fast_read_only_path_for_multilingual_chunking_question(tmp_path: Path) -> None:
+    state_store = AgentRunStateStore(state_path=tmp_path / "agent_run_states.json")
+    planner_client = _QueuedPlannerClient(
+        payloads=[],
+        route_payload="""
+        {
+          "route": "fast_read_only",
+          "subject": "chunking",
+          "bundle_id": "chunking_review",
+          "reason": "The user is asking for an explanation and recommendation about chunking in French."
+        }
+        """,
+        text_response="",
+    )
+    registry = _FakeRegistry(
+        {
+            "get_chunking_config": _FakeTool(
+                {
+                    "answer": "Current chunking strategy is 'late' with chunk size 800 and overlap 120.",
+                    "result": {"chunk_strategy": "late", "chunk_size": 800, "chunk_overlap": 120},
+                }
+            ),
+            "get_chunking_strategy_catalog": _FakeChunkingCatalogTool(),
+        }
+    )
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(PlannedAction(mode="qa", intent="qa", tool_name=None)),
+        registry=registry,
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        explainer_client=planner_client,  # type: ignore[arg-type]
+        agent_state_store=state_store,
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    response = orchestrator.handle(
+        AdminRequestContext(
+            message="Quel choix de decoupage faire pour reduire les couts sans perdre beaucoup de performance ?",
+            selected_mode="plan",
+            session_id="fast-chunking",
+        )
+    )
+
+    assert response.status == "ok"
+    assert response.intent == "fast_read_only_plan"
+    assert response.result["route"] == "fast_read_only"
+    assert response.result["bundle_id"] == "chunking_review"
+    assert "Comparaison directe des strategies disponibles" in response.answer
+    assert "late" in response.answer
+    assert "semantic" in response.answer
+    assert "overlap" in response.answer
+    assert "For performance/retrieval quality" in response.answer
+    assert "reranker" not in response.answer.lower()
+    assert "evaluation" not in response.answer.lower()
+    assert "rag" not in response.answer.lower()
+
+
+def test_orchestrator_uses_fast_read_only_path_for_performance_question(tmp_path: Path) -> None:
+    state_store = AgentRunStateStore(state_path=tmp_path / "agent_run_states.json")
+    planner_client = _QueuedPlannerClient(
+        payloads=[],
+        route_payload="""
+        {
+          "route": "fast_read_only",
+          "subject": "evaluation",
+          "bundle_id": "evaluation_review",
+          "reason": "The user is asking about performance and evaluation, which maps to a read-only evaluation bundle."
+        }
+        """,
+        text_response="Current performance should be judged from the latest evaluation report. Faithfulness is 0.7 and factual correctness is 0.6, and the next step would be to compare those metrics before changing configuration.",
+    )
+    registry = _FakeRegistry(
+        {
+            "get_evaluation_report": _FakeEvaluationReportTool(),
+            "get_evaluation_capability_catalog": _FakeTool(
+                {
+                    "answer": "Evaluation capabilities are available through the local report directory and evaluation endpoint.",
+                    "result": {"subject": "evaluation", "capabilities": {"supported_operations": ["run", "read_report"]}},
+                }
+            ),
+        }
+    )
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(PlannedAction(mode="qa", intent="qa", tool_name=None)),
+        registry=registry,
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        explainer_client=planner_client,  # type: ignore[arg-type]
+        agent_state_store=state_store,
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    response = orchestrator.handle(
+        AdminRequestContext(
+            message="How is the system performing right now and what should I watch before changing config?",
+            selected_mode="plan",
+            session_id="fast-eval",
+        )
+    )
+
+    assert response.status == "ok"
+    assert response.intent == "fast_read_only_plan"
+    assert response.result["bundle_id"] == "evaluation_review"
+    assert "Faithfulness" in response.answer
+
+
+def test_fast_read_only_path_degrades_gracefully_when_one_tool_fails(tmp_path: Path) -> None:
+    state_store = AgentRunStateStore(state_path=tmp_path / "agent_run_states.json")
+    planner_client = _QueuedPlannerClient(
+        payloads=[],
+        route_payload="""
+        {
+          "route": "fast_read_only",
+          "subject": "system_information",
+          "bundle_id": "system_overview",
+          "reason": "The user wants current system information."
+        }
+        """,
+        text_response="Some system information is available, but one service health check failed.",
+    )
+    registry = _FakeRegistry(
+        {
+            "get_pipeline_status": _FailingTool(),
+            "get_embedding_config": _FakeTool(
+                {
+                    "answer": "The current embedding model is text-embedding-3-small.",
+                    "result": {"embedding_model": "text-embedding-3-small"},
+                }
+            ),
+            "get_chunking_config": _FakeTool(
+                {
+                    "answer": "Current chunking strategy is late.",
+                    "result": {"chunk_strategy": "late"},
+                }
+            ),
+            "get_reranker_config": _FakeTool(
+                {
+                    "answer": "Current reranker is cross_encoder.",
+                    "result": {"default_ranker": "cross_encoder"},
+                }
+            ),
+            "get_evaluation_capability_catalog": _FakeTool(
+                {
+                    "answer": "Evaluation capabilities are available.",
+                    "result": {"subject": "evaluation"},
+                }
+            ),
+        }
+    )
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(PlannedAction(mode="qa", intent="qa", tool_name=None)),
+        registry=registry,
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        explainer_client=planner_client,  # type: ignore[arg-type]
+        agent_state_store=state_store,
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    response = orchestrator.handle(
+        AdminRequestContext(
+            message="what are the current system informations",
+            selected_mode="plan",
+            session_id="fast-failure",
+        )
+    )
+
+    assert response.status == "ok"
+    assert response.intent == "fast_read_only_plan"
+    assert response.activity[1].status == "failed"
+    assert "failed" in response.result["observations"][0]["status"]
 
 
 def test_orchestrator_stream_emits_progress_events_before_final(tmp_path: Path) -> None:

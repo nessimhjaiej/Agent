@@ -76,5 +76,25 @@
     "reversible": true,
     "restart_services": [],
     "recorded_at_utc": "2026-03-16T10:35:07.983361+00:00"
+  },
+  {
+    "session_id": "admin-chat-bdcae110-faf5-47f7-b50e-e51616c048d7",
+    "tool_name": "update_chunking_config",
+    "arguments": {
+      "chunk_strategy": "semantic",
+      "chunk_size": 750,
+      "chunk_overlap": 120
+    },
+    "rollback": {
+      "tool": "update_chunking_config",
+      "arguments": {
+        "chunk_strategy": "late",
+        "chunk_size": 750,
+        "chunk_overlap": 120
+      }
+    },
+    "reversible": true,
+    "restart_services": [],
+    "recorded_at_utc": "2026-03-17T09:59:50.436894+00:00"
   }
 ]
