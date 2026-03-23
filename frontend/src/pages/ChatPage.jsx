@@ -54,6 +54,7 @@ export default function ChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingElapsedSeconds, setRecordingElapsedSeconds] = useState(0);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editingText, setEditingText] = useState('');
   const [expandedSources, setExpandedSources] = useState({});
@@ -67,6 +68,7 @@ export default function ChatPage() {
   const analyserRef = useRef(null);
   const animationFrameRef = useRef(null);
   const sourceNodeRef = useRef(null);
+  const recordingStartedAtRef = useRef(null);
   const [waveformSamples, setWaveformSamples] = useState(
     () => Array.from({ length: VOICE_WAVEFORM_BAR_COUNT }, () => 0),
   );
@@ -89,6 +91,20 @@ export default function ChatPage() {
     mediaRecorderRef.current?.stop?.();
     mediaStreamRef.current?.getTracks?.().forEach((track) => track.stop());
   }, []);
+
+  useEffect(() => {
+    if (!isRecording) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (!recordingStartedAtRef.current) return;
+      const elapsedSeconds = Math.floor((Date.now() - recordingStartedAtRef.current) / 1000);
+      setRecordingElapsedSeconds(elapsedSeconds);
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [isRecording]);
 
   const stopAudioLevelTracking = () => {
     if (animationFrameRef.current) {
@@ -321,6 +337,14 @@ export default function ChatPage() {
     }
     audioChunksRef.current = [];
     setIsRecording(false);
+    setRecordingElapsedSeconds(0);
+    recordingStartedAtRef.current = null;
+  };
+
+  const formatRecordingTimer = (elapsedSeconds) => {
+    const minutes = Math.floor(elapsedSeconds / 60);
+    const seconds = elapsedSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
   const handleRecordAudio = async () => {
@@ -361,6 +385,8 @@ export default function ChatPage() {
       });
 
       recorder.start();
+  recordingStartedAtRef.current = Date.now();
+  setRecordingElapsedSeconds(0);
       setIsRecording(true);
     } catch (error) {
       const fallback = {
@@ -396,24 +422,27 @@ export default function ChatPage() {
       type="button"
       onClick={isRecording ? handleStopRecording : handleRecordAudio}
       disabled={isTyping || isTranscribing}
-      className={`voice-waveform-button rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0 ${isRecording ? 'is-recording' : 'is-idle'}`}
+      className={`voice-waveform-button rounded-xl transition-all duration-200 disabled:opacity-20 disabled:cursor-not-allowed shrink-0 ${isRecording ? 'is-recording' : 'is-idle'}`}
       style={{
         padding: isRecording ? '10px 14px 10px 28px' : '12px 14px',
       }}
-      whileHover={!isTyping && !isTranscribing ? { scale: 1.03 } : {}}
+      whileHover={{}}
       whileTap={{ scale: 0.97 }}
       title={recordButtonTitle}
     >
       {isRecording ? (
         <>
           <span className="voice-waveform-button__dot" aria-hidden="true" />
+          <span className="voice-waveform-button__timer" aria-label={`Recording time ${formatRecordingTimer(recordingElapsedSeconds)}`}>
+            {formatRecordingTimer(recordingElapsedSeconds)}
+          </span>
           <VoiceWaveform isRecording={isRecording} samples={waveformSamples} />
           <span className="voice-waveform-button__stop" aria-hidden="true">
-            <Square size={12} color={recordButtonColor} fill={recordButtonColor} />
+            <Square className="voice-waveform-button__icon" size={12} color={recordButtonColor} fill={recordButtonColor} />
           </span>
         </>
       ) : (
-        <Mic size={18} color={recordButtonColor} />
+        <Mic className="voice-waveform-button__icon" size={18} color={recordButtonColor} />
       )}
     </motion.button>
   );
