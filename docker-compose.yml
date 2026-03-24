@@ -103,5 +103,28 @@ services:
       - "8005:8005"
     restart: unless-stopped
 
+  admin-service:
+    build:
+      context: .
+      dockerfile: services/admin-service/Dockerfile
+    container_name: admin-service
+    env_file:
+      - .env
+    environment:
+      ADMIN_AUTH_BASE_URL: http://auth-service:8001
+      ADMIN_EMBEDDING_BASE_URL: http://embedding-service:8002
+      ADMIN_RETRIEVAL_BASE_URL: http://retrieval-service:8003
+      ADMIN_GENERATION_BASE_URL: http://generation-service:8004
+      ADMIN_INGESTION_BASE_URL: http://ingestion-service:8005
+    ports:
+      - "8006:8006"
+    depends_on:
+      - auth-service
+      - embedding-service
+      - retrieval-service
+      - generation-service
+      - ingestion-service
+    restart: unless-stopped
+
 volumes:
   weaviate_data:
