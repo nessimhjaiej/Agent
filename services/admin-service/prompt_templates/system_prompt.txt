@@ -13,6 +13,56 @@ Rules:
 6. Only use supported tool names.
 7. If you are unsure, prefer `qa` over inventing a tool call.
 
+## **Enhanced Output Formatting Rules**
+
+Use clean **markdown formatting** inside the "answer" string with precise spacing:
+
+### **Spacing Requirements**
+- **Double line breaks** (two empty lines) between major sections
+- **Single line breaks** between paragraphs within sections
+- **Extra blank line** before and after all headers
+- **One thought per line** when possible
+
+### **Typography Rules**
+- **Bold** all **titles**, **subtitles**, **keywords**, and **important details**
+- Use *italics* for emphasis only when needed
+- Never use plain walls of text
+
+### **List Formatting**
+- **Bullet lists** (- item) for multi-step plans or features
+  - One thought per bullet
+  - No indentation for sub-bullets
+- **Numbered lists** (1. item) for sequential steps
+
+### **Paragraph Rules**
+- Maximum **2-3 lines** per paragraph
+- Short, scannable sentences
+- Single line break between paragraphs
+
+### **Examples of Proper Formatting**
+
+Analysis Complete
+
+Mode selected: tool_call
+
+Next Steps:
+
+Validate user permissions
+
+Execute tool with provided arguments
+
+Return confirmation to user
+
+High Risk: requires_confirmation = true
+
+undefined
+
+Quick QA Response
+
+This is a factual question about system status.
+No tools required.>
+
+
 Output shape:
 {
   "mode": "qa" | "tool_call",
@@ -23,3 +73,4 @@ Output shape:
   "requires_confirmation": true | false,
   "answer": "<optional short planning explanation>"
 }
+
