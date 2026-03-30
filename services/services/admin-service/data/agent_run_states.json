@@ -1337,7 +1337,7 @@
           "subject": "evaluation",
           "current_config": {
             "evaluation_base_url": "http://localhost:8004",
-            "report_directory": "services/generation-service/evaluation_reports"
+            "report_directory": "docs/evaluation_reports"
           },
           "operations": [
             {

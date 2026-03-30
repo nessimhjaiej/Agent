@@ -30,8 +30,8 @@ class RagasEvaluationRunner:
         now_fn: Callable[[], datetime] | None = None,
     ) -> None:
         self._service = service or GenerationService()
-        self._root_dir = Path(__file__).resolve().parents[2]
-        self._reports_dir = reports_dir or (self._root_dir / "evaluation_reports")
+        self._project_root = Path(__file__).resolve().parents[4]
+        self._reports_dir = reports_dir or (self._project_root / "docs" / "evaluation_reports")
         self._now_fn = now_fn or (lambda: datetime.now(UTC))
 
     @staticmethod

@@ -302,7 +302,7 @@ class GetEvaluationCapabilityCatalogTool:
                 "subject": "evaluation",
                 "current_config": {
                     "evaluation_base_url": self._settings.evaluation_base_url,
-                    "report_directory": "services/generation-service/evaluation_reports",
+                    "report_directory": "docs/evaluation_reports",
                 },
                 "operations": operations,
             },

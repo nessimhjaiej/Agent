@@ -112,7 +112,7 @@ class _FakeEvaluationReportTool:
             status="ok",
             answer="Loaded the latest evaluation report.",
             result={
-                "report_path": "evaluation_reports/baseline.json",
+                "report_path": "docs/evaluation_reports/baseline.json",
                 "generated_at_utc": "2026-03-16T10:00:00+00:00",
                 "summary": {"faithfulness": 0.7, "factual_correctness(mode=f1)": 0.6},
             },
@@ -130,7 +130,7 @@ class _FakeRunEvaluationTool:
             status="ok",
             answer="Evaluation rerun completed.",
             result={
-                "report_path": "evaluation_reports/latest.json",
+                "report_path": "docs/evaluation_reports/latest.json",
                 "dataset_path": arguments.get("dataset_path", "evals/sample_eval_dataset.json"),
                 "sample_count": 4,
                 "summary": {"faithfulness": 0.82, "factual_correctness(mode=f1)": 0.68},

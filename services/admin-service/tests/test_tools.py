@@ -398,8 +398,7 @@ def test_get_embedding_capability_catalog_returns_current_settings(tmp_path: Pat
 
 
 def test_get_evaluation_report_tool_loads_latest_report(tmp_path: Path) -> None:
-    generation_dir = tmp_path / "services" / "generation-service"
-    reports_dir = generation_dir / "evaluation_reports"
+    reports_dir = tmp_path / "docs" / "evaluation_reports"
     reports_dir.mkdir(parents=True)
     report_path = reports_dir / "ragas_report_20260310_120000.json"
     report_path.write_text(
@@ -426,8 +425,7 @@ def test_get_evaluation_report_tool_loads_latest_report(tmp_path: Path) -> None:
 
 
 def test_get_evaluation_report_tool_falls_back_to_any_json_report(tmp_path: Path) -> None:
-    generation_dir = tmp_path / "services" / "generation-service"
-    reports_dir = generation_dir / "evaluation_reports"
+    reports_dir = tmp_path / "docs" / "evaluation_reports"
     reports_dir.mkdir(parents=True)
     report_path = reports_dir / "ragas report sample.json"
     report_path.write_text(

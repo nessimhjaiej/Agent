@@ -97,7 +97,7 @@ Ragas evaluation is available directly inside generation-service.
 
 - Runner module: `app/evaluation/ragas_runner.py`
 - Sample dataset: `evals/sample_eval_dataset.json`
-- Report output folder: `evaluation_reports/`
+- Report output folder: `docs/evaluation_reports/` at the project root
 
 Run:
 
@@ -112,4 +112,4 @@ Each run:
 - executes generation-service ask logic for each dataset row;
 - computes Ragas metrics (`ContextRecall`, `Faithfulness`, `FactualCorrectness`);
 - writes a timestamped JSON report like:
-  `evaluation_reports/ragas_report_YYYYMMDD_HHMMSS.json`.
+  `docs/evaluation_reports/ragas_report_YYYYMMDD_HHMMSS.json`.

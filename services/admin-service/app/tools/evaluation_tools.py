@@ -15,7 +15,7 @@ class EvaluationReportStore:
     def __init__(self, project_root: Path | None = None) -> None:
         self._project_root = project_root or Path(__file__).resolve().parents[4]
         self._generation_service_dir = self._project_root / "services" / "generation-service"
-        self._reports_dir = self._generation_service_dir / "evaluation_reports"
+        self._reports_dir = self._project_root / "docs" / "evaluation_reports"
 
     def run(self, dataset_path: str) -> dict:
         command = [
