@@ -73,7 +73,7 @@ Copy-Item frontend\.env.example frontend\.env
 
 The repository currently includes one SQL setup script:
 
-- `docs/supabase_users_table.sql`
+- `infrastructure/supabase/supabase_users_table.sql`
 
 This script creates `public.users` and keeps role metadata synchronized with `auth.users`.
 

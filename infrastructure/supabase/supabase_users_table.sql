@@ -99,3 +99,4 @@ with check (false);
 
 -- Promote a user to admin (example):
 -- update public.users set role = 'admin' where email = 'user@example.com';
+
