@@ -36,13 +36,15 @@ class LLMToolCatalogPolicy:
             "Choose exactly one next action from: respond, call_tool, request_confirmation, stop. "
             "You must choose from the provided tool catalog only. "
             "Use read-only inspection tools first when they help you reason toward the goal. "
+            "If a tool does not require confirmation, execute it with call_tool instead of request_confirmation. "
             "If you already have enough observations to answer or recommend a next action, prefer respond instead of stop. "
             "If a mutation is appropriate, do not execute it directly; return request_confirmation and provide grounded tool arguments. "
             "If multiple actions are needed, include them in proposed_steps and set tool_name/arguments to the first mutation step when asking for confirmation. "
             "If the request is outside the safe tool catalog and should be handled by the legacy planner, "
             "return action_type='stop' and reason='fallback_legacy_planner'. "
             "Do not use fallback_legacy_planner for informational or comparative questions if the existing observations are enough to produce a useful answer. "
-            "You must support multilingual user input."
+            "You must support multilingual user input. "
+            "Whenever you produce natural-language text in the message field, always use the same language as the user's latest message."
         )
 
     def _build_user_prompt(self, state: AgentRunState) -> str:
@@ -51,6 +53,7 @@ class LLMToolCatalogPolicy:
             {
                 "goal": {
                     "message": goal.message,
+                    "latest_user_language": state.facts.get("latest_user_language", "unknown"),
                     "subject": goal.subject,
                     "desired_outcome": goal.desired_outcome,
                     "constraints": goal.constraints,
@@ -100,6 +103,15 @@ class LLMToolCatalogPolicy:
                         "arguments_schema": tool.arguments_schema,
                         "output_description": tool.output_description,
                         "requires_confirmation": tool.requires_confirmation,
+                        "goal_tags": tool.goal_tags,
+                        "affects": tool.affects,
+                        "impact_summary": tool.impact_summary,
+                        "expected_tradeoffs": tool.expected_tradeoffs,
+                        "best_for": tool.best_for,
+                        "risk_level": tool.risk_level,
+                        "requires_reindex": tool.requires_reindex,
+                        "requires_restart": tool.requires_restart,
+                        "typical_followups": tool.typical_followups,
                     }
                     for tool in self._tool_catalog
                 ],
@@ -181,7 +193,6 @@ class LLMToolCatalogPolicy:
 
         if action_type == "request_confirmation":
             if proposed_steps:
-                state.proposed_steps = proposed_steps
                 primary_step = proposed_steps[0]
                 tool_name = primary_step["tool"]
                 arguments = primary_step["arguments"]
@@ -189,7 +200,16 @@ class LLMToolCatalogPolicy:
                 return None
             metadata = self._tool_metadata[tool_name]
             if not metadata.requires_confirmation:
-                return None
+                return AgentDecision(
+                    action_type="call_tool",
+                    message=message,
+                    tool_name=tool_name,
+                    arguments=arguments,
+                    reason=reason or "Auto-converted from unnecessary confirmation request.",
+                    expected_observation=expected_observation,
+                )
+            if proposed_steps:
+                state.proposed_steps = proposed_steps
             if not state.proposed_steps:
                 state.proposed_steps = [{"tool": tool_name, "arguments": arguments}]
             if not message:

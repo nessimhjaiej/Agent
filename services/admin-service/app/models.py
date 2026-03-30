@@ -32,6 +32,7 @@ class PendingAction:
 @dataclass(slots=True)
 class AdminRequestContext:
     message: str
+    latest_user_language: str = "unknown"
     selected_mode: str = "qa"
     session_id: str | None = None
     confirm: bool = False

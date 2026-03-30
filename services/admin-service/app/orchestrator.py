@@ -21,6 +21,7 @@ from app.clients.retrieval_client import RetrievalClient
 from app.clients.security_client import SecurityClient
 from app.clients.supabase_documents_client import SupabaseDocumentsClient
 from app.config import Settings
+from app.language_utils import detect_language
 from app.fast_path_service import FastPathPlanService
 from app.legacy_plan_service import LegacyPlanService
 from app.models import AdminRequestContext, PlanStep, PlannedAction
@@ -462,11 +463,13 @@ class AdminOrchestrator:
                         "You are an admin agent explaining grounded system observations. "
                         "Answer the user's request directly using the gathered observations. "
                         "Do not tell the user to switch modes. "
-                        "Be practical, concise, and keep the same language as the user when reasonable. "
+                        "Be practical and concise. "
+                        "Always answer in the same language as the user's latest message. "
                         "If proposed steps exist, mention them as recommendations rather than automatic actions."
                     ),
                     user_prompt=(
                         f"User request:\n{user_message.strip()}\n\n"
+                        f"Latest user language: {detect_language(user_message)}\n\n"
                         f"Grounded observations:\n" + "\n".join(observation_lines) + "\n\n"
                         f"Proposed steps:\n{proposed_steps}"
                     ),
@@ -642,7 +645,7 @@ class AdminOrchestrator:
         loaded_state = self._agent_state_store.load(context.session_id or "")
         if loaded_state is not None:
             if loaded_state.status in {"completed", "failed", "blocked"} and not self._is_follow_up_agent_message(context.message):
-                return AgentRunState(
+                state = AgentRunState(
                     goal=AgentGoal(
                         message=context.message,
                         subject="",
@@ -650,6 +653,8 @@ class AdminOrchestrator:
                         success_criteria=["ground the recommendation or action in supported admin tools"],
                     )
                 )
+                state.facts["latest_user_language"] = context.latest_user_language
+                return state
             if loaded_state.goal is None:
                 loaded_state.goal = AgentGoal(message=context.message, subject="")
             else:
@@ -660,12 +665,13 @@ class AdminOrchestrator:
                     constraints=loaded_state.goal.constraints,
                     success_criteria=loaded_state.goal.success_criteria,
                 )
+            loaded_state.facts["latest_user_language"] = context.latest_user_language
             if loaded_state.status in {"completed", "failed", "blocked"}:
                 loaded_state.status = "running"
                 loaded_state.stop_reason = ""
                 loaded_state.final_answer = ""
             return loaded_state
-        return AgentRunState(
+        state = AgentRunState(
             goal=AgentGoal(
                 message=context.message,
                 subject="",
@@ -673,6 +679,8 @@ class AdminOrchestrator:
                 success_criteria=["ground the recommendation or action in supported admin tools"],
             )
         )
+        state.facts["latest_user_language"] = context.latest_user_language
+        return state
 
     def _is_follow_up_agent_message(self, message: str) -> bool:
         lowered = message.strip().lower()
@@ -1116,10 +1124,12 @@ class AdminOrchestrator:
                         "Do not answer from RAG documents. "
                         "Explain the operational meaning of the assistant's previous message, "
                         "what actually happened, and what did not happen yet. "
-                        "Be concise and practical."
+                        "Be concise and practical. "
+                        "Always answer in the same language as the user's latest message."
                     ),
                     user_prompt=(
                         f"Admin follow-up: {user_message.strip()}\n\n"
+                        f"Latest user language: {detect_language(user_message)}\n\n"
                         f"Previous assistant response to explain:\n{assistant_message}"
                     ),
                 )

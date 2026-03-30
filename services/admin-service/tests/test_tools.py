@@ -342,6 +342,9 @@ def test_get_reranker_strategy_catalog_returns_supported_options(tmp_path: Path)
     assert response.result["subject"] == "reranker"
     assert response.result["current_config"]["default_ranker"] == "cross_encoder"
     assert [item["name"] for item in response.result["options"]] == ["none", "cross_encoder", "llm_batch"]
+    assert tool.metadata.goal_tags == ["cost", "latency", "quality", "ranking"]
+    assert tool.metadata.affects == ["retrieval", "generation"]
+    assert tool.metadata.typical_followups == ["update_reranker_config", "run_rag_evaluation"]
 
 
 def test_get_chunking_strategy_catalog_returns_supported_options(tmp_path: Path) -> None:
@@ -541,6 +544,8 @@ def test_tool_registry_exposes_structured_planning_metadata() -> None:
     ]
     assert planning_tools[1].requires_confirmation is True
     assert planning_tools[1].arguments_schema["value"]["type"] == "string"
+    assert planning_tools[1].risk_level == "low"
+    assert planning_tools[1].goal_tags == []
 
 
 def test_tool_selector_prefers_llm_plan_and_filters_unknown_tools() -> None:

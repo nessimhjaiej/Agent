@@ -1,0 +1,453 @@
+openapi: 3.0.3
+info:
+  title: auth-service API
+  version: 0.1.0
+  description: Contract-first API for authentication and admin user management backed by Supabase Auth.
+servers:
+  - url: http://localhost:8001
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: Service health
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /auth/signup:
+    post:
+      summary: Register a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+      responses:
+        "200":
+          description: Auth session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "400":
+          description: Invalid email, password, or duplicate user
+        "422":
+          description: Invalid payload
+        "500":
+          description: Internal server error
+  /auth/login:
+    post:
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Auth session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "401":
+          description: Invalid credentials
+        "403":
+          description: Unauthorized due to user state
+        "429":
+          description: Account locked
+        "422":
+          description: Invalid payload
+  /auth/password-reset:
+    post:
+      summary: Request password reset email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetRequest"
+      responses:
+        "200":
+          description: Reset email accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "422":
+          description: Invalid payload
+        "500":
+          description: Internal server error
+  /auth/update-password:
+    post:
+      summary: Update current user password
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordUpdateRequest"
+      responses:
+        "200":
+          description: Password updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Invalid password
+        "401":
+          description: Missing or invalid bearer token
+        "422":
+          description: Invalid payload
+  /auth/me:
+    get:
+      summary: Get current user profile
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationHeader"
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "401":
+          description: Missing or invalid bearer token
+  /auth/logout:
+    post:
+      summary: Logout current user
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationHeader"
+      responses:
+        "200":
+          description: Logout message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Missing or invalid bearer token
+  /auth/admin/users:
+    get:
+      summary: List users as admin
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationHeader"
+      responses:
+        "200":
+          description: Admin user list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUsersResponse"
+        "403":
+          description: Admin access required
+        "500":
+          description: Internal server error
+  /auth/admin/invite:
+    post:
+      summary: Invite a user as admin
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminInviteRequest"
+      responses:
+        "200":
+          description: Invitation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminInviteResponse"
+        "400":
+          description: Invalid email or user state
+        "403":
+          description: Admin access required
+        "422":
+          description: Invalid payload
+        "500":
+          description: Internal server error
+  /auth/admin/users/{user_id}/validate:
+    post:
+      summary: Set user validation status
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationHeader"
+        - $ref: "#/components/parameters/UserIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminValidationRequest"
+      responses:
+        "200":
+          description: Updated admin user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserResponse"
+        "400":
+          description: Invalid user state
+        "403":
+          description: Admin access required
+        "422":
+          description: Invalid payload
+        "500":
+          description: Internal server error
+  /auth/admin/users/{user_id}/block:
+    post:
+      summary: Set user block status
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationHeader"
+        - $ref: "#/components/parameters/UserIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminBlockRequest"
+      responses:
+        "200":
+          description: Updated admin user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserResponse"
+        "403":
+          description: Admin access required
+        "422":
+          description: Invalid payload
+        "500":
+          description: Internal server error
+  /auth/admin/users/{user_id}:
+    delete:
+      summary: Delete a user as admin
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationHeader"
+        - $ref: "#/components/parameters/UserIdPath"
+      responses:
+        "200":
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "403":
+          description: Admin access required or protected target
+        "500":
+          description: Internal server error
+components:
+  parameters:
+    AuthorizationHeader:
+      name: Authorization
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Bearer access token, for example `Bearer eyJ...`
+    UserIdPath:
+      name: user_id
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, version]
+      properties:
+        status:
+          type: string
+          example: ok
+        service:
+          type: string
+          example: auth-service
+        version:
+          type: string
+          example: 0.1.0
+    SignupRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 6
+        role:
+          type: string
+          enum: [user, admin]
+          default: user
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+    PasswordResetRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          minLength: 1
+    PasswordUpdateRequest:
+      type: object
+      required: [new_password]
+      properties:
+        new_password:
+          type: string
+          minLength: 6
+    AdminInviteRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          enum: [user, admin]
+          default: user
+    AdminValidationRequest:
+      type: object
+      required: [validated]
+      properties:
+        validated:
+          type: boolean
+    AdminBlockRequest:
+      type: object
+      required: [blocked]
+      properties:
+        blocked:
+          type: boolean
+    UserResponse:
+      type: object
+      required: [id, email, role, email_confirmed, created_at]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        email_confirmed:
+          type: boolean
+        created_at:
+          type: string
+    SessionResponse:
+      type: object
+      required: [access_token, refresh_token, token_type, expires_in, user]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: bearer
+        expires_in:
+          type: integer
+        user:
+          $ref: "#/components/schemas/UserResponse"
+    MessageResponse:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+    AdminUserResponse:
+      type: object
+      required:
+        - id
+        - email
+        - username
+        - phone_number
+        - profile_picture
+        - role
+        - created_at
+        - email_confirmed
+        - validated
+        - blocked
+        - invited
+        - status
+        - invited_at
+        - last_sign_in_at
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        username:
+          type: string
+        phone_number:
+          type: string
+        profile_picture:
+          type: string
+        role:
+          type: string
+        created_at:
+          type: string
+        email_confirmed:
+          type: boolean
+        validated:
+          type: boolean
+        blocked:
+          type: boolean
+        invited:
+          type: boolean
+        status:
+          type: string
+        invited_at:
+          type: string
+        last_sign_in_at:
+          type: string
+    AdminUsersResponse:
+      type: object
+      required: [users]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUserResponse"
+    AdminInviteResponse:
+      type: object
+      required:
+        - success
+        - message
+        - user_id
+        - email
+        - generated_password
+        - email_sent
+        - recovery_link
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        user_id:
+          type: string
+        email:
+          type: string
+        generated_password:
+          type: string
+        email_sent:
+          type: boolean
+        recovery_link:
+          type: string

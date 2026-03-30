@@ -29,6 +29,15 @@ class LLMPlanner:
                     "arguments_schema": tool.arguments_schema,
                     "output_description": tool.output_description,
                     "requires_confirmation": tool.requires_confirmation,
+                    "goal_tags": tool.goal_tags,
+                    "affects": tool.affects,
+                    "impact_summary": tool.impact_summary,
+                    "expected_tradeoffs": tool.expected_tradeoffs,
+                    "best_for": tool.best_for,
+                    "risk_level": tool.risk_level,
+                    "requires_reindex": tool.requires_reindex,
+                    "requires_restart": tool.requires_restart,
+                    "typical_followups": tool.typical_followups,
                 }
                 for tool in self._tool_catalog
             ],

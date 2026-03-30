@@ -8,7 +8,6 @@ MUTATING_TOOLS = {
     "update_chunking_config",
     "update_embedding_model",
     "update_reranker_config",
-    "run_rag_evaluation",
     "restart_services",
 }
 

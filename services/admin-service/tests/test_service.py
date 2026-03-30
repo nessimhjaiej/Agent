@@ -27,6 +27,7 @@ class _FakeOrchestrator:
             "activity": [],
             "result": {},
             "agent_run": None,
+            "latest_user_language": context.latest_user_language,
         }
 
 def test_service_maps_request_to_orchestrator_response() -> None:
@@ -40,3 +41,12 @@ def test_service_maps_request_to_orchestrator_response() -> None:
     assert response["selected_mode"] == "qa"
     assert response["session_id"] == "session-1"
     assert response["intent"] == "qa"
+
+
+def test_service_detects_latest_user_message_language() -> None:
+    service = AdminService(orchestrator=_FakeOrchestrator())  # type: ignore[arg-type]
+    payload = AdminChatRequest(message="Quelle est la configuration actuelle ?", selected_mode="plan")
+
+    response = service.chat(payload)
+
+    assert response["latest_user_language"] == "fr"

@@ -36,6 +36,16 @@ class GetRerankerStrategyCatalogTool:
         arguments_schema={},
         output_description="Returns the current reranker configuration and a grounded catalog of supported reranker options.",
         requires_confirmation=False,
+        goal_tags=["cost", "latency", "quality", "ranking"],
+        affects=["retrieval", "generation"],
+        impact_summary="Helps the admin compare reranker choices by quality, latency, and cost before making a retrieval change.",
+        expected_tradeoffs=[
+            "Higher-quality rerankers usually add latency and runtime cost.",
+            "The current default reranker can materially change answer relevance and generation quality.",
+        ],
+        best_for=["reranker comparison", "quality vs cost decisions", "read-only diagnostics"],
+        risk_level="low",
+        typical_followups=["update_reranker_config", "run_rag_evaluation"],
     )
 
     def __init__(self, store: EnvConfigStore | None = None) -> None:
@@ -108,6 +118,16 @@ class GetChunkingStrategyCatalogTool:
         arguments_schema={},
         output_description="Returns the current chunking configuration and a grounded catalog of supported chunking options.",
         requires_confirmation=False,
+        goal_tags=["cost", "latency", "quality", "chunking", "ingestion"],
+        affects=["preprocessing", "retrieval", "citation_quality"],
+        impact_summary="Helps the admin compare chunking strategies by indexing cost, retrieval quality, and chunk volume.",
+        expected_tradeoffs=[
+            "Smaller or more granular chunks can improve precision but increase chunk count and indexing cost.",
+            "More context-preserving strategies can improve retrieval quality but may increase preprocessing complexity.",
+        ],
+        best_for=["chunking comparison", "cost reduction planning", "retrieval tuning"],
+        risk_level="low",
+        typical_followups=["update_chunking_config", "reindex_corpus", "run_rag_evaluation"],
     )
 
     def __init__(self, store: EnvConfigStore | None = None) -> None:
@@ -187,6 +207,16 @@ class GetEmbeddingCapabilityCatalogTool:
         arguments_schema={},
         output_description="Returns the current embedding settings and the tunable embedding capabilities exposed by the stack.",
         requires_confirmation=False,
+        goal_tags=["cost", "quality", "indexing", "embedding"],
+        affects=["embedding", "retrieval", "indexing"],
+        impact_summary="Explains the active embedding setup and the controls that influence embedding quality, throughput, and indexing cost.",
+        expected_tradeoffs=[
+            "Stronger embedding models can improve retrieval quality but raise indexing cost.",
+            "Changing embedding space often implies corpus reindexing to stay consistent.",
+        ],
+        best_for=["embedding diagnostics", "cost vs quality decisions", "indexing planning"],
+        risk_level="low",
+        typical_followups=["update_embedding_model", "reindex_corpus", "run_rag_evaluation"],
     )
 
     def __init__(self, settings: Settings, store: EnvConfigStore | None = None) -> None:
@@ -234,6 +264,16 @@ class GetEvaluationCapabilityCatalogTool:
         arguments_schema={},
         output_description="Returns the evaluation endpoint, report location, and supported evaluation operations.",
         requires_confirmation=False,
+        goal_tags=["quality", "validation", "risk_reduction"],
+        affects=["evaluation"],
+        impact_summary="Helps the admin understand how to validate changes before or after adjusting system configuration.",
+        expected_tradeoffs=[
+            "Evaluation adds time and compute cost but reduces guesswork when changing configuration.",
+            "Evaluation does not change production behavior by itself; it validates proposed changes.",
+        ],
+        best_for=["post-change validation", "baseline comparison", "quality monitoring"],
+        risk_level="low",
+        typical_followups=["get_evaluation_report", "run_rag_evaluation"],
     )
 
     def __init__(self, settings: Settings) -> None:
@@ -277,6 +317,15 @@ class GetPipelineStatusTool:
         arguments_schema={},
         output_description="Returns per-service health details keyed by service name.",
         requires_confirmation=False,
+        goal_tags=["stability", "latency", "operations"],
+        affects=["auth", "embedding", "retrieval", "generation", "ingestion"],
+        impact_summary="Provides current service health so the admin can rule out outages before making configuration changes.",
+        expected_tradeoffs=[
+            "This is diagnostic only and does not change system state.",
+        ],
+        best_for=["incident triage", "pre-change checks", "service diagnostics"],
+        risk_level="low",
+        typical_followups=["restart_services"],
     )
 
     def __init__(
@@ -319,6 +368,15 @@ class GetEmbeddingConfigTool:
         arguments_schema={},
         output_description="Returns embedding model, optional dimensions, batch size, and service base URL.",
         requires_confirmation=False,
+        goal_tags=["cost", "quality", "embedding"],
+        affects=["embedding", "retrieval", "indexing"],
+        impact_summary="Shows the current embedding setup that drives indexing cost and retrieval quality.",
+        expected_tradeoffs=[
+            "Embedding-model changes can alter retrieval quality and indexing cost.",
+        ],
+        best_for=["current-state inspection", "embedding diagnostics"],
+        risk_level="low",
+        typical_followups=["update_embedding_model", "reindex_corpus"],
     )
 
     def __init__(self, settings: Settings, store: EnvConfigStore | None = None) -> None:
@@ -362,6 +420,17 @@ class UpdateEmbeddingModelTool:
         },
         output_description="Returns the updated embedding model, previous model, config file path, and rollback payload.",
         requires_confirmation=True,
+        goal_tags=["cost", "quality", "embedding", "indexing"],
+        affects=["embedding", "retrieval", "indexing"],
+        impact_summary="Changes the embedding model, which can reduce or increase indexing cost and retrieval quality across the stack.",
+        expected_tradeoffs=[
+            "Cheaper embedding models can lower cost but may reduce retrieval quality.",
+            "Changing embedding space often requires reindexing to apply consistently.",
+        ],
+        best_for=["embedding cost reduction", "embedding quality upgrades"],
+        risk_level="medium",
+        requires_reindex=True,
+        typical_followups=["reindex_corpus", "run_rag_evaluation"],
     )
 
     def __init__(self, store: EnvConfigStore | None = None) -> None:
@@ -397,6 +466,15 @@ class GetChunkingConfigTool:
         arguments_schema={},
         output_description="Returns chunk strategy, chunk size, and chunk overlap.",
         requires_confirmation=False,
+        goal_tags=["cost", "quality", "latency", "chunking"],
+        affects=["preprocessing", "retrieval", "citation_quality"],
+        impact_summary="Shows the current chunking setup that influences chunk count, retrieval behavior, and indexing cost.",
+        expected_tradeoffs=[
+            "More chunks can improve retrieval precision but raise preprocessing and indexing cost.",
+        ],
+        best_for=["current-state inspection", "chunking diagnostics"],
+        risk_level="low",
+        typical_followups=["get_chunking_strategy_catalog", "update_chunking_config"],
     )
 
     def __init__(self, store: EnvConfigStore | None = None) -> None:
@@ -452,6 +530,17 @@ class UpdateChunkingConfigTool:
         },
         output_description="Returns the new chunking config, previous values, config file path, and rollback payload.",
         requires_confirmation=True,
+        goal_tags=["cost", "quality", "latency", "chunking"],
+        affects=["preprocessing", "retrieval", "citation_quality", "indexing"],
+        impact_summary="Changes chunking behavior, which affects chunk volume, indexing cost, retrieval quality, and citation granularity.",
+        expected_tradeoffs=[
+            "Larger chunks can reduce chunk count and cost but may lower precision.",
+            "Changing chunking usually needs reindexing to affect existing indexed data.",
+        ],
+        best_for=["cost reduction planning", "retrieval tuning", "citation tuning"],
+        risk_level="medium",
+        requires_reindex=True,
+        typical_followups=["reindex_corpus", "run_rag_evaluation"],
     )
 
     def __init__(self, store: EnvConfigStore | None = None) -> None:
@@ -518,6 +607,15 @@ class GetRerankerConfigTool:
         arguments_schema={},
         output_description="Returns default reranker, rerank top N, and configured reranker model names.",
         requires_confirmation=False,
+        goal_tags=["cost", "latency", "quality", "ranking"],
+        affects=["retrieval", "generation"],
+        impact_summary="Shows the active reranker settings that influence ranking quality, latency, and serving cost.",
+        expected_tradeoffs=[
+            "Higher-quality rerankers usually add latency and cost to retrieval.",
+        ],
+        best_for=["current-state inspection", "reranker diagnostics"],
+        risk_level="low",
+        typical_followups=["get_reranker_strategy_catalog", "update_reranker_config"],
     )
 
     def __init__(self, store: EnvConfigStore | None = None) -> None:
@@ -581,6 +679,17 @@ class UpdateRerankerConfigTool:
         },
         output_description="Returns the updated reranker config, previous values, config file path, and rollback payload.",
         requires_confirmation=True,
+        goal_tags=["cost", "latency", "quality", "ranking"],
+        affects=["retrieval", "generation"],
+        impact_summary="Changes the reranker used at retrieval time, which can improve answer relevance but also increase latency and serving cost.",
+        expected_tradeoffs=[
+            "Cross-encoder usually improves quality with moderate latency and cost.",
+            "LLM batch reranking usually increases quality further but is slower and more expensive.",
+            "Disabling reranking reduces cost and latency but may lower answer quality.",
+        ],
+        best_for=["cost vs quality tuning", "latency reduction", "ranking optimization"],
+        risk_level="medium",
+        typical_followups=["restart_services", "run_rag_evaluation"],
     )
 
     def __init__(self, store: EnvConfigStore | None = None) -> None:

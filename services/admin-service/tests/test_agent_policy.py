@@ -125,6 +125,45 @@ def test_llm_tool_catalog_policy_rejects_direct_mutation_tool_calls() -> None:
     assert decision.reason == "fallback_legacy_planner"
 
 
+def test_llm_tool_catalog_policy_converts_unneeded_confirmation_into_tool_call() -> None:
+    policy = LLMToolCatalogPolicy(
+        client=_FakePlannerClient(
+            """
+            {
+              "action_type": "request_confirmation",
+              "message": "Run the evaluation now.",
+              "tool_name": "run_rag_evaluation",
+              "arguments": {
+                "dataset_path": "evals/sample_eval_dataset.json"
+              },
+              "reason": "Validation should run immediately.",
+              "expected_observation": "A new evaluation report with summary metrics.",
+              "goal_subject": "evaluation",
+              "proposed_steps": [
+                {
+                  "tool": "run_rag_evaluation",
+                  "arguments": {
+                    "dataset_path": "evals/sample_eval_dataset.json"
+                  }
+                }
+              ]
+            }
+            """
+        ),
+        tool_catalog=[
+            ToolMetadata(name="run_rag_evaluation", description="Run evaluation", requires_confirmation=False),
+        ],
+    )
+
+    state = AgentRunState(goal=AgentGoal(message="Run RAG evaluation."))
+    decision = policy(state)
+
+    assert decision.action_type == "call_tool"
+    assert decision.tool_name == "run_rag_evaluation"
+    assert decision.arguments["dataset_path"] == "evals/sample_eval_dataset.json"
+    assert state.proposed_steps == []
+
+
 def test_llm_tool_catalog_policy_falls_back_to_legacy_when_client_fails() -> None:
     policy = LLMToolCatalogPolicy(
         client=_FakePlannerClient("", raises=True),

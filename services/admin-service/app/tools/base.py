@@ -12,6 +12,15 @@ class ToolMetadata:
     output_description: str = ""
     planning_enabled: bool = True
     requires_confirmation: bool = False
+    goal_tags: list[str] = field(default_factory=list)
+    affects: list[str] = field(default_factory=list)
+    impact_summary: str = ""
+    expected_tradeoffs: list[str] = field(default_factory=list)
+    best_for: list[str] = field(default_factory=list)
+    risk_level: str = "low"
+    requires_reindex: bool = False
+    requires_restart: bool = False
+    typical_followups: list[str] = field(default_factory=list)
 
 
 class AdminTool(Protocol):

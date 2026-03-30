@@ -1,4 +1,5 @@
 from app.config import Settings
+from app.language_utils import detect_language
 from app.models import AdminActor, AdminChatTurn, AdminRequestContext, PendingAction, PlanStep
 from app.orchestrator import AdminOrchestrator
 from app.schemas import AdminChatRequest, AdminChatResponse
@@ -24,6 +25,7 @@ class AdminService:
     def _build_context(self, payload: AdminChatRequest) -> AdminRequestContext:
         context = AdminRequestContext(
             message=payload.message,
+            latest_user_language=detect_language(payload.message),
             selected_mode=payload.selected_mode,
             session_id=payload.session_id,
             confirm=payload.confirm,

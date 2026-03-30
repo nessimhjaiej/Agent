@@ -106,7 +106,7 @@ class FastPathPlanService:
                 )
             )
 
-        answer = self._synthesize_answer(context.message, subject, bundle_id, observations)
+        answer = self._synthesize_answer(context, subject, bundle_id, observations)
         return self._response_factory.build_response(
             status="ok",
             mode="advisory",
@@ -137,7 +137,7 @@ class FastPathPlanService:
 
     def _synthesize_answer(
         self,
-        user_message: str,
+        context: AdminRequestContext,
         subject: str,
         bundle_id: str,
         observations: list[dict],
@@ -147,7 +147,7 @@ class FastPathPlanService:
                 answer = self._explainer_client.complete_text(
                     system_prompt=(
                         "You answer admin configuration questions using grounded read-only tool outputs. "
-                        "Answer directly in the user's language when reasonable. "
+                        "Always answer in the same language as the user's latest message. "
                         "Explain the current setup, compare meaningful choices if asked, and recommend practical next steps. "
                         "Stay strictly within the subsystem identified by the subject and bundle id. "
                         "Do not introduce unrelated subsystems, unrelated config changes, or execution proposals unless the user explicitly asked for them. "
@@ -156,7 +156,8 @@ class FastPathPlanService:
                         "Do not ask the user to switch modes."
                     ),
                     user_prompt=(
-                        f"User request:\n{user_message.strip()}\n\n"
+                        f"User request:\n{context.message.strip()}\n\n"
+                        f"Latest user language: {context.latest_user_language}\n"
                         f"Subject: {subject}\n"
                         f"Bundle id: {bundle_id}\n\n"
                         f"Grounded tool observations:\n{json.dumps(observations, ensure_ascii=True, indent=2)}"
@@ -168,9 +169,9 @@ class FastPathPlanService:
                 pass
 
         if bundle_id == "chunking_review":
-            return self._build_chunking_comparison_answer(user_message, observations)
+            return self._build_chunking_comparison_answer(context.message, observations)
         if bundle_id == "reranking_review":
-            return self._build_reranking_comparison_answer(user_message, observations)
+            return self._build_reranking_comparison_answer(context.message, observations)
 
         lines = []
         for item in observations:

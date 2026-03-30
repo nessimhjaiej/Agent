@@ -33,6 +33,17 @@ class RestartServicesTool:
         },
         output_description="Returns the selected runtime, services scheduled for restart, and script or compose path details.",
         requires_confirmation=True,
+        goal_tags=["stability", "operations", "availability"],
+        affects=["auth", "embedding", "retrieval", "generation", "ingestion", "admin"],
+        impact_summary="Restarts backend services so configuration changes take effect or unhealthy services recover.",
+        expected_tradeoffs=[
+            "Restarts can briefly interrupt availability.",
+            "Restarts may be necessary after some configuration mutations but should be used carefully in active environments.",
+        ],
+        best_for=["service recovery", "applying config changes", "operational maintenance"],
+        risk_level="high",
+        requires_restart=True,
+        typical_followups=["get_pipeline_status"],
     )
 
     def __init__(self, project_root: Path | None = None) -> None:

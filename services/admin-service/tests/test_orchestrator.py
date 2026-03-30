@@ -121,7 +121,7 @@ class _FakeEvaluationReportTool:
 
 class _FakeRunEvaluationTool:
     name = "run_rag_evaluation"
-    metadata = ToolMetadata(name=name, description="Run evaluation", output_description="evaluation", requires_confirmation=True)
+    metadata = ToolMetadata(name=name, description="Run evaluation", output_description="evaluation", requires_confirmation=False)
 
     def execute(self, arguments: dict):  # noqa: ANN001
         from app.models import ToolExecutionResult
@@ -1054,6 +1054,79 @@ def test_orchestrator_runs_evaluation_after_confirmed_reranker_change_when_reque
     assert confirmed_response.result["steps"][1]["tool"] == "run_rag_evaluation"
     assert "evaluation_comparison" in confirmed_response.result
     assert confirmed_response.result["evaluation_comparison"]["deltas"]["faithfulness"] == 0.12
+
+
+def test_orchestrator_executes_run_evaluation_without_soft_fallback(tmp_path: Path) -> None:
+    state_store = AgentRunStateStore(state_path=tmp_path / "agent_run_states.json")
+    planner_client = _QueuedPlannerClient(
+        payloads=[
+            """
+            {
+              "action_type": "request_confirmation",
+              "message": "Run the evaluation now.",
+              "tool_name": "run_rag_evaluation",
+              "arguments": {
+                "dataset_path": "evals/sample_eval_dataset.json"
+              },
+              "reason": "Evaluation does not require confirmation and should run directly.",
+              "expected_observation": "A completed evaluation report with metrics.",
+              "goal_subject": "evaluation",
+              "proposed_steps": [
+                {
+                  "tool": "run_rag_evaluation",
+                  "arguments": {
+                    "dataset_path": "evals/sample_eval_dataset.json"
+                  }
+                }
+              ]
+            }
+            """,
+            """
+            {
+              "action_type": "respond",
+              "message": "The RAG evaluation completed successfully and produced fresh metrics.",
+              "tool_name": null,
+              "arguments": {},
+              "reason": "The evaluation result is now available.",
+              "expected_observation": "",
+              "goal_subject": "evaluation",
+              "proposed_steps": []
+            }
+            """,
+        ]
+    )
+    registry = _FakeRegistry(
+        {
+            "run_rag_evaluation": _FakeRunEvaluationTool(),
+        }
+    )
+    orchestrator = AdminOrchestrator(
+        settings=Settings(planner_enabled=False),
+        selector=_FakeSelector(PlannedAction(mode="qa", intent="qa", tool_name=None)),
+        registry=registry,
+        security_client=_FakeSecurityClient(),  # type: ignore[arg-type]
+        generation_client=_FakeGenerationClient(),  # type: ignore[arg-type]
+        explainer_client=planner_client,  # type: ignore[arg-type]
+        agent_state_store=state_store,
+        supabase_documents_client=_FakeSupabaseDocumentsClient(),  # type: ignore[arg-type]
+    )
+
+    response = orchestrator.handle(
+        AdminRequestContext(
+            message="run RAG evaluation",
+            selected_mode="plan",
+            session_id="eval-direct",
+        )
+    )
+
+    assert response.status == "ok"
+    assert response.intent == "recursive_plan_agent"
+    assert response.agent_run is not None
+    assert response.agent_run.stop_reason == "responded"
+    assert response.agent_run.tool_call_count == 1
+    assert response.result["stop_reason"] == "responded"
+    assert response.result["facts"]["latest_user_language"] == "unknown"
+    assert "completed successfully" in response.answer
 
 
 def test_orchestrator_uses_recursive_agent_for_multilingual_chunking_request(tmp_path: Path) -> None:

@@ -225,7 +225,17 @@ class RunRagEvaluationTool:
             }
         },
         output_description="Returns the dataset path, generated report path, generation timestamp, sample count, and metric summary.",
-        requires_confirmation=True,
+        requires_confirmation=False,
+        goal_tags=["quality", "validation", "risk_reduction", "benchmarking"],
+        affects=["evaluation"],
+        impact_summary="Runs a validation workflow to measure the impact of a planned or recent configuration change.",
+        expected_tradeoffs=[
+            "Evaluation consumes time and compute cost but reduces configuration guesswork.",
+            "Evaluation does not change production behavior directly.",
+        ],
+        best_for=["post-change validation", "baseline comparison", "quality measurement"],
+        risk_level="medium",
+        typical_followups=["get_evaluation_report"],
     )
 
     def __init__(
@@ -279,6 +289,15 @@ class GetEvaluationReportTool:
         },
         output_description="Returns report metadata, summary metrics, and the report records payload.",
         requires_confirmation=False,
+        goal_tags=["quality", "validation", "benchmarking"],
+        affects=["evaluation"],
+        impact_summary="Reads the latest quality metrics so the admin can compare current performance before deciding on a change.",
+        expected_tradeoffs=[
+            "Read-only diagnostic; no system state is changed.",
+        ],
+        best_for=["quality monitoring", "before/after comparison", "decision support"],
+        risk_level="low",
+        typical_followups=["run_rag_evaluation"],
     )
 
     def __init__(
