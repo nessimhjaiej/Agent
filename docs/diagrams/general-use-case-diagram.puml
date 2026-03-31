@@ -7,98 +7,64 @@ skinparam actorStyle awesome
 title Agentic RAG Platform - General Use Case Diagram
 
 actor Guest
-actor "Authenticated User" as User
-actor Administrator as Admin
-actor "Supabase Auth / Storage" as Supabase
-actor "OpenAI / Ollama" as LLM
-actor Weaviate
+actor User
+actor Admin
 
 rectangle "Agentic RAG Platform" {
   usecase "Sign up" as UC_SignUp
   usecase "Sign in" as UC_SignIn
-  usecase "Manage account access" as UC_Access
+  usecase "Change password" as UC_ChangePassword
+  usecase "Sign out" as UC_SignOut
 
-  usecase "Ask grounded question" as UC_Ask
-  usecase "View answer citations" as UC_Citations
+  usecase "Ask document-specific questions" as UC_Ask
   usecase "Use voice input" as UC_Voice
-  usecase "Review chat history" as UC_History
+  usecase "Review chunks used in answer" as UC_Chunks
+  usecase "Review cited documents" as UC_CitedDocs
 
+  usecase "Manage documents" as UC_ManageDocs
   usecase "Upload document" as UC_Upload
-  usecase "List documents" as UC_ListDocs
-  usecase "Preview document" as UC_Preview
+  usecase "Delete document" as UC_DeleteDoc
+  usecase "Validate document" as UC_ValidateDoc
 
-  usecase "Validate or reject document" as UC_Validate
-  usecase "Index validated document" as UC_Index
-  usecase "Delete document and chunks" as UC_DeleteDoc
+  usecase "Manage users" as UC_ManageUsers
+  usecase "Invite user" as UC_InviteUser
+  usecase "Validate user" as UC_ValidateUser
+  usecase "Promote user" as UC_PromoteUser
+  usecase "Kick user" as UC_KickUser
 
-  usecase "Ask admin copilot" as UC_AdminChat
-  usecase "Review system status" as UC_Status
-  usecase "Update retrieval configuration" as UC_Config
-  usecase "Reindex corpus" as UC_Reindex
-  usecase "Run RAG evaluation" as UC_Eval
-  usecase "Restart backend services" as UC_Restart
-  usecase "Manage users" as UC_Users
-
-  usecase "Authenticate user" as UC_Auth
-  usecase "Retrieve relevant chunks" as UC_Retrieve
-  usecase "Generate grounded response" as UC_Generate
-  usecase "Store files and metadata" as UC_Store
-  usecase "Store and search vectors" as UC_Vector
+  usecase "Interact with user chat\n(QA mode)" as UC_UserChat
+  usecase "Interact with admin control chat" as UC_AdminChat
 }
 
 Guest --> UC_SignUp
 Guest --> UC_SignIn
 
 User --> UC_Ask
-User --> UC_Citations
 User --> UC_Voice
-User --> UC_History
-User --> UC_Upload
-User --> UC_ListDocs
-User --> UC_Preview
+User --> UC_Chunks
+User --> UC_CitedDocs
+User --> UC_ChangePassword
+User --> UC_SignOut
 
-Admin --> UC_Validate
-Admin --> UC_Index
-Admin --> UC_DeleteDoc
+Admin --> UC_ManageDocs
+Admin --> UC_ManageUsers
+Admin --> UC_UserChat
 Admin --> UC_AdminChat
-Admin --> UC_Status
-Admin --> UC_Config
-Admin --> UC_Reindex
-Admin --> UC_Eval
-Admin --> UC_Restart
-Admin --> UC_Users
-Admin --> UC_Access
+Admin --> UC_Ask
+Admin --> UC_ChangePassword
+Admin --> UC_SignOut
 
-UC_SignUp .> UC_Auth : <<include>>
-UC_SignIn .> UC_Auth : <<include>>
-UC_Access .> UC_Auth : <<include>>
-
-UC_Ask .> UC_Retrieve : <<include>>
-UC_Ask .> UC_Generate : <<include>>
-UC_Citations .> UC_Ask : <<extend>>
 UC_Voice .> UC_Ask : <<extend>>
-UC_History .> UC_Ask : <<extend>>
+UC_Chunks .> UC_Ask : <<extend>>
+UC_CitedDocs .> UC_Ask : <<extend>>
 
-UC_Upload .> UC_Store : <<include>>
-UC_ListDocs .> UC_Store : <<include>>
-UC_Preview .> UC_Store : <<include>>
+UC_ManageDocs .> UC_Upload : <<include>>
+UC_ManageDocs .> UC_DeleteDoc : <<include>>
+UC_ManageDocs .> UC_ValidateDoc : <<include>>
 
-UC_Validate .> UC_Store : <<include>>
-UC_Index .> UC_Store : <<include>>
-UC_Index .> UC_Vector : <<include>>
-UC_DeleteDoc .> UC_Store : <<include>>
-UC_DeleteDoc .> UC_Vector : <<include>>
-
-UC_AdminChat .> UC_Status : <<extend>>
-UC_AdminChat .> UC_Config : <<extend>>
-UC_AdminChat .> UC_Reindex : <<extend>>
-UC_AdminChat .> UC_Eval : <<extend>>
-UC_AdminChat .> UC_Restart : <<extend>>
-
-Supabase --> UC_Auth
-Supabase --> UC_Store
-LLM --> UC_Generate
-Weaviate --> UC_Retrieve
-Weaviate --> UC_Vector
+UC_ManageUsers .> UC_InviteUser : <<include>>
+UC_ManageUsers .> UC_ValidateUser : <<include>>
+UC_ManageUsers .> UC_PromoteUser : <<include>>
+UC_ManageUsers .> UC_KickUser : <<include>>
 
 @enduml
