@@ -13,6 +13,7 @@ actor Admin
 rectangle "Agentic RAG Platform" {
   usecase "Sign up" as UC_SignUp
   usecase "Sign in" as UC_SignIn
+  usecase "Update own profile" as UC_UpdateProfile
   usecase "Change password" as UC_ChangePassword
   usecase "Sign out" as UC_SignOut
 
@@ -43,16 +44,15 @@ User --> UC_Ask
 User --> UC_Voice
 User --> UC_Chunks
 User --> UC_CitedDocs
+User --> UC_UpdateProfile
 User --> UC_ChangePassword
 User --> UC_SignOut
 
+Admin --|> User
 Admin --> UC_ManageDocs
 Admin --> UC_ManageUsers
 Admin --> UC_UserChat
 Admin --> UC_AdminChat
-Admin --> UC_Ask
-Admin --> UC_ChangePassword
-Admin --> UC_SignOut
 
 UC_Voice .> UC_Ask : <<extend>>
 UC_Chunks .> UC_Ask : <<extend>>
