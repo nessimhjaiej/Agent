@@ -23,17 +23,11 @@ rectangle "Agentic RAG Platform" {
   usecase "Review cited documents" as UC_CitedDocs
 
   usecase "Manage documents" as UC_ManageDocs
-  usecase "Upload document" as UC_Upload
-  usecase "Delete document" as UC_DeleteDoc
-  usecase "Validate document" as UC_ValidateDoc
+ 
 
   usecase "Manage users" as UC_ManageUsers
-  usecase "Invite user" as UC_InviteUser
-  usecase "Validate user" as UC_ValidateUser
-  usecase "Promote user" as UC_PromoteUser
-  usecase "Kick user" as UC_KickUser
 
-  usecase "Interact with user chat\n(QA mode)" as UC_UserChat
+
   usecase "Interact with admin control chat" as UC_AdminChat
 }
 
@@ -51,20 +45,11 @@ User --> UC_SignOut
 Admin --|> User
 Admin --> UC_ManageDocs
 Admin --> UC_ManageUsers
-Admin --> UC_UserChat
 Admin --> UC_AdminChat
 
 UC_Voice .> UC_Ask : <<extend>>
 UC_Chunks .> UC_Ask : <<extend>>
 UC_CitedDocs .> UC_Ask : <<extend>>
 
-UC_ManageDocs .> UC_Upload : <<include>>
-UC_ManageDocs .> UC_DeleteDoc : <<include>>
-UC_ManageDocs .> UC_ValidateDoc : <<include>>
-
-UC_ManageUsers .> UC_InviteUser : <<include>>
-UC_ManageUsers .> UC_ValidateUser : <<include>>
-UC_ManageUsers .> UC_PromoteUser : <<include>>
-UC_ManageUsers .> UC_KickUser : <<include>>
 
 @enduml
