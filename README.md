@@ -31,6 +31,15 @@ Microservice-based Retrieval-Augmented Generation platform with:
 - `weaviate` on `http://localhost:8080`
 - frontend on `http://localhost:5173`
 
+## Local Fallback Model Note
+
+The generation fallback model is currently configured for local use with Ollama.
+
+- `GENERATION_FALLBACK_PROVIDER=ollama`
+- `GENERATION_FALLBACK_MODEL=qwen2.5:7b`
+
+This is acceptable for local development, but for deployment you should implement and validate a different fallback strategy that matches your production reliability, security, and hosting requirements.
+
 ## Prerequisites
 
 - Docker Desktop
