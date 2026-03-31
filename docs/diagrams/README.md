@@ -4,6 +4,7 @@ This folder contains the first UML-style diagrams for the Agentic RAG platform.
 
 Current diagrams:
 
+- `general-use-case-diagram.puml`: general PlantUML use case diagram
 - `system-component-diagram.md`: high-level component/service view
 - `ingestion-sequence-diagram.md`: document upload and indexing workflow
 - `query-generation-sequence-diagram.md`: grounded question-answer workflow
