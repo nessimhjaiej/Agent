@@ -19,7 +19,7 @@ class PasswordResetRequest(BaseModel):
 
 
 class PasswordUpdateRequest(BaseModel):
-    new_password: str = Field(..., min_length=6)
+    new_password: str = Field(..., min_length=8)
 
 
 class AdminInviteRequest(BaseModel):

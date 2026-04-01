@@ -10,7 +10,7 @@
     { "name": "document_id", "dataType": ["text"] },
     { "name": "chunk_text", "dataType": ["text"] },
     { "name": "source_type", "dataType": ["text"] },
-    { "name": "source_uri", "dataType": ["text"] },
+    { "name": "sourccheck e_uri", "dataType": ["text"] },
     { "name": "source_filename", "dataType": ["text"] },
     { "name": "language", "dataType": ["text"] },
     { "name": "chunk_index", "dataType": ["int"] },

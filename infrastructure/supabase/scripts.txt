@@ -1,0 +1,514 @@
+-- Users table
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  role VARCHAR(50) NOT NULL CHECK (role IN ('user', 'admin')),
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Audit logs table
+CREATE TABLE audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  action VARCHAR(255) NOT NULL,
+  details JSONB,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Login attempts table
+CREATE TABLE login_attempts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) NOT NULL,
+  success BOOLEAN NOT NULL,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX idx_login_attempts_email ON login_attempts(email);
+
+ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE login_attempts DISABLE ROW LEVEL SECURITY;
+
+DROP TABLE IF EXISTS users CASCADE;
+
+-- Audit logs (tracks user actions)
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  action VARCHAR(255) NOT NULL,
+  details JSONB,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Login attempts (rate limiting)
+CREATE TABLE IF NOT EXISTS login_attempts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) NOT NULL,
+  success BOOLEAN NOT NULL,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Disable RLS on these tables (backend-only access)
+ALTER TABLE audit_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE login_attempts DISABLE ROW LEVEL SECURITY;
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_email ON login_attempts(email);
+
+DELETE FROM login_attempts;
+
+create extension if not exists pgcrypto;
+
+create table if not exists public.documents (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  original_name text not null,
+  storage_path text not null unique,
+  status text not null check (status in ('pending', 'validated', 'rejected')),
+  embedded boolean not null default false,
+  embedded_at timestamptz null,
+  size_bytes bigint null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.documents enable row level security;
+
+drop policy if exists docs_select_own on public.documents;
+drop policy if exists docs_insert_own on public.documents;
+drop policy if exists docs_update_own on public.documents;
+drop policy if exists docs_delete_own on public.documents;
+
+create policy docs_select_own
+  on public.documents
+  for select
+  using (auth.uid() = user_id);
+
+create policy docs_insert_own
+  on public.documents
+  for insert
+  with check (auth.uid() = user_id);
+
+create policy docs_update_own
+  on public.documents
+  for update
+  using (auth.uid() = user_id);
+
+create policy docs_delete_own
+  on public.documents
+  for delete
+  using (auth.uid() = user_id);
+
+insert into storage.buckets (id, name, public)
+values ('documents', 'documents', false)
+on conflict (id) do nothing;
+
+-- documents table policies
+alter table public.documents enable row level security;
+
+drop policy if exists docs_select_own on public.documents;
+drop policy if exists docs_insert_own on public.documents;
+drop policy if exists docs_update_own on public.documents;
+drop policy if exists docs_delete_own on public.documents;
+
+create policy docs_select_own
+on public.documents
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy docs_insert_own
+on public.documents
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+create policy docs_update_own
+on public.documents
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+create policy docs_delete_own
+on public.documents
+for delete
+to authenticated
+using (auth.uid() = user_id);
+
+-- storage.objects policies for bucket documents
+drop policy if exists storage_docs_select_own on storage.objects;
+drop policy if exists storage_docs_insert_own on storage.objects;
+drop policy if exists storage_docs_update_own on storage.objects;
+drop policy if exists storage_docs_delete_own on storage.objects;
+
+create policy storage_docs_select_own
+on storage.objects
+for select
+to authenticated
+using (
+  bucket_id = 'documents'
+  and auth.uid()::text = (storage.foldername(name))[2]
+);
+
+create policy storage_docs_insert_own
+on storage.objects
+for insert
+to authenticated
+with check (
+  bucket_id = 'documents'
+  and auth.uid()::text = (storage.foldername(name))[2]
+);
+
+create policy storage_docs_update_own
+on storage.objects
+for update
+to authenticated
+using (
+  bucket_id = 'documents'
+  and auth.uid()::text = (storage.foldername(name))[2]
+)
+with check (
+  bucket_id = 'documents'
+  and auth.uid()::text = (storage.foldername(name))[2]
+);
+
+create policy storage_docs_delete_own
+on storage.objects
+for delete
+to authenticated
+using (
+  bucket_id = 'documents'
+  and auth.uid()::text = (storage.foldername(name))[2]
+);
+
+-- Run in Supabase SQL editor.
+-- Creates a public users table and keeps role changes synced to auth.users metadata.
+
+create extension if not exists pgcrypto;
+
+create table if not exists public.users (
+  id uuid primary key references auth.users (id) on delete cascade,
+  email text not null unique,
+  role text not null default 'user' check (role in ('user', 'admin')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_users_set_updated_at on public.users;
+create trigger trg_users_set_updated_at
+before update on public.users
+for each row execute function public.set_updated_at();
+
+-- Create/refresh a public.users row whenever a new auth user is created.
+create or replace function public.handle_new_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.users (id, email, role)
+  values (
+    new.id,
+    coalesce(new.email, ''),
+    coalesce(new.raw_user_meta_data ->> 'role', 'user')
+  )
+  on conflict (id) do update
+    set email = excluded.email;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_auth_user();
+
+-- Keep auth.users role metadata aligned when public.users.role changes.
+create or replace function public.sync_role_to_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update auth.users
+  set raw_user_meta_data = jsonb_set(
+    coalesce(raw_user_meta_data, '{}'::jsonb),
+    '{role}',
+    to_jsonb(new.role::text),
+    true
+  )
+  where id = new.id;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_users_sync_role_to_auth on public.users;
+create trigger trg_users_sync_role_to_auth
+after insert or update of role on public.users
+for each row execute function public.sync_role_to_auth_user();
+
+-- Backfill existing auth users into public.users.
+insert into public.users (id, email, role)
+select
+  u.id,
+  coalesce(u.email, ''),
+  coalesce(u.raw_user_meta_data ->> 'role', 'user') as role
+from auth.users u
+on conflict (id) do update
+  set email = excluded.email;
+
+-- Optional: strict client-side access.
+alter table public.users enable row level security;
+
+drop policy if exists users_no_client_access on public.users;
+create policy users_no_client_access
+on public.users
+for all
+using (false)
+with check (false);
+
+-- Promote a user to admin (example):
+-- update public.users set role = 'admin' where email = 'user@example.com';
+
+-- 1) Create profiles storage bucket (public, because frontend uses getPublicUrl)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'profiles',
+  'profiles',
+  true,
+  5242880,
+  array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+)
+on conflict (id) do nothing;
+
+-- 2) RLS policies for profile images (users manage only their own folder: <uid>/file)
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname = 'profiles_select_public'
+  ) then
+    create policy profiles_select_public
+      on storage.objects
+      for select
+      to public
+      using (bucket_id = 'profiles');
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname = 'profiles_insert_own'
+  ) then
+    create policy profiles_insert_own
+      on storage.objects
+      for insert
+      to authenticated
+      with check (
+        bucket_id = 'profiles'
+        and split_part(name, '/', 1) = auth.uid()::text
+      );
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname = 'profiles_update_own'
+  ) then
+    create policy profiles_update_own
+      on storage.objects
+      for update
+      to authenticated
+      using (
+        bucket_id = 'profiles'
+        and split_part(name, '/', 1) = auth.uid()::text
+      )
+      with check (
+        bucket_id = 'profiles'
+        and split_part(name, '/', 1) = auth.uid()::text
+      );
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname = 'profiles_delete_own'
+  ) then
+    create policy profiles_delete_own
+      on storage.objects
+      for delete
+      to authenticated
+      using (
+        bucket_id = 'profiles'
+        and split_part(name, '/', 1) = auth.uid()::text
+      );
+  end if;
+end $$;
+
+-- 3) Backfill missing user_metadata fields for existing users
+update auth.users
+set raw_user_meta_data =
+  coalesce(raw_user_meta_data, '{}'::jsonb)
+  || jsonb_build_object(
+       'username',
+       coalesce(
+         nullif(raw_user_meta_data->>'username', ''),
+         left(regexp_replace(split_part(coalesce(email,''), '@', 1), '[^a-zA-Z0-9._-]', '_', 'g'), 32),
+         'user'
+       ),
+       'phone_number',
+       coalesce(raw_user_meta_data->>'phone_number', ''),
+       'profile_picture',
+       coalesce(raw_user_meta_data->>'profile_picture', ''),
+       'invite_onboarding_completed',
+       coalesce(
+         (raw_user_meta_data->>'invite_onboarding_completed')::boolean,
+         case
+           when coalesce((raw_app_meta_data->>'invited_by_admin')::boolean, false) then false
+           else true
+         end
+       )
+     )
+where true;
+
+-- 1) Create profile pictures bucket (idempotent)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'profiles',
+  'profiles',
+  true,
+  5242880,
+  array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+)
+on conflict (id) do nothing;
+
+-- 2) Storage policies for profile pictures (idempotent)
+do $$
+begin
+  -- Public read (needed because frontend uses getPublicUrl)
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname = 'profiles_select_public'
+  ) then
+    create policy profiles_select_public
+      on storage.objects
+      for select
+      to public
+      using (bucket_id = 'profiles');
+  end if;
+
+  -- Authenticated users can upload only into their own folder: <uid>/...
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname = 'profiles_insert_own'
+  ) then
+    create policy profiles_insert_own
+      on storage.objects
+      for insert
+      to authenticated
+      with check (
+        bucket_id = 'profiles'
+        and split_part(name, '/', 1) = auth.uid()::text
+      );
+  end if;
+
+  -- Authenticated users can update only their own files
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname = 'profiles_update_own'
+  ) then
+    create policy profiles_update_own
+      on storage.objects
+      for update
+      to authenticated
+      using (
+        bucket_id = 'profiles'
+        and split_part(name, '/', 1) = auth.uid()::text
+      )
+      with check (
+        bucket_id = 'profiles'
+        and split_part(name, '/', 1) = auth.uid()::text
+      );
+  end if;
+
+  -- Authenticated users can delete only their own files
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'storage'
+      and tablename = 'objects'
+      and policyname = 'profiles_delete_own'
+  ) then
+    create policy profiles_delete_own
+      on storage.objects
+      for delete
+      to authenticated
+      using (
+        bucket_id = 'profiles'
+        and split_part(name, '/', 1) = auth.uid()::text
+      );
+  end if;
+end $$;
+
+-- 3) Backfill auth.users metadata for existing users (idempotent-ish)
+update auth.users
+set raw_user_meta_data =
+  coalesce(raw_user_meta_data, '{}'::jsonb)
+  || jsonb_build_object(
+       'username',
+       coalesce(
+         nullif(raw_user_meta_data->>'username', ''),
+         left(
+           regexp_replace(split_part(coalesce(email, ''), '@', 1), '[^a-zA-Z0-9._-]', '_', 'g'),
+           32
+         ),
+         'user'
+       ),
+       'phone_number',
+       coalesce(raw_user_meta_data->>'phone_number', ''),
+       'profile_picture',
+       coalesce(raw_user_meta_data->>'profile_picture', ''),
+       'invite_onboarding_completed',
+       coalesce(
+         (raw_user_meta_data->>'invite_onboarding_completed')::boolean,
+         case
+           when coalesce((raw_app_meta_data->>'invited_by_admin')::boolean, false) then false
+           else true
+         end
+       )
+     )
+where true;
