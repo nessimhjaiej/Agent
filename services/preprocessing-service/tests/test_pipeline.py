@@ -47,6 +47,22 @@ def test_process_source_txt_file(tmp_path: Path) -> None:
     assert chunks[0].metadata.language in {"en", "und"}
 
 
+def test_process_source_uses_document_id_override_for_chunk_ids(tmp_path: Path) -> None:
+    source = tmp_path / "doc.txt"
+    source.write_text("A short sample document for override testing.", encoding="utf-8")
+
+    orchestrator = PreprocessingOrchestrator(chunk_strategy="overlap", pipeline_version="v-test")
+    chunks = orchestrator.process_source(
+        str(source),
+        document_id="2120f479-c3c4-4b60-a3a7-972084efb67b",
+        context=ChunkingContext(chunk_size=10, chunk_overlap=2),
+    )
+
+    assert len(chunks) >= 1
+    assert chunks[0].document_id == "2120f479-c3c4-4b60-a3a7-972084efb67b"
+    assert chunks[0].chunk_id.startswith("2120f479-c3c4-4b60-a3a7-972084efb67b:")
+
+
 def test_language_detector_short_text_returns_und() -> None:
     detector = LightweightLanguageDetector(min_chars=20)
     assert detector.detect("hello") == "und"

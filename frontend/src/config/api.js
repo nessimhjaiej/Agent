@@ -129,6 +129,11 @@ export async function getDocumentSignedUrl(documentId, expiresIn = 3600) {
   return getJson(`${API.ingestion}/ingestion/documents/${documentId}/signed-url?expires_in=${expiresIn}`);
 }
 
+export async function getDocumentSignedUrlByStoragePath(storagePath, expiresIn = 3600) {
+  const query = new URLSearchParams({ storage_path: storagePath, expires_in: String(expiresIn) });
+  return getJson(`${API.ingestion}/ingestion/documents/signed-url/by-storage-path?${query.toString()}`);
+}
+
 export async function deleteDocumentRecord(documentId) {
   return deleteJson(`${API.ingestion}/ingestion/documents/${documentId}`);
 }

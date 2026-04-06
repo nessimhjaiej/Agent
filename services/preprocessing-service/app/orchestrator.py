@@ -22,12 +22,15 @@ class PreprocessingOrchestrator:
     def process_source(
         self,
         source_path: str,
+        document_id: str | None = None,
         source_type: str | None = None,
         context: ChunkingContext | None = None,
     ) -> list[ChunkRecord]:
         resolved_source_type = source_type or InputAdapterFactory.infer_source_type(source_path)
         adapter = InputAdapterFactory.create(resolved_source_type)
         raw_document = adapter.load(source_path)
+        if document_id is not None and document_id.strip():
+            raw_document.document_id = document_id.strip()
         normalized_document = self._normalizer.normalize(raw_document)
         chunking_context = context or ChunkingContext()
         chunks = self._chunker.chunk(normalized_document, chunking_context)

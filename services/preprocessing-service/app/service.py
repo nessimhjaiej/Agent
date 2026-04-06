@@ -10,6 +10,7 @@ class PreprocessingService:
     def process_source(
         self,
         source_path: str,
+        document_id: str | None = None,
         source_type: str | None = None,
         chunk_strategy: str | None = None,
         chunk_size: int | None = None,
@@ -34,6 +35,7 @@ class PreprocessingService:
         )
         return orchestrator.process_source(
             source_path=source_path,
+            document_id=document_id,
             source_type=source_type,
             context=context,
         )

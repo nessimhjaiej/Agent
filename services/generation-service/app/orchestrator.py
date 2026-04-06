@@ -228,6 +228,7 @@ class GenerationOrchestrator:
                 document_id=by_chunk_id[chunk_id].document_id,
                 document_name=by_chunk_id[chunk_id].document_name,
                 chunk_text=by_chunk_id[chunk_id].chunk_text,
+                storage_path=self._extract_storage_path(by_chunk_id[chunk_id]),
             )
             for chunk_id in citation_ids
         ]
@@ -239,6 +240,21 @@ class GenerationOrchestrator:
             used_chunk_ids=[item.chunk_id for item in citations],
             model=model_name,
         )
+
+    @staticmethod
+    def _extract_storage_path(chunk: RetrievedChunk) -> str | None:
+        source_uri = chunk.metadata.get("source_uri")
+        if not isinstance(source_uri, str) or not source_uri.strip():
+            return None
+
+        normalized = source_uri.replace("\\", "/")
+        marker = "/supabase/"
+        marker_index = normalized.rfind(marker)
+        if marker_index == -1:
+            return None
+
+        storage_path = normalized[marker_index + len(marker):].strip("/")
+        return storage_path or None
 
     def _client_for_attempt(self, provider: str) -> ChatClient:
         if provider.strip().lower() == "openai":

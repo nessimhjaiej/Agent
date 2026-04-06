@@ -87,7 +87,7 @@ class EmbeddingOrchestrator:
                 )
 
             local_path = self._download_document(client, document)
-            chunks = self._call_preprocessing(client, str(local_path))
+            chunks = self._call_preprocessing(client, str(local_path), str(document["id"]))
             index_results = self.index_chunks(chunks)
             indexed_count = sum(1 for item in index_results if item.indexed)
 
@@ -153,10 +153,15 @@ class EmbeddingOrchestrator:
                     f"Vector dimension mismatch. Expected {expected}, got {len(vector)}"
                 )
 
-    def _call_preprocessing(self, client: httpx.Client, source_path: str) -> list[Chunk]:
+    def _call_preprocessing(
+        self,
+        client: httpx.Client,
+        source_path: str,
+        document_id: str,
+    ) -> list[Chunk]:
         response = client.post(
             f"{self._settings.preprocessing_base_url.rstrip('/')}/preprocessing/process-source",
-            json={"source_path": source_path},
+            json={"source_path": source_path, "document_id": document_id},
         )
         self._raise_for_status(response, f"preprocessing {source_path}")
         payload = response.json()

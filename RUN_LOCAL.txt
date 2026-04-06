@@ -4,10 +4,10 @@ Run Locally (Windows PowerShell)
 Option A) Start backend services with Docker Compose
 ----------------------------------------------------
 cd C:\Users\NESSIM\Desktop\agentic
-docker compose up -d weaviate auth-service preprocessing-service embedding-service retrieval-service generation-service
+docker compose up -d weaviate auth-service preprocessing-service embedding-service retrieval-service generation-service ingestion-service
 
 Optional: rebuild images before starting
-docker compose build auth-service preprocessing-service embedding-service retrieval-service generation-service
+docker compose build auth-service preprocessing-service embedding-service retrieval-service generation-service ingestion-service
 
 Option B) Start backend services locally with uvicorn
 -----------------------------------------------------

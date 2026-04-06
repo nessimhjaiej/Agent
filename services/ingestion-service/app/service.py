@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import mimetypes
+import re
 import time
 from pathlib import PurePosixPath
+from uuid import UUID
 
 import httpx
 
@@ -138,7 +140,42 @@ class IngestionService:
             raise ValueError("expires_in must be > 0")
 
         with self._client() as client:
-            document = self._get_document(client, document_id)
+            document = self._get_document_flexible(client, document_id)
+            sign_response = client.post(
+                self._storage_url(f"object/sign/{self._settings.supabase_docs_bucket}/{document.storage_path}"),
+                headers=self._json_headers(),
+                json={"expiresIn": ttl},
+            )
+            self._raise_for_status(sign_response, f"sign document url {document.id}")
+            payload = sign_response.json()
+
+        signed_url = payload.get("signedURL") if isinstance(payload, dict) else None
+        if not isinstance(signed_url, str) or not signed_url.strip():
+            raise UpstreamServiceError("Supabase did not return a signed URL")
+
+        absolute_url = signed_url if signed_url.startswith("http") else f"{self._settings.supabase_url.rstrip('/')}/storage/v1{signed_url}"
+        return SignedUrlResult(
+            document_id=document.id,
+            storage_path=document.storage_path,
+            signed_url=absolute_url,
+            expires_in=ttl,
+        )
+
+    def get_document_signed_url_by_storage_path(
+        self,
+        storage_path: str,
+        expires_in: int | None = None,
+    ) -> SignedUrlResult:
+        ttl = expires_in or self._settings.signed_url_ttl_seconds
+        if ttl <= 0:
+            raise ValueError("expires_in must be > 0")
+        if not storage_path.strip():
+            raise ValueError("storage_path is required")
+
+        normalized_storage_path = storage_path.strip().replace("\\", "/").strip("/")
+
+        with self._client() as client:
+            document = self._get_document_by_storage_path(client, normalized_storage_path)
             sign_response = client.post(
                 self._storage_url(f"object/sign/{self._settings.supabase_docs_bucket}/{document.storage_path}"),
                 headers=self._json_headers(),
@@ -199,6 +236,83 @@ class IngestionService:
         if not isinstance(payload, list) or not payload or not isinstance(payload[0], dict):
             raise ConfigurationError(f"Document not found: {document_id}")
         return self._to_document_record(payload[0])
+
+    def _get_document_flexible(self, client: httpx.Client, document_id: str) -> DocumentRecord:
+        normalized = document_id.strip()
+        if not normalized:
+            raise ValueError("document_id is required")
+
+        if self._looks_like_uuid(normalized):
+            return self._get_document(client, normalized)
+
+        resolved = self._get_document_by_indexed_document_id(client, normalized)
+        if resolved is not None:
+            return resolved
+
+        return self._get_document(client, normalized)
+
+    def _get_document_by_storage_path(self, client: httpx.Client, storage_path: str) -> DocumentRecord:
+        response = client.get(
+            self._rest_url(self._settings.supabase_docs_table),
+            params={
+                "select": "id,user_id,original_name,storage_path,status,embedded,size_bytes,created_at,embedded_at",
+                "storage_path": f"eq.{storage_path}",
+                "limit": 1,
+            },
+            headers=self._auth_headers(),
+        )
+        self._raise_for_status(response, f"get document by storage path {storage_path}")
+        payload = response.json()
+        if not isinstance(payload, list) or not payload or not isinstance(payload[0], dict):
+            raise ConfigurationError(f"Document not found for storage path: {storage_path}")
+        return self._to_document_record(payload[0])
+
+    def _get_document_by_indexed_document_id(
+        self,
+        client: httpx.Client,
+        indexed_document_id: str,
+    ) -> DocumentRecord | None:
+        source_stem = self._source_stem_from_indexed_document_id(indexed_document_id)
+        if not source_stem:
+            return None
+
+        response = client.get(
+            self._rest_url(self._settings.supabase_docs_table),
+            params={
+                "select": "id,user_id,original_name,storage_path,status,embedded,size_bytes,created_at,embedded_at",
+                "storage_path": f"ilike.*{source_stem}*",
+                "order": "created_at.desc",
+                "limit": 20,
+            },
+            headers=self._auth_headers(),
+        )
+        self._raise_for_status(response, f"resolve indexed document id {indexed_document_id}")
+        payload = response.json()
+        if not isinstance(payload, list):
+            return None
+
+        for item in payload:
+            if not isinstance(item, dict):
+                continue
+            storage_path = str(item.get("storage_path") or "")
+            if PurePosixPath(storage_path).stem == source_stem:
+                return self._to_document_record(item)
+        return None
+
+    @staticmethod
+    def _looks_like_uuid(value: str) -> bool:
+        try:
+            UUID(value)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def _source_stem_from_indexed_document_id(indexed_document_id: str) -> str:
+        match = re.match(r"^(?P<stem>.+)-[0-9a-f]{12}$", indexed_document_id.strip(), re.IGNORECASE)
+        if match:
+            return match.group("stem")
+        return indexed_document_id.strip()
 
     def _to_document_record(self, item: dict) -> DocumentRecord:
         return DocumentRecord(

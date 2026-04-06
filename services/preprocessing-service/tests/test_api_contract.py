@@ -49,6 +49,29 @@ def test_process_source_txt_endpoint(tmp_path: Path) -> None:
     assert payload["chunks"][0]["metadata"]["chunking_strategy"] == "overlap"
 
 
+def test_process_source_accepts_document_id_override(tmp_path: Path) -> None:
+    source = tmp_path / "sample.txt"
+    source.write_text("One two three four five six seven", encoding="utf-8")
+    app = create_app()
+    client = TestClient(app)
+
+    response = client.post(
+        "/preprocessing/process-source",
+        json={
+            "source_path": str(source),
+            "document_id": "supabase-doc-uuid",
+            "chunk_strategy": "overlap",
+            "chunk_size": 10,
+            "chunk_overlap": 2,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["chunks"][0]["document_id"] == "supabase-doc-uuid"
+    assert payload["chunks"][0]["chunk_id"].startswith("supabase-doc-uuid:")
+
+
 def test_process_source_returns_400_when_file_missing() -> None:
     app = create_app()
     client = TestClient(app)

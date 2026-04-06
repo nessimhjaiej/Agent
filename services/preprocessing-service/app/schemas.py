@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 class ProcessSourceRequest(BaseModel):
     source_path: str = Field(..., min_length=1)
+    document_id: str | None = Field(default=None, min_length=1)
     source_type: str | None = None
     chunk_strategy: str | None = None
     chunk_size: int | None = Field(default=None, gt=0)

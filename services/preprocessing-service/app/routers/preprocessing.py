@@ -16,6 +16,7 @@ def process_source(payload: ProcessSourceRequest) -> ProcessSourceResponse:
     try:
         chunks = service.process_source(
             source_path=payload.source_path,
+            document_id=payload.document_id,
             source_type=payload.source_type,
             chunk_strategy=payload.chunk_strategy,
             chunk_size=payload.chunk_size,

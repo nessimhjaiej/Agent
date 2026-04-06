@@ -31,6 +31,22 @@ class CitationEnforcer:
                 document_id=chunks_by_id[chunk_id].document_id,
                 document_name=chunks_by_id[chunk_id].document_name,
                 chunk_text=chunks_by_id[chunk_id].chunk_text,
+                storage_path=self._extract_storage_path(chunks_by_id[chunk_id]),
             )
             for chunk_id in valid_ids
         ]
+
+    @staticmethod
+    def _extract_storage_path(chunk: RetrievedChunk) -> str | None:
+        source_uri = chunk.metadata.get("source_uri")
+        if not isinstance(source_uri, str) or not source_uri.strip():
+            return None
+
+        normalized = source_uri.replace("\\", "/")
+        marker = "/supabase/"
+        marker_index = normalized.rfind(marker)
+        if marker_index == -1:
+            return None
+
+        storage_path = normalized[marker_index + len(marker):].strip("/")
+        return storage_path or None

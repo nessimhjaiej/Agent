@@ -35,6 +35,7 @@ class Citation:
     document_id: str
     document_name: str
     chunk_text: str
+    storage_path: str | None = None
 
 
 @dataclass(slots=True)

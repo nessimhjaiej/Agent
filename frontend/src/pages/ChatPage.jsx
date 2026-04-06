@@ -18,9 +18,32 @@ import { useTheme } from '../context/ThemeContext';
 import AuthModal from '../components/AuthModal';
 import TypingIndicator from '../components/TypingIndicator';
 import AnimatedPage from '../components/AnimatedPage';
-import API from '../config/api';
+import API, { getDocumentSignedUrl, getDocumentSignedUrlByStoragePath } from '../config/api';
 
 const VOICE_WAVEFORM_BAR_COUNT = 33;
+
+function mapSourcesFromCitations(citations) {
+  if (!Array.isArray(citations)) return [];
+
+  const uniqueSources = [];
+  const seen = new Set();
+
+  citations.forEach((citation) => {
+    const documentId = typeof citation?.document_id === 'string' ? citation.document_id : '';
+    const documentName = typeof citation?.document_name === 'string' ? citation.document_name : '';
+    const dedupeKey = documentId || documentName;
+
+    if (!dedupeKey || seen.has(dedupeKey)) return;
+    seen.add(dedupeKey);
+    uniqueSources.push({
+      documentId,
+      storagePath: typeof citation?.storage_path === 'string' ? citation.storage_path : '',
+      documentName: documentName || documentId || 'Unknown document',
+    });
+  });
+
+  return uniqueSources;
+}
 
 function VoiceWaveform({ isRecording, samples }) {
   const isActive = isRecording && samples.some((sample) => sample > 0.05);
@@ -59,6 +82,12 @@ export default function ChatPage() {
   const [editingText, setEditingText] = useState('');
   const [expandedSources, setExpandedSources] = useState({});
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [previewName, setPreviewName] = useState('');
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState('');
+  const [openingDocumentId, setOpeningDocumentId] = useState('');
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -196,10 +225,8 @@ export default function ChatPage() {
         throw new Error(detail);
       }
 
-      const sources = Array.isArray(payload.citations)
-        ? [...new Set(payload.citations.map((item) => item.document_name).filter(Boolean))]
-        : [];
       const citations = Array.isArray(payload.citations) ? payload.citations : [];
+      const sources = mapSourcesFromCitations(citations);
 
       const aiResponse = {
         id: (Date.now() + 1).toString(),
@@ -408,6 +435,27 @@ export default function ChatPage() {
 
   const toggleSources = (messageId) => {
     setExpandedSources((prev) => ({ ...prev, [messageId]: !prev[messageId] }));
+  };
+
+  const openDocumentPreview = async (source) => {
+    if (!source?.documentId && !source?.storagePath) return;
+
+    setOpeningDocumentId(source.storagePath || source.documentId);
+    setPreviewLoading(true);
+    setPreviewError('');
+    try {
+      const data = source.storagePath
+        ? await getDocumentSignedUrlByStoragePath(source.storagePath, 3600)
+        : await getDocumentSignedUrl(source.documentId, 3600);
+      setPreviewUrl(data.signed_url);
+      setPreviewName(source.documentName || 'Document preview');
+      setPreviewOpen(true);
+    } catch (error) {
+      setPreviewError(error?.message || 'Failed to load document preview');
+    } finally {
+      setPreviewLoading(false);
+      setOpeningDocumentId('');
+    }
   };
 
   const latestUserMessageId = [...messages].reverse().find((message) => message.role === 'user')?.id ?? null;
@@ -679,19 +727,28 @@ export default function ChatPage() {
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {msg.sources.map((src, i) => (
-                          <span
-                            key={i}
-                            className="text-xs px-2.5 py-0.5 rounded-full"
+                          <button
+                            key={src.storagePath || src.documentId || `${src.documentName}-${i}`}
+                            type="button"
+                            onClick={() => openDocumentPreview(src)}
+                            disabled={(!src.documentId && !src.storagePath) || previewLoading}
+                            className="text-xs px-2.5 py-0.5 rounded-full transition-opacity disabled:opacity-60"
                             style={{
                               background: 'rgba(139,92,246,0.08)',
                               color: 'var(--color-primary-400)',
                               border: '1px solid rgba(139,92,246,0.15)',
                             }}
+                            title={src.documentId || src.storagePath ? 'Open document preview' : 'Document preview unavailable'}
                           >
-                            {src}
-                          </span>
+                            {openingDocumentId === (src.storagePath || src.documentId) ? 'Opening...' : src.documentName}
+                          </button>
                         ))}
                       </div>
+                      {previewError && (
+                        <p className="mt-2 text-xs" style={{ color: '#f87171' }}>
+                          {previewError}
+                        </p>
+                      )}
                       {expandedSources[msg.id] && Array.isArray(msg.citations) && msg.citations.length > 0 && (
                         <div className="mt-3 space-y-3">
                           {msg.citations.map((citation) => (
@@ -829,6 +886,42 @@ export default function ChatPage() {
       )}
 
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      {previewOpen && (
+        <div
+          className="absolute inset-0 z-40 flex items-center justify-center"
+          style={{ background: 'rgba(2, 6, 23, 0.65)' }}
+          onClick={() => setPreviewOpen(false)}
+        >
+          <div
+            className="w-[92%] max-w-5xl h-[86%] rounded-xl overflow-hidden"
+            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--border-color)' }}>
+              <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                {previewName}
+              </p>
+              <div className="flex items-center gap-2">
+                <a href={previewUrl} target="_blank" rel="noreferrer" className="text-xs px-3 py-1 rounded-lg" style={{ border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+                  Open new tab
+                </a>
+                <button onClick={() => setPreviewOpen(false)} className="text-xs px-3 py-1 rounded-lg" style={{ border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+                  Close
+                </button>
+              </div>
+            </div>
+            <div className="w-full h-[calc(100%-49px)]">
+              {previewLoading ? (
+                <div className="w-full h-full flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>
+                  Loading preview...
+                </div>
+              ) : (
+                <iframe title={`preview-${previewName}`} src={previewUrl} className="w-full h-full border-0" />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </AnimatedPage>
   );

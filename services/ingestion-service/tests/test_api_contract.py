@@ -64,6 +64,24 @@ def test_get_signed_url_returns_payload(monkeypatch) -> None:
     assert response.json()["document_id"] == "doc-1"
 
 
+def test_get_signed_url_by_storage_path_returns_payload(monkeypatch) -> None:
+    monkeypatch.setattr(ingestion_router, "_service", lambda: type("_Stub", (), {
+        "get_document_signed_url_by_storage_path": lambda self, storage_path, expires_in=None: SignedUrlResult(
+            document_id="doc-1",
+            storage_path=storage_path,
+            signed_url="https://example.supabase.co/storage/v1/object/sign/doc",
+            expires_in=expires_in or 3600,
+        )
+    })())
+    app = create_app(_settings())
+    client = TestClient(app)
+
+    response = client.get("/ingestion/documents/signed-url/by-storage-path?storage_path=validated/u/doc.pdf")
+
+    assert response.status_code == 200
+    assert response.json()["storage_path"] == "validated/u/doc.pdf"
+
+
 def test_delete_document_returns_payload(monkeypatch) -> None:
     monkeypatch.setattr(ingestion_router, "_service", lambda: type("_Stub", (), {
         "delete_document": lambda self, document_id: DeleteDocumentResult(

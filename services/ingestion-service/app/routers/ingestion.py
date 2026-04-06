@@ -124,6 +124,34 @@ def get_document_signed_url(document_id: str, expires_in: int | None = Query(def
     )
 
 
+@router.get("/documents/signed-url/by-storage-path", response_model=SignedUrlResponse)
+def get_document_signed_url_by_storage_path(
+    storage_path: str = Query(..., min_length=1),
+    expires_in: int | None = Query(default=None, gt=0),
+) -> SignedUrlResponse:
+    try:
+        result = _service().get_document_signed_url_by_storage_path(
+            storage_path=storage_path,
+            expires_in=expires_in,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ConfigurationError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except UpstreamServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except IngestionServiceError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return SignedUrlResponse(
+        status="ok",
+        document_id=result.document_id,
+        storage_path=result.storage_path,
+        signed_url=result.signed_url,
+        expires_in=result.expires_in,
+    )
+
+
 @router.delete("/documents/{document_id}", response_model=DeleteDocumentResponse)
 def delete_document(document_id: str) -> DeleteDocumentResponse:
     try:

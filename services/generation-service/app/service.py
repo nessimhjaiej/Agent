@@ -150,6 +150,7 @@ class GenerationService:
                     document_id=item.document_id,
                     document_name=item.document_name,
                     chunk_text=item.chunk_text,
+                    storage_path=item.storage_path,
                 )
                 for item in result.citations
             ],
