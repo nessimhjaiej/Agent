@@ -12,6 +12,7 @@ const supabase =
     : null;
 
 const AuthContext = createContext(null);
+const AUTH_OPERATION_TIMEOUT_MS = 8000;
 
 function deriveUsernameFromEmail(email) {
   const localPart = (email || '').split('@')[0].trim().toLowerCase();
@@ -23,7 +24,7 @@ function getAccountFlags(currentUser) {
   const role = currentUser?.user_metadata?.role || 'user';
   const appMetadata = currentUser?.app_metadata || {};
   const blocked = appMetadata.account_blocked === true;
-  const validated = role === 'admin' || appMetadata.account_validated === true;
+  const validated = role === 'admin' || appMetadata.account_validated !== false;
   const username = (currentUser?.user_metadata?.username || '').trim();
   const invited = appMetadata.invited_by_admin === true;
   const inviteOnboardingCompleted =
@@ -42,8 +43,88 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [requireInviteOnboarding, setRequireInviteOnboarding] = useState(false);
+  const [authRefreshKey, setAuthRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const authMutationInFlightRef = useRef(false);
+
+  const applyUserState = (currentUser) => {
+    if (!currentUser) {
+      setUser(null);
+      setUserRole(null);
+      setRequireInviteOnboarding(false);
+      return;
+    }
+
+    const { role, requireInviteOnboarding: requiresOnboarding } = getAccountFlags(currentUser);
+    setUser(currentUser);
+    setUserRole(role || 'user');
+    setRequireInviteOnboarding(requiresOnboarding);
+  };
+
+  const bumpAuthRefreshKey = () => {
+    setAuthRefreshKey((previousKey) => previousKey + 1);
+  };
+
+  const withTimeout = async (promise, timeoutMs = AUTH_OPERATION_TIMEOUT_MS) => {
+    let timeoutId;
+    try {
+      return await Promise.race([
+        promise,
+        new Promise((_, reject) => {
+          timeoutId = window.setTimeout(() => {
+            reject(new Error('Authentication request timed out.'));
+          }, timeoutMs);
+        }),
+      ]);
+    } finally {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+    }
+  };
+
+  const hasUsableAccessToken = (session) => (
+    Boolean(
+      session?.access_token
+      && (!session?.expires_at || (session.expires_at * 1000) > (Date.now() + 15_000))
+    )
+  );
+
+  const ensureActiveSession = async ({ forceRefresh = false } = {}) => {
+    if (!supabase) return null;
+
+    const { data, error } = await withTimeout(supabase.auth.getSession());
+    if (error) {
+      throw error;
+    }
+
+    let session = data?.session ?? null;
+    const expiresSoon = session?.expires_at
+      ? (session.expires_at * 1000) - Date.now() < 60_000
+      : false;
+
+    if ((forceRefresh || expiresSoon) && session?.refresh_token) {
+      try {
+        const { data: refreshedData, error: refreshError } = await withTimeout(
+          supabase.auth.refreshSession()
+        );
+        if (refreshError) {
+          throw refreshError;
+        }
+        session = refreshedData?.session ?? session;
+      } catch (refreshError) {
+        if (!hasUsableAccessToken(session)) {
+          throw refreshError;
+        }
+      }
+    }
+
+    if (session?.user) {
+      applyUserState(session.user);
+    }
+
+    return session;
+  };
 
   useEffect(() => {
     if (!supabase) {
@@ -84,12 +165,16 @@ export function AuthProvider({ children }) {
       let currentUser = sessionUser;
       try {
         if (currentUser === undefined) {
-          const { data, error } = await supabase.auth.getUser();
-          currentUser = !error ? (data?.user ?? null) : null;
+          try {
+            const session = await ensureActiveSession();
+            currentUser = session?.user ?? null;
+          } catch {
+            currentUser = user;
+          }
         } else if (currentUser) {
           // Refresh with latest server-side metadata when we already have a session user.
           try {
-            const { data, error } = await supabase.auth.getUser();
+            const { data, error } = await withTimeout(supabase.auth.getUser());
             if (!error && data?.user) {
               currentUser = data.user;
             }
@@ -100,24 +185,19 @@ export function AuthProvider({ children }) {
 
         if (!currentUser) {
           if (!isUnmounted) {
-            setUser(null);
-            setUserRole(null);
-            setRequireInviteOnboarding(false);
+            applyUserState(null);
           }
           return;
         }
 
-        const { blocked, validated, role, requireInviteOnboarding: requiresOnboarding } =
-          getAccountFlags(currentUser);
-        if (blocked || (!validated && role !== 'admin')) {
+        const { blocked } = getAccountFlags(currentUser);
+        if (blocked) {
           await forceSignOut({ redirectHome: true });
           return;
         }
 
         if (!isUnmounted) {
-          setUser(currentUser);
-          setUserRole(role || 'user');
-          setRequireInviteOnboarding(requiresOnboarding);
+          applyUserState(currentUser);
         }
       } finally {
         isEnforcing = false;
@@ -130,17 +210,38 @@ export function AuthProvider({ children }) {
       }
     };
 
-    enforceAccountState(undefined).then(() => {
-      setLoading(false);
-    });
+    Promise.resolve()
+      .then(() => ensureActiveSession().catch(() => null))
+      .then(() => enforceAccountState(undefined))
+      .catch(() => {
+        if (!isUnmounted) {
+          setLoading(false);
+        }
+      })
+      .finally(() => {
+        if (!isUnmounted) {
+          setLoading(false);
+        }
+      });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          applyUserState(null);
+          return;
+        }
         await enforceAccountState(session?.user ?? null);
       }
     );
 
-    const verifySessionAccountState = async () => enforceAccountState(undefined);
+    const verifySessionAccountState = async ({ forceRefresh = false } = {}) => {
+      try {
+        await ensureActiveSession({ forceRefresh });
+      } catch {
+        // Fall back to direct account enforcement below.
+      }
+      await enforceAccountState(undefined);
+    };
 
     const intervalId = window.setInterval(() => {
       void verifySessionAccountState();
@@ -148,17 +249,29 @@ export function AuthProvider({ children }) {
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        void verifySessionAccountState();
+        void verifySessionAccountState({ forceRefresh: true });
       }
     };
 
+    const handleWindowFocus = () => {
+      void verifySessionAccountState({ forceRefresh: true });
+    };
+
+    const handleOnline = () => {
+      void verifySessionAccountState({ forceRefresh: true });
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+    window.addEventListener('online', handleOnline);
 
     return () => {
       isUnmounted = true;
       subscription.unsubscribe();
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
+      window.removeEventListener('online', handleOnline);
     };
   }, []);
 
@@ -176,16 +289,14 @@ export function AuthProvider({ children }) {
       throw error;
     }
 
-    const { blocked, validated } = getAccountFlags(data?.user);
+    const { blocked } = getAccountFlags(data?.user);
     if (blocked) {
       await supabase.auth.signOut();
       throw new Error('Your account is blocked. Please contact an administrator.');
     }
-    if (!validated) {
-      await supabase.auth.signOut();
-      throw new Error('Your account is pending admin validation.');
-    }
 
+    applyUserState(data?.user ?? null);
+    bumpAuthRefreshKey();
     return data;
   };
 
@@ -209,6 +320,7 @@ export function AuthProvider({ children }) {
       },
     });
     if (error) throw error;
+    bumpAuthRefreshKey();
     return data;
   };
 
@@ -292,18 +404,32 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const getAccessToken = async () => {
+  const getAccessToken = async ({ forceRefresh = false } = {}) => {
     if (!supabase) return '';
-    const { data } = await supabase.auth.getSession();
-    return data?.session?.access_token || '';
+    try {
+      const { data, error } = await withTimeout(supabase.auth.getSession());
+      if (error) {
+        throw error;
+      }
+
+      const currentSession = data?.session ?? null;
+      if (!forceRefresh && currentSession?.access_token) {
+        return currentSession.access_token;
+      }
+
+      const refreshedSession = await ensureActiveSession({ forceRefresh });
+      return refreshedSession?.access_token || currentSession?.access_token || '';
+    } catch {
+      return '';
+    }
   };
 
   const signOut = async () => {
     if (!supabase) return;
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-    setUser(null);
-    setUserRole(null);
+    applyUserState(null);
+    bumpAuthRefreshKey();
   };
 
   return (
@@ -312,6 +438,7 @@ export function AuthProvider({ children }) {
         user,
         userRole,
         requireInviteOnboarding,
+        authRefreshKey,
         loading,
         signIn,
         signUp,
@@ -319,6 +446,7 @@ export function AuthProvider({ children }) {
         updatePassword,
         updateProfile,
         getAccessToken,
+        ensureActiveSession,
         supabase,
       }}
     >

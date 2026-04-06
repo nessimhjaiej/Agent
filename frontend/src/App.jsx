@@ -11,14 +11,14 @@ import SecurityPage from './pages/SecurityPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 function AdminOnlyRoute({ user, userRole, children }) {
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/" replace />;
   if (userRole !== 'admin') return <Navigate to="/" replace />;
   return children;
 }
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const { loading, user, userRole } = useAuth();
+  const { loading, user, userRole, authRefreshKey } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const authenticatedHome = userRole === 'admin' ? '/admin' : '/';
@@ -63,15 +63,15 @@ export default function App() {
 
     return (
       <AnimatePresence mode="wait">
-        <LoginPage key="login" />
+        <LoginPage key={`login-${authRefreshKey}`} />
       </AnimatePresence>
     );
   }
 
   return (
-    <Layout>
+    <Layout key={`layout-${authRefreshKey}`}>
       <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
+        <Routes location={location} key={`${location.pathname}-${authRefreshKey}`}>
           <Route path="/" element={<ChatPage />} />
           <Route
             path="/admin"

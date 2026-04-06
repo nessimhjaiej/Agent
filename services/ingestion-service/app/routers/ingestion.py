@@ -1,7 +1,8 @@
-from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
+import httpx
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, UploadFile
 
 from app.config import Settings
-from app.errors import ConfigurationError, IngestionServiceError, UpstreamServiceError
+from app.errors import AuthorizationError, ConfigurationError, IngestionServiceError, UpstreamServiceError
 from app.models import UpdateDocumentStatusParams, UploadDocumentParams
 from app.schemas import (
     DeleteDocumentResponse,
@@ -20,6 +21,60 @@ def _service() -> IngestionService:
     return IngestionService(settings=Settings.from_env())
 
 
+def _get_current_user(authorization: str | None) -> dict:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+
+    token = authorization[7:].strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+
+    settings = Settings.from_env()
+    try:
+        with httpx.Client(timeout=settings.http_timeout_seconds) as client:
+            response = client.get(
+                f"{settings.supabase_url.rstrip('/')}/auth/v1/user",
+                headers={
+                    "apikey": settings.supabase_key,
+                    "Authorization": f"Bearer {token}",
+                },
+            )
+        if response.status_code >= 400:
+            raise AuthorizationError("Invalid or expired token")
+        payload = response.json()
+    except AuthorizationError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Unable to verify token: {exc}") from exc
+
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return payload
+
+
+def _require_verified_user(authorization: str | None = Header(default=None)) -> dict:
+    user = _get_current_user(authorization)
+    app_metadata = user.get("app_metadata") if isinstance(user.get("app_metadata"), dict) else {}
+    user_metadata = user.get("user_metadata") if isinstance(user.get("user_metadata"), dict) else {}
+    role = str(user_metadata.get("role") or "user")
+    validated = role == "admin" or app_metadata.get("account_validated") is not False
+    blocked = app_metadata.get("account_blocked") is True or bool(user.get("banned_until"))
+    if blocked:
+        raise HTTPException(status_code=403, detail="Account is blocked")
+    if not validated:
+        raise HTTPException(status_code=403, detail="Account pending admin validation")
+    return user
+
+
+def _require_admin_user(authorization: str | None = Header(default=None)) -> dict:
+    user = _require_verified_user(authorization)
+    user_metadata = user.get("user_metadata") if isinstance(user.get("user_metadata"), dict) else {}
+    role = str(user_metadata.get("role") or "user")
+    if role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+
 def _document_response(document) -> DocumentResponse:
     return DocumentResponse(
         id=document.id,
@@ -35,7 +90,10 @@ def _document_response(document) -> DocumentResponse:
 
 
 @router.get("/documents", response_model=ListDocumentsResponse)
-def list_documents(user_id: str | None = Query(default=None, min_length=1)) -> ListDocumentsResponse:
+def list_documents(
+    user_id: str | None = Query(default=None, min_length=1),
+    _admin_user: dict = Depends(_require_admin_user),
+) -> ListDocumentsResponse:
     try:
         documents = _service().list_documents(user_id)
     except ValueError as exc:
@@ -57,6 +115,7 @@ def list_documents(user_id: str | None = Query(default=None, min_length=1)) -> L
 async def upload_document(
     user_id: str = Form(..., min_length=1),
     file: UploadFile = File(...),
+    _admin_user: dict = Depends(_require_admin_user),
 ) -> DocumentResponse:
     try:
         content = await file.read()
@@ -82,7 +141,11 @@ async def upload_document(
 
 
 @router.post("/documents/{document_id}/status", response_model=DocumentResponse)
-def update_document_status(document_id: str, payload: UpdateDocumentStatusRequest) -> DocumentResponse:
+def update_document_status(
+    document_id: str,
+    payload: UpdateDocumentStatusRequest,
+    _admin_user: dict = Depends(_require_admin_user),
+) -> DocumentResponse:
     try:
         document = _service().update_document_status(
             UpdateDocumentStatusParams(
@@ -103,7 +166,11 @@ def update_document_status(document_id: str, payload: UpdateDocumentStatusReques
 
 
 @router.get("/documents/{document_id}/signed-url", response_model=SignedUrlResponse)
-def get_document_signed_url(document_id: str, expires_in: int | None = Query(default=None, gt=0)) -> SignedUrlResponse:
+def get_document_signed_url(
+    document_id: str,
+    expires_in: int | None = Query(default=None, gt=0),
+    _verified_user: dict = Depends(_require_verified_user),
+) -> SignedUrlResponse:
     try:
         result = _service().get_document_signed_url(document_id=document_id, expires_in=expires_in)
     except ValueError as exc:
@@ -128,6 +195,7 @@ def get_document_signed_url(document_id: str, expires_in: int | None = Query(def
 def get_document_signed_url_by_storage_path(
     storage_path: str = Query(..., min_length=1),
     expires_in: int | None = Query(default=None, gt=0),
+    _verified_user: dict = Depends(_require_verified_user),
 ) -> SignedUrlResponse:
     try:
         result = _service().get_document_signed_url_by_storage_path(
@@ -153,7 +221,10 @@ def get_document_signed_url_by_storage_path(
 
 
 @router.delete("/documents/{document_id}", response_model=DeleteDocumentResponse)
-def delete_document(document_id: str) -> DeleteDocumentResponse:
+def delete_document(
+    document_id: str,
+    _admin_user: dict = Depends(_require_admin_user),
+) -> DeleteDocumentResponse:
     try:
         result = _service().delete_document(document_id)
     except ValueError as exc:

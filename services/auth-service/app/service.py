@@ -253,7 +253,7 @@ class AuthService:
         blocked = app_metadata.get("account_blocked") is True or bool(
             getattr(supabase_user, "banned_until", None)
         )
-        validated = role == "admin" or app_metadata.get("account_validated") is True
+        validated = role == "admin" or app_metadata.get("account_validated") is not False
         status = "blocked" if blocked else "invited" if invited else "validated" if validated else "pending"
         return {
             "id": supabase_user.id,

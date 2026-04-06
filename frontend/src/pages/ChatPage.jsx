@@ -70,7 +70,7 @@ function VoiceWaveform({ isRecording, samples }) {
 }
 
 export default function ChatPage() {
-  const { user } = useAuth();
+  const { user, getAccessToken } = useAuth();
   const { theme } = useTheme();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -444,9 +444,27 @@ export default function ChatPage() {
     setPreviewLoading(true);
     setPreviewError('');
     try {
-      const data = source.storagePath
-        ? await getDocumentSignedUrlByStoragePath(source.storagePath, 3600)
-        : await getDocumentSignedUrl(source.documentId, 3600);
+      const loadPreview = async (forceRefresh = false) => {
+        const token = await getAccessToken({ forceRefresh });
+        if (!token) {
+          throw new Error('Your session is missing. Please sign in again.');
+        }
+        return source.storagePath
+          ? getDocumentSignedUrlByStoragePath(token, source.storagePath, 3600)
+          : getDocumentSignedUrl(token, source.documentId, 3600);
+      };
+
+      let data;
+      try {
+        data = await loadPreview(false);
+      } catch (error) {
+        const message = String(error?.message || '');
+        if (!message.includes('401')) {
+          throw error;
+        }
+        data = await loadPreview(true);
+      }
+
       setPreviewUrl(data.signed_url);
       setPreviewName(source.documentName || 'Document preview');
       setPreviewOpen(true);

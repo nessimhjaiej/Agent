@@ -103,7 +103,7 @@ def test_vector_retriever_skips_invalid_rows() -> None:
     assert candidates[0].chunk_id == "doc-3:0"
 
 
-def test_vector_retriever_raises_when_chunk_embedding_model_missing() -> None:
+def test_vector_retriever_allows_missing_chunk_embedding_model() -> None:
     rows = [
         {
             "chunk_id": "doc-1:0",
@@ -118,8 +118,31 @@ def test_vector_retriever_raises_when_chunk_embedding_model_missing() -> None:
     )
     ctx = QueryContext(query="alpha", top_k_retrieve=5, top_k_return=3)
 
-    with pytest.raises(RetrievalValidationError):
-        _ = retriever.retrieve(ctx)
+    candidates = retriever.retrieve(ctx)
+
+    assert len(candidates) == 1
+    assert candidates[0].chunk_id == "doc-1:0"
+
+
+def test_vector_retriever_allows_empty_chunk_text() -> None:
+    rows = [
+        {
+            "chunk_id": "doc-1:0",
+            "document_id": "doc-1",
+            "chunk_text": "",
+            "_additional": {"distance": 0.12},
+        }
+    ]
+    retriever = VectorRetriever(
+        embedder=_FakeEmbedder([0.1]),
+        weaviate_client=_FakeWeaviateClient(rows=rows),
+    )
+    ctx = QueryContext(query="alpha", top_k_retrieve=5, top_k_return=3)
+
+    candidates = retriever.retrieve(ctx)
+
+    assert len(candidates) == 1
+    assert candidates[0].chunk_text == ""
 
 
 def test_vector_retriever_raises_when_embedding_model_mismatch() -> None:

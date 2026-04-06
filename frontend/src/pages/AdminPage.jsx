@@ -51,6 +51,10 @@ function formatDate(value) {
   return new Intl.DateTimeFormat([], { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 }
 
+function normalizeId(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
 function mapRow(row) {
   return {
     id: row.id,
@@ -122,8 +126,17 @@ export default function AdminPage() {
   const dragDepthRef = useRef(0);
   const endRef = useRef(null);
 
+  const managedUsersById = useMemo(
+    () =>
+      new Map(
+        managedUsers.map((managedUser) => [normalizeId(managedUser.id), managedUser]),
+      ),
+    [managedUsers]
+  );
+
   const getUploaderLabel = (userId) => {
-    const managedUser = managedUsers.find((candidate) => candidate.id === userId);
+    const normalizedUserId = normalizeId(userId);
+    const managedUser = managedUsersById.get(normalizedUserId);
     if (!managedUser) return userId || 'Unknown uploader';
     return managedUser.username?.trim() || managedUser.email?.trim() || userId || 'Unknown uploader';
   };
@@ -142,7 +155,8 @@ export default function AdminPage() {
     setLoadingDocs(true);
     setDocsError('');
     try {
-      const response = await listDocuments();
+      const token = await getAccessToken();
+      const response = await listDocuments(token);
       const mapped = (response.documents || []).map(mapRow);
       setDocs(mapped);
       setSelectedDocIds((prev) => {
@@ -280,7 +294,6 @@ export default function AdminPage() {
   }, [tab, user?.id]);
 
   useEffect(() => {
-    if (tab !== 'users') return undefined;
     if (!user || user.user_metadata?.role !== 'admin') return undefined;
 
     const intervalId = window.setInterval(() => {
@@ -298,7 +311,7 @@ export default function AdminPage() {
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [tab, user?.id]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!supabase || !user?.id) return undefined;
@@ -327,14 +340,23 @@ export default function AdminPage() {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [agentMsgs, typing]);
 
+  const docsWithUploader = useMemo(
+    () =>
+      docs.map((doc) => ({
+        ...doc,
+        uploaderLabel: getUploaderLabel(doc.userId),
+      })),
+    [docs, managedUsersById]
+  );
+
   const filtered = useMemo(
     () =>
-      docs.filter(
-        (d) =>
-          `${d.name} ${getUploaderLabel(d.userId)}`.toLowerCase().includes(search.toLowerCase()) &&
-          (filter === 'all' || d.status === filter)
+      docsWithUploader.filter(
+        (doc) =>
+          `${doc.name} ${doc.uploaderLabel}`.toLowerCase().includes(search.toLowerCase()) &&
+          (filter === 'all' || doc.status === filter)
       ),
-    [docs, managedUsers, search, filter]
+    [docsWithUploader, search, filter]
   );
 
   const allFilteredSelected = filtered.length > 0 && filtered.every((doc) => selectedDocIds.has(doc.id));
@@ -364,9 +386,10 @@ export default function AdminPage() {
     if (!user || !files?.length) return;
     setDocsError('');
     try {
+      const token = await getAccessToken();
       for (const file of files) {
         // eslint-disable-next-line no-await-in-loop
-        await uploadDocument({ userId: user.id, file });
+        await uploadDocument({ accessToken: token, userId: user.id, file });
       }
       await loadDocuments();
     } catch (error) {
@@ -409,7 +432,8 @@ export default function AdminPage() {
   };
 
   const moveDocument = async (doc, targetStatus) => {
-    const updated = await updateDocumentStatus(doc.id, { target_status: targetStatus });
+    const token = await getAccessToken();
+    const updated = await updateDocumentStatus(token, doc.id, { target_status: targetStatus });
     return updated.storage_path;
   };
 
@@ -459,7 +483,8 @@ export default function AdminPage() {
         // Best effort vector cleanup before removing the Supabase document record.
         await removeDocumentChunks({ document_id: doc.id });
       }
-      await deleteDocumentRecord(doc.id);
+      const token = await getAccessToken();
+      await deleteDocumentRecord(token, doc.id);
       await loadDocuments();
     } catch (error) {
       setDocsError(error.message);
@@ -473,7 +498,8 @@ export default function AdminPage() {
     setDocsError('');
     setPreviewLoading(true);
     try {
-      const data = await getDocumentSignedUrl(doc.id, 3600);
+      const token = await getAccessToken();
+      const data = await getDocumentSignedUrl(token, doc.id, 3600);
       setPreviewUrl(data.signed_url);
       setPreviewName(doc.name);
       setPreviewOpen(true);
@@ -751,7 +777,7 @@ export default function AdminPage() {
                               </div>
                             </td>
                             <td className="px-4 py-4 hidden lg:table-cell align-middle" style={{ color: 'var(--text-secondary)' }}>
-                              {getUploaderLabel(doc.userId)}
+                              {doc.uploaderLabel}
                             </td>
                             <td className="px-4 py-4 hidden md:table-cell align-middle" style={{ color: 'var(--text-secondary)' }}>{doc.size}</td>
                             <td className="px-4 py-4 hidden sm:table-cell align-middle" style={{ color: 'var(--text-secondary)' }}>{doc.date}</td>

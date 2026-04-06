@@ -64,6 +64,17 @@ async function postJsonWithAuth(url, body, accessToken) {
   return parseResponse(response);
 }
 
+async function postFormWithAuth(url, formData, accessToken) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: formData,
+  });
+  return parseResponse(response);
+}
+
 async function getJsonWithAuth(url, accessToken) {
   const response = await fetch(url, {
     method: 'GET',
@@ -109,37 +120,37 @@ export async function askGeneration({ query, chatHistory = [] }) {
   });
 }
 
-export async function listDocuments(userId) {
+export async function listDocuments(accessToken, userId) {
   const query = new URLSearchParams();
   if (userId) {
     query.set('user_id', userId);
   }
   const suffix = query.toString() ? `?${query.toString()}` : '';
-  return getJson(`${API.ingestion}/ingestion/documents${suffix}`);
+  return getJsonWithAuth(`${API.ingestion}/ingestion/documents${suffix}`, accessToken);
 }
 
-export async function uploadDocument({ userId, file }) {
+export async function uploadDocument({ accessToken, userId, file }) {
   const formData = new FormData();
   formData.append('user_id', userId);
   formData.append('file', file);
-  return postForm(`${API.ingestion}/ingestion/documents/upload`, formData);
+  return postFormWithAuth(`${API.ingestion}/ingestion/documents/upload`, formData, accessToken);
 }
 
-export async function updateDocumentStatus(documentId, payload) {
-  return postJson(`${API.ingestion}/ingestion/documents/${documentId}/status`, payload);
+export async function updateDocumentStatus(accessToken, documentId, payload) {
+  return postJsonWithAuth(`${API.ingestion}/ingestion/documents/${documentId}/status`, payload, accessToken);
 }
 
-export async function getDocumentSignedUrl(documentId, expiresIn = 3600) {
-  return getJson(`${API.ingestion}/ingestion/documents/${documentId}/signed-url?expires_in=${expiresIn}`);
+export async function getDocumentSignedUrl(accessToken, documentId, expiresIn = 3600) {
+  return getJsonWithAuth(`${API.ingestion}/ingestion/documents/${documentId}/signed-url?expires_in=${expiresIn}`, accessToken);
 }
 
-export async function getDocumentSignedUrlByStoragePath(storagePath, expiresIn = 3600) {
+export async function getDocumentSignedUrlByStoragePath(accessToken, storagePath, expiresIn = 3600) {
   const query = new URLSearchParams({ storage_path: storagePath, expires_in: String(expiresIn) });
-  return getJson(`${API.ingestion}/ingestion/documents/signed-url/by-storage-path?${query.toString()}`);
+  return getJsonWithAuth(`${API.ingestion}/ingestion/documents/signed-url/by-storage-path?${query.toString()}`, accessToken);
 }
 
-export async function deleteDocumentRecord(documentId) {
-  return deleteJson(`${API.ingestion}/ingestion/documents/${documentId}`);
+export async function deleteDocumentRecord(accessToken, documentId) {
+  return deleteWithAuth(`${API.ingestion}/ingestion/documents/${documentId}`, accessToken);
 }
 
 export async function indexDocument(payload) {

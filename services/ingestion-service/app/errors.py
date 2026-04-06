@@ -9,3 +9,7 @@ class ConfigurationError(IngestionServiceError):
 class UpstreamServiceError(IngestionServiceError):
     pass
 
+
+class AuthorizationError(IngestionServiceError):
+    pass
+

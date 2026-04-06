@@ -18,10 +18,24 @@ def _settings():
     return Settings(supabase_url="https://example.supabase.co", supabase_key="test-key")
 
 
+def _client_with_auth(app):
+    app.dependency_overrides[ingestion_router._require_admin_user] = lambda: {
+        "id": "admin-1",
+        "user_metadata": {"role": "admin"},
+        "app_metadata": {"account_validated": True},
+    }
+    app.dependency_overrides[ingestion_router._require_verified_user] = lambda: {
+        "id": "user-1",
+        "user_metadata": {"role": "user"},
+        "app_metadata": {"account_validated": True},
+    }
+    return TestClient(app)
+
+
 def test_list_documents_allows_missing_user_id(monkeypatch) -> None:
     monkeypatch.setattr(ingestion_router, "_service", lambda: type("_Stub", (), {"list_documents": lambda self, user_id=None: []})())
     app = create_app(_settings())
-    client = TestClient(app)
+    client = _client_with_auth(app)
 
     response = client.get("/ingestion/documents")
 
@@ -31,7 +45,7 @@ def test_list_documents_allows_missing_user_id(monkeypatch) -> None:
 
 def test_upload_document_requires_file(monkeypatch) -> None:
     app = create_app(_settings())
-    client = TestClient(app)
+    client = _client_with_auth(app)
 
     response = client.post("/ingestion/documents/upload", data={"user_id": "user-1"})
 
@@ -40,7 +54,7 @@ def test_upload_document_requires_file(monkeypatch) -> None:
 
 def test_update_document_status_rejects_invalid_status() -> None:
     app = create_app(_settings())
-    client = TestClient(app)
+    client = _client_with_auth(app)
 
     response = client.post("/ingestion/documents/doc-1/status", json={"target_status": "archived"})
 
@@ -57,7 +71,7 @@ def test_get_signed_url_returns_payload(monkeypatch) -> None:
         )
     })())
     app = create_app(_settings())
-    client = TestClient(app)
+    client = _client_with_auth(app)
 
     response = client.get("/ingestion/documents/doc-1/signed-url")
 
@@ -75,7 +89,7 @@ def test_get_signed_url_by_storage_path_returns_payload(monkeypatch) -> None:
         )
     })())
     app = create_app(_settings())
-    client = TestClient(app)
+    client = _client_with_auth(app)
 
     response = client.get("/ingestion/documents/signed-url/by-storage-path?storage_path=validated/u/doc.pdf")
 
@@ -92,7 +106,7 @@ def test_delete_document_returns_payload(monkeypatch) -> None:
         )
     })())
     app = create_app(_settings())
-    client = TestClient(app)
+    client = _client_with_auth(app)
 
     response = client.delete("/ingestion/documents/doc-1")
 
@@ -116,7 +130,7 @@ def test_list_documents_returns_rows(monkeypatch) -> None:
         ]
     })())
     app = create_app(_settings())
-    client = TestClient(app)
+    client = _client_with_auth(app)
 
     response = client.get("/ingestion/documents?user_id=user-1")
 
