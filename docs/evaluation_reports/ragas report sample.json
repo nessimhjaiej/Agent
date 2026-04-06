@@ -1,0 +1,34 @@
+{
+  "generated_at_utc": "2026-03-07T15:38:00+00:00",
+  "dataset_path": "evals/sample_eval_dataset.json",
+  "sample_count": 2,
+  "summary": {
+    "context_recall": 0.91,
+    "faithfulness": 0.88,
+    "factual_correctness(mode=f1)": 0.86
+  },
+  "records": [
+    {
+      "user_input": "What is retrieval-augmented generation?",
+      "response": "Retrieval-augmented generation combines information retrieval with LLM generation so answers can use external source material.",
+      "reference": "RAG combines a retriever and a generator to produce answers grounded in retrieved external knowledge.",
+      "retrieved_contexts": [
+        "RAG is a pattern where a retriever fetches relevant documents before an LLM generates an answer."
+      ],
+      "context_recall": 0.93,
+      "faithfulness": 0.9,
+      "factual_correctness(mode=f1)": 0.87
+    },
+    {
+      "user_input": "Why are citations useful in a RAG system?",
+      "response": "Citations let users verify which retrieved chunks supported the answer and reduce trust gaps.",
+      "reference": "Citations improve traceability by showing which retrieved evidence supports the generated answer.",
+      "retrieved_contexts": [
+        "Grounded answers should provide traceable citations back to retrieved chunks."
+      ],
+      "context_recall": 0.89,
+      "faithfulness": 0.86,
+      "factual_correctness(mode=f1)": 0.85
+    }
+  ]
+}

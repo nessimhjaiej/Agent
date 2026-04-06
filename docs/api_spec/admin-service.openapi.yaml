@@ -1,0 +1,358 @@
+openapi: 3.0.3
+info:
+  title: admin-service API
+  version: 0.1.0
+  description: Contract-first API for admin chat, planning, tool execution, and streaming responses.
+servers:
+  - url: http://localhost:8006
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: Service health
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /admin/chat:
+    post:
+      summary: Admin chat request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminChatRequest"
+      responses:
+        "200":
+          description: Admin chat response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminChatResponse"
+        "400":
+          description: Invalid request or configuration
+        "422":
+          description: Invalid payload
+        "500":
+          description: Internal tool or admin service error
+        "502":
+          description: Upstream dependency failure
+  /admin/chat/stream:
+    post:
+      summary: Stream admin chat response as NDJSON
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminChatRequest"
+      responses:
+        "200":
+          description: Streaming response
+          content:
+            application/x-ndjson:
+              schema:
+                type: string
+                description: NDJSON event stream produced by the admin service.
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, version]
+      properties:
+        status:
+          type: string
+          example: ok
+        service:
+          type: string
+          example: admin-service
+        version:
+          type: string
+          example: 0.1.0
+    AdminChatTurnInput:
+      type: object
+      required: [role, content]
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+          minLength: 1
+    AdminPlanStep:
+      type: object
+      required: [tool, arguments]
+      properties:
+        tool:
+          type: string
+          minLength: 1
+        arguments:
+          type: object
+          additionalProperties: true
+    AdminPendingAction:
+      type: object
+      required: [intent, tool, arguments, steps]
+      properties:
+        intent:
+          type: string
+          minLength: 1
+        tool:
+          type: string
+          minLength: 1
+        arguments:
+          type: object
+          additionalProperties: true
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminPlanStep"
+    AdminChatRequest:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          minLength: 1
+        selected_mode:
+          type: string
+          enum: [qa, plan]
+          default: qa
+        session_id:
+          type: string
+          nullable: true
+        confirm:
+          type: boolean
+          default: false
+        pending_action:
+          allOf:
+            - $ref: "#/components/schemas/AdminPendingAction"
+          nullable: true
+        chat_history:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminChatTurnInput"
+    AdminCitationResponse:
+      type: object
+      required: [chunk_id, document_id, document_name, chunk_text]
+      properties:
+        chunk_id:
+          type: string
+        document_id:
+          type: string
+        document_name:
+          type: string
+        chunk_text:
+          type: string
+    AdminActivityItem:
+      type: object
+      required: [phase, status, title, detail, arguments]
+      properties:
+        phase:
+          type: string
+          minLength: 1
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, skipped]
+        title:
+          type: string
+          minLength: 1
+        detail:
+          type: string
+        tool:
+          type: string
+          nullable: true
+        arguments:
+          type: object
+          additionalProperties: true
+    AdminAgentGoal:
+      type: object
+      required: [message, subject, desired_outcome, constraints, success_criteria]
+      properties:
+        message:
+          type: string
+          minLength: 1
+        subject:
+          type: string
+        desired_outcome:
+          type: string
+        constraints:
+          type: array
+          items:
+            type: string
+        success_criteria:
+          type: array
+          items:
+            type: string
+    AdminAgentObservation:
+      type: object
+      required: [source, content, data]
+      properties:
+        source:
+          type: string
+          minLength: 1
+        content:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+    AdminAgentPendingConfirmation:
+      type: object
+      required: [tool_name, arguments, reason]
+      properties:
+        tool_name:
+          type: string
+          minLength: 1
+        arguments:
+          type: object
+          additionalProperties: true
+        reason:
+          type: string
+    AdminAgentDecision:
+      type: object
+      required: [action_type, message, arguments, reason, expected_observation]
+      properties:
+        action_type:
+          type: string
+          enum: [respond, call_tool, request_confirmation, stop]
+        message:
+          type: string
+        tool_name:
+          type: string
+          nullable: true
+        arguments:
+          type: object
+          additionalProperties: true
+        reason:
+          type: string
+        expected_observation:
+          type: string
+    AdminAgentRunState:
+      type: object
+      required:
+        - status
+        - iteration_count
+        - tool_call_count
+        - max_iterations
+        - max_tool_calls
+        - facts
+        - observations
+        - decision_history
+        - proposed_steps
+        - final_answer
+        - stop_reason
+      properties:
+        run_id:
+          type: string
+          nullable: true
+        goal:
+          allOf:
+            - $ref: "#/components/schemas/AdminAgentGoal"
+          nullable: true
+        status:
+          type: string
+          enum: [running, paused_for_confirmation, completed, blocked, failed]
+        iteration_count:
+          type: integer
+          minimum: 0
+        tool_call_count:
+          type: integer
+          minimum: 0
+        max_iterations:
+          type: integer
+          minimum: 1
+        max_tool_calls:
+          type: integer
+          minimum: 1
+        facts:
+          type: object
+          additionalProperties: true
+        observations:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminAgentObservation"
+        decision_history:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminAgentDecision"
+        proposed_steps:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        pending_confirmation:
+          allOf:
+            - $ref: "#/components/schemas/AdminAgentPendingConfirmation"
+          nullable: true
+        final_answer:
+          type: string
+        stop_reason:
+          type: string
+    AdminChatResponse:
+      type: object
+      required:
+        - status
+        - mode
+        - selected_mode
+        - message
+        - answer
+        - intent
+        - arguments
+        - requires_confirmation
+        - executed
+        - citations
+        - thinking_summary
+        - activity
+        - result
+      properties:
+        status:
+          type: string
+          enum: [ok, needs_confirmation, error]
+        mode:
+          type: string
+          enum: [qa, advisory, tool_call]
+        selected_mode:
+          type: string
+          enum: [qa, plan]
+        session_id:
+          type: string
+          nullable: true
+        message:
+          type: string
+        answer:
+          type: string
+        intent:
+          type: string
+        tool:
+          type: string
+          nullable: true
+        arguments:
+          type: object
+          additionalProperties: true
+        requires_confirmation:
+          type: boolean
+        executed:
+          type: boolean
+        pending_action:
+          allOf:
+            - $ref: "#/components/schemas/AdminPendingAction"
+          nullable: true
+        citations:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminCitationResponse"
+        thinking_summary:
+          type: string
+        activity:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminActivityItem"
+        result:
+          type: object
+          additionalProperties: true
+        agent_run:
+          allOf:
+            - $ref: "#/components/schemas/AdminAgentRunState"
+          nullable: true

@@ -1,0 +1,48 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
+
+title Agentic RAG Platform - General Use Case Diagram
+
+actor User
+actor Admin
+
+rectangle "Agentic RAG Platform" {
+
+  usecase "Sign up" as UC_SignUp
+  usecase "Sign in" as UC_SignIn
+  usecase "Sign out" as UC_SignOut
+  usecase "Update own profile" as UC_UpdateProfile
+  usecase "Change password" as UC_ChangePassword
+
+  usecase "Ask document-specific questions" as UC_Ask
+  usecase "Use voice input" as UC_Voice
+  usecase "Review chunks used in answer" as UC_Chunks
+  usecase "Review cited documents" as UC_CitedDocs
+
+  usecase "Manage documents" as UC_ManageDocs
+  usecase "Manage users" as UC_ManageUsers
+  usecase "Interact with admin control chat" as UC_AdminChat
+
+}
+
+User --> UC_SignUp
+User --> UC_SignIn
+User --> UC_SignOut
+User --> UC_UpdateProfile
+User --> UC_ChangePassword
+User --> UC_Ask
+
+Admin --> UC_SignIn
+Admin --> UC_ManageDocs
+Admin --> UC_ManageUsers
+Admin --> UC_AdminChat
+Admin --> UC_Ask
+
+UC_Voice .> UC_Ask : <<extend>>
+UC_Chunks .> UC_Ask : <<extend>>
+UC_CitedDocs .> UC_Ask : <<extend>>
+
+@enduml

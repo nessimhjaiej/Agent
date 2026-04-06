@@ -28,6 +28,16 @@ $services = @(
         Name = "generation-service"
         Path = Join-Path $repoRoot "services/generation-service"
         Port = 8004
+    },
+    @{
+        Name = "ingestion-service"
+        Path = Join-Path $repoRoot "services/ingestion-service"
+        Port = 8005
+    },
+    @{
+        Name = "admin-service"
+        Path = Join-Path $repoRoot "services/admin-service"
+        Port = 8006
     }
 )
 
@@ -67,4 +77,6 @@ Write-Host "  curl.exe http://localhost:8001/health"
 Write-Host "  curl.exe http://localhost:8002/health"
 Write-Host "  curl.exe http://localhost:8003/health"
 Write-Host "  curl.exe http://localhost:8004/health"
+Write-Host "  curl.exe http://localhost:8005/health"
+Write-Host "  curl.exe http://localhost:8006/health"
 Write-Host "  curl.exe http://localhost:8080/v1/.well-known/ready"
