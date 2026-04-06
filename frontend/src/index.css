@@ -380,11 +380,27 @@ textarea:disabled {
   min-width: 0;
   gap: 12px;
   justify-content: space-between;
-  width: 100%;
+  width: calc(100% - 12px);
+  max-width: calc(100% - 12px);
+  margin-inline: 6px;
   height: 42px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--border-color) 78%, var(--color-primary-500) 22%);
   box-shadow: none;
+}
+
+.voice-waveform-button__icon,
+.voice-waveform-button__dot,
+.voice-waveform-button__stop,
+.voice-waveform-button__timer {
+  transition: transform 0.2s ease;
+}
+
+.voice-waveform-button:hover .voice-waveform-button__icon,
+.voice-waveform-button:hover .voice-waveform-button__dot,
+.voice-waveform-button:hover .voice-waveform-button__stop,
+.voice-waveform-button:hover .voice-waveform-button__timer {
+  transform: scale(1.1);
 }
 
 .voice-waveform-button__dot {
@@ -394,6 +410,16 @@ textarea:disabled {
   background: linear-gradient(135deg, #60a5fa, var(--color-accent-400));
   box-shadow: 0 0 10px rgba(34, 211, 238, 0.28);
   flex: 0 0 auto;
+}
+
+.voice-waveform-button__timer {
+  flex: 0 0 auto;
+  min-width: 42px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
 }
 
 .voice-waveform-button__stop {
