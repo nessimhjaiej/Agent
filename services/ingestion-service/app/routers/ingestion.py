@@ -35,7 +35,7 @@ def _document_response(document) -> DocumentResponse:
 
 
 @router.get("/documents", response_model=ListDocumentsResponse)
-def list_documents(user_id: str = Query(..., min_length=1)) -> ListDocumentsResponse:
+def list_documents(user_id: str | None = Query(default=None, min_length=1)) -> ListDocumentsResponse:
     try:
         documents = _service().list_documents(user_id)
     except ValueError as exc:

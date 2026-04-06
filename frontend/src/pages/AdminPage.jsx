@@ -54,6 +54,7 @@ function formatDate(value) {
 function mapRow(row) {
   return {
     id: row.id,
+    userId: row.user_id,
     name: row.original_name || row.storage_path?.split('/').pop() || 'unknown',
     status: row.status || 'pending',
     storagePath: row.storage_path,
@@ -121,6 +122,12 @@ export default function AdminPage() {
   const dragDepthRef = useRef(0);
   const endRef = useRef(null);
 
+  const getUploaderLabel = (userId) => {
+    const managedUser = managedUsers.find((candidate) => candidate.id === userId);
+    if (!managedUser) return userId || 'Unknown uploader';
+    return managedUser.username?.trim() || managedUser.email?.trim() || userId || 'Unknown uploader';
+  };
+
   const markBusy = (docId, value) => {
     setBusyDocIds((prev) => {
       const next = new Set(prev);
@@ -135,7 +142,7 @@ export default function AdminPage() {
     setLoadingDocs(true);
     setDocsError('');
     try {
-      const response = await listDocuments(user.id);
+      const response = await listDocuments();
       const mapped = (response.documents || []).map(mapRow);
       setDocs(mapped);
       setSelectedDocIds((prev) => {
@@ -262,6 +269,11 @@ export default function AdminPage() {
   }, [supabase, user]);
 
   useEffect(() => {
+    if (!user || user.user_metadata?.role !== 'admin') return;
+    loadManagedUsersData();
+  }, [user?.id]);
+
+  useEffect(() => {
     if (tab === 'users') {
       loadManagedUsersData();
     }
@@ -299,7 +311,6 @@ export default function AdminPage() {
           event: '*',
           schema: 'public',
           table: DOCS_TABLE,
-          filter: `user_id=eq.${user.id}`,
         },
         () => {
           loadDocuments();
@@ -320,10 +331,10 @@ export default function AdminPage() {
     () =>
       docs.filter(
         (d) =>
-          d.name.toLowerCase().includes(search.toLowerCase()) &&
+          `${d.name} ${getUploaderLabel(d.userId)}`.toLowerCase().includes(search.toLowerCase()) &&
           (filter === 'all' || d.status === filter)
       ),
-    [docs, search, filter]
+    [docs, managedUsers, search, filter]
   );
 
   const allFilteredSelected = filtered.length > 0 && filtered.every((doc) => selectedDocIds.has(doc.id));
@@ -710,6 +721,7 @@ export default function AdminPage() {
                             />
                           </th>
                           <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Document</th>
+                          <th className="px-4 text-left text-base font-semibold hidden lg:table-cell" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Uploader</th>
                           <th className="px-4 text-left text-base font-semibold hidden md:table-cell" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Size</th>
                           <th className="px-4 text-left text-base font-semibold hidden sm:table-cell" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Date</th>
                           <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Status</th>
@@ -738,6 +750,9 @@ export default function AdminPage() {
                                 </div>
                               </div>
                             </td>
+                            <td className="px-4 py-4 hidden lg:table-cell align-middle" style={{ color: 'var(--text-secondary)' }}>
+                              {getUploaderLabel(doc.userId)}
+                            </td>
                             <td className="px-4 py-4 hidden md:table-cell align-middle" style={{ color: 'var(--text-secondary)' }}>{doc.size}</td>
                             <td className="px-4 py-4 hidden sm:table-cell align-middle" style={{ color: 'var(--text-secondary)' }}>{doc.date}</td>
                             <td className="px-4 py-4 align-middle"><StatusBadge status={doc.status} /></td>
@@ -763,10 +778,10 @@ export default function AdminPage() {
                         {filtered.length === 0 && (
                           <>
                             <tr>
-                              <td colSpan={6} className="px-4 py-3">&nbsp;</td>
+                              <td colSpan={7} className="px-4 py-3">&nbsp;</td>
                             </tr>
                             <tr>
-                              <td colSpan={6} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
+                              <td colSpan={7} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
                                 <p className="text-lg font-semibold">
                                   {loadingDocs ? 'Loading documents...' : 'No documents found'}
                                 </p>

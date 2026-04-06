@@ -18,14 +18,15 @@ def _settings():
     return Settings(supabase_url="https://example.supabase.co", supabase_key="test-key")
 
 
-def test_list_documents_requires_user_id(monkeypatch) -> None:
-    monkeypatch.setattr(ingestion_router, "_service", lambda: type("_Stub", (), {"list_documents": lambda self, user_id: []})())
+def test_list_documents_allows_missing_user_id(monkeypatch) -> None:
+    monkeypatch.setattr(ingestion_router, "_service", lambda: type("_Stub", (), {"list_documents": lambda self, user_id=None: []})())
     app = create_app(_settings())
     client = TestClient(app)
 
     response = client.get("/ingestion/documents")
 
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert response.json()["documents"] == []
 
 
 def test_upload_document_requires_file(monkeypatch) -> None:
@@ -101,10 +102,10 @@ def test_delete_document_returns_payload(monkeypatch) -> None:
 
 def test_list_documents_returns_rows(monkeypatch) -> None:
     monkeypatch.setattr(ingestion_router, "_service", lambda: type("_Stub", (), {
-        "list_documents": lambda self, user_id: [
+        "list_documents": lambda self, user_id=None: [
             DocumentRecord(
                 id="doc-1",
-                user_id=user_id,
+                user_id=user_id or "user-1",
                 original_name="sample.pdf",
                 storage_path="pending/user-1/sample.pdf",
                 status="pending",

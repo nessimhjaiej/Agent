@@ -24,18 +24,19 @@ class IngestionService:
         self._settings = settings
         self._settings.validate()
 
-    def list_documents(self, user_id: str) -> list[DocumentRecord]:
-        if not user_id.strip():
-            raise ValueError("user_id is required")
+    def list_documents(self, user_id: str | None = None) -> list[DocumentRecord]:
+        normalized_user_id = (user_id or "").strip()
+        params = {
+            "select": "id,user_id,original_name,storage_path,status,embedded,size_bytes,created_at,embedded_at",
+            "order": "created_at.desc",
+        }
+        if normalized_user_id:
+            params["user_id"] = f"eq.{normalized_user_id}"
 
         with self._client() as client:
             response = client.get(
                 self._rest_url(self._settings.supabase_docs_table),
-                params={
-                    "select": "id,user_id,original_name,storage_path,status,embedded,size_bytes,created_at,embedded_at",
-                    "user_id": f"eq.{user_id.strip()}",
-                    "order": "created_at.desc",
-                },
+                params=params,
                 headers=self._auth_headers(),
             )
             self._raise_for_status(response, "list documents")

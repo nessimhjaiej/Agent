@@ -110,8 +110,12 @@ export async function askGeneration({ query, chatHistory = [] }) {
 }
 
 export async function listDocuments(userId) {
-  const query = new URLSearchParams({ user_id: userId });
-  return getJson(`${API.ingestion}/ingestion/documents?${query.toString()}`);
+  const query = new URLSearchParams();
+  if (userId) {
+    query.set('user_id', userId);
+  }
+  const suffix = query.toString() ? `?${query.toString()}` : '';
+  return getJson(`${API.ingestion}/ingestion/documents${suffix}`);
 }
 
 export async function uploadDocument({ userId, file }) {
