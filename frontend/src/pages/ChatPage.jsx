@@ -471,10 +471,10 @@ export default function ChatPage() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl mb-8" style={{ marginTop: '32px' }}>
               {[
-                'What are the key GDPR requirements for data controllers?',
-                'Explain ICC arbitration procedures',
-                'French labor law dismissal process',
-                'SOX compliance requirements',
+                'What is the ICC ?',
+                'How can AI be made inclusive for all countries?',
+                'What global framework is needed to fight cybercrime effectively',
+                'How can digitalisation support sustainable development',
               ].map((suggestion, i) => (
                 <motion.button
                   key={i}

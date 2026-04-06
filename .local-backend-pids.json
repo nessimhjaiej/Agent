@@ -1,0 +1,27 @@
+[
+    {
+        "name":  "auth-service",
+        "pid":  22904,
+        "port":  8001
+    },
+    {
+        "name":  "preprocessing-service",
+        "pid":  26720,
+        "port":  8000
+    },
+    {
+        "name":  "embedding-service",
+        "pid":  22084,
+        "port":  8002
+    },
+    {
+        "name":  "retrieval-service",
+        "pid":  17584,
+        "port":  8003
+    },
+    {
+        "name":  "generation-service",
+        "pid":  24476,
+        "port":  8004
+    }
+]
