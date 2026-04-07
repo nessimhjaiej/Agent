@@ -13,6 +13,7 @@ const supabase =
 
 const AuthContext = createContext(null);
 const AUTH_OPERATION_TIMEOUT_MS = 8000;
+const AUTH_CACHE_KEY = 'agent.auth.cache.v1';
 
 function deriveUsernameFromEmail(email) {
   const localPart = (email || '').split('@')[0].trim().toLowerCase();
@@ -40,20 +41,82 @@ function getAccountFlags(currentUser) {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [userRole, setUserRole] = useState(null);
-  const [requireInviteOnboarding, setRequireInviteOnboarding] = useState(false);
+  const readCachedAuthState = () => {
+    if (typeof window === 'undefined') {
+      return {
+        user: null,
+        userRole: null,
+        requireInviteOnboarding: false,
+      };
+    }
+
+    try {
+      const rawValue = window.localStorage.getItem(AUTH_CACHE_KEY);
+      if (!rawValue) {
+        return {
+          user: null,
+          userRole: null,
+          requireInviteOnboarding: false,
+        };
+      }
+
+      const parsed = JSON.parse(rawValue);
+      const cachedUser = parsed?.user ?? null;
+      return {
+        user: cachedUser,
+        userRole: parsed?.userRole || cachedUser?.user_metadata?.role || null,
+        requireInviteOnboarding: parsed?.requireInviteOnboarding === true,
+      };
+    } catch {
+      return {
+        user: null,
+        userRole: null,
+        requireInviteOnboarding: false,
+      };
+    }
+  };
+
+  const cachedAuthState = readCachedAuthState();
+  const [user, setUser] = useState(cachedAuthState.user);
+  const [userRole, setUserRole] = useState(cachedAuthState.userRole);
+  const [requireInviteOnboarding, setRequireInviteOnboarding] = useState(cachedAuthState.requireInviteOnboarding);
   const [authRefreshKey, setAuthRefreshKey] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedAuthState.user);
   const authMutationInFlightRef = useRef(false);
-  const latestUserRef = useRef(null);
+  const latestUserRef = useRef(cachedAuthState.user);
   const manualSignOutRef = useRef(false);
+
+  const persistUserState = (currentUser, role, requiresOnboarding) => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        AUTH_CACHE_KEY,
+        JSON.stringify({
+          user: currentUser,
+          userRole: role,
+          requireInviteOnboarding: requiresOnboarding,
+        })
+      );
+    } catch {
+      // Ignore storage failures and keep in-memory auth state.
+    }
+  };
+
+  const clearPersistedUserState = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.removeItem(AUTH_CACHE_KEY);
+    } catch {
+      // Ignore storage failures and keep in-memory auth state.
+    }
+  };
 
   const applyUserState = (currentUser) => {
     if (!currentUser) {
       setUser(null);
       setUserRole(null);
       setRequireInviteOnboarding(false);
+      clearPersistedUserState();
       return;
     }
 
@@ -61,6 +124,7 @@ export function AuthProvider({ children }) {
     setUser(currentUser);
     setUserRole(role || 'user');
     setRequireInviteOnboarding(requiresOnboarding);
+    persistUserState(currentUser, role || 'user', requiresOnboarding);
   };
 
   const bumpAuthRefreshKey = () => {
@@ -71,10 +135,13 @@ export function AuthProvider({ children }) {
     latestUserRef.current = user;
   }, [user]);
 
-  const clearUserState = () => {
+  const clearUserState = ({ clearCache = true } = {}) => {
     setUser(null);
     setUserRole(null);
     setRequireInviteOnboarding(false);
+    if (clearCache) {
+      clearPersistedUserState();
+    }
   };
 
   const withTimeout = async (promise, timeoutMs = AUTH_OPERATION_TIMEOUT_MS) => {
@@ -131,10 +198,6 @@ export function AuthProvider({ children }) {
       }
     }
 
-    if (session?.user) {
-      applyUserState(session.user);
-    }
-
     return session;
   };
 
@@ -144,17 +207,15 @@ export function AuthProvider({ children }) {
       return;
     }
     let isUnmounted = false;
-    let isEnforcing = false;
-    let hasQueuedEnforcement = false;
-    let queuedSessionUser = null;
     let isSigningOut = false;
 
     const forceSignOut = async ({ redirectHome = false } = {}) => {
       if (isSigningOut) return;
       isSigningOut = true;
       try {
-        await supabase.auth.signOut();
         clearUserState();
+        bumpAuthRefreshKey();
+        await supabase.auth.signOut();
         if (redirectHome) {
           window.location.replace('/');
         }
@@ -163,74 +224,36 @@ export function AuthProvider({ children }) {
       }
     };
 
-    const enforceAccountState = async (sessionUser = undefined) => {
-      if (authMutationInFlightRef.current) return;
-      if (isEnforcing) {
-        hasQueuedEnforcement = true;
-        queuedSessionUser = sessionUser ?? null;
+    const syncKnownUser = async (currentUser) => {
+      if (!currentUser) {
         return;
       }
-      isEnforcing = true;
 
-      let currentUser = sessionUser;
-      try {
-        if (currentUser === undefined) {
-          try {
-            const session = await ensureActiveSession();
-            currentUser = session?.user ?? null;
-          } catch {
-            currentUser = latestUserRef.current;
-          }
-        } else if (currentUser) {
-          // Refresh with latest server-side metadata when we already have a session user.
-          try {
-            const { data, error } = await withTimeout(supabase.auth.getUser());
-            if (!error && data?.user) {
-              currentUser = data.user;
-            }
-          } catch {
-            // Keep session user if live fetch fails.
-          }
-        }
+      const { blocked } = getAccountFlags(currentUser);
+      if (blocked) {
+        await forceSignOut({ redirectHome: true });
+        return;
+      }
 
-        if (!currentUser) {
-          if (!manualSignOutRef.current && latestUserRef.current) {
-            if (!isUnmounted) {
-              applyUserState(latestUserRef.current);
-            }
-            return;
-          }
-          if (!isUnmounted && manualSignOutRef.current) {
-            clearUserState();
-          }
-          return;
-        }
-
-        const { blocked } = getAccountFlags(currentUser);
-        if (blocked) {
-          await forceSignOut({ redirectHome: true });
-          return;
-        }
-
-        if (!isUnmounted) {
-          applyUserState(currentUser);
-        }
-      } finally {
-        isEnforcing = false;
-        if (hasQueuedEnforcement) {
-          const nextSessionUser = queuedSessionUser;
-          hasQueuedEnforcement = false;
-          queuedSessionUser = null;
-          void enforceAccountState(nextSessionUser);
-        }
+      if (!isUnmounted) {
+        applyUserState(currentUser);
       }
     };
 
     Promise.resolve()
       .then(() => ensureActiveSession().catch(() => null))
-      .then(() => enforceAccountState(undefined))
+      .then(async (session) => {
+        if (session?.user) {
+          await syncKnownUser(session.user);
+          return;
+        }
+
+        if (!latestUserRef.current && !isUnmounted) {
+          clearUserState();
+        }
+      })
       .catch(() => {
-        if (!isUnmounted) {
+        if (!isUnmounted && !latestUserRef.current) {
           setLoading(false);
         }
       })
@@ -243,69 +266,23 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_OUT') {
-          if (!manualSignOutRef.current) {
-            try {
-              const recoveredSession = await ensureActiveSession({ forceRefresh: true });
-              if (recoveredSession?.user) {
-                await enforceAccountState(recoveredSession.user);
-                return;
-              }
-            } catch {
-              if (latestUserRef.current) {
-                applyUserState(latestUserRef.current);
-                return;
-              }
-            }
+          if (manualSignOutRef.current) {
+            clearUserState();
           }
-          clearUserState();
           return;
         }
+
         if (!session?.user) {
-          await enforceAccountState(undefined);
           return;
         }
-        await enforceAccountState(session.user);
+
+        await syncKnownUser(session.user);
       }
     );
-
-    const verifySessionAccountState = async ({ forceRefresh = false } = {}) => {
-      try {
-        await ensureActiveSession({ forceRefresh });
-      } catch {
-        // Fall back to direct account enforcement below.
-      }
-      await enforceAccountState(undefined);
-    };
-
-    const intervalId = window.setInterval(() => {
-      void verifySessionAccountState();
-    }, 15000);
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        void verifySessionAccountState({ forceRefresh: true });
-      }
-    };
-
-    const handleWindowFocus = () => {
-      void verifySessionAccountState({ forceRefresh: true });
-    };
-
-    const handleOnline = () => {
-      void verifySessionAccountState({ forceRefresh: true });
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleWindowFocus);
-    window.addEventListener('online', handleOnline);
 
     return () => {
       isUnmounted = true;
       subscription.unsubscribe();
-      window.clearInterval(intervalId);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleWindowFocus);
-      window.removeEventListener('online', handleOnline);
     };
   }, []);
 
@@ -325,6 +302,8 @@ export function AuthProvider({ children }) {
 
     const { blocked } = getAccountFlags(data?.user);
     if (blocked) {
+      clearUserState();
+      bumpAuthRefreshKey();
       await supabase.auth.signOut();
       throw new Error('Your account is blocked. Please contact an administrator.');
     }
@@ -369,8 +348,7 @@ export function AuthProvider({ children }) {
     if (!supabase) throw new Error('Supabase not configured');
     authMutationInFlightRef.current = true;
     try {
-      const { data: currentData } = await supabase.auth.getUser();
-      const currentUser = currentData?.user;
+      const currentUser = latestUserRef.current;
       const existingMetadata = currentUser?.user_metadata || {};
       const resolvedUsername = (username || '').trim()
         || (existingMetadata.username || '').trim()
@@ -416,7 +394,7 @@ export function AuthProvider({ children }) {
 
       const { data, error } = await supabase.auth.updateUser(attributes);
       if (error) throw error;
-      setUser(data?.user ?? currentUser ?? null);
+      applyUserState(data?.user ?? currentUser ?? null);
       if (completeInviteOnboarding) {
         setRequireInviteOnboarding(false);
       }
@@ -462,10 +440,10 @@ export function AuthProvider({ children }) {
     if (!supabase) return;
     manualSignOutRef.current = true;
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
       clearUserState();
       bumpAuthRefreshKey();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
     } finally {
       manualSignOutRef.current = false;
     }
