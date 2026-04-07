@@ -14,6 +14,8 @@ const supabase =
 const AuthContext = createContext(null);
 const AUTH_OPERATION_TIMEOUT_MS = 8000;
 const AUTH_CACHE_KEY = 'agent.auth.cache.v1';
+const AUTH_SIGN_OUT_EVENT_KEY = 'agent.auth.signout.v1';
+const AUTH_BROADCAST_CHANNEL = 'agent-auth';
 
 function deriveUsernameFromEmail(email) {
   const localPart = (email || '').split('@')[0].trim().toLowerCase();
@@ -85,6 +87,7 @@ export function AuthProvider({ children }) {
   const authMutationInFlightRef = useRef(false);
   const latestUserRef = useRef(cachedAuthState.user);
   const manualSignOutRef = useRef(false);
+  const authBroadcastRef = useRef(null);
 
   const persistUserState = (currentUser, role, requiresOnboarding) => {
     if (typeof window === 'undefined') return;
@@ -111,12 +114,61 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const clearStoredAuthArtifacts = () => {
+    clearPersistedUserState();
+    if (typeof window === 'undefined') return;
+
+    const clearMatchingKeys = (storage) => {
+      try {
+        const keysToRemove = [];
+        for (let index = 0; index < storage.length; index += 1) {
+          const key = storage.key(index);
+          if (key && key.startsWith('sb-')) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach((key) => storage.removeItem(key));
+      } catch {
+        // Ignore storage failures and keep in-memory auth state.
+      }
+    };
+
+    clearMatchingKeys(window.localStorage);
+    clearMatchingKeys(window.sessionStorage);
+  };
+
+  const redirectToMainPage = () => {
+    if (typeof window === 'undefined') return;
+    window.location.replace('/');
+  };
+
+  const broadcastSignOut = (reason = 'manual') => {
+    if (typeof window === 'undefined') return;
+
+    const payload = JSON.stringify({
+      reason,
+      at: Date.now(),
+    });
+
+    try {
+      window.localStorage.setItem(AUTH_SIGN_OUT_EVENT_KEY, payload);
+    } catch {
+      // Ignore storage failures and rely on local cleanup.
+    }
+
+    try {
+      authBroadcastRef.current?.postMessage(payload);
+    } catch {
+      // Ignore broadcast failures and rely on storage events.
+    }
+  };
+
   const applyUserState = (currentUser) => {
     if (!currentUser) {
       setUser(null);
       setUserRole(null);
       setRequireInviteOnboarding(false);
-      clearPersistedUserState();
+      clearStoredAuthArtifacts();
       return;
     }
 
@@ -215,9 +267,10 @@ export function AuthProvider({ children }) {
       try {
         clearUserState();
         bumpAuthRefreshKey();
+        broadcastSignOut('blocked');
         await supabase.auth.signOut();
         if (redirectHome) {
-          window.location.replace('/');
+          redirectToMainPage();
         }
       } finally {
         isSigningOut = false;
@@ -263,6 +316,30 @@ export function AuthProvider({ children }) {
         }
       });
 
+    if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
+      authBroadcastRef.current = new BroadcastChannel(AUTH_BROADCAST_CHANNEL);
+    }
+
+    const handleSharedSignOut = () => {
+      clearUserState();
+      bumpAuthRefreshKey();
+      redirectToMainPage();
+    };
+
+    const handleStorage = (event) => {
+      if (event.key !== AUTH_SIGN_OUT_EVENT_KEY || !event.newValue) {
+        return;
+      }
+      handleSharedSignOut();
+    };
+
+    const handleBroadcastMessage = () => {
+      handleSharedSignOut();
+    };
+
+    window.addEventListener('storage', handleStorage);
+    authBroadcastRef.current?.addEventListener('message', handleBroadcastMessage);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_OUT') {
@@ -283,6 +360,10 @@ export function AuthProvider({ children }) {
     return () => {
       isUnmounted = true;
       subscription.unsubscribe();
+      window.removeEventListener('storage', handleStorage);
+      authBroadcastRef.current?.removeEventListener('message', handleBroadcastMessage);
+      authBroadcastRef.current?.close?.();
+      authBroadcastRef.current = null;
     };
   }, []);
 
@@ -304,6 +385,7 @@ export function AuthProvider({ children }) {
     if (blocked) {
       clearUserState();
       bumpAuthRefreshKey();
+      broadcastSignOut('blocked');
       await supabase.auth.signOut();
       throw new Error('Your account is blocked. Please contact an administrator.');
     }
@@ -442,8 +524,10 @@ export function AuthProvider({ children }) {
     try {
       clearUserState();
       bumpAuthRefreshKey();
+      broadcastSignOut('manual');
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      redirectToMainPage();
     } finally {
       manualSignOutRef.current = false;
     }
