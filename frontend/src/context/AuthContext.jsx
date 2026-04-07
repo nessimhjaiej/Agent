@@ -46,6 +46,8 @@ export function AuthProvider({ children }) {
   const [authRefreshKey, setAuthRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const authMutationInFlightRef = useRef(false);
+  const latestUserRef = useRef(null);
+  const manualSignOutRef = useRef(false);
 
   const applyUserState = (currentUser) => {
     if (!currentUser) {
@@ -63,6 +65,16 @@ export function AuthProvider({ children }) {
 
   const bumpAuthRefreshKey = () => {
     setAuthRefreshKey((previousKey) => previousKey + 1);
+  };
+
+  useEffect(() => {
+    latestUserRef.current = user;
+  }, [user]);
+
+  const clearUserState = () => {
+    setUser(null);
+    setUserRole(null);
+    setRequireInviteOnboarding(false);
   };
 
   const withTimeout = async (promise, timeoutMs = AUTH_OPERATION_TIMEOUT_MS) => {
@@ -142,9 +154,7 @@ export function AuthProvider({ children }) {
       isSigningOut = true;
       try {
         await supabase.auth.signOut();
-        setUser(null);
-        setUserRole(null);
-        setRequireInviteOnboarding(false);
+        clearUserState();
         if (redirectHome) {
           window.location.replace('/');
         }
@@ -169,7 +179,7 @@ export function AuthProvider({ children }) {
             const session = await ensureActiveSession();
             currentUser = session?.user ?? null;
           } catch {
-            currentUser = user;
+            currentUser = latestUserRef.current;
           }
         } else if (currentUser) {
           // Refresh with latest server-side metadata when we already have a session user.
@@ -184,8 +194,14 @@ export function AuthProvider({ children }) {
         }
 
         if (!currentUser) {
-          if (!isUnmounted) {
-            applyUserState(null);
+          if (!manualSignOutRef.current && latestUserRef.current) {
+            if (!isUnmounted) {
+              applyUserState(latestUserRef.current);
+            }
+            return;
+          }
+          if (!isUnmounted && manualSignOutRef.current) {
+            clearUserState();
           }
           return;
         }
@@ -227,10 +243,28 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_OUT') {
-          applyUserState(null);
+          if (!manualSignOutRef.current) {
+            try {
+              const recoveredSession = await ensureActiveSession({ forceRefresh: true });
+              if (recoveredSession?.user) {
+                await enforceAccountState(recoveredSession.user);
+                return;
+              }
+            } catch {
+              if (latestUserRef.current) {
+                applyUserState(latestUserRef.current);
+                return;
+              }
+            }
+          }
+          clearUserState();
           return;
         }
-        await enforceAccountState(session?.user ?? null);
+        if (!session?.user) {
+          await enforceAccountState(undefined);
+          return;
+        }
+        await enforceAccountState(session.user);
       }
     );
 
@@ -426,10 +460,15 @@ export function AuthProvider({ children }) {
 
   const signOut = async () => {
     if (!supabase) return;
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    applyUserState(null);
-    bumpAuthRefreshKey();
+    manualSignOutRef.current = true;
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      clearUserState();
+      bumpAuthRefreshKey();
+    } finally {
+      manualSignOutRef.current = false;
+    }
   };
 
   return (
