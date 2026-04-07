@@ -58,6 +58,7 @@ class Settings:
     generation_timeout_seconds: float = 30.0
     generation_max_context_chunks: int = 8
     generation_max_history_turns: int = 6
+    generation_max_history_chars: int = 4000
     generation_max_chunk_chars: int = 1200
     generation_ollama_base_url: str = "http://localhost:11434"
     generation_fallback_enabled: bool = True
@@ -88,6 +89,7 @@ class Settings:
             generation_timeout_seconds=_parse_float("GENERATION_TIMEOUT_SECONDS", 30.0),
             generation_max_context_chunks=_parse_int("GENERATION_MAX_CONTEXT_CHUNKS", 8),
             generation_max_history_turns=_parse_int("GENERATION_MAX_HISTORY_TURNS", 6),
+            generation_max_history_chars=_parse_int("GENERATION_MAX_HISTORY_CHARS", 4000),
             generation_max_chunk_chars=_parse_int("GENERATION_MAX_CHUNK_CHARS", 1200),
             generation_ollama_base_url=os.getenv(
                 "GENERATION_OLLAMA_BASE_URL", "http://localhost:11434"

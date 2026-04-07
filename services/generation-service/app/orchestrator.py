@@ -6,7 +6,7 @@ from app.clients.openai_client import OpenAIChatClient
 from app.clients.ollama_client import OllamaChatClient
 from app.config import Settings
 from app.errors import GenerationParseError, GenerationProviderError, GenerationValidationError
-from app.models import ChatContext, Citation, GenerationResult, RetrievedChunk
+from app.models import ChatContext, ChatTurn, Citation, GenerationResult, RetrievedChunk
 from citation_enforcement.enforcer import CitationEnforcer
 from fallback_model.plan import ModelFallbackPlan
 
@@ -100,7 +100,7 @@ class GenerationOrchestrator:
         return 0.0
 
     def _build_user_prompt(self, ctx: ChatContext, selected_chunks: list[RetrievedChunk]) -> str:
-        history = ctx.chat_history[-self._settings.generation_max_history_turns :]
+        history = self._select_history_window(ctx.chat_history)
 
         lines: list[str] = []
         lines.append("Response language rule:")
@@ -136,6 +136,36 @@ class GenerationOrchestrator:
             'Return JSON only with this exact shape: {"answer": "...", "citations": [{"chunk_id": "..."}]}'
         )
         return "\n".join(lines)
+
+    def _select_history_window(self, chat_history: list[ChatTurn]) -> list[ChatTurn]:
+        if not chat_history:
+            return []
+
+        max_turns = max(0, self._settings.generation_max_history_turns)
+        max_chars = max(0, self._settings.generation_max_history_chars)
+        if max_turns == 0 or max_chars == 0:
+            return []
+
+        selected: list[ChatTurn] = []
+        total_chars = 0
+
+        for turn in reversed(chat_history):
+            content = turn.content.strip()
+            if not content:
+                continue
+
+            turn_chars = len(turn.role) + len(content)
+            if selected and (len(selected) >= max_turns or total_chars + turn_chars > max_chars):
+                break
+
+            selected.append(ChatTurn(role=turn.role, content=content))
+            total_chars += turn_chars
+
+            if len(selected) >= max_turns:
+                break
+
+        selected.reverse()
+        return selected
 
     def _parse_generation_json(self, raw: str) -> dict:
         text = raw.strip()

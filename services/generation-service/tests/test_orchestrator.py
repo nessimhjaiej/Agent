@@ -7,7 +7,7 @@ if str(SERVICE_ROOT) not in sys.path:
 
 from app.config import Settings  # noqa: E402
 from app.errors import GenerationProviderError  # noqa: E402
-from app.models import ChatContext, RetrievedChunk  # noqa: E402
+from app.models import ChatContext, ChatTurn, RetrievedChunk  # noqa: E402
 from app.orchestrator import GenerationOrchestrator  # noqa: E402
 
 
@@ -155,6 +155,8 @@ def test_orchestrator_instructs_model_to_answer_in_user_language() -> None:
     assert result.answer == "Réponse concise."
     assert "Answer in the same language as the user's latest query" in llm.calls[0]["user_prompt"]
     assert "answer in the language requested by the user" in llm.calls[0]["system_prompt"].lower()
+
+
 def test_orchestrator_instructs_model_to_explain_without_chunk_availability_wording() -> None:
     llm = _FakeLLMClient(
         raw_response='{"answer":"Concise answer.","citations":[{"chunk_id":"doc-1:0"}]}'
@@ -174,3 +176,71 @@ def test_orchestrator_instructs_model_to_explain_without_chunk_availability_word
     assert "do not say that the information is \"not available in the retrieved chunks\"" in llm.calls[0][
         "system_prompt"
     ].lower()
+
+
+def test_orchestrator_uses_sliding_history_window_by_character_budget() -> None:
+    llm = _FakeLLMClient(
+        raw_response='{"answer":"Concise answer.","citations":[{"chunk_id":"doc-1:0"}]}'
+    )
+    orchestrator = GenerationOrchestrator(
+        settings=Settings(
+            openai_key="test-key",
+            generation_model="gpt-4o",
+            generation_max_history_turns=10,
+            generation_max_history_chars=80,
+        ),
+        llm_client=llm,  # type: ignore[arg-type]
+        fallback_llm_client=llm,  # type: ignore[arg-type]
+    )
+    ctx = ChatContext(
+        query="Use recent context only.",
+        retrieved_chunks=[_chunk("doc-1:0", 0.9)],
+        chat_history=[
+            ChatTurn(
+                role="user",
+                content="Earlier context that should be excluded because the combined budget is too small.",
+            ),
+            ChatTurn(
+                role="assistant",
+                content="Assistant reply that should also be excluded from the prompt window.",
+            ),
+            ChatTurn(role="user", content="Most recent short question."),
+            ChatTurn(role="assistant", content="Most recent short answer."),
+        ],
+    )
+
+    orchestrator.generate(ctx)
+
+    prompt = llm.calls[0]["user_prompt"]
+    assert "Most recent short question." in prompt
+    assert "Most recent short answer." in prompt
+    assert "Earlier context that should be excluded" not in prompt
+    assert "Assistant reply that should also be excluded" not in prompt
+
+
+def test_orchestrator_keeps_latest_turn_when_it_exceeds_history_budget() -> None:
+    llm = _FakeLLMClient(
+        raw_response='{"answer":"Concise answer.","citations":[{"chunk_id":"doc-1:0"}]}'
+    )
+    orchestrator = GenerationOrchestrator(
+        settings=Settings(
+            openai_key="test-key",
+            generation_model="gpt-4o",
+            generation_max_history_turns=6,
+            generation_max_history_chars=10,
+        ),
+        llm_client=llm,  # type: ignore[arg-type]
+        fallback_llm_client=llm,  # type: ignore[arg-type]
+    )
+    ctx = ChatContext(
+        query="Use at least one turn.",
+        retrieved_chunks=[_chunk("doc-1:0", 0.9)],
+        chat_history=[
+            ChatTurn(role="user", content="A very long latest message that exceeds the tiny budget."),
+        ],
+    )
+
+    orchestrator.generate(ctx)
+
+    prompt = llm.calls[0]["user_prompt"]
+    assert "A very long latest message that exceeds the tiny budget." in prompt

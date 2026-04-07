@@ -49,11 +49,15 @@ This is a placeholder baseline so Step 3 can replace answer construction with GP
 - Added strict system prompt template in `prompt_templates/system_prompt.txt`.
 - Orchestrator now:
   - ranks and trims chunk context;
-  - builds prompt with query, recent chat history, and retrieved chunks;
+  - builds prompt with query, a sliding window of recent chat history, and retrieved chunks;
   - calls GPT-4o and parses strict JSON output:
     `{"answer":"...","citations":[{"chunk_id":"..."}]}`
   - maps cited chunk ids to full citation payload;
   - falls back to `This is beyond my scope.` on provider or parse failure.
+
+Chat history windowing is controlled by:
+- `GENERATION_MAX_HISTORY_TURNS`: hard cap on included prior turns.
+- `GENERATION_MAX_HISTORY_CHARS`: rolling character budget used to keep the most recent relevant turns.
 
 ## Step 4 Citation Enforcement (Implemented)
 
