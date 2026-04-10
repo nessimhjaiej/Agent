@@ -1,0 +1,2553 @@
+{
+  "admin-session-1": {
+    "state": {
+      "session_id": "admin-session-1",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "show system status",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "show system status"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        },
+        {
+          "role": "user",
+          "content": "show system status"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        },
+        {
+          "role": "user",
+          "content": "show system status"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        },
+        {
+          "role": "user",
+          "content": "show system status"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        },
+        {
+          "role": "user",
+          "content": "show system status"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        },
+        {
+          "role": "user",
+          "content": "show system status"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-1"
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [],
+      "current_tool_index": 0,
+      "completed_tool_results": [],
+      "selected_tool": null,
+      "selected_tool_arguments": {},
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "qa",
+      "answer": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place.",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:21:42.645531Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:42.646527+00:00"
+  },
+  "admin-session-stream": {
+    "state": {
+      "session_id": "admin-session-stream",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "show system status",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "show system status"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        },
+        {
+          "role": "user",
+          "content": "show system status"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        },
+        {
+          "role": "user",
+          "content": "show system status"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        },
+        {
+          "role": "user",
+          "content": "show system status"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        },
+        {
+          "role": "user",
+          "content": "show system status"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        },
+        {
+          "role": "user",
+          "content": "show system status"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-stream"
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [],
+      "current_tool_index": 0,
+      "completed_tool_results": [],
+      "selected_tool": null,
+      "selected_tool_arguments": {},
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "qa",
+      "answer": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place.",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:21:42.727337Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:42.727337+00:00"
+  },
+  "admin-session-confirm": {
+    "state": {
+      "session_id": "admin-session-confirm",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "delete document gdpr.pdf",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "delete document gdpr.pdf"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'delete_document'."
+        },
+        {
+          "role": "user",
+          "content": "delete document gdpr.pdf"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'delete_document'."
+        },
+        {
+          "role": "user",
+          "content": "delete document gdpr.pdf"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'delete_document'."
+        },
+        {
+          "role": "user",
+          "content": "delete document gdpr.pdf"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'delete_document'."
+        },
+        {
+          "role": "user",
+          "content": "delete document gdpr.pdf"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'delete_document'."
+        },
+        {
+          "role": "user",
+          "content": "delete document gdpr.pdf"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'delete_document'."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-confirm"
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": true,
+      "confirmation_id": "conf_c2dbd8f160ef449ab0bd3b60878abff4",
+      "pending_action": {
+        "confirmation_id": "conf_c2dbd8f160ef449ab0bd3b60878abff4",
+        "session_id": "admin-session-confirm",
+        "user_id": "admin-1",
+        "tool_name": "delete_document",
+        "arguments": {
+          "document_id": "gdpr.pdf",
+          "query": "delete document gdpr.pdf"
+        },
+        "reason": "Document deletion is irreversible.",
+        "requested_at_utc": "2026-04-07T11:21:42.812013Z",
+        "expires_at_utc": "2026-04-07T12:21:42.812013Z"
+      },
+      "planned_tool_calls": [
+        {
+          "tool_name": "delete_document",
+          "arguments": {
+            "document_id": "gdpr.pdf",
+            "query": "delete document gdpr.pdf"
+          },
+          "service": "ingestion-service",
+          "operation": "delete_document",
+          "requires_confirmation": true,
+          "mutation": true
+        }
+      ],
+      "current_tool_index": 0,
+      "completed_tool_results": [],
+      "selected_tool": "delete_document",
+      "selected_tool_arguments": {
+        "document_id": "gdpr.pdf",
+        "query": "delete document gdpr.pdf"
+      },
+      "selected_tool_service": "ingestion-service",
+      "selected_tool_operation": "delete_document",
+      "selected_tool_requires_confirmation": true,
+      "selected_tool_mutation": true,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "mutation",
+      "answer": "This action requires confirmation before execution. Confirm if you want me to run 'delete_document'.",
+      "status": "needs_confirmation",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:21:42.817017Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:42.827446+00:00",
+    "pending_confirmation": {
+      "confirmation_id": "conf_c2dbd8f160ef449ab0bd3b60878abff4",
+      "session_id": "admin-session-confirm",
+      "user_id": "admin-1",
+      "tool_name": "delete_document",
+      "arguments": {
+        "document_id": "gdpr.pdf",
+        "query": "delete document gdpr.pdf"
+      },
+      "reason": "Document deletion is irreversible.",
+      "requested_at_utc": "2026-04-07T11:21:42.812013Z",
+      "expires_at_utc": "2026-04-07T12:21:42.812013Z"
+    }
+  },
+  "admin-session-resume": {
+    "state": {
+      "session_id": "admin-session-resume",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "confirm restart retrieval",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "confirm restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "The tool 'restart_service' completed successfully through the MCP adapter."
+        },
+        {
+          "role": "user",
+          "content": "restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "confirm restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "The tool 'restart_service' completed successfully through the MCP adapter."
+        },
+        {
+          "role": "user",
+          "content": "restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "confirm restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "The tool 'restart_service' completed successfully through the MCP adapter."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-resume"
+      },
+      "request_confirmation": true,
+      "request_confirmation_id": "conf_f12dac1677764711abec44ba176b9bf9",
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [
+        {
+          "tool_name": "restart_service",
+          "arguments": {
+            "service_name": "retrieval-service"
+          },
+          "service": "platform-runtime",
+          "operation": "restart_service",
+          "requires_confirmation": true,
+          "mutation": true
+        }
+      ],
+      "current_tool_index": 0,
+      "completed_tool_results": [
+        {
+          "tool_name": "restart_service",
+          "service": "platform-runtime",
+          "operation": "restart_service",
+          "mutation": true,
+          "result": {
+            "status": "accepted",
+            "service_name": "retrieval-service",
+            "note": "Live service restart is skipped during tests."
+          }
+        }
+      ],
+      "selected_tool": "restart_service",
+      "selected_tool_arguments": {
+        "service_name": "retrieval-service"
+      },
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": "restart_service",
+      "last_tool_arguments": {
+        "service_name": "retrieval-service"
+      },
+      "last_tool_result": {
+        "status": "accepted",
+        "service_name": "retrieval-service",
+        "note": "Live service restart is skipped during tests."
+      },
+      "mode": "mutation",
+      "answer": "The tool 'restart_service' completed successfully through the MCP adapter.",
+      "status": "ok",
+      "audit_event_id": "audit_4474ba01aab04c31b4ed89931ab444d2",
+      "updated_at_utc": "2026-04-07T11:21:42.994136Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:43.004476+00:00"
+  },
+  "admin-session-wrong-id": {
+    "state": {
+      "session_id": "admin-session-wrong-id",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "confirm reindex embeddings",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "reindex embeddings"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'reindex_embeddings'."
+        },
+        {
+          "role": "user",
+          "content": "confirm reindex embeddings"
+        },
+        {
+          "role": "assistant",
+          "content": "There is no valid pending action for this session, the confirmation id does not match, or it expired."
+        },
+        {
+          "role": "user",
+          "content": "reindex embeddings"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'reindex_embeddings'."
+        },
+        {
+          "role": "user",
+          "content": "confirm reindex embeddings"
+        },
+        {
+          "role": "assistant",
+          "content": "There is no valid pending action for this session, the confirmation id does not match, or it expired."
+        },
+        {
+          "role": "user",
+          "content": "reindex embeddings"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'reindex_embeddings'."
+        },
+        {
+          "role": "user",
+          "content": "confirm reindex embeddings"
+        },
+        {
+          "role": "assistant",
+          "content": "There is no valid pending action for this session, the confirmation id does not match, or it expired."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-wrong-id"
+      },
+      "request_confirmation": true,
+      "request_confirmation_id": "conf_wrong",
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [
+        {
+          "tool_name": "reindex_embeddings",
+          "arguments": {
+            "scope": "all"
+          },
+          "service": "embedding-service",
+          "operation": "reindex_embeddings",
+          "requires_confirmation": true,
+          "mutation": true
+        }
+      ],
+      "current_tool_index": 0,
+      "completed_tool_results": [],
+      "selected_tool": null,
+      "selected_tool_arguments": {},
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "mutation",
+      "answer": "There is no valid pending action for this session, the confirmation id does not match, or it expired.",
+      "status": "error",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:21:43.172347Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:43.172347+00:00",
+    "pending_confirmation": {
+      "confirmation_id": "conf_7ecb227b8f134ab5957703f12985e33b",
+      "session_id": "admin-session-wrong-id",
+      "user_id": "admin-1",
+      "tool_name": "reindex_embeddings",
+      "arguments": {
+        "scope": "all"
+      },
+      "reason": "Reindexing may be expensive and can affect operational workloads.",
+      "requested_at_utc": "2026-04-07T11:21:43.093204Z",
+      "expires_at_utc": "2026-04-07T12:21:43.093204Z"
+    }
+  },
+  "admin-session-config": {
+    "state": {
+      "session_id": "admin-session-config",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "show config chunking",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "show config chunking"
+        },
+        {
+          "role": "assistant",
+          "content": "I executed the read-only tool 'show_config' and returned its result."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking"
+        },
+        {
+          "role": "assistant",
+          "content": "The current chunking strategy in preprocessing-service is 'late' with chunk size 750 and overlap 120."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking"
+        },
+        {
+          "role": "assistant",
+          "content": "The current chunking strategy in preprocessing-service is 'late' with chunk size 750 and overlap 120."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking"
+        },
+        {
+          "role": "assistant",
+          "content": "The current chunking strategy in preprocessing-service is 'late' with chunk size 750 and overlap 120."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking"
+        },
+        {
+          "role": "assistant",
+          "content": "The current chunking strategy in preprocessing-service is 'late' with chunk size 750 and overlap 120."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking"
+        },
+        {
+          "role": "assistant",
+          "content": "The current chunking strategy in preprocessing-service is 'late' with chunk size 750 and overlap 120."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-config"
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [
+        {
+          "tool_name": "get_chunking_config",
+          "arguments": {},
+          "service": "preprocessing-service",
+          "operation": "get_chunking_config",
+          "requires_confirmation": false,
+          "mutation": false
+        }
+      ],
+      "current_tool_index": 0,
+      "completed_tool_results": [
+        {
+          "tool_name": "get_chunking_config",
+          "service": "preprocessing-service",
+          "operation": "get_chunking_config",
+          "mutation": false,
+          "result": {
+            "status": "ok",
+            "service_name": "preprocessing-service",
+            "section": "chunk",
+            "config": {
+              "chunk_strategy": "late",
+              "chunk_size": 750,
+              "chunk_overlap": 120
+            }
+          }
+        }
+      ],
+      "selected_tool": "get_chunking_config",
+      "selected_tool_arguments": {},
+      "selected_tool_service": "preprocessing-service",
+      "selected_tool_operation": "get_chunking_config",
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": "get_chunking_config",
+      "last_tool_arguments": {},
+      "last_tool_result": {
+        "status": "ok",
+        "service_name": "preprocessing-service",
+        "section": "chunk",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 750,
+          "chunk_overlap": 120
+        }
+      },
+      "mode": "diagnostic",
+      "answer": "The current chunking strategy in preprocessing-service is 'late' with chunk size 750 and overlap 120.",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:21:43.262418Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:43.263421+00:00"
+  },
+  "admin-session-eval": {
+    "state": {
+      "session_id": "admin-session-eval",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "run evaluation smoke",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "run evaluation smoke"
+        },
+        {
+          "role": "assistant",
+          "content": "The tool 'run_evaluation' completed successfully through the MCP adapter."
+        },
+        {
+          "role": "user",
+          "content": "run evaluation smoke"
+        },
+        {
+          "role": "assistant",
+          "content": "The tool 'run_evaluation' completed successfully through the MCP adapter."
+        },
+        {
+          "role": "user",
+          "content": "run evaluation smoke"
+        },
+        {
+          "role": "assistant",
+          "content": "The tool 'run_evaluation' completed successfully through the MCP adapter."
+        },
+        {
+          "role": "user",
+          "content": "run evaluation smoke"
+        },
+        {
+          "role": "assistant",
+          "content": "The tool 'run_evaluation' completed successfully through the MCP adapter."
+        },
+        {
+          "role": "user",
+          "content": "run evaluation smoke"
+        },
+        {
+          "role": "assistant",
+          "content": "The tool 'run_evaluation' completed successfully through the MCP adapter."
+        },
+        {
+          "role": "user",
+          "content": "run evaluation smoke"
+        },
+        {
+          "role": "assistant",
+          "content": "The tool 'run_evaluation' completed successfully through the MCP adapter."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-eval"
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [
+        {
+          "tool_name": "run_evaluation",
+          "arguments": {
+            "suite": "smoke"
+          },
+          "service": "generation-service",
+          "operation": "run_evaluation",
+          "requires_confirmation": false,
+          "mutation": true
+        }
+      ],
+      "current_tool_index": 0,
+      "completed_tool_results": [
+        {
+          "tool_name": "run_evaluation",
+          "service": "generation-service",
+          "operation": "run_evaluation",
+          "mutation": true,
+          "result": {
+            "status": "accepted",
+            "suite": "smoke",
+            "dataset": "C:\\Users\\NESSIM\\Desktop\\agentic\\services\\generation-service\\evals\\sample_eval_dataset.json",
+            "note": "Live evaluation execution is skipped during tests."
+          }
+        }
+      ],
+      "selected_tool": "run_evaluation",
+      "selected_tool_arguments": {
+        "suite": "smoke"
+      },
+      "selected_tool_service": "generation-service",
+      "selected_tool_operation": "run_evaluation",
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": true,
+      "last_tool_name": "run_evaluation",
+      "last_tool_arguments": {
+        "suite": "smoke"
+      },
+      "last_tool_result": {
+        "status": "accepted",
+        "suite": "smoke",
+        "dataset": "C:\\Users\\NESSIM\\Desktop\\agentic\\services\\generation-service\\evals\\sample_eval_dataset.json",
+        "note": "Live evaluation execution is skipped during tests."
+      },
+      "mode": "mutation",
+      "answer": "The tool 'run_evaluation' completed successfully through the MCP adapter.",
+      "status": "ok",
+      "audit_event_id": "audit_37227943a7de4f3ab201b7640d271432",
+      "updated_at_utc": "2026-04-07T11:21:43.363819Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:43.364850+00:00"
+  },
+  "admin-session-stream-config": {
+    "state": {
+      "session_id": "admin-session-stream-config",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "show config chunking",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "show config chunking"
+        },
+        {
+          "role": "assistant",
+          "content": "I executed the read-only tool 'show_config' and returned its result."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking"
+        },
+        {
+          "role": "assistant",
+          "content": "The current chunking strategy in preprocessing-service is 'late' with chunk size 750 and overlap 120."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking"
+        },
+        {
+          "role": "assistant",
+          "content": "The current chunking strategy in preprocessing-service is 'late' with chunk size 750 and overlap 120."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking"
+        },
+        {
+          "role": "assistant",
+          "content": "The current chunking strategy in preprocessing-service is 'late' with chunk size 750 and overlap 120."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking"
+        },
+        {
+          "role": "assistant",
+          "content": "The current chunking strategy in preprocessing-service is 'late' with chunk size 750 and overlap 120."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking"
+        },
+        {
+          "role": "assistant",
+          "content": "The current chunking strategy in preprocessing-service is 'late' with chunk size 750 and overlap 120."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-stream-config"
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [
+        {
+          "tool_name": "get_chunking_config",
+          "arguments": {},
+          "service": "preprocessing-service",
+          "operation": "get_chunking_config",
+          "requires_confirmation": false,
+          "mutation": false
+        }
+      ],
+      "current_tool_index": 0,
+      "completed_tool_results": [
+        {
+          "tool_name": "get_chunking_config",
+          "service": "preprocessing-service",
+          "operation": "get_chunking_config",
+          "mutation": false,
+          "result": {
+            "status": "ok",
+            "service_name": "preprocessing-service",
+            "section": "chunk",
+            "config": {
+              "chunk_strategy": "late",
+              "chunk_size": 750,
+              "chunk_overlap": 120
+            }
+          }
+        }
+      ],
+      "selected_tool": "get_chunking_config",
+      "selected_tool_arguments": {},
+      "selected_tool_service": "preprocessing-service",
+      "selected_tool_operation": "get_chunking_config",
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": "get_chunking_config",
+      "last_tool_arguments": {},
+      "last_tool_result": {
+        "status": "ok",
+        "service_name": "preprocessing-service",
+        "section": "chunk",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 750,
+          "chunk_overlap": 120
+        }
+      },
+      "mode": "diagnostic",
+      "answer": "The current chunking strategy in preprocessing-service is 'late' with chunk size 750 and overlap 120.",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:21:44.088429Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:44.089423+00:00"
+  },
+  "admin-session-stream-confirm": {
+    "state": {
+      "session_id": "admin-session-stream-confirm",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "delete document gdpr.pdf",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "delete document gdpr.pdf"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'delete_document'."
+        },
+        {
+          "role": "user",
+          "content": "delete document gdpr.pdf"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'delete_document'."
+        },
+        {
+          "role": "user",
+          "content": "delete document gdpr.pdf"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'delete_document'."
+        },
+        {
+          "role": "user",
+          "content": "delete document gdpr.pdf"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'delete_document'."
+        },
+        {
+          "role": "user",
+          "content": "delete document gdpr.pdf"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'delete_document'."
+        },
+        {
+          "role": "user",
+          "content": "delete document gdpr.pdf"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'delete_document'."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-stream-confirm"
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": true,
+      "confirmation_id": "conf_c143e459ed7949558a4add4c2449f55f",
+      "pending_action": {
+        "confirmation_id": "conf_c143e459ed7949558a4add4c2449f55f",
+        "session_id": "admin-session-stream-confirm",
+        "user_id": "admin-1",
+        "tool_name": "delete_document",
+        "arguments": {
+          "document_id": "gdpr.pdf",
+          "query": "delete document gdpr.pdf"
+        },
+        "reason": "Document deletion is irreversible.",
+        "requested_at_utc": "2026-04-07T11:21:44.190583Z",
+        "expires_at_utc": "2026-04-07T12:21:44.190583Z"
+      },
+      "planned_tool_calls": [
+        {
+          "tool_name": "delete_document",
+          "arguments": {
+            "document_id": "gdpr.pdf",
+            "query": "delete document gdpr.pdf"
+          },
+          "service": "ingestion-service",
+          "operation": "delete_document",
+          "requires_confirmation": true,
+          "mutation": true
+        }
+      ],
+      "current_tool_index": 0,
+      "completed_tool_results": [],
+      "selected_tool": "delete_document",
+      "selected_tool_arguments": {
+        "document_id": "gdpr.pdf",
+        "query": "delete document gdpr.pdf"
+      },
+      "selected_tool_service": "ingestion-service",
+      "selected_tool_operation": "delete_document",
+      "selected_tool_requires_confirmation": true,
+      "selected_tool_mutation": true,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "mutation",
+      "answer": "This action requires confirmation before execution. Confirm if you want me to run 'delete_document'.",
+      "status": "needs_confirmation",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:21:44.195850Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:44.209409+00:00",
+    "pending_confirmation": {
+      "confirmation_id": "conf_c143e459ed7949558a4add4c2449f55f",
+      "session_id": "admin-session-stream-confirm",
+      "user_id": "admin-1",
+      "tool_name": "delete_document",
+      "arguments": {
+        "document_id": "gdpr.pdf",
+        "query": "delete document gdpr.pdf"
+      },
+      "reason": "Document deletion is irreversible.",
+      "requested_at_utc": "2026-04-07T11:21:44.190583Z",
+      "expires_at_utc": "2026-04-07T12:21:44.190583Z"
+    }
+  },
+  "admin-session-stream-bad-confirm": {
+    "state": {
+      "session_id": "admin-session-stream-bad-confirm",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "confirm reindex embeddings",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "reindex embeddings"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'reindex_embeddings'."
+        },
+        {
+          "role": "user",
+          "content": "confirm reindex embeddings"
+        },
+        {
+          "role": "assistant",
+          "content": "There is no valid pending action for this session, the confirmation id does not match, or it expired."
+        },
+        {
+          "role": "user",
+          "content": "reindex embeddings"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'reindex_embeddings'."
+        },
+        {
+          "role": "user",
+          "content": "confirm reindex embeddings"
+        },
+        {
+          "role": "assistant",
+          "content": "There is no valid pending action for this session, the confirmation id does not match, or it expired."
+        },
+        {
+          "role": "user",
+          "content": "reindex embeddings"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'reindex_embeddings'."
+        },
+        {
+          "role": "user",
+          "content": "confirm reindex embeddings"
+        },
+        {
+          "role": "assistant",
+          "content": "There is no valid pending action for this session, the confirmation id does not match, or it expired."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-stream-bad-confirm"
+      },
+      "request_confirmation": true,
+      "request_confirmation_id": "conf_wrong",
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [
+        {
+          "tool_name": "reindex_embeddings",
+          "arguments": {
+            "scope": "all"
+          },
+          "service": "embedding-service",
+          "operation": "reindex_embeddings",
+          "requires_confirmation": true,
+          "mutation": true
+        }
+      ],
+      "current_tool_index": 0,
+      "completed_tool_results": [],
+      "selected_tool": null,
+      "selected_tool_arguments": {},
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "mutation",
+      "answer": "There is no valid pending action for this session, the confirmation id does not match, or it expired.",
+      "status": "error",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:21:44.543840Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:44.544894+00:00",
+    "pending_confirmation": {
+      "confirmation_id": "conf_9aa9774799f642f5bf60dba810daa379",
+      "session_id": "admin-session-stream-bad-confirm",
+      "user_id": "admin-1",
+      "tool_name": "reindex_embeddings",
+      "arguments": {
+        "scope": "all"
+      },
+      "reason": "Reindexing may be expensive and can affect operational workloads.",
+      "requested_at_utc": "2026-04-07T11:21:44.459209Z",
+      "expires_at_utc": "2026-04-07T12:21:44.459209Z"
+    }
+  },
+  "admin-session-bad-restart": {
+    "state": {
+      "session_id": "admin-session-bad-restart",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "restart banana",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "restart banana"
+        },
+        {
+          "role": "assistant",
+          "content": "Unsupported service 'banana'. Allowed values: admin-service, auth-service, embedding-service, generation-service, ingestion-service, preprocessing-service, retrieval-service."
+        },
+        {
+          "role": "user",
+          "content": "restart banana"
+        },
+        {
+          "role": "assistant",
+          "content": "Unsupported service 'banana'. Allowed values: admin-service, auth-service, embedding-service, generation-service, ingestion-service, preprocessing-service, retrieval-service."
+        },
+        {
+          "role": "user",
+          "content": "restart banana"
+        },
+        {
+          "role": "assistant",
+          "content": "Unsupported service 'banana'. Allowed values: admin-service, auth-service, embedding-service, generation-service, ingestion-service, preprocessing-service, retrieval-service."
+        },
+        {
+          "role": "user",
+          "content": "restart banana"
+        },
+        {
+          "role": "assistant",
+          "content": "Unsupported service 'banana'. Allowed values: admin-service, auth-service, embedding-service, generation-service, ingestion-service, preprocessing-service, retrieval-service."
+        },
+        {
+          "role": "user",
+          "content": "restart banana"
+        },
+        {
+          "role": "assistant",
+          "content": "Unsupported service 'banana'. Allowed values: admin-service, auth-service, embedding-service, generation-service, ingestion-service, preprocessing-service, retrieval-service."
+        },
+        {
+          "role": "user",
+          "content": "restart banana"
+        },
+        {
+          "role": "assistant",
+          "content": "Unsupported service 'banana'. Allowed values: admin-service, auth-service, embedding-service, generation-service, ingestion-service, preprocessing-service, retrieval-service."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-bad-restart"
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [],
+      "current_tool_index": 0,
+      "completed_tool_results": [],
+      "selected_tool": null,
+      "selected_tool_arguments": {},
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "mutation",
+      "answer": "Unsupported service 'banana'. Allowed values: admin-service, auth-service, embedding-service, generation-service, ingestion-service, preprocessing-service, retrieval-service.",
+      "status": "error",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:21:43.794023Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:43.794023+00:00"
+  },
+  "admin-session-bad-delete": {
+    "state": {
+      "session_id": "admin-session-bad-delete",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "delete document",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "delete document"
+        },
+        {
+          "role": "assistant",
+          "content": "delete_document requires a concrete document_id. Free-text search is not supported by the current ingestion API."
+        },
+        {
+          "role": "user",
+          "content": "delete document"
+        },
+        {
+          "role": "assistant",
+          "content": "delete_document requires a concrete document_id. Free-text search is not supported by the current ingestion API."
+        },
+        {
+          "role": "user",
+          "content": "delete document"
+        },
+        {
+          "role": "assistant",
+          "content": "delete_document requires a concrete document_id. Free-text search is not supported by the current ingestion API."
+        },
+        {
+          "role": "user",
+          "content": "delete document"
+        },
+        {
+          "role": "assistant",
+          "content": "delete_document requires a concrete document_id. Free-text search is not supported by the current ingestion API."
+        },
+        {
+          "role": "user",
+          "content": "delete document"
+        },
+        {
+          "role": "assistant",
+          "content": "delete_document requires a concrete document_id. Free-text search is not supported by the current ingestion API."
+        },
+        {
+          "role": "user",
+          "content": "delete document"
+        },
+        {
+          "role": "assistant",
+          "content": "delete_document requires a concrete document_id. Free-text search is not supported by the current ingestion API."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-bad-delete"
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [],
+      "current_tool_index": 0,
+      "completed_tool_results": [],
+      "selected_tool": null,
+      "selected_tool_arguments": {},
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "mutation",
+      "answer": "delete_document requires a concrete document_id. Free-text search is not supported by the current ingestion API.",
+      "status": "error",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:21:43.971634Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:43.972649+00:00"
+  },
+  "admin-session-multi-step": {
+    "state": {
+      "session_id": "admin-session-multi-step",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "show config chunking and then restart retrieval",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-multi-step"
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": true,
+      "confirmation_id": "conf_20184d8a68034f2db705a3038d9c25b1",
+      "pending_action": {
+        "confirmation_id": "conf_20184d8a68034f2db705a3038d9c25b1",
+        "session_id": "admin-session-multi-step",
+        "user_id": "admin-1",
+        "tool_name": "restart_service",
+        "arguments": {
+          "service_name": "retrieval-service"
+        },
+        "reason": "Restarting a live service can temporarily affect availability.",
+        "requested_at_utc": "2026-04-07T11:21:43.470759Z",
+        "expires_at_utc": "2026-04-07T12:21:43.470759Z"
+      },
+      "planned_tool_calls": [
+        {
+          "tool_name": "get_chunking_config",
+          "arguments": {},
+          "service": "preprocessing-service",
+          "operation": "get_chunking_config",
+          "requires_confirmation": false,
+          "mutation": false
+        },
+        {
+          "tool_name": "restart_service",
+          "arguments": {
+            "service_name": "retrieval-service"
+          },
+          "service": "platform-runtime",
+          "operation": "restart_service",
+          "requires_confirmation": true,
+          "mutation": true
+        }
+      ],
+      "current_tool_index": 1,
+      "completed_tool_results": [
+        {
+          "tool_name": "get_chunking_config",
+          "service": "preprocessing-service",
+          "operation": "get_chunking_config",
+          "mutation": false,
+          "result": {
+            "status": "ok",
+            "service_name": "preprocessing-service",
+            "section": "chunk",
+            "config": {
+              "chunk_strategy": "late",
+              "chunk_size": 750,
+              "chunk_overlap": 120
+            }
+          }
+        }
+      ],
+      "selected_tool": "restart_service",
+      "selected_tool_arguments": {
+        "service_name": "retrieval-service"
+      },
+      "selected_tool_service": "platform-runtime",
+      "selected_tool_operation": "restart_service",
+      "selected_tool_requires_confirmation": true,
+      "selected_tool_mutation": true,
+      "last_tool_name": "get_chunking_config",
+      "last_tool_arguments": {},
+      "last_tool_result": {
+        "status": "ok",
+        "service_name": "preprocessing-service",
+        "section": "chunk",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 750,
+          "chunk_overlap": 120
+        }
+      },
+      "mode": "mutation",
+      "answer": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'.",
+      "status": "needs_confirmation",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:21:43.475754Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:43.486422+00:00",
+    "pending_confirmation": {
+      "confirmation_id": "conf_20184d8a68034f2db705a3038d9c25b1",
+      "session_id": "admin-session-multi-step",
+      "user_id": "admin-1",
+      "tool_name": "restart_service",
+      "arguments": {
+        "service_name": "retrieval-service"
+      },
+      "reason": "Restarting a live service can temporarily affect availability.",
+      "requested_at_utc": "2026-04-07T11:21:43.470759Z",
+      "expires_at_utc": "2026-04-07T12:21:43.470759Z"
+    }
+  },
+  "admin-session-multi-confirm": {
+    "state": {
+      "session_id": "admin-session-multi-confirm",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "confirm restart retrieval",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "confirm restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "Completed 2 tool steps through the MCP adapter: get_chunking_config, restart_service."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "confirm restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "Completed 2 tool steps through the MCP adapter: get_chunking_config, restart_service."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "confirm restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "Completed 2 tool steps through the MCP adapter: get_chunking_config, restart_service."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-multi-confirm"
+      },
+      "request_confirmation": true,
+      "request_confirmation_id": "conf_eb2968da215f4688a732a520851e93e1",
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [
+        {
+          "tool_name": "get_chunking_config",
+          "arguments": {},
+          "service": "preprocessing-service",
+          "operation": "get_chunking_config",
+          "requires_confirmation": false,
+          "mutation": false
+        },
+        {
+          "tool_name": "restart_service",
+          "arguments": {
+            "service_name": "retrieval-service"
+          },
+          "service": "platform-runtime",
+          "operation": "restart_service",
+          "requires_confirmation": true,
+          "mutation": true
+        }
+      ],
+      "current_tool_index": 1,
+      "completed_tool_results": [
+        {
+          "tool_name": "get_chunking_config",
+          "service": "preprocessing-service",
+          "operation": "get_chunking_config",
+          "mutation": false,
+          "result": {
+            "status": "ok",
+            "service_name": "preprocessing-service",
+            "section": "chunk",
+            "config": {
+              "chunk_strategy": "late",
+              "chunk_size": 750,
+              "chunk_overlap": 120
+            }
+          }
+        },
+        {
+          "tool_name": "restart_service",
+          "service": "platform-runtime",
+          "operation": "restart_service",
+          "mutation": true,
+          "result": {
+            "status": "accepted",
+            "service_name": "retrieval-service",
+            "note": "Live service restart is skipped during tests."
+          }
+        }
+      ],
+      "selected_tool": "restart_service",
+      "selected_tool_arguments": {
+        "service_name": "retrieval-service"
+      },
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": "restart_service",
+      "last_tool_arguments": {
+        "service_name": "retrieval-service"
+      },
+      "last_tool_result": {
+        "status": "accepted",
+        "service_name": "retrieval-service",
+        "note": "Live service restart is skipped during tests."
+      },
+      "mode": "mutation",
+      "answer": "Completed 2 tool steps through the MCP adapter: get_chunking_config, restart_service.",
+      "status": "ok",
+      "audit_event_id": "audit_306a5069cd0f4b4aa64768a139f4f09e",
+      "updated_at_utc": "2026-04-07T11:21:43.698111Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:43.708238+00:00"
+  },
+  "admin-session-stream-multi": {
+    "state": {
+      "session_id": "admin-session-stream-multi",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "show config chunking and then restart retrieval",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        },
+        {
+          "role": "user",
+          "content": "show config chunking and then restart retrieval"
+        },
+        {
+          "role": "assistant",
+          "content": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-session-stream-multi"
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": true,
+      "confirmation_id": "conf_ecb15a542e85469d8cd767aada1fc946",
+      "pending_action": {
+        "confirmation_id": "conf_ecb15a542e85469d8cd767aada1fc946",
+        "session_id": "admin-session-stream-multi",
+        "user_id": "admin-1",
+        "tool_name": "restart_service",
+        "arguments": {
+          "service_name": "retrieval-service"
+        },
+        "reason": "Restarting a live service can temporarily affect availability.",
+        "requested_at_utc": "2026-04-07T11:21:44.330974Z",
+        "expires_at_utc": "2026-04-07T12:21:44.330974Z"
+      },
+      "planned_tool_calls": [
+        {
+          "tool_name": "get_chunking_config",
+          "arguments": {},
+          "service": "preprocessing-service",
+          "operation": "get_chunking_config",
+          "requires_confirmation": false,
+          "mutation": false
+        },
+        {
+          "tool_name": "restart_service",
+          "arguments": {
+            "service_name": "retrieval-service"
+          },
+          "service": "platform-runtime",
+          "operation": "restart_service",
+          "requires_confirmation": true,
+          "mutation": true
+        }
+      ],
+      "current_tool_index": 1,
+      "completed_tool_results": [
+        {
+          "tool_name": "get_chunking_config",
+          "service": "preprocessing-service",
+          "operation": "get_chunking_config",
+          "mutation": false,
+          "result": {
+            "status": "ok",
+            "service_name": "preprocessing-service",
+            "section": "chunk",
+            "config": {
+              "chunk_strategy": "late",
+              "chunk_size": 750,
+              "chunk_overlap": 120
+            }
+          }
+        }
+      ],
+      "selected_tool": "restart_service",
+      "selected_tool_arguments": {
+        "service_name": "retrieval-service"
+      },
+      "selected_tool_service": "platform-runtime",
+      "selected_tool_operation": "restart_service",
+      "selected_tool_requires_confirmation": true,
+      "selected_tool_mutation": true,
+      "last_tool_name": "get_chunking_config",
+      "last_tool_arguments": {},
+      "last_tool_result": {
+        "status": "ok",
+        "service_name": "preprocessing-service",
+        "section": "chunk",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 750,
+          "chunk_overlap": 120
+        }
+      },
+      "mode": "mutation",
+      "answer": "This action requires confirmation before execution. Confirm if you want me to run 'restart_service'.",
+      "status": "needs_confirmation",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:21:44.335506Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:44.354093+00:00",
+    "pending_confirmation": {
+      "confirmation_id": "conf_ecb15a542e85469d8cd767aada1fc946",
+      "session_id": "admin-session-stream-multi",
+      "user_id": "admin-1",
+      "tool_name": "restart_service",
+      "arguments": {
+        "service_name": "retrieval-service"
+      },
+      "reason": "Restarting a live service can temporarily affect availability.",
+      "requested_at_utc": "2026-04-07T11:21:44.330974Z",
+      "expires_at_utc": "2026-04-07T12:21:44.330974Z"
+    }
+  },
+  "debug-session": {
+    "state": {
+      "session_id": "debug-session",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "what's the current chunking strategy",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "what's the current chunking strategy"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        },
+        {
+          "role": "user",
+          "content": "what's the current chunking strategy"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        }
+      ],
+      "metadata": {
+        "client": "debug",
+        "trace_id": null
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [],
+      "current_tool_index": 0,
+      "completed_tool_results": [],
+      "selected_tool": null,
+      "selected_tool_arguments": {},
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "qa",
+      "answer": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place.",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T10:56:37.800323Z"
+    },
+    "expires_at_utc": "2026-04-07T11:56:37.801354+00:00"
+  },
+  "debug-session-8016": {
+    "state": {
+      "session_id": "debug-session-8016",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "what's the current chunking strategy",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "what's the current chunking strategy"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        }
+      ],
+      "metadata": {
+        "client": "debug",
+        "trace_id": null
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [],
+      "current_tool_index": 0,
+      "completed_tool_results": [],
+      "selected_tool": null,
+      "selected_tool_arguments": {},
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "qa",
+      "answer": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place.",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T10:57:57.734326Z"
+    },
+    "expires_at_utc": "2026-04-07T11:57:57.734326+00:00"
+  },
+  "debug-session-8017": {
+    "state": {
+      "session_id": "debug-session-8017",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "what's the current chunking strategy",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "what's the current chunking strategy"
+        },
+        {
+          "role": "assistant",
+          "content": "preprocessing-service \u2014 chunk section:\n- chunk_strategy: \"late\"\n- chunk_size: 750\n- chunk_overlap: 120\n\n(status: ok)"
+        }
+      ],
+      "metadata": {
+        "client": "debug",
+        "trace_id": null
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [
+        {
+          "tool_name": "show_config",
+          "arguments": {
+            "section": "chunk"
+          },
+          "service": "platform-config",
+          "operation": "show_config",
+          "requires_confirmation": false,
+          "mutation": false
+        }
+      ],
+      "current_tool_index": 0,
+      "completed_tool_results": [
+        {
+          "tool_name": "show_config",
+          "service": "platform-config",
+          "operation": "show_config",
+          "mutation": false,
+          "result": {
+            "status": "ok",
+            "service_name": "preprocessing-service",
+            "section": "chunk",
+            "config": {
+              "chunk_strategy": "late",
+              "chunk_size": 750,
+              "chunk_overlap": 120
+            }
+          }
+        }
+      ],
+      "selected_tool": "show_config",
+      "selected_tool_arguments": {
+        "section": "chunk"
+      },
+      "selected_tool_service": "platform-config",
+      "selected_tool_operation": "show_config",
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": "show_config",
+      "last_tool_arguments": {
+        "section": "chunk"
+      },
+      "last_tool_result": {
+        "status": "ok",
+        "service_name": "preprocessing-service",
+        "section": "chunk",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 750,
+          "chunk_overlap": 120
+        }
+      },
+      "mode": "diagnostic",
+      "answer": "preprocessing-service \u2014 chunk section:\n- chunk_strategy: \"late\"\n- chunk_size: 750\n- chunk_overlap: 120\n\n(status: ok)",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:01:53.262309Z"
+    },
+    "expires_at_utc": "2026-04-07T12:01:53.263271+00:00"
+  },
+  "debug-session-8018": {
+    "state": {
+      "session_id": "debug-session-8018",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "what's the current chunking strategy",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "what's the current chunking strategy"
+        },
+        {
+          "role": "assistant",
+          "content": "preprocessing-service (section: chunk) \u2014 status: ok\n- chunk_strategy: \"late\"\n- chunk_size: 750\n- chunk_overlap: 120"
+        }
+      ],
+      "metadata": {
+        "client": "debug",
+        "trace_id": null
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [
+        {
+          "tool_name": "show_config",
+          "arguments": {
+            "section": "chunk"
+          },
+          "service": "platform-config",
+          "operation": "show_config",
+          "requires_confirmation": false,
+          "mutation": false
+        }
+      ],
+      "current_tool_index": 0,
+      "completed_tool_results": [
+        {
+          "tool_name": "show_config",
+          "service": "platform-config",
+          "operation": "show_config",
+          "mutation": false,
+          "result": {
+            "status": "ok",
+            "service_name": "preprocessing-service",
+            "section": "chunk",
+            "config": {
+              "chunk_strategy": "late",
+              "chunk_size": 750,
+              "chunk_overlap": 120
+            }
+          }
+        }
+      ],
+      "selected_tool": "show_config",
+      "selected_tool_arguments": {
+        "section": "chunk"
+      },
+      "selected_tool_service": "platform-config",
+      "selected_tool_operation": "show_config",
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": "show_config",
+      "last_tool_arguments": {
+        "section": "chunk"
+      },
+      "last_tool_result": {
+        "status": "ok",
+        "service_name": "preprocessing-service",
+        "section": "chunk",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 750,
+          "chunk_overlap": 120
+        }
+      },
+      "mode": "diagnostic",
+      "answer": "preprocessing-service (section: chunk) \u2014 status: ok\n- chunk_strategy: \"late\"\n- chunk_size: 750\n- chunk_overlap: 120",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:04:27.605278Z"
+    },
+    "expires_at_utc": "2026-04-07T12:04:27.605278+00:00"
+  },
+  "debug-session-live-headers-8018": {
+    "state": {
+      "session_id": "debug-session-live-headers-8018",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "what's the current chunking strategy",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "what's the current chunking strategy"
+        },
+        {
+          "role": "assistant",
+          "content": "Preprocessing service (section: chunk) reports status OK. Current chunking config: strategy = \"late\"; chunk_size = 750; chunk_overlap = 120. Units are as configured by the service."
+        }
+      ],
+      "metadata": {
+        "client": "debug",
+        "trace_id": null
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [
+        {
+          "tool_name": "show_config",
+          "arguments": {
+            "section": "chunk"
+          },
+          "service": "platform-config",
+          "operation": "show_config",
+          "requires_confirmation": false,
+          "mutation": false
+        }
+      ],
+      "current_tool_index": 0,
+      "completed_tool_results": [
+        {
+          "tool_name": "show_config",
+          "service": "platform-config",
+          "operation": "show_config",
+          "mutation": false,
+          "result": {
+            "status": "ok",
+            "service_name": "preprocessing-service",
+            "section": "chunk",
+            "config": {
+              "chunk_strategy": "late",
+              "chunk_size": 750,
+              "chunk_overlap": 120
+            }
+          }
+        }
+      ],
+      "selected_tool": "show_config",
+      "selected_tool_arguments": {
+        "section": "chunk"
+      },
+      "selected_tool_service": "platform-config",
+      "selected_tool_operation": "show_config",
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": "show_config",
+      "last_tool_arguments": {
+        "section": "chunk"
+      },
+      "last_tool_result": {
+        "status": "ok",
+        "service_name": "preprocessing-service",
+        "section": "chunk",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 750,
+          "chunk_overlap": 120
+        }
+      },
+      "mode": "diagnostic",
+      "answer": "Preprocessing service (section: chunk) reports status OK. Current chunking config: strategy = \"late\"; chunk_size = 750; chunk_overlap = 120. Units are as configured by the service.",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:04:48.479463Z"
+    },
+    "expires_at_utc": "2026-04-07T12:04:48.480451+00:00"
+  },
+  "debug-session-8018-final": {
+    "state": {
+      "session_id": "debug-session-8018-final",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "what's the current chunking strategy",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "what's the current chunking strategy"
+        },
+        {
+          "role": "assistant",
+          "content": "preprocessing-service (section: chunk) returned OK.\n\n- chunk_strategy: \"late\"\n- chunk_size: 750\n- chunk_overlap: 120\n\nNo other chunking details were returned."
+        }
+      ],
+      "metadata": {
+        "client": "debug",
+        "trace_id": null
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [
+        {
+          "tool_name": "show_config",
+          "arguments": {
+            "section": "chunk"
+          },
+          "service": "platform-config",
+          "operation": "show_config",
+          "requires_confirmation": false,
+          "mutation": false
+        }
+      ],
+      "current_tool_index": 0,
+      "completed_tool_results": [
+        {
+          "tool_name": "show_config",
+          "service": "platform-config",
+          "operation": "show_config",
+          "mutation": false,
+          "result": {
+            "status": "ok",
+            "service_name": "preprocessing-service",
+            "section": "chunk",
+            "config": {
+              "chunk_strategy": "late",
+              "chunk_size": 750,
+              "chunk_overlap": 120
+            }
+          }
+        }
+      ],
+      "selected_tool": "show_config",
+      "selected_tool_arguments": {
+        "section": "chunk"
+      },
+      "selected_tool_service": "platform-config",
+      "selected_tool_operation": "show_config",
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": "show_config",
+      "last_tool_arguments": {
+        "section": "chunk"
+      },
+      "last_tool_result": {
+        "status": "ok",
+        "service_name": "preprocessing-service",
+        "section": "chunk",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 750,
+          "chunk_overlap": 120
+        }
+      },
+      "mode": "diagnostic",
+      "answer": "preprocessing-service (section: chunk) returned OK.\n\n- chunk_strategy: \"late\"\n- chunk_size: 750\n- chunk_overlap: 120\n\nNo other chunking details were returned.",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:07:43.877664Z"
+    },
+    "expires_at_utc": "2026-04-07T12:07:43.879175+00:00"
+  },
+  "debug-session-8018-final-2": {
+    "state": {
+      "session_id": "debug-session-8018-final-2",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "what's the current chunking strategy",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "what's the current chunking strategy"
+        },
+        {
+          "role": "assistant",
+          "content": "preprocessing-service (section: chunk) reports status OK.\n- chunk_strategy: \"late\"\n- chunk_size: 750\n- chunk_overlap: 120\n\nLet me know if you want to change or validate these settings."
+        }
+      ],
+      "metadata": {
+        "client": "debug",
+        "trace_id": null
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [
+        {
+          "tool_name": "show_config",
+          "arguments": {
+            "section": "chunk"
+          },
+          "service": "platform-config",
+          "operation": "show_config",
+          "requires_confirmation": false,
+          "mutation": false
+        }
+      ],
+      "current_tool_index": 0,
+      "completed_tool_results": [
+        {
+          "tool_name": "show_config",
+          "service": "platform-config",
+          "operation": "show_config",
+          "mutation": false,
+          "result": {
+            "status": "ok",
+            "service_name": "preprocessing-service",
+            "section": "chunk",
+            "config": {
+              "chunk_strategy": "late",
+              "chunk_size": 750,
+              "chunk_overlap": 120
+            }
+          }
+        }
+      ],
+      "selected_tool": "show_config",
+      "selected_tool_arguments": {
+        "section": "chunk"
+      },
+      "selected_tool_service": "platform-config",
+      "selected_tool_operation": "show_config",
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": "show_config",
+      "last_tool_arguments": {
+        "section": "chunk"
+      },
+      "last_tool_result": {
+        "status": "ok",
+        "service_name": "preprocessing-service",
+        "section": "chunk",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 750,
+          "chunk_overlap": 120
+        }
+      },
+      "mode": "diagnostic",
+      "answer": "preprocessing-service (section: chunk) reports status OK.\n- chunk_strategy: \"late\"\n- chunk_size: 750\n- chunk_overlap: 120\n\nLet me know if you want to change or validate these settings.",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:08:05.482169Z"
+    },
+    "expires_at_utc": "2026-04-07T12:08:05.483242+00:00"
+  },
+  "admin-chat-2153d8f6-49af-4ebd-966b-0e08b5e74999": {
+    "state": {
+      "session_id": "admin-chat-2153d8f6-49af-4ebd-966b-0e08b5e74999",
+      "user_id": "2153d8f6-49af-4ebd-966b-0e08b5e74999",
+      "user_email": "hjaiejnessim@gmail.com",
+      "message": "what is the current retrieval startegy",
+      "chat_history": [
+        {
+          "role": "assistant",
+          "content": "Alert: this admin chat has advanced privileges. You are currently in Control mode. Use Q&A for informational questions and Control mode for operational or configuration requests."
+        },
+        {
+          "role": "user",
+          "content": "what's the current reranking strategy"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        },
+        {
+          "role": "assistant",
+          "content": "Alert: this admin chat has advanced privileges. You are currently in Control mode. Use Q&A for informational questions and Control mode for operational or configuration requests."
+        },
+        {
+          "role": "user",
+          "content": "what's the current retrieval settings"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        },
+        {
+          "role": "assistant",
+          "content": "Alert: this admin chat has advanced privileges. You are currently in Control mode. Use Q&A for informational questions and Control mode for operational or configuration requests."
+        },
+        {
+          "role": "user",
+          "content": "what's the current reranking strategy"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        },
+        {
+          "role": "assistant",
+          "content": "Alert: this admin chat has advanced privileges. You are currently in Control mode. Use Q&A for informational questions and Control mode for operational or configuration requests."
+        },
+        {
+          "role": "user",
+          "content": "what is the current retrieval startegy"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        }
+      ],
+      "metadata": {
+        "client": "admin-ui",
+        "trace_id": "trace-admin-chat-2153d8f6-49af-4ebd-966b-0e08b5e74999"
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [
+        {
+          "tool_name": "show_config",
+          "arguments": {
+            "section": "chunk"
+          },
+          "service": "platform-config",
+          "operation": "show_config",
+          "requires_confirmation": false,
+          "mutation": false
+        }
+      ],
+      "current_tool_index": 0,
+      "completed_tool_results": [
+        {
+          "tool_name": "show_config",
+          "service": "platform-config",
+          "operation": "show_config",
+          "mutation": false,
+          "result": {
+            "status": "ok",
+            "service_name": "preprocessing-service",
+            "section": "chunk",
+            "config": {
+              "chunk_strategy": "late",
+              "chunk_size": 750,
+              "chunk_overlap": 120
+            }
+          }
+        }
+      ],
+      "selected_tool": null,
+      "selected_tool_arguments": {},
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "qa",
+      "answer": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place.",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:27:45.821131Z"
+    },
+    "expires_at_utc": "2026-04-07T12:27:45.824131+00:00"
+  },
+  "debug-rerank-check": {
+    "state": {
+      "session_id": "debug-rerank-check",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "what's the current reranking strategy",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "what's the current reranking strategy"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        }
+      ],
+      "metadata": {
+        "client": "debug",
+        "trace_id": null
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [],
+      "current_tool_index": 0,
+      "completed_tool_results": [],
+      "selected_tool": null,
+      "selected_tool_arguments": {},
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "qa",
+      "answer": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place.",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:21:10.772275Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:10.773299+00:00"
+  },
+  "debug-rerank-check-2": {
+    "state": {
+      "session_id": "debug-rerank-check-2",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "what's the current reranking strategy",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "what's the current reranking strategy"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        }
+      ],
+      "metadata": {
+        "client": "debug",
+        "trace_id": null
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [],
+      "current_tool_index": 0,
+      "completed_tool_results": [],
+      "selected_tool": null,
+      "selected_tool_arguments": {},
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "qa",
+      "answer": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place.",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:21:48.173106Z"
+    },
+    "expires_at_utc": "2026-04-07T12:21:48.174097+00:00"
+  },
+  "debug-retrieval-check-final": {
+    "state": {
+      "session_id": "debug-retrieval-check-final",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "what is the current retrieval strategy",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "what is the current retrieval strategy"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        }
+      ],
+      "metadata": {
+        "client": "debug",
+        "trace_id": null
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [],
+      "current_tool_index": 0,
+      "completed_tool_results": [],
+      "selected_tool": null,
+      "selected_tool_arguments": {},
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "qa",
+      "answer": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place.",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:28:42.575164Z"
+    },
+    "expires_at_utc": "2026-04-07T12:28:42.576730+00:00"
+  },
+  "debug-retrieval-check-final-2": {
+    "state": {
+      "session_id": "debug-retrieval-check-final-2",
+      "user_id": "admin-1",
+      "user_email": "admin@example.com",
+      "message": "what is the current retrieval strategy",
+      "chat_history": [
+        {
+          "role": "user",
+          "content": "what is the current retrieval strategy"
+        },
+        {
+          "role": "assistant",
+          "content": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place."
+        }
+      ],
+      "metadata": {
+        "client": "debug",
+        "trace_id": null
+      },
+      "request_confirmation": false,
+      "request_confirmation_id": null,
+      "confirmation_requested": false,
+      "confirmation_id": null,
+      "pending_action": null,
+      "planned_tool_calls": [],
+      "current_tool_index": 0,
+      "completed_tool_results": [],
+      "selected_tool": null,
+      "selected_tool_arguments": {},
+      "selected_tool_service": null,
+      "selected_tool_operation": null,
+      "selected_tool_requires_confirmation": false,
+      "selected_tool_mutation": false,
+      "last_tool_name": null,
+      "last_tool_arguments": {},
+      "last_tool_result": null,
+      "mode": "qa",
+      "answer": "Admin-service v2 is initialized with the new contract, session state model, and confirmation contract. Agent reasoning will be added next. The MCP adapter, sliding-window memory, and metadata-driven tool policy are now in place.",
+      "status": "ok",
+      "audit_event_id": null,
+      "updated_at_utc": "2026-04-07T11:29:05.165324Z"
+    },
+    "expires_at_utc": "2026-04-07T12:29:05.169263+00:00"
+  }
+}

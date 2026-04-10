@@ -1,72 +1,37 @@
 [
     {
         "name":  "auth-service",
-        "pid":  14940,
+        "pid":  24292,
         "port":  8001
     },
     {
         "name":  "preprocessing-service",
-        "pid":  4264,
+        "pid":  10716,
         "port":  8000
     },
     {
         "name":  "embedding-service",
-        "pid":  10796,
+        "pid":  412,
         "port":  8002
     },
     {
         "name":  "retrieval-service",
-        "pid":  24244,
+        "pid":  10836,
         "port":  8003
     },
     {
         "name":  "generation-service",
-        "pid":  24964,
+        "pid":  24548,
         "port":  8004
     },
     {
         "name":  "ingestion-service",
-        "pid":  23796,
+        "pid":  3212,
         "port":  8005
     },
     {
         "name":  "admin-service",
-        "pid":  23872,
-        "port":  8006
-    },
-    {
-        "name":  "auth-service",
-        "pid":  30452,
-        "port":  8001
-    },
-    {
-        "name":  "preprocessing-service",
-        "pid":  27640,
-        "port":  8000
-    },
-    {
-        "name":  "embedding-service",
-        "pid":  30312,
-        "port":  8002
-    },
-    {
-        "name":  "retrieval-service",
-        "pid":  30508,
-        "port":  8003
-    },
-    {
-        "name":  "generation-service",
-        "pid":  30180,
-        "port":  8004
-    },
-    {
-        "name":  "ingestion-service",
-        "pid":  27864,
-        "port":  8005
-    },
-    {
-        "name":  "admin-service",
-        "pid":  28580,
+        "pid":  14844,
         "port":  8006
     }
 ]
