@@ -98,9 +98,64 @@ export default function ChatPage() {
   const animationFrameRef = useRef(null);
   const sourceNodeRef = useRef(null);
   const recordingStartedAtRef = useRef(null);
+  const sourcePreviewCacheRef = useRef(new Map());
   const [waveformSamples, setWaveformSamples] = useState(
     () => Array.from({ length: VOICE_WAVEFORM_BAR_COUNT }, () => 0),
   );
+
+  const getSourceCacheKey = (source) => source?.storagePath || source?.documentId || '';
+
+  const getCachedPreviewUrl = (source) => {
+    const cacheKey = getSourceCacheKey(source);
+    if (!cacheKey) return '';
+
+    const cached = sourcePreviewCacheRef.current.get(cacheKey);
+    if (!cached?.signedUrl) return '';
+    if (cached.expiresAt <= Date.now() + 15_000) {
+      sourcePreviewCacheRef.current.delete(cacheKey);
+      return '';
+    }
+
+    return cached.signedUrl;
+  };
+
+  const cachePreviewUrl = (source, signedUrl, expiresInSeconds) => {
+    const cacheKey = getSourceCacheKey(source);
+    if (!cacheKey || !signedUrl) return;
+
+    const ttlMs = Math.max(60, Number(expiresInSeconds) || 3600) * 1000;
+    sourcePreviewCacheRef.current.set(cacheKey, {
+      signedUrl,
+      expiresAt: Date.now() + ttlMs,
+    });
+  };
+
+  const fetchPreviewUrl = async (source, { forceRefresh = false, expiresIn = 3600 } = {}) => {
+    const token = await getAccessToken({ forceRefresh });
+    if (!token) {
+      throw new Error('Your session is missing. Please sign in again.');
+    }
+
+    const data = source.storagePath
+      ? await getDocumentSignedUrlByStoragePath(token, source.storagePath, expiresIn)
+      : await getDocumentSignedUrl(token, source.documentId, expiresIn);
+
+    cachePreviewUrl(source, data?.signed_url, expiresIn);
+    return data;
+  };
+
+  const warmSourcePreviews = async (sources) => {
+    if (!user || !Array.isArray(sources) || sources.length === 0) return;
+
+    await Promise.allSettled(
+      sources.map(async (source) => {
+        if ((!source?.documentId && !source?.storagePath) || getCachedPreviewUrl(source)) {
+          return;
+        }
+        await fetchPreviewUrl(source, { expiresIn: 3600 });
+      })
+    );
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -237,6 +292,7 @@ export default function ChatPage() {
         citations,
       };
       setMessages((prev) => [...prev, aiResponse]);
+      void warmSourcePreviews(sources);
     } catch (error) {
       const fallback = {
         id: (Date.now() + 1).toString(),
@@ -444,25 +500,23 @@ export default function ChatPage() {
     setPreviewLoading(true);
     setPreviewError('');
     try {
-      const loadPreview = async (forceRefresh = false) => {
-        const token = await getAccessToken({ forceRefresh });
-        if (!token) {
-          throw new Error('Your session is missing. Please sign in again.');
-        }
-        return source.storagePath
-          ? getDocumentSignedUrlByStoragePath(token, source.storagePath, 3600)
-          : getDocumentSignedUrl(token, source.documentId, 3600);
-      };
+      const cachedPreviewUrl = getCachedPreviewUrl(source);
+      if (cachedPreviewUrl) {
+        setPreviewUrl(cachedPreviewUrl);
+        setPreviewName(source.documentName || 'Document preview');
+        setPreviewOpen(true);
+        return;
+      }
 
       let data;
       try {
-        data = await loadPreview(false);
+        data = await fetchPreviewUrl(source, { expiresIn: 3600 });
       } catch (error) {
         const message = String(error?.message || '');
         if (!message.includes('401')) {
           throw error;
         }
-        data = await loadPreview(true);
+        data = await fetchPreviewUrl(source, { forceRefresh: true, expiresIn: 3600 });
       }
 
       setPreviewUrl(data.signed_url);
