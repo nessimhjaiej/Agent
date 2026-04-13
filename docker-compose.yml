@@ -103,5 +103,32 @@ services:
       - "8005:8005"
     restart: unless-stopped
 
+  admin-service:
+    image: icc-admin-service:local
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: services/admin-service/Dockerfile
+    container_name: admin-service
+    env_file:
+      - .env
+    environment:
+      INGESTION_BASE_URL: http://ingestion-service:8005
+      PREPROCESSING_BASE_URL: http://preprocessing-service:8000
+      EMBEDDING_BASE_URL: http://embedding-service:8002
+      GENERATION_BASE_URL: http://generation-service:8004
+      RETRIEVAL_BASE_URL: http://retrieval-service:8003
+    ports:
+      - "8006:8006"
+    depends_on:
+      - preprocessing-service
+      - embedding-service
+      - retrieval-service
+      - generation-service
+      - ingestion-service
+    volumes:
+      - ./services/admin-service/data:/app/services/admin-service/data
+    restart: unless-stopped
+
 volumes:
   weaviate_data:

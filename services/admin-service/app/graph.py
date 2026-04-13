@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 from time import time
-from typing import Any, Literal
+from typing import Any, Callable, Literal
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_openai import ChatOpenAI
@@ -14,6 +14,33 @@ from app.config import Settings
 from app.schemas import AdminActivityItem, AdminAgentRunState, AdminChatRequest, AdminChatResponse, IntentClassification
 from app.state import AdminState
 from app.tools import AdminToolbox, build_tools, is_generic_follow_up
+
+
+ProgressCallback = Callable[[dict[str, Any]], None]
+
+
+def _progress_item(
+    *,
+    phase: str,
+    status: str,
+    title: str,
+    detail: str,
+    tool: str | None = None,
+    arguments: dict | None = None,
+) -> dict[str, Any]:
+    return {
+        "phase": phase,
+        "status": status,
+        "title": title,
+        "detail": detail,
+        "tool": tool,
+        "arguments": arguments or {},
+    }
+
+
+def _emit_progress(progress_callback: ProgressCallback | None, item: dict[str, Any]) -> None:
+    if progress_callback is not None:
+        progress_callback(item)
 
 
 def _make_model(settings: Settings):
@@ -71,10 +98,20 @@ class IntentClassifier:
                 category=previous_route, intent=previous_topic or previous_route, reasoning="Generic follow-up reused the previous route.",
             )
 
-        if any(token in lowered for token in ["reindex", "run evaluation", "compare evaluation", "compare reports", "réindex", "evaluer", "évaluation"]):
+        if _is_chunking_methods_question(message):
+            category: Literal["inspect"] = "inspect"
+        elif any(token in lowered for token in ["reindex", "run evaluation", "compare evaluation", "compare reports", "réindex", "evaluer", "évaluation"]):
             category: Literal["workflow"] = "workflow"
         elif any(token in lowered for token in ["delete document", "remove document", "delete file", "change", "set", "switch", "update", "changer", "modifier", "supprimer"]):
             category = "mutate"
+        elif (
+            any(token in lowered for token in ["config", "configuration", "settings", "current", "what is the current"])
+            and any(
+                token in lowered
+                for token in ["chunk", "rerank", "retrieval", "embedding", "generation", "top k", "temperature", "model"]
+            )
+        ):
+            category = "inspect"
         elif any(token in lowered for token in ["show", "list", "status", "which documents", "what is current", "reports", "documents", "montre", "liste", "quel est", "ما هو", "اعرض"]):
             category = "inspect"
         else:
@@ -87,6 +124,8 @@ class IntentClassifier:
             intent = "evaluation"
         elif "document" in lowered:
             intent = "documents"
+        elif "chunk" in lowered:
+            intent = "chunking"
         elif "cost" in lowered:
             intent = "cost_optimization"
 
@@ -121,6 +160,21 @@ def _history_messages(state: AdminState) -> list:
     return messages
 
 
+def _serialize_chat_history(chat_history: list[Any]) -> list[dict[str, Any]]:
+    serialized: list[dict[str, Any]] = []
+    for item in chat_history:
+        if hasattr(item, "model_dump"):
+            serialized.append(item.model_dump())
+        elif isinstance(item, dict):
+            serialized.append(
+                {
+                    "role": str(item.get("role") or ""),
+                    "content": str(item.get("content") or ""),
+                }
+            )
+    return serialized
+
+
 def _fallback_advisory_answer(state: AdminState) -> str:
     message = state["message"].lower()
     if "rerank" in message and any(token in message for token in ["cost", "money", "cheap"]):
@@ -146,6 +200,13 @@ def _normalize_user_answer(answer: str) -> str:
     normalized = normalized.replace("repo-backed", "current")
     normalized = normalized.replace("write that into the system configuration.local", "apply that change to the system configuration")
     return normalized
+
+
+def _is_chunking_methods_question(message: str) -> bool:
+    lowered = message.lower()
+    asks_about_chunking = any(token in lowered for token in ["chunking", "chunk", "chunks"])
+    asks_for_options = any(token in lowered for token in ["available", "supported", "methods", "method", "strategies", "strategy", "options", "types"])
+    return asks_about_chunking and asks_for_options
 
 
 def _summarize_inspection_result(tool_result: dict[str, Any], message: str, session_context: dict) -> str:
@@ -185,6 +246,35 @@ def _summarize_inspection_result(tool_result: dict[str, Any], message: str, sess
         if isinstance(config, dict):
             parts = [f"{key}={value}" for key, value in config.items()]
             return f"The current {scope} settings are: {', '.join(parts)}."
+
+    if "methods" in tool_result:
+        implemented = []
+        pending = []
+        for item in tool_result.get("methods", []):
+            if not isinstance(item, dict):
+                continue
+            name = str(item.get("name") or "").strip()
+            if not name:
+                continue
+            if item.get("implemented"):
+                implemented.append(name)
+            else:
+                pending.append(name)
+
+        segments = []
+        if implemented:
+            segments.append(f"Available chunking methods are {', '.join(implemented)}")
+        if pending:
+            segments.append(f"{', '.join(pending)} exists in the pipeline but is not implemented yet")
+        current_strategy = tool_result.get("current_strategy")
+        if current_strategy:
+            segments.append(f"the current default strategy is {current_strategy}")
+        chunk_size = tool_result.get("current_chunk_size")
+        chunk_overlap = tool_result.get("current_chunk_overlap")
+        if chunk_size is not None and chunk_overlap is not None:
+            segments.append(f"the current chunk size is {chunk_size} with overlap {chunk_overlap}")
+        if segments:
+            return ". ".join(segments) + "."
 
     return f"I inspected the system and got: {tool_result}."
 
@@ -345,6 +435,7 @@ def _run_llm_tool_loop(
     tools: list,
     system_prompt: str,
     state: AdminState,
+    progress_callback: ProgressCallback | None = None,
 ) -> tuple[str, dict[str, Any] | None, list[dict], int, dict[str, dict]]:
     model = _make_model(settings)
     if model is None:
@@ -396,10 +487,23 @@ def _run_llm_tool_loop(
                             "arguments": tool_call.get("args", {}),
                         }
                     )
+                    if progress_callback is not None:
+                        progress_callback(activity[-1])
                     continue
             uncached_calls.append(tool_call)
 
         if uncached_calls:
+            for tool_call in uncached_calls:
+                started_item = _progress_item(
+                    phase="tool",
+                    status="in_progress",
+                    title=f"Tool started: {tool_call['name']}",
+                    detail="Collecting live data from a backend service.",
+                    tool=tool_call["name"],
+                    arguments=tool_call.get("args", {}),
+                )
+                activity.append(started_item)
+                _emit_progress(progress_callback, started_item)
             tool_response = tool_node.invoke({"messages": [AIMessage(content="", tool_calls=uncached_calls)]})
             for item in tool_response.get("messages", []):
                 if isinstance(item, ToolMessage):
@@ -424,6 +528,8 @@ def _run_llm_tool_loop(
                             "arguments": {},
                         }
                     )
+                    if progress_callback is not None:
+                        progress_callback(activity[-1])
                 tool_call = next((call for call in ai_message.tool_calls if call["id"] == item.tool_call_id), None)
                 if tool_call and isinstance(last_tool_result, dict):
                     cache_key = json.dumps({"name": item.name, "args": tool_call.get("args", {})}, sort_keys=True)
@@ -452,25 +558,33 @@ def _tool_cache_policy(tool_name: str) -> tuple[int, list[str]]:
     return 60, [tool_name]
 
 
-def build_graph(settings: Settings, access_token: str | None = None):
+def build_graph(settings: Settings, access_token: str | None = None, progress_callback: ProgressCallback | None = None):
     graph = StateGraph(AdminState)
     classifier = IntentClassifier(settings)
 
     def classify_intent(state: AdminState) -> AdminState:
+        in_progress_item = _progress_item(
+            phase="classify",
+            status="in_progress",
+            title="Classifying request",
+            detail="Understanding the request and choosing the right admin path.",
+        )
+        _emit_progress(progress_callback, in_progress_item)
         try:
             result = classifier.classify(state["message"], state.get("session_context"))
         except TypeError:
             result = classifier.classify(state["message"])
         activity = list(state.get("activity", []))
-        activity.append(
-            {
-                "phase": "classify",
-                "status": "completed",
-                "title": "Intent classified",
-                "detail": result.reasoning,
-                "arguments": {"category": result.category, "intent": result.intent},
-            }
+        activity.append(in_progress_item)
+        completed_item = _progress_item(
+            phase="classify",
+            status="completed",
+            title="Intent classified",
+            detail=result.reasoning,
+            arguments={"category": result.category, "intent": result.intent},
         )
+        activity.append(completed_item)
+        _emit_progress(progress_callback, completed_item)
         return {
             **state,
             "route": result.category,
@@ -483,6 +597,13 @@ def build_graph(settings: Settings, access_token: str | None = None):
     def advisory_node(state: AdminState) -> AdminState:
         toolbox = AdminToolbox(settings, access_token=state.get("access_token") or access_token)
         read_tools = build_tools(toolbox, include_mutations=False)
+        advisory_started = _progress_item(
+            phase="advisory",
+            status="in_progress",
+            title="Preparing advisory answer",
+            detail="Gathering the context needed to answer the request clearly.",
+        )
+        _emit_progress(progress_callback, advisory_started)
         answer, tool_result, tool_activity, tool_call_count, cache_updates = _run_llm_tool_loop(
             settings=settings,
             tools=read_tools,
@@ -493,22 +614,23 @@ def build_graph(settings: Settings, access_token: str | None = None):
                 "If the question is conceptual, answer directly. If current system state or current configuration would materially improve the answer, use tools."
             ),
             state=state,
+            progress_callback=progress_callback,
         )
         if not answer:
             answer = _fallback_advisory_answer(state)
         answer = _normalize_user_answer(answer)
 
         activity = list(state.get("activity", []))
+        activity.append(advisory_started)
         activity.extend(tool_activity)
-        activity.append(
-            {
-                "phase": "advisory",
-                "status": "completed",
-                "title": "Advice prepared",
-                "detail": "The request was answered for a non-technical admin.",
-                "arguments": {},
-            }
+        advisory_completed = _progress_item(
+            phase="advisory",
+            status="completed",
+            title="Advice prepared",
+            detail="The request was answered for a non-technical admin.",
         )
+        activity.append(advisory_completed)
+        _emit_progress(progress_callback, advisory_completed)
         return {
             **state,
             "status": "completed",
@@ -524,6 +646,14 @@ def build_graph(settings: Settings, access_token: str | None = None):
         toolbox = AdminToolbox(settings, access_token=state.get("access_token") or access_token)
         read_tools = build_tools(toolbox, include_mutations=False)
         activity = list(state.get("activity", []))
+        inspect_started = _progress_item(
+            phase="inspect",
+            status="in_progress",
+            title="Inspecting current settings",
+            detail="Checking the live admin context and current system configuration.",
+        )
+        activity.append(inspect_started)
+        _emit_progress(progress_callback, inspect_started)
         try:
             answer, tool_result, tool_activity, tool_call_count, cache_updates = _run_llm_tool_loop(
                 settings=settings,
@@ -536,6 +666,7 @@ def build_graph(settings: Settings, access_token: str | None = None):
                     "Never mention code files, env files, repositories, or implementation details."
                 ),
                 state=state,
+                progress_callback=progress_callback,
             )
         except Exception as exc:
             answer = ""
@@ -549,18 +680,35 @@ def build_graph(settings: Settings, access_token: str | None = None):
             for token in ["chunk", "rerank", "reranking", "retrieval", "embedding model", "generation model", "config"]
         ):
             try:
-                scope = toolbox.resolve_config_scope(state["message"])
-                tool_result = toolbox.get_repo_config(scope)
-                tool_activity.append(
-                    {
-                        "phase": "tool",
-                        "status": "completed",
-                        "title": f"Tool executed: get_repo_config ({scope})",
-                        "detail": "The agent read repo-backed config values.",
-                        "tool": "get_repo_config",
-                        "arguments": {"service_name": scope},
-                    }
-                )
+                if _is_chunking_methods_question(state["message"]):
+                    tool_result = toolbox.get_chunking_methods()
+                    tool_activity.append(
+                        {
+                            "phase": "tool",
+                            "status": "completed",
+                            "title": "Chunking methods inspected",
+                            "detail": "The agent read the current preprocessing chunking options.",
+                            "tool": "get_chunking_methods",
+                            "arguments": {},
+                        }
+                    )
+                    if progress_callback is not None:
+                        progress_callback(tool_activity[-1])
+                else:
+                    scope = toolbox.resolve_config_scope(state["message"])
+                    tool_result = toolbox.get_repo_config(scope)
+                    tool_activity.append(
+                        {
+                            "phase": "tool",
+                            "status": "completed",
+                            "title": f"Tool executed: get_repo_config ({scope})",
+                            "detail": "The agent read repo-backed config values.",
+                            "tool": "get_repo_config",
+                            "arguments": {"service_name": scope},
+                        }
+                    )
+                    if progress_callback is not None:
+                        progress_callback(tool_activity[-1])
             except Exception:
                 pass
 
@@ -569,15 +717,14 @@ def build_graph(settings: Settings, access_token: str | None = None):
         answer = _normalize_user_answer(answer)
 
         activity.extend(tool_activity)
-        activity.append(
-            {
-                "phase": "inspect",
-                "status": "completed" if tool_result is not None else "failed",
-                "title": "Inspection finished",
-                "detail": "Live system information was prepared for the admin." if tool_result is not None else "Inspection had no usable data.",
-                "arguments": {},
-            }
+        inspect_finished = _progress_item(
+            phase="inspect",
+            status="completed" if tool_result is not None else "failed",
+            title="Inspection finished",
+            detail="Live system information was prepared for the admin." if tool_result is not None else "Inspection had no usable data.",
         )
+        activity.append(inspect_finished)
+        _emit_progress(progress_callback, inspect_finished)
         return {
             **state,
             "status": "completed",
@@ -591,18 +738,26 @@ def build_graph(settings: Settings, access_token: str | None = None):
 
     def mutate_node(state: AdminState) -> AdminState:
         toolbox = AdminToolbox(settings, access_token=state.get("access_token") or access_token)
+        mutate_started = _progress_item(
+            phase="mutate",
+            status="in_progress",
+            title="Planning requested change",
+            detail="Checking whether the requested change can be applied safely.",
+        )
+        _emit_progress(progress_callback, mutate_started)
         pending_action, answer = _plan_mutation(state["message"], toolbox)
         activity = list(state.get("activity", []))
-        activity.append(
-            {
-                "phase": "mutate",
-                "status": "completed" if pending_action else "failed",
-                "title": "Mutation planned" if pending_action else "Mutation unsupported",
-                "detail": answer,
-                "tool": (pending_action or {}).get("tool"),
-                "arguments": (pending_action or {}).get("arguments", {}),
-            }
+        activity.append(mutate_started)
+        mutate_finished = _progress_item(
+            phase="mutate",
+            status="completed" if pending_action else "failed",
+            title="Mutation planned" if pending_action else "Mutation unsupported",
+            detail=answer,
+            tool=(pending_action or {}).get("tool"),
+            arguments=(pending_action or {}).get("arguments", {}),
         )
+        activity.append(mutate_finished)
+        _emit_progress(progress_callback, mutate_finished)
         return {
             **state,
             "status": "completed",
@@ -615,18 +770,26 @@ def build_graph(settings: Settings, access_token: str | None = None):
 
     def workflow_node(state: AdminState) -> AdminState:
         toolbox = AdminToolbox(settings, access_token=state.get("access_token") or access_token)
+        workflow_started = _progress_item(
+            phase="workflow",
+            status="in_progress",
+            title="Planning workflow",
+            detail="Mapping the request to the supported admin workflow steps.",
+        )
+        _emit_progress(progress_callback, workflow_started)
         pending_action, answer = _plan_workflow(state["message"], toolbox)
         activity = list(state.get("activity", []))
-        activity.append(
-            {
-                "phase": "workflow",
-                "status": "completed" if pending_action else "failed",
-                "title": "Workflow planned" if pending_action else "Workflow could not be planned",
-                "detail": answer,
-                "tool": (pending_action or {}).get("tool"),
-                "arguments": (pending_action or {}).get("arguments", {}),
-            }
+        activity.append(workflow_started)
+        workflow_finished = _progress_item(
+            phase="workflow",
+            status="completed" if pending_action else "failed",
+            title="Workflow planned" if pending_action else "Workflow could not be planned",
+            detail=answer,
+            tool=(pending_action or {}).get("tool"),
+            arguments=(pending_action or {}).get("arguments", {}),
         )
+        activity.append(workflow_finished)
+        _emit_progress(progress_callback, workflow_finished)
         return {
             **state,
             "status": "completed",
@@ -639,15 +802,22 @@ def build_graph(settings: Settings, access_token: str | None = None):
 
     def summarize(state: AdminState) -> AdminState:
         activity = list(state.get("activity", []))
-        activity.append(
-            {
-                "phase": "summarize",
-                "status": "completed",
-                "title": "Response prepared",
-                "detail": "The graph produced a user-facing response.",
-                "arguments": {},
-            }
+        summarize_started = _progress_item(
+            phase="summarize",
+            status="in_progress",
+            title="Finalizing response",
+            detail="Preparing the final response for display.",
         )
+        summarize_completed = _progress_item(
+            phase="summarize",
+            status="completed",
+            title="Response prepared",
+            detail="The graph produced a user-facing response.",
+        )
+        activity.append(summarize_started)
+        _emit_progress(progress_callback, summarize_started)
+        activity.append(summarize_completed)
+        _emit_progress(progress_callback, summarize_completed)
         return {**state, "activity": activity, "status": "completed", "current_step": None}
 
     def route(state: AdminState) -> str:
@@ -684,8 +854,13 @@ def get_graph_mermaid(settings: Settings) -> str:
     return compiled.get_graph().draw_mermaid()
 
 
-def run_graph(payload: AdminChatRequest, settings: Settings, session_context: dict | None = None) -> AdminChatResponse:
-    app = build_graph(settings, access_token=payload.access_token)
+def run_graph(
+    payload: AdminChatRequest,
+    settings: Settings,
+    session_context: dict | None = None,
+    progress_callback: ProgressCallback | None = None,
+) -> AdminChatResponse:
+    app = build_graph(settings, access_token=payload.access_token, progress_callback=progress_callback)
     final_state = app.invoke(
         {
             "session_id": payload.session_id,
@@ -695,7 +870,7 @@ def run_graph(payload: AdminChatRequest, settings: Settings, session_context: di
             "status": "running",
             "activity": [],
             "requires_confirmation": False,
-            "chat_history": [item.model_dump() for item in payload.chat_history],
+            "chat_history": _serialize_chat_history(payload.chat_history),
             "session_context": session_context or {},
             "tool_call_count": 0,
             "tool_cache": session_context.get("tool_cache", {}) if isinstance(session_context, dict) else {},

@@ -134,3 +134,25 @@ def test_session_store_keeps_compact_memory(tmp_path: Path) -> None:
     assert len(stored["history"]) == 6
     assert len(stored["tool_cache"]) == 8
     assert "noise" not in stored
+
+
+def test_service_accepts_stored_dict_history_on_follow_up(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+    first = service.chat(AdminChatRequest(message="what are the available chunking methods"))
+    second = service.chat(AdminChatRequest(message="and what is the current chunk size?", session_id=first.session_id))
+
+    assert second.status == "ok"
+    assert second.session_id == first.session_id
+    assert second.answer
+
+
+def test_chat_events_streams_activity_before_final_response(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+    events = list(service.chat_events(AdminChatRequest(message="what are the available chunking methods")))
+
+    activity_indexes = [index for index, event in enumerate(events) if event.get("type") == "activity"]
+    response_indexes = [index for index, event in enumerate(events) if event.get("type") == "response"]
+
+    assert activity_indexes
+    assert response_indexes
+    assert min(activity_indexes) < min(response_indexes)

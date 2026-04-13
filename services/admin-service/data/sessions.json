@@ -188,5 +188,271 @@
     },
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDEwMzI5LCJpYXQiOjE3NzYwMDY3MjksImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiIiLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImhqYWllam5lc3NpbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc1OTE5NzY4fV0sInNlc3Npb25faWQiOiJhNGQ0OWU0Yy04YTkxLTRkODQtYTJiZS00OTY4NjZmOTAyNDUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.sZQmcfVDDh7MffELr0OIA70YToIX9Zim9BYLBKoieYxOVcZdQG99ynsZgraYP5nCEjA_wLE_gTTab99mUE0zEQ",
     "cache_invalidated_at": 1776007048.0002286
+  },
+  "056530b8-543c-49d4-94b4-f7a91d6cc2ee": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what is the chunk size ?"
+      },
+      {
+        "role": "assistant",
+        "content": "It isn\u2019t set. The preprocessing config shows chunk_size is unset, so the system\u2019s default is being used. If you want a specific size (and overlap), tell me your preference or document types and I can recommend values."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": null,
+            "chunk_size": null,
+            "chunk_overlap": null,
+            "pipeline_version": null
+          },
+          "sources": {
+            "chunk_strategy": "unset",
+            "chunk_size": "unset",
+            "chunk_overlap": "unset",
+            "pipeline_version": "unset"
+          }
+        },
+        "created_at": 1776078687.4278588,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "last_message": "what is the chunk size ?",
+    "pending_action": null,
+    "last_response": "It isn\u2019t set. The preprocessing config shows chunk_size is unset, so the system\u2019s default is being used. If you want a specific size (and overlap), tell me your preference or document types and I can recommend values.",
+    "last_route": "inspect",
+    "last_topic": "Retrieve the current configured chunk size value",
+    "last_result": {
+      "route": "inspect",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "config": {
+          "chunk_strategy": null,
+          "chunk_size": null,
+          "chunk_overlap": null,
+          "pipeline_version": null
+        },
+        "sources": {
+          "chunk_strategy": "unset",
+          "chunk_size": "unset",
+          "chunk_overlap": "unset",
+          "pipeline_version": "unset"
+        }
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDgyMDk4LCJpYXQiOjE3NzYwNzg0OTgsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.-oCul5Irt5U_d5-NODFcIZPRrTRQujMrA8vGjq7i5FZtz3e9IgQlGy4lOa8sNxvbWrDIXuuOILX4av4CKyQUTw"
+  },
+  "9ce45932-bc63-45b7-a38c-22bf80759779": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what is the existing chunking size ?"
+      },
+      {
+        "role": "assistant",
+        "content": "There isn\u2019t an explicit chunk size configured right now\u2014it\u2019s unset.  \nWould you like me to set a specific chunk size (and overlap)?"
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": null,
+            "chunk_size": null,
+            "chunk_overlap": null,
+            "pipeline_version": null
+          },
+          "sources": {
+            "chunk_strategy": "unset",
+            "chunk_size": "unset",
+            "chunk_overlap": "unset",
+            "pipeline_version": "unset"
+          }
+        },
+        "created_at": 1776079055.094349,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "last_message": "what is the existing chunking size ?",
+    "pending_action": null,
+    "last_response": "There isn\u2019t an explicit chunk size configured right now\u2014it\u2019s unset.  \nWould you like me to set a specific chunk size (and overlap)?",
+    "last_route": "inspect",
+    "last_topic": "View current chunk size configuration",
+    "last_result": {
+      "route": "inspect",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "config": {
+          "chunk_strategy": null,
+          "chunk_size": null,
+          "chunk_overlap": null,
+          "pipeline_version": null
+        },
+        "sources": {
+          "chunk_strategy": "unset",
+          "chunk_size": "unset",
+          "chunk_overlap": "unset",
+          "pipeline_version": "unset"
+        }
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDgyMDk4LCJpYXQiOjE3NzYwNzg0OTgsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.-oCul5Irt5U_d5-NODFcIZPRrTRQujMrA8vGjq7i5FZtz3e9IgQlGy4lOa8sNxvbWrDIXuuOILX4av4CKyQUTw"
+  },
+  "686eaa20-5334-4627-984d-c005e96dbb04": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what is the existing chunking size ?"
+      },
+      {
+        "role": "assistant",
+        "content": "It isn\u2019t set right now. The chunk size (and overlap) are currently unset in the preprocessing config, so the system is using its built-in defaults.\n\nWould you like me to set a specific chunk size and overlap for you? If so, share your preference or I can apply a common starting point."
+      },
+      {
+        "role": "user",
+        "content": "what are the available strategies we have ?"
+      },
+      {
+        "role": "assistant",
+        "content": "Here\u2019s what I can see: no chunking strategy is currently set in the preprocessing config, and there isn\u2019t a pre-registered list of choices in the system. We can, however, configure any of the common strategies below:\n\n- Fixed-size with overlap: simple, consistent chunks by tokens/characters (e.g., 800 with 200 overlap).\n- Structure-aware (recursive): respects headings/sections (Markdown/HTML), then splits large sections further.\n- Sentence/semantic-aware: splits on sentences/paragraphs and merges up to a target size for coherent chunks.\n- Code-aware: keeps code blocks/functions intact to avoid splitting important context.\n- Table-aware: keeps whole tables together.\n- Hybrid: structure-aware first, then fixed-size to cap long sections.\n\nIf you tell me the primary document types (e.g., policies/FAQs, Markdown docs, code, PDFs with tables), I can recommend one and set it up for you. A safe default for general docs is structure-aware with a fixed-size fallback (e.g., size 800, overlap 200)."
+      },
+      {
+        "role": "user",
+        "content": "change it to late"
+      },
+      {
+        "role": "assistant",
+        "content": "That change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluation workflows."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": null,
+            "chunk_size": null,
+            "chunk_overlap": null,
+            "pipeline_version": null
+          },
+          "sources": {
+            "chunk_strategy": "unset",
+            "chunk_size": "unset",
+            "chunk_overlap": "unset",
+            "pipeline_version": "unset"
+          }
+        },
+        "created_at": 1776079334.7627802,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "last_message": "change it to late",
+    "pending_action": null,
+    "last_response": "That change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluation workflows.",
+    "last_route": "mutate",
+    "last_topic": "Change the referenced setting/strategy to the value 'late'",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDgyMDk4LCJpYXQiOjE3NzYwNzg0OTgsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.-oCul5Irt5U_d5-NODFcIZPRrTRQujMrA8vGjq7i5FZtz3e9IgQlGy4lOa8sNxvbWrDIXuuOILX4av4CKyQUTw"
+  },
+  "503ede2a-35fa-48fd-b048-7000ca67947c": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what is the existing chunking size ?"
+      },
+      {
+        "role": "assistant",
+        "content": "I inspected the system and got: {'status': 'error', 'detail': \"[Errno 2] No such file or directory: '/app/services/preprocessing-service/app/config.py'\"}."
+      },
+      {
+        "role": "user",
+        "content": "what is the existing chunking size ?"
+      },
+      {
+        "role": "assistant",
+        "content": "800 (with an overlap of 120; strategy: late)"
+      },
+      {
+        "role": "user",
+        "content": "change it to 750"
+      },
+      {
+        "role": "assistant",
+        "content": "That change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluation workflows."
+      }
+    ],
+    "last_message": "change it to 750",
+    "pending_action": null,
+    "last_response": "That change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluation workflows.",
+    "last_route": "mutate",
+    "last_topic": "Update the chunking size configuration to 750",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDgyMDk4LCJpYXQiOjE3NzYwNzg0OTgsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.-oCul5Irt5U_d5-NODFcIZPRrTRQujMrA8vGjq7i5FZtz3e9IgQlGy4lOa8sNxvbWrDIXuuOILX4av4CKyQUTw",
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": "late",
+            "chunk_size": 800,
+            "chunk_overlap": 120,
+            "pipeline_version": "v1"
+          },
+          "sources": {
+            "chunk_strategy": "preprocessing-service runtime",
+            "chunk_size": "preprocessing-service runtime",
+            "chunk_overlap": "preprocessing-service runtime",
+            "pipeline_version": "preprocessing-service runtime"
+          }
+        },
+        "created_at": 1776080474.0267115,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    }
   }
 }

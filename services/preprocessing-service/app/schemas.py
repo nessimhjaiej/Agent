@@ -42,6 +42,28 @@ class ProcessSourceResponse(BaseModel):
     chunks: list[ChunkResponse]
 
 
+class PreprocessingConfigResponse(BaseModel):
+    status: str = "ok"
+    scope: str = "preprocessing"
+    config: dict[str, str | int]
+    sources: dict[str, str]
+
+
+class UpdatePreprocessingConfigRequest(BaseModel):
+    chunk_strategy: str | None = None
+    chunk_size: int | None = Field(default=None, gt=0)
+    chunk_overlap: int | None = Field(default=None, ge=0)
+    pipeline_version: str | None = Field(default=None, min_length=1)
+
+
+class UpdatePreprocessingConfigResponse(BaseModel):
+    status: str = "ok"
+    scope: str = "preprocessing"
+    updated: dict[str, str | int]
+    applied_via: str
+    restart_required: bool = False
+
+
 class HealthResponse(BaseModel):
     status: str = "ok"
     service: str

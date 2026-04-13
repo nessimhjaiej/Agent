@@ -86,3 +86,24 @@ def test_run_graph_routes_to_inspect(monkeypatch) -> None:  # noqa: ANN001
 
     assert response.status == "ok"
     assert response.mode == "inspect"
+
+
+def test_run_graph_answers_available_chunking_methods(tmp_path: Path) -> None:
+    settings = Settings(
+        project_root=tmp_path,
+        openai_key="",
+        max_iterations=8,
+        max_tool_calls=8,
+    )
+    (tmp_path / ".env").write_text(
+        "PREPROCESSING_CHUNK_SIZE=800\nPREPROCESSING_CHUNK_OVERLAP=120\nPREPROCESSING_CHUNK_STRATEGY=late\n",
+        encoding="utf-8",
+    )
+
+    response = run_graph(AdminChatRequest(message="what are the available chunking methods"), settings)
+
+    assert response.status == "ok"
+    assert response.mode == "inspect"
+    assert "late" in response.answer
+    assert "overlap" in response.answer
+    assert "semantic" in response.answer

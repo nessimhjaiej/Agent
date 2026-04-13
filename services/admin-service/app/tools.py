@@ -51,6 +51,13 @@ CONFIG_SCOPES: dict[str, dict[str, Any]] = {
     },
 }
 
+CHUNKING_METHODS: tuple[tuple[str, bool], ...] = (
+    ("late", True),
+    ("overlap", True),
+    ("semantic", True),
+    ("sentence", False),
+)
+
 
 class AdminToolbox:
     def __init__(self, settings: Settings, access_token: str | None = None) -> None:
@@ -90,11 +97,29 @@ class AdminToolbox:
             return float(raw) if raw.strip() else None
         return raw
 
+    def _get_preprocessing_config(self) -> dict[str, Any]:
+        with self._client() as client:
+            response = client.get(f"{self._settings.preprocessing_base_url.rstrip('/')}/preprocessing/config")
+            response.raise_for_status()
+            return response.json()
+
+    def _update_preprocessing_config(self, changes: dict[str, Any]) -> dict[str, Any]:
+        with self._client() as client:
+            response = client.put(
+                f"{self._settings.preprocessing_base_url.rstrip('/')}/preprocessing/config",
+                json=changes,
+            )
+            response.raise_for_status()
+            return response.json()
+
     def get_repo_config(self, service_name: str) -> dict[str, Any]:
         normalized = self.resolve_config_scope(service_name)
         scope = CONFIG_SCOPES.get(normalized)
         if scope is None:
             raise ValueError(f"Unsupported config scope: {service_name}")
+
+        if normalized == "preprocessing":
+            return self._get_preprocessing_config()
 
         values, sources = self._read_env_map()
         config: dict[str, Any] = {}
@@ -105,6 +130,20 @@ class AdminToolbox:
             source_map[field_name] = sources.get(env_name, "unset")
         return {"status": "ok", "scope": normalized, "config": config, "sources": source_map}
 
+    def get_chunking_methods(self) -> dict[str, Any]:
+        config_payload = self.get_repo_config("preprocessing")
+        return {
+            "status": "ok",
+            "scope": "preprocessing",
+            "current_strategy": config_payload["config"].get("chunk_strategy"),
+            "current_chunk_size": config_payload["config"].get("chunk_size"),
+            "current_chunk_overlap": config_payload["config"].get("chunk_overlap"),
+            "methods": [
+                {"name": name, "implemented": implemented}
+                for name, implemented in CHUNKING_METHODS
+            ],
+        }
+
     def update_repo_config(self, service_name: str, changes: dict[str, Any]) -> dict[str, Any]:
         normalized = self.resolve_config_scope(service_name)
         scope = CONFIG_SCOPES.get(normalized)
@@ -112,6 +151,9 @@ class AdminToolbox:
             raise ValueError(f"Unsupported config scope: {service_name}")
         if not isinstance(changes, dict) or not changes:
             raise ValueError("changes must contain at least one supported field")
+
+        if normalized == "preprocessing":
+            return self._update_preprocessing_config(changes)
 
         lines: list[str] = []
         env_local = self._settings.project_root / ".env.local"

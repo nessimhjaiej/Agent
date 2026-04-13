@@ -41,11 +41,15 @@ class _MockClient:
     def post(self, url, **kwargs):
         return self._responses.pop(0)
 
+    def put(self, url, **kwargs):
+        return self._responses.pop(0)
+
 
 def _settings() -> Settings:
     return Settings(
         openai_key="",
         ingestion_base_url="http://ingestion",
+        preprocessing_base_url="http://preprocessing",
         embedding_base_url="http://embedding",
         generation_base_url="http://generation",
         retrieval_base_url="http://retrieval",
@@ -109,21 +113,66 @@ def test_reindex_validated_documents_loops_over_candidates(monkeypatch) -> None:
     assert result["reindexed_count"] == 2
 
 
-def test_get_repo_config_reads_env_local_override(tmp_path: Path) -> None:
-    (tmp_path / ".env").write_text("PREPROCESSING_CHUNK_SIZE=800\nPREPROCESSING_CHUNK_STRATEGY=late\n", encoding="utf-8")
-    (tmp_path / ".env.local").write_text("PREPROCESSING_CHUNK_SIZE=750\n", encoding="utf-8")
-    settings = Settings(project_root=tmp_path, openai_key="")
-    result = AdminToolbox(settings).get_repo_config("preprocessing")
+def test_get_repo_config_reads_preprocessing_service(monkeypatch) -> None:  # noqa: ANN001
+    responses = [
+        _MockResponse(
+            200,
+            {
+                "status": "ok",
+                "scope": "preprocessing",
+                "config": {"chunk_size": 800, "chunk_strategy": "late", "chunk_overlap": 120, "pipeline_version": "v1"},
+                "sources": {"chunk_size": "preprocessing-service runtime"},
+            },
+        )
+    ]
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    result = AdminToolbox(_settings()).get_repo_config("preprocessing")
     assert result["scope"] == "preprocessing"
-    assert result["config"]["chunk_size"] == 750
+    assert result["config"]["chunk_size"] == 800
     assert result["config"]["chunk_strategy"] == "late"
 
 
-def test_update_repo_config_writes_env_local(tmp_path: Path) -> None:
-    (tmp_path / ".env").write_text("PREPROCESSING_CHUNK_SIZE=800\n", encoding="utf-8")
-    settings = Settings(project_root=tmp_path, openai_key="")
-    result = AdminToolbox(settings).update_repo_config("preprocessing", {"chunk_size": 900, "chunk_overlap": 100})
+def test_update_repo_config_calls_preprocessing_service(monkeypatch) -> None:  # noqa: ANN001
+    responses = [
+        _MockResponse(
+            200,
+            {
+                "status": "ok",
+                "scope": "preprocessing",
+                "updated": {"chunk_size": 900, "chunk_overlap": 100},
+                "applied_via": "preprocessing-service",
+                "restart_required": False,
+            },
+        )
+    ]
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    result = AdminToolbox(_settings()).update_repo_config("preprocessing", {"chunk_size": 900, "chunk_overlap": 100})
     assert result["updated"]["chunk_size"] == 900
-    env_local = (tmp_path / ".env.local").read_text(encoding="utf-8")
-    assert "PREPROCESSING_CHUNK_SIZE=900" in env_local
-    assert "PREPROCESSING_CHUNK_OVERLAP=100" in env_local
+    assert result["updated"]["chunk_overlap"] == 100
+    assert result["applied_via"] == "preprocessing-service"
+
+
+def test_get_chunking_methods_reads_current_preprocessing_settings(monkeypatch) -> None:  # noqa: ANN001
+    responses = [
+        _MockResponse(
+            200,
+            {
+                "status": "ok",
+                "scope": "preprocessing",
+                "config": {"chunk_size": 800, "chunk_overlap": 120, "chunk_strategy": "late", "pipeline_version": "v1"},
+                "sources": {
+                    "chunk_size": "preprocessing-service runtime",
+                    "chunk_overlap": "preprocessing-service runtime",
+                    "chunk_strategy": "preprocessing-service runtime",
+                    "pipeline_version": "preprocessing-service runtime",
+                },
+            },
+        )
+    ]
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    result = AdminToolbox(_settings()).get_chunking_methods()
+    assert result["current_strategy"] == "late"
+    assert result["current_chunk_size"] == 800
+    assert result["current_chunk_overlap"] == 120
+    names = {item["name"] for item in result["methods"]}
+    assert {"late", "overlap", "semantic", "sentence"} <= names

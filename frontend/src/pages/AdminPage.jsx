@@ -68,6 +68,25 @@ function mapRow(row) {
   };
 }
 
+function extractAdminStreamResponse(event) {
+  if (!event || typeof event !== 'object') return null;
+  if (event.type === 'response' && event.data && typeof event.data === 'object') {
+    return event.data;
+  }
+  if (event.type === 'final' && event.response && typeof event.response === 'object') {
+    return event.response;
+  }
+  return null;
+}
+
+function formatActivityLine(activity) {
+  if (!activity || typeof activity !== 'object') return '';
+  const title = typeof activity.title === 'string' ? activity.title.trim() : '';
+  const detail = typeof activity.detail === 'string' ? activity.detail.trim() : '';
+  if (title && detail) return `${title}: ${detail}`;
+  return title || detail || '';
+}
+
 function StatusBadge({ status }) {
   const cfg = {
     validated: { bg: 'rgba(16,185,129,0.1)', text: '#10b981', border: 'rgba(16,185,129,0.2)', icon: Check, label: 'Validated' },
@@ -105,6 +124,8 @@ export default function AdminPage() {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       content: 'Documents now track embedded state in Supabase. Validate to index once, then it is skipped.',
       sources: [],
+      detailsOpen: false,
+      activity: [],
     },
   ]);
   const [agentInput, setAgentInput] = useState('');
@@ -127,6 +148,41 @@ export default function AdminPage() {
   const [userFilter, setUserFilter] = useState('all');
   const dragDepthRef = useRef(0);
   const endRef = useRef(null);
+
+  const appendAssistantPlaceholder = (messageId) => {
+    setAgentMsgs((prev) => [
+      ...prev,
+      {
+        id: messageId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sources: [],
+        activity: [],
+        detailsOpen: false,
+      },
+    ]);
+  };
+
+  const updateAssistantPlaceholder = (messageId, updater) => {
+    setAgentMsgs((prev) =>
+      prev.map((msg) => {
+        if (msg.id !== messageId) return msg;
+        const patch = updater(msg) || {};
+        return { ...msg, ...patch };
+      })
+    );
+  };
+
+  const toggleAssistantDetails = (messageId) => {
+    setAgentMsgs((prev) =>
+      prev.map((msg) => (
+        msg.id === messageId
+          ? { ...msg, detailsOpen: !msg.detailsOpen }
+          : msg
+      ))
+    );
+  };
 
   const managedUsersById = useMemo(
     () =>
@@ -558,6 +614,7 @@ export default function AdminPage() {
     setAgentMsgs((prev) => [...prev, { id: Date.now().toString(), role: 'user', content: userText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     setAgentInput('');
     setTyping(true);
+    const assistantMessageId = `${Date.now()}-assistant`;
     try {
       const normalized = userText.toLowerCase();
       let content = '';
@@ -569,6 +626,7 @@ export default function AdminPage() {
         await loadDocuments();
         content = `Documents loaded. total=${docs.length}, embedded=${docs.filter((d) => d.embedded).length}.`;
       } else {
+        appendAssistantPlaceholder(assistantMessageId);
         const accessToken = await getAccessToken();
         let finalResponse = null;
         await streamAdmin(
@@ -582,11 +640,38 @@ export default function AdminPage() {
             if (event.session_id) {
               setAgentSessionId(event.session_id);
             }
+            if (event.type === 'status') {
+              updateAssistantPlaceholder(assistantMessageId, () => ({
+                content: 'Working on your request...',
+              }));
+            }
+            if (event.type === 'activity') {
+              const activityText = formatActivityLine(event.data) || 'Working on your request...';
+              updateAssistantPlaceholder(assistantMessageId, (msg) => ({
+                content: activityText,
+                activity: [...(Array.isArray(msg.activity) ? msg.activity : []), event.data],
+              }));
+            }
             if (event.type === 'confirmation') {
               setAgentPendingAction(event.data);
             }
-            if (event.type === 'response') {
-              finalResponse = event.data;
+            if (event.type === 'error') {
+              updateAssistantPlaceholder(assistantMessageId, () => ({
+                content: `Request failed: ${event.message || 'Unknown admin-service error'}`,
+              }));
+            }
+            const resolvedResponse = extractAdminStreamResponse(event);
+            if (resolvedResponse) {
+              finalResponse = resolvedResponse;
+              updateAssistantPlaceholder(assistantMessageId, (msg) => ({
+                content: resolvedResponse.answer || msg.content || 'No answer returned by admin service.',
+                sources: Array.isArray(resolvedResponse.citations)
+                  ? [...new Set(resolvedResponse.citations.map((citation) => citation.document_name).filter(Boolean))]
+                  : [],
+                activity: Array.isArray(resolvedResponse.activity) && resolvedResponse.activity.length > 0
+                  ? resolvedResponse.activity
+                  : (Array.isArray(msg.activity) ? msg.activity : []),
+              }));
             }
           }
         );
@@ -595,10 +680,22 @@ export default function AdminPage() {
           ? [...new Set(finalResponse.citations.map((citation) => citation.document_name).filter(Boolean))]
           : [];
         setAgentPendingAction(finalResponse?.pending_action || null);
+        updateAssistantPlaceholder(assistantMessageId, (msg) => ({
+          content,
+          sources,
+          activity: Array.isArray(finalResponse?.activity) && finalResponse.activity.length > 0
+            ? finalResponse.activity
+            : (Array.isArray(msg.activity) ? msg.activity : []),
+        }));
       }
-      setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources }]);
+      if (normalized.includes('embed validated') || normalized.includes('refresh') || normalized.includes('status')) {
+        setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources, activity: [], detailsOpen: false }]);
+      }
     } catch (error) {
-      setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: `Request failed: ${error.message}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources: [] }]);
+      updateAssistantPlaceholder(assistantMessageId, () => ({
+        content: `Request failed: ${error.message}`,
+        activity: [],
+      }));
     } finally {
       setTyping(false);
     }
@@ -607,6 +704,8 @@ export default function AdminPage() {
   const confirmAgentAction = async () => {
     if (!agentPendingAction || typing) return;
     setTyping(true);
+    const assistantMessageId = `${Date.now()}-confirm`;
+    appendAssistantPlaceholder(assistantMessageId);
     try {
       const accessToken = await getAccessToken();
       let finalResponse = null;
@@ -623,15 +722,44 @@ export default function AdminPage() {
           if (event.session_id) {
             setAgentSessionId(event.session_id);
           }
-          if (event.type === 'response') {
-            finalResponse = event.data;
+          if (event.type === 'status') {
+            updateAssistantPlaceholder(assistantMessageId, () => ({
+              content: 'Executing the confirmed action...',
+            }));
+          }
+          if (event.type === 'activity') {
+            const activityText = formatActivityLine(event.data) || 'Executing the confirmed action...';
+            updateAssistantPlaceholder(assistantMessageId, (msg) => ({
+              content: activityText,
+              activity: [...(Array.isArray(msg.activity) ? msg.activity : []), event.data],
+            }));
+          }
+          if (event.type === 'error') {
+            updateAssistantPlaceholder(assistantMessageId, () => ({
+              content: `Confirmation failed: ${event.message || 'Unknown admin-service error'}`,
+            }));
+          }
+          const resolvedResponse = extractAdminStreamResponse(event);
+          if (resolvedResponse) {
+            finalResponse = resolvedResponse;
+            updateAssistantPlaceholder(assistantMessageId, (msg) => ({
+              content: resolvedResponse.answer || msg.content || 'Action confirmed.',
+              activity: Array.isArray(resolvedResponse.activity) && resolvedResponse.activity.length > 0
+                ? resolvedResponse.activity
+                : (Array.isArray(msg.activity) ? msg.activity : []),
+            }));
           }
         }
       );
       setAgentPendingAction(null);
-      setAgentMsgs((prev) => [...prev, { id: `${Date.now()}-confirm`, role: 'assistant', content: finalResponse?.answer || 'Action confirmed.', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources: [] }]);
+      updateAssistantPlaceholder(assistantMessageId, (msg) => ({
+        content: finalResponse?.answer || msg.content || 'Action confirmed.',
+      }));
     } catch (error) {
-      setAgentMsgs((prev) => [...prev, { id: `${Date.now()}-confirm-error`, role: 'assistant', content: `Confirmation failed: ${error.message}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources: [] }]);
+      updateAssistantPlaceholder(assistantMessageId, () => ({
+        content: `Confirmation failed: ${error.message}`,
+        activity: [],
+      }));
     } finally {
       setTyping(false);
     }
@@ -1070,19 +1198,78 @@ export default function AdminPage() {
                         <motion.div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`} style={{ marginBottom: '32px' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                           {msg.role === 'assistant' && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', boxShadow: '0 0 12px rgba(245,158,11,0.3)' }}><Bot size={15} className="text-white" /></div>}
                           <div className={`max-w-[80%] rounded-2xl ${msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'}`} style={msg.role === 'user' ? { background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', color: 'white', boxShadow: '0 4px 15px rgba(139,92,246,0.2)', padding: '16px 24px' } : { background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '16px 24px' }}>
-                            <p className="text-sm leading-relaxed whitespace-pre-line my-2">{msg.content}</p>
-                            {msg.sources && msg.sources.length > 0 && (
-                              <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-color)' }}>
-                                <p className="text-xs font-medium mb-1.5" style={{ color: 'var(--text-muted)' }}>Sources:</p>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {msg.sources.map((src, i) => (
-                                    <span key={i} className="text-xs px-2.5 py-0.5 rounded-full" style={{ background: 'rgba(139,92,246,0.08)', color: 'var(--color-primary-400)', border: '1px solid rgba(139,92,246,0.15)' }}>
-                                      {src}
-                                    </span>
-                                  ))}
-                                </div>
+                            {msg.role === 'assistant' && ((Array.isArray(msg.activity) && msg.activity.length > 0) || (Array.isArray(msg.sources) && msg.sources.length > 0)) && (
+                              <div className="mb-3">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleAssistantDetails(msg.id)}
+                                  className="inline-flex items-center gap-2 text-xs font-medium"
+                                  style={{ color: 'var(--text-muted)' }}
+                                >
+                                  <ChevronDown
+                                    size={14}
+                                    style={{
+                                      transform: msg.detailsOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                                      transition: 'transform 160ms ease',
+                                    }}
+                                  />
+                                  {msg.detailsOpen ? 'Hide details' : 'Show details'}
+                                </button>
+                                {msg.detailsOpen && (
+                                  <div
+                                    className="mt-3 rounded-xl p-3"
+                                    style={{
+                                      background: 'rgba(15,23,42,0.04)',
+                                      border: '1px solid var(--border-color)',
+                                    }}
+                                  >
+                                    {Array.isArray(msg.activity) && msg.activity.length > 0 && (
+                                      <div className="space-y-2">
+                                        {msg.activity.map((activity, index) => (
+                                          <div
+                                            key={`${msg.id}-activity-${index}`}
+                                            className="rounded-xl px-3 py-2 text-xs"
+                                            style={{
+                                              background: activity.status === 'failed'
+                                                ? 'rgba(239,68,68,0.08)'
+                                                : activity.status === 'completed'
+                                                  ? 'rgba(16,185,129,0.08)'
+                                                  : 'rgba(245,158,11,0.08)',
+                                              border: activity.status === 'failed'
+                                                ? '1px solid rgba(239,68,68,0.18)'
+                                                : activity.status === 'completed'
+                                                  ? '1px solid rgba(16,185,129,0.18)'
+                                                  : '1px solid rgba(245,158,11,0.18)',
+                                              color: 'var(--text-secondary)',
+                                            }}
+                                          >
+                                            <div className="flex items-center justify-between gap-3">
+                                              <span>{formatActivityLine(activity)}</span>
+                                              <span className="uppercase tracking-wide" style={{ fontSize: '10px' }}>
+                                                {activity.status}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {Array.isArray(msg.sources) && msg.sources.length > 0 && (
+                                      <div className={Array.isArray(msg.activity) && msg.activity.length > 0 ? 'mt-3' : ''}>
+                                        <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Citations</p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {msg.sources.map((src, i) => (
+                                            <span key={i} className="text-xs px-2.5 py-0.5 rounded-full" style={{ background: 'rgba(139,92,246,0.08)', color: 'var(--color-primary-400)', border: '1px solid rgba(139,92,246,0.15)' }}>
+                                              {src}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             )}
+                            <p className="text-sm leading-relaxed whitespace-pre-line my-2">{msg.content}</p>
                             <p className={`text-xs mt-2 ${msg.role === 'user' ? 'text-white/50' : ''}`} style={msg.role === 'assistant' ? { color: 'var(--text-muted)' } : {}}>{msg.timestamp}</p>
                           </div>
                           {msg.role === 'user' && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1" style={{ background: 'linear-gradient(135deg, #52525b, #27272a)' }}><User size={15} className="text-white" /></div>}
