@@ -51,14 +51,6 @@ CONFIG_SCOPES: dict[str, dict[str, Any]] = {
     },
 }
 
-CHUNKING_METHODS: tuple[tuple[str, bool], ...] = (
-    ("late", True),
-    ("overlap", True),
-    ("semantic", True),
-    ("sentence", False),
-)
-
-
 class AdminToolbox:
     def __init__(self, settings: Settings, access_token: str | None = None) -> None:
         self._settings = settings
@@ -112,6 +104,14 @@ class AdminToolbox:
             response.raise_for_status()
             return response.json()
 
+    def _get_preprocessing_chunking_strategies(self) -> dict[str, Any]:
+        with self._client() as client:
+            response = client.get(
+                f"{self._settings.preprocessing_base_url.rstrip('/')}/preprocessing/chunking-strategies"
+            )
+            response.raise_for_status()
+            return response.json()
+
     def get_repo_config(self, service_name: str) -> dict[str, Any]:
         normalized = self.resolve_config_scope(service_name)
         scope = CONFIG_SCOPES.get(normalized)
@@ -131,18 +131,7 @@ class AdminToolbox:
         return {"status": "ok", "scope": normalized, "config": config, "sources": source_map}
 
     def get_chunking_methods(self) -> dict[str, Any]:
-        config_payload = self.get_repo_config("preprocessing")
-        return {
-            "status": "ok",
-            "scope": "preprocessing",
-            "current_strategy": config_payload["config"].get("chunk_strategy"),
-            "current_chunk_size": config_payload["config"].get("chunk_size"),
-            "current_chunk_overlap": config_payload["config"].get("chunk_overlap"),
-            "methods": [
-                {"name": name, "implemented": implemented}
-                for name, implemented in CHUNKING_METHODS
-            ],
-        }
+        return self._get_preprocessing_chunking_strategies()
 
     def update_repo_config(self, service_name: str, changes: dict[str, Any]) -> dict[str, Any]:
         normalized = self.resolve_config_scope(service_name)

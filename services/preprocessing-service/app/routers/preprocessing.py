@@ -1,4 +1,5 @@
 import re
+import inspect
 from dataclasses import asdict
 from pathlib import Path
 
@@ -6,6 +7,8 @@ from fastapi import APIRouter, HTTPException, Request
 
 from app.config import Settings
 from app.schemas import (
+    ChunkingStrategiesResponse,
+    ChunkingStrategyItem,
     ChunkResponse,
     PreprocessingConfigResponse,
     ProcessSourceRequest,
@@ -14,6 +17,7 @@ from app.schemas import (
     UpdatePreprocessingConfigResponse,
 )
 from app.service import PreprocessingService
+from chunking.factory import ChunkerFactory
 
 
 router = APIRouter(prefix="/preprocessing", tags=["preprocessing"])
@@ -44,6 +48,32 @@ def _source_payload() -> dict[str, str]:
         "chunk_overlap": source,
         "pipeline_version": source,
     }
+
+
+def _chunking_methods_payload(settings: Settings) -> ChunkingStrategiesResponse:
+    methods: list[ChunkingStrategyItem] = []
+    for name, chunker_cls in sorted(ChunkerFactory._registry.items()):
+        try:
+            source = inspect.getsource(chunker_cls.chunk)
+        except (OSError, TypeError):
+            source = ""
+        implemented = "raise NotImplementedError" not in source
+        methods.append(
+            ChunkingStrategyItem(
+                name=name,
+                exists=True,
+                implemented=implemented,
+            )
+        )
+
+    return ChunkingStrategiesResponse(
+        status="ok",
+        scope="preprocessing",
+        current_strategy=settings.chunk_strategy,
+        current_chunk_size=settings.chunk_size,
+        current_chunk_overlap=settings.chunk_overlap,
+        methods=methods,
+    )
 
 
 def _config_path(request: Request) -> Path:
@@ -145,6 +175,11 @@ def get_config(request: Request) -> PreprocessingConfigResponse:
         config=_config_payload(settings),
         sources=_source_payload(),
     )
+
+
+@router.get("/chunking-strategies", response_model=ChunkingStrategiesResponse)
+def get_chunking_strategies(request: Request) -> ChunkingStrategiesResponse:
+    return _chunking_methods_payload(_runtime_settings(request))
 
 
 @router.put("/config", response_model=UpdatePreprocessingConfigResponse)

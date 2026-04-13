@@ -70,6 +70,29 @@ def test_get_config_returns_runtime_chunk_settings() -> None:
     assert payload["config"]["pipeline_version"] == "v2"
 
 
+def test_get_chunking_strategies_returns_registered_methods() -> None:
+    app = create_app(
+        Settings(
+            chunk_strategy="semantic",
+            chunk_size=640,
+            chunk_overlap=80,
+            pipeline_version="v2",
+        )
+    )
+    client = TestClient(app)
+
+    response = client.get("/preprocessing/chunking-strategies")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["current_strategy"] == "semantic"
+    names = {item["name"] for item in payload["methods"]}
+    assert {"late", "overlap", "semantic", "sentence"} <= names
+    sentence = next(item for item in payload["methods"] if item["name"] == "sentence")
+    assert sentence["exists"] is True
+    assert sentence["implemented"] is False
+
+
 def test_update_config_updates_runtime_and_process_source(tmp_path: Path) -> None:
     source = tmp_path / "sample.txt"
     source.write_text("One two three four five six seven", encoding="utf-8")

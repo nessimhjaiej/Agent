@@ -361,46 +361,204 @@
       {
         "role": "assistant",
         "content": "Confirmed action executed successfully."
+      },
+      {
+        "role": "user",
+        "content": "what is the chunk size ?"
+      },
+      {
+        "role": "assistant",
+        "content": "The current chunk size is 750."
       }
     ],
-    "tool_cache": {},
-    "pending_action": null,
-    "last_message": "confirm",
-    "last_response": "Confirmed action executed successfully.",
-    "last_route": "mutate",
-    "last_topic": "update_repo_config",
-    "last_result": {
-      "route": null,
-      "tool_result": {}
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": "late",
+            "chunk_size": 750,
+            "chunk_overlap": 120,
+            "pipeline_version": "v1"
+          },
+          "sources": {
+            "chunk_strategy": "preprocessing-service runtime",
+            "chunk_size": "preprocessing-service runtime",
+            "chunk_overlap": "preprocessing-service runtime",
+            "pipeline_version": "preprocessing-service runtime"
+          }
+        },
+        "created_at": 1776083917.661416,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
     },
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDgwNDEzLCJpYXQiOjE3NzYwNzY4MTMsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiIiLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImhqYWllam5lc3NpbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc1OTE5NzY4fV0sInNlc3Npb25faWQiOiJhNGQ0OWU0Yy04YTkxLTRkODQtYTJiZS00OTY4NjZmOTAyNDUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.NuDvjAa0fNQdvCMXn6kwxIVrCeEozFJzm3eJY71XSK4PWxpKrw_wTlBtOkI7woY2FjMkqN893Ut7oUusx-boSw",
-    "cache_invalidated_at": 1776077694.840775
+    "pending_action": null,
+    "last_message": "what is the chunk size ?",
+    "last_response": "The current chunk size is 750.",
+    "last_route": "inspect",
+    "last_topic": "view_chunk_size",
+    "last_result": {
+      "route": "inspect",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 750,
+          "chunk_overlap": 120,
+          "pipeline_version": "v1"
+        },
+        "sources": {
+          "chunk_strategy": "preprocessing-service runtime",
+          "chunk_size": "preprocessing-service runtime",
+          "chunk_overlap": "preprocessing-service runtime",
+          "pipeline_version": "preprocessing-service runtime"
+        }
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDg1NjM4LCJpYXQiOjE3NzYwODIwMzgsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0._VLP0dLx4fQOQrtXNprMh4hC07LZIz3npkJ7Y3CB60dtILscSFxNP2yLNXaDeGMcjrvzQiXN6tA2eN2xXFXVag",
+    "cache_invalidated_at": 1776083847.243644
   },
-  "58a77833-9302-4b70-b4c0-d4e564ef8538": {
+  "ad203154-4ec4-4787-9ce7-23c43e34f42d": {
     "history": [
       {
         "role": "user",
-        "content": "please do adjust the chunk size to 750 are you able to do this ?"
+        "content": "what is the chunk size ?"
       },
       {
         "role": "assistant",
-        "content": "That change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluation workflows."
+        "content": "The current chunk size is 750, with a 120 overlap (chunking strategy: late)."
       },
       {
         "role": "user",
-        "content": "what are the other avilable chunking strategies"
+        "content": "where did you find this data ?"
       },
       {
         "role": "assistant",
-        "content": "Short answer: in this deployment, only \u201clate\u201d chunking is available via the admin controls.\n\nIf you\u2019re asking conceptually, common chunking strategies you might consider are:\n- Early chunking: split before embedding or indexing.\n- Recursive/hierarchical chunking: respect headings and structure, fall back to smaller splits.\n- Semantic/embedding-aware chunking: split at meaning boundaries using model signals.\n- Fixed-size sliding windows: fixed tokens/characters with overlap (what we use).\n- Section- or header-aware chunking: split by document sections first, then window within.\n\nIf you want to explore alternatives, I can note the request so it can be enabled in the pipeline, and then we can reindex and evaluate."
+        "content": "I pulled it from the preprocessing configuration currently in use. It reports:\n- chunk_size: 750\n- chunk_overlap: 120\n- chunking strategy: late\n\nThese come from the preprocessing service\u2019s runtime settings."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": "late",
+            "chunk_size": 750,
+            "chunk_overlap": 120,
+            "pipeline_version": "v1"
+          },
+          "sources": {
+            "chunk_strategy": "preprocessing-service runtime",
+            "chunk_size": "preprocessing-service runtime",
+            "chunk_overlap": "preprocessing-service runtime",
+            "pipeline_version": "preprocessing-service runtime"
+          }
+        },
+        "created_at": 1776084041.089415,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      },
+      "{\"args\": {\"service_name\": \"retrieval\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "retrieval"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "retrieval",
+          "config": {
+            "top_k_retrieve": null,
+            "top_k_return": null,
+            "fusion": null,
+            "alpha": null,
+            "rrf_k": null,
+            "ranker": null,
+            "rerank_top_n": null
+          },
+          "sources": {
+            "top_k_retrieve": "unset",
+            "top_k_return": "unset",
+            "fusion": "unset",
+            "alpha": "unset",
+            "rrf_k": "unset",
+            "ranker": "unset",
+            "rerank_top_n": "unset"
+          }
+        },
+        "created_at": 1776083959.688529,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "last_message": "where did you find this data ?",
+    "pending_action": null,
+    "last_response": "I pulled it from the preprocessing configuration currently in use. It reports:\n- chunk_size: 750\n- chunk_overlap: 120\n- chunking strategy: late\n\nThese come from the preprocessing service\u2019s runtime settings.",
+    "last_route": "advisory",
+    "last_topic": "Explain provenance/source of the previously returned configuration data",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 750,
+          "chunk_overlap": 120,
+          "pipeline_version": "v1"
+        },
+        "sources": {
+          "chunk_strategy": "preprocessing-service runtime",
+          "chunk_size": "preprocessing-service runtime",
+          "chunk_overlap": "preprocessing-service runtime",
+          "pipeline_version": "preprocessing-service runtime"
+        }
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDg1NjM4LCJpYXQiOjE3NzYwODIwMzgsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0._VLP0dLx4fQOQrtXNprMh4hC07LZIz3npkJ7Y3CB60dtILscSFxNP2yLNXaDeGMcjrvzQiXN6tA2eN2xXFXVag"
+  },
+  "a069f498-e059-44b1-873e-8eefafea34ec": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what are the available chunking strategies ?"
+      },
+      {
+        "role": "assistant",
+        "content": "Available chunking strategies are late, overlap, semantic. you can change the chunking strategy to any of these: late, overlap, semantic. sentence exists in the pipeline but is not implemented yet. the current chunking strategy is late. the current chunk size is 800 with overlap 120."
       },
       {
         "role": "user",
-        "content": "can you change chunk overlap to 115 and also check the current reranking options"
+        "content": "what is the current used chunking strategy ?"
       },
       {
         "role": "assistant",
-        "content": "I could not map that workflow to a supported operation yet."
+        "content": "The current chunking strategy is: late."
+      },
+      {
+        "role": "user",
+        "content": "and what other options do we have ?"
+      },
+      {
+        "role": "assistant",
+        "content": "Other options you can choose from:\n- overlap: fixed-size chunks with a sliding window (uses chunk size and overlap)\n- semantic: splits along meaning-based boundaries (e.g., sections/headings)\n- sentence: exists in the pipeline but isn\u2019t enabled yet\n\nCurrent setting is late. Current defaults are chunk size 800 and overlap 120.\n\nIf you want to try overlap or semantic, tell me which one and I\u2019ll arrange the change and reindex the documents so it takes effect."
       }
     ],
     "tool_cache": {
@@ -425,224 +583,38 @@
             "pipeline_version": "services/preprocessing-service/app/config.py"
           }
         },
-        "created_at": 1776087572.62705,
+        "created_at": 1776088439.0398886,
         "ttl_seconds": 600,
         "tags": [
           "config"
         ]
       }
     },
-    "last_message": "can you change chunk overlap to 115 and also check the current reranking options",
     "pending_action": null,
-    "last_response": "I could not map that workflow to a supported operation yet.",
-    "last_route": "workflow",
-    "last_topic": "Update chunk overlap to 115 and retrieve the current reranking options.",
-    "last_result": {
-      "route": "workflow",
-      "tool_result": {}
-    },
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDkxMDIwLCJpYXQiOjE3NzYwODc0MjAsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiIiLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImhqYWllam5lc3NpbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc1OTE5NzY4fV0sInNlc3Npb25faWQiOiJhNGQ0OWU0Yy04YTkxLTRkODQtYTJiZS00OTY4NjZmOTAyNDUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.crDrxO0lEW6agbd44Qf4k32jC2ub-bcTkMSZUDP4hK1kgV-LVPqPGY054I3-MQrZZ_Mvn-ilgjJhO3wKKWO9dQ"
-  },
-  "953fb09f-2015-4420-9e34-1ca614341281": {
-    "history": [
-      {
-        "role": "user",
-        "content": "hello"
-      },
-      {
-        "role": "assistant",
-        "content": "Hi! How can I help you today? \nI can check document ingestion status, list loaded documents, run or compare evaluations, or rebuild embeddings if needed."
-      }
-    ],
-    "last_message": "hello",
-    "pending_action": null,
-    "last_response": "Hi! How can I help you today? \nI can check document ingestion status, list loaded documents, run or compare evaluations, or rebuild embeddings if needed.",
+    "last_message": "and what other options do we have ?",
+    "last_response": "Other options you can choose from:\n- overlap: fixed-size chunks with a sliding window (uses chunk size and overlap)\n- semantic: splits along meaning-based boundaries (e.g., sections/headings)\n- sentence: exists in the pipeline but isn\u2019t enabled yet\n\nCurrent setting is late. Current defaults are chunk size 800 and overlap 120.\n\nIf you want to try overlap or semantic, tell me which one and I\u2019ll arrange the change and reindex the documents so it takes effect.",
     "last_route": "advisory",
-    "last_topic": "greeting/no action requested",
+    "last_topic": "Describe available chunking strategy options and when to use each",
     "last_result": {
       "route": "advisory",
-      "tool_result": {}
-    },
-    "access_token": null,
-    "tool_cache": {}
-  },
-  "cb0b6d62-8585-4c39-b45f-0941eb8cce84": {
-    "history": [
-      {
-        "role": "user",
-        "content": "hello"
-      },
-      {
-        "role": "assistant",
-        "content": "Hi! How can I help today? \nI can check document ingestion status, list loaded documents, reindex content, run/compare evaluation reports, or show current retrieval/generation settings."
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 800,
+          "chunk_overlap": 120,
+          "pipeline_version": "v1"
+        },
+        "sources": {
+          "chunk_strategy": "services/preprocessing-service/app/config.py",
+          "chunk_size": "services/preprocessing-service/app/config.py",
+          "chunk_overlap": "services/preprocessing-service/app/config.py",
+          "pipeline_version": "services/preprocessing-service/app/config.py"
+        }
       }
-    ],
-    "last_message": "hello",
-    "pending_action": null,
-    "last_response": "Hi! How can I help today? \nI can check document ingestion status, list loaded documents, reindex content, run/compare evaluation reports, or show current retrieval/generation settings.",
-    "last_route": "advisory",
-    "last_topic": "greeting/no actionable request",
-    "last_result": {
-      "route": "advisory",
-      "tool_result": {}
     },
-    "access_token": null,
-    "tool_cache": {}
-  },
-  "acecfaaa-f09e-46cb-9fd8-a1483ed17351": {
-    "history": [
-      {
-        "role": "user",
-        "content": "give me the current reranking startegy and let me change chunk size to 801"
-      },
-      {
-        "role": "assistant",
-        "content": "I planned these actions in order: check current retrieval settings, update preprocessing settings. Confirm if you want me to execute them."
-      },
-      {
-        "role": "user",
-        "content": "confirm"
-      },
-      {
-        "role": "assistant",
-        "content": "Confirmed action executed successfully."
-      }
-    ],
-    "tool_cache": {},
-    "pending_action": null,
-    "last_message": "confirm",
-    "last_response": "Confirmed action executed successfully.",
-    "last_route": "mutate",
-    "last_topic": "compound_action",
-    "last_result": {
-      "route": null,
-      "tool_result": {}
-    },
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDkzOTM0LCJpYXQiOjE3NzYwOTAzMzQsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiIiLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImhqYWllam5lc3NpbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc1OTIyMjY3fV0sInNlc3Npb25faWQiOiJhYTA2YjUwZi1lZTA3LTQ2NjItYWUzNC1jOWU1YmFmM2RkMDAiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ._kC8GRueemv932hY9K2otjBfOM8to-JjJgvXsDQy5_daIPiKpFywyAWDAv5JYFOaJzfCcFKocjcBlAynZMuPYQ",
-    "cache_invalidated_at": 1776090373.8920557
-  },
-  "cdaf2520-d6c0-4e4a-b305-dd587e873966": {
-    "history": [
-      {
-        "role": "user",
-        "content": "hello"
-      },
-      {
-        "role": "assistant",
-        "content": "Hi there! How can I help today?\n\nI can, for example:\n- Check document ingestion status\n- Reindex a document or all validated documents\n- Run or compare evaluation reports\n- Show current retrieval/embedding/generation settings\n\nTell me what you\u2019d like to do, or ask for the current status."
-      }
-    ],
-    "last_message": "hello",
-    "pending_action": null,
-    "last_response": "Hi there! How can I help today?\n\nI can, for example:\n- Check document ingestion status\n- Reindex a document or all validated documents\n- Run or compare evaluation reports\n- Show current retrieval/embedding/generation settings\n\nTell me what you\u2019d like to do, or ask for the current status.",
-    "last_route": "advisory",
-    "last_topic": "greeting",
-    "last_result": {
-      "route": "advisory",
-      "tool_result": {}
-    },
-    "access_token": null,
-    "tool_cache": {}
-  },
-  "beb0893f-428e-4584-a1d2-3c06531db061": {
-    "history": [
-      {
-        "role": "user",
-        "content": "hello"
-      },
-      {
-        "role": "assistant",
-        "content": "Hi there! How can I help you today? If you\u2019d like, I can check document ingestion status, run or compare evaluations, reindex documents, or review current configuration."
-      }
-    ],
-    "last_message": "hello",
-    "pending_action": null,
-    "last_response": "Hi there! How can I help you today? If you\u2019d like, I can check document ingestion status, run or compare evaluations, reindex documents, or review current configuration.",
-    "last_route": "advisory",
-    "last_topic": "greeting",
-    "last_result": {
-      "route": "advisory",
-      "tool_result": {}
-    },
-    "access_token": null,
-    "tool_cache": {}
-  },
-  "66b41ae7-87ef-4b4c-92ba-1f990c1cddcb": {
-    "history": [
-      {
-        "role": "user",
-        "content": "hello"
-      },
-      {
-        "role": "assistant",
-        "content": "Hi! How can I help today? I can check document ingestion, list or reindex documents, run and compare evaluation reports, and look up current retrieval/embedding/generation settings."
-      }
-    ],
-    "last_message": "hello",
-    "pending_action": null,
-    "last_response": "Hi! How can I help today? I can check document ingestion, list or reindex documents, run and compare evaluation reports, and look up current retrieval/embedding/generation settings.",
-    "last_route": "advisory",
-    "last_topic": "greeting / establish contact",
-    "last_result": {
-      "route": "advisory",
-      "tool_result": {}
-    },
-    "access_token": null,
-    "tool_cache": {}
-  },
-  "c9642fbc-469f-494b-a2dd-28fd1bbaa2b6": {
-    "history": [
-      {
-        "role": "user",
-        "content": "hello"
-      },
-      {
-        "role": "assistant",
-        "content": "Hi there! How can I help you today? \n- Do you want to check document ingestion status?\n- Reindex or refresh embeddings?\n- Run or compare evaluation reports?\n- Review current loaded documents?"
-      }
-    ],
-    "last_message": "hello",
-    "pending_action": null,
-    "last_response": "Hi there! How can I help you today? \n- Do you want to check document ingestion status?\n- Reindex or refresh embeddings?\n- Run or compare evaluation reports?\n- Review current loaded documents?",
-    "last_route": "advisory",
-    "last_topic": "greeting",
-    "last_result": {
-      "route": "advisory",
-      "tool_result": {}
-    },
-    "access_token": null,
-    "tool_cache": {}
-  },
-  "67169e8e-5a42-4262-9a3c-6a7f3d793608": {
-    "history": [
-      {
-        "role": "user",
-        "content": "change the current chunk size to 750 and show me the reranking config"
-      },
-      {
-        "role": "assistant",
-        "content": "I planned these actions in order: update preprocessing settings, check current retrieval settings. Confirm if you want me to execute them."
-      },
-      {
-        "role": "user",
-        "content": "confirm"
-      },
-      {
-        "role": "assistant",
-        "content": "Done: chunk size set to 750; the current reranking strategy is cross_encoder; reranking reviews the top 10 retrieved chunks; retrieval pulls 5 candidates and returns 3."
-      }
-    ],
-    "tool_cache": {},
-    "pending_action": null,
-    "last_message": "confirm",
-    "last_response": "Done: chunk size set to 750; the current reranking strategy is cross_encoder; reranking reviews the top 10 retrieved chunks; retrieval pulls 5 candidates and returns 3.",
-    "last_route": "mutate",
-    "last_topic": "compound_action",
-    "last_result": {
-      "route": null,
-      "tool_result": {}
-    },
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDkxMDIwLCJpYXQiOjE3NzYwODc0MjAsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiIiLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImhqYWllam5lc3NpbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc1OTE5NzY4fV0sInNlc3Npb25faWQiOiJhNGQ0OWU0Yy04YTkxLTRkODQtYTJiZS00OTY4NjZmOTAyNDUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.crDrxO0lEW6agbd44Qf4k32jC2ub-bcTkMSZUDP4hK1kgV-LVPqPGY054I3-MQrZZ_Mvn-ilgjJhO3wKKWO9dQ",
-    "cache_invalidated_at": 1776090810.69665
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDg5MTQ5LCJpYXQiOjE3NzYwODU1NDksImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.D6nBVMYxGbZ2ZjaiOfnJ45WunVQRid0qrMWDD3_DQxAn-emodwXlVEwpTwDA77fOw5xDKGDeJdGcUY5t1ijpYA",
+    "cache_invalidated_at": 1776085438.9688463
   }
 }

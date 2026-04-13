@@ -265,12 +265,13 @@ def _summarize_inspection_result(tool_result: dict[str, Any], message: str, sess
 
         segments = []
         if implemented:
-            segments.append(f"Available chunking methods are {', '.join(implemented)}")
+            segments.append(f"Available chunking strategies are {', '.join(implemented)}")
+            segments.append(f"you can change the chunking strategy to any of these: {', '.join(implemented)}")
         if pending:
             segments.append(f"{', '.join(pending)} exists in the pipeline but is not implemented yet")
         current_strategy = tool_result.get("current_strategy")
         if current_strategy:
-            segments.append(f"the current default strategy is {current_strategy}")
+            segments.append(f"the current chunking strategy is {current_strategy}")
         chunk_size = tool_result.get("current_chunk_size")
         chunk_overlap = tool_result.get("current_chunk_overlap")
         if chunk_size is not None and chunk_overlap is not None:
@@ -800,6 +801,42 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
         )
         activity.append(inspect_started)
         _emit_progress(progress_callback, inspect_started)
+        if _is_chunking_methods_question(state["message"]):
+            tool_result = toolbox.get_chunking_methods()
+            tool_activity = [
+                {
+                    "phase": "tool",
+                    "status": "completed",
+                    "title": "Chunking strategies inspected",
+                    "detail": "The agent read the current preprocessing chunking strategies and the active default.",
+                    "tool": "get_chunking_methods",
+                    "arguments": {},
+                }
+            ]
+            if progress_callback is not None:
+                progress_callback(tool_activity[-1])
+            answer = _summarize_inspection_result(tool_result, state["message"], state.get("session_context", {}))
+            answer = _normalize_user_answer(answer)
+            activity.extend(tool_activity)
+            inspect_finished = _progress_item(
+                phase="inspect",
+                status="completed",
+                title="Inspection finished",
+                detail="Live chunking strategy information was prepared for the admin.",
+            )
+            activity.append(inspect_finished)
+            _emit_progress(progress_callback, inspect_finished)
+            return {
+                **state,
+                "status": "completed",
+                "final_answer": answer,
+                "current_step": "summarize",
+                "activity": activity,
+                "tool_result": tool_result,
+                "tool_call_count": 1,
+                "tool_cache_updates": {},
+            }
+
         try:
             answer, tool_result, tool_activity, tool_call_count, cache_updates = _run_llm_tool_loop(
                 settings=settings,
