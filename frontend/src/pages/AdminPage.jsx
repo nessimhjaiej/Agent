@@ -20,7 +20,6 @@ import TypingIndicator from '../components/TypingIndicator';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import {
-  askGeneration,
   deleteDocumentRecord,
   deleteManagedUser,
   getDocumentSignedUrl,
@@ -31,6 +30,7 @@ import {
   removeDocumentChunks,
   setUserBlock,
   setUserValidation,
+  streamAdmin,
   updateDocumentStatus,
   uploadDocument,
 } from '../config/api';
@@ -109,6 +109,8 @@ export default function AdminPage() {
   ]);
   const [agentInput, setAgentInput] = useState('');
   const [typing, setTyping] = useState(false);
+  const [agentSessionId, setAgentSessionId] = useState(null);
+  const [agentPendingAction, setAgentPendingAction] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -567,16 +569,69 @@ export default function AdminPage() {
         await loadDocuments();
         content = `Documents loaded. total=${docs.length}, embedded=${docs.filter((d) => d.embedded).length}.`;
       } else {
-        const history = agentMsgs.filter((m) => m.role === 'user' || m.role === 'assistant').map((m) => ({ role: m.role, content: m.content }));
-        const response = await askGeneration({ query: userText, chatHistory: history });
-        content = response.answer || 'No answer returned by generation service.';
-        sources = Array.isArray(response?.citations)
-          ? [...new Set(response.citations.map((citation) => citation.document_name).filter(Boolean))]
+        const accessToken = await getAccessToken();
+        let finalResponse = null;
+        await streamAdmin(
+          {
+            message: userText,
+            session_id: agentSessionId,
+            selected_mode: 'qa',
+            access_token: accessToken,
+          },
+          (event) => {
+            if (event.session_id) {
+              setAgentSessionId(event.session_id);
+            }
+            if (event.type === 'confirmation') {
+              setAgentPendingAction(event.data);
+            }
+            if (event.type === 'response') {
+              finalResponse = event.data;
+            }
+          }
+        );
+        content = finalResponse?.answer || 'No answer returned by admin service.';
+        sources = Array.isArray(finalResponse?.citations)
+          ? [...new Set(finalResponse.citations.map((citation) => citation.document_name).filter(Boolean))]
           : [];
+        setAgentPendingAction(finalResponse?.pending_action || null);
       }
       setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources }]);
     } catch (error) {
       setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: `Request failed: ${error.message}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources: [] }]);
+    } finally {
+      setTyping(false);
+    }
+  };
+
+  const confirmAgentAction = async () => {
+    if (!agentPendingAction || typing) return;
+    setTyping(true);
+    try {
+      const accessToken = await getAccessToken();
+      let finalResponse = null;
+      await streamAdmin(
+        {
+          message: 'confirm',
+          session_id: agentSessionId,
+          selected_mode: 'qa',
+          confirm: true,
+          pending_action: agentPendingAction,
+          access_token: accessToken,
+        },
+        (event) => {
+          if (event.session_id) {
+            setAgentSessionId(event.session_id);
+          }
+          if (event.type === 'response') {
+            finalResponse = event.data;
+          }
+        }
+      );
+      setAgentPendingAction(null);
+      setAgentMsgs((prev) => [...prev, { id: `${Date.now()}-confirm`, role: 'assistant', content: finalResponse?.answer || 'Action confirmed.', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources: [] }]);
+    } catch (error) {
+      setAgentMsgs((prev) => [...prev, { id: `${Date.now()}-confirm-error`, role: 'assistant', content: `Confirmation failed: ${error.message}`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources: [] }]);
     } finally {
       setTyping(false);
     }
@@ -1040,8 +1095,40 @@ export default function AdminPage() {
                   <div className="py-3 w-full" style={{ transform: 'translateY(-14px)' }}>
                     <div className="max-w-5xl md:-ml-24 lg:-ml-32 xl:-ml-40" style={{ marginLeft: '0', marginRight: 'auto' }}>
                       <div className="w-full" style={{ paddingLeft: '44px', paddingRight: '44px' }}>
+                        {agentPendingAction && (
+                          <div
+                            className="mb-3 flex items-center justify-between gap-3 rounded-2xl"
+                            style={{
+                              background: 'rgba(245,158,11,0.08)',
+                              border: '1px solid rgba(245,158,11,0.22)',
+                              padding: '14px 18px',
+                            }}
+                          >
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                                Confirmation required
+                              </p>
+                              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                                {agentPendingAction.summary || 'This action needs your confirmation before execution.'}
+                              </p>
+                            </div>
+                            <motion.button
+                              onClick={confirmAgentAction}
+                              disabled={typing}
+                              className="rounded-xl text-sm font-medium text-white disabled:opacity-50 shrink-0"
+                              style={{
+                                background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                                minHeight: '42px',
+                                paddingLeft: '18px',
+                                paddingRight: '18px',
+                              }}
+                            >
+                              Confirm
+                            </motion.button>
+                          </div>
+                        )}
                         <div className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-                          <textarea id="admin-agent-input" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }} placeholder='Try: "refresh status" or "embed validated"' rows={3} className="flex-1 bg-transparent outline-none text-sm resize-none max-h-56" style={{ color: 'var(--text-primary)', padding: '16px 24px' }} />
+                          <textarea id="admin-agent-input" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }} placeholder='Try: "refresh status", "embed validated", or "run evaluation"' rows={3} className="flex-1 bg-transparent outline-none text-sm resize-none max-h-56" style={{ color: 'var(--text-primary)', padding: '16px 24px' }} />
                           <motion.button id="admin-send" onClick={sendAgent} disabled={!agentInput.trim() || typing} className="rounded-xl disabled:opacity-20 shrink-0" style={{ padding: '16px 22px', marginRight: '8px' }}>
                             <Send size={16} color={agentInput.trim() && !typing ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
                           </motion.button>

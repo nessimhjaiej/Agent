@@ -1,14 +1,21 @@
 [
   {
-    "question": "What are the obligations for AML transaction monitoring?",
-    "reference": "Financial institutions should apply risk-based transaction monitoring, document suspicious activity, and report it to the competent authority within required timelines.",
+    "question": " What is the ICC ?",
+    "reference": "The International Chamber of Commerce (ICC) is the world’s largest business organization, representing over 45 million companies in 170+ countries, often referred to as the world business organization. It promotes international trade and investment, responsible business conduct, and a global approach to regulation through a unique mix of advocacy, solutions, and standard setting.",
     "mode": "hybrid",
     "top_k_retrieve": 8,
     "top_k_return": 5
   },
   {
-    "question": "When is customer due diligence required?",
-    "reference": "CDD is required before establishing a business relationship, for occasional high-value transactions, when suspicion arises, and when customer identity information is doubtful.",
+    "question": "Why is international cooperation considered essential in combating cybercrime?",
+    "reference": "International cooperation is essential in combating cybercrime because cyber threats transcend national borders, requiring coordinated efforts to investigate, prosecute, and prevent such crimes effectively.",
+    "mode": "hybrid",
+    "top_k_retrieve": 8,
+    "top_k_return": 5
+  } ,
+  {
+    "question": "What are the key challenges in international cooperation against cybercrime?",
+    "reference": "Key challenges in international cooperation against cybercrime include differences in legal frameworks, varying levels of technological capabilities, issues of jurisdiction, and the need for effective communication and trust between countries.",
     "mode": "hybrid",
     "top_k_retrieve": 8,
     "top_k_return": 5

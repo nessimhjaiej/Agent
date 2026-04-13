@@ -46,6 +46,7 @@ def _parse_bool(name: str, default: bool) -> bool:
 class Settings:
     app_name: str = "generation-service"
     app_version: str = "0.1.0"
+    project_root: Path = _PROJECT_ROOT
     openai_key: str = ""
     generation_model: str = "gpt-4o"
     transcription_model: str = "gpt-4o-mini-transcribe"
@@ -67,12 +68,14 @@ class Settings:
     generation_require_citations: bool = True
     generation_strict_citation_validation: bool = True
     default_scope_fallback: str = "This is beyond my scope."
+    evaluation_reports_dir: str = str(_PROJECT_ROOT / "docs" / "evaluation_reports")
 
     @classmethod
     def from_env(cls) -> "Settings":
         return cls(
             app_name=os.getenv("GENERATION_APP_NAME", "generation-service"),
             app_version=os.getenv("GENERATION_APP_VERSION", "0.1.0"),
+            project_root=_PROJECT_ROOT,
             openai_key=os.getenv("OPENAI_KEY", ""),
             generation_model=os.getenv("GENERATION_MODEL", "gpt-4o"),
             transcription_model=os.getenv(
@@ -103,5 +106,9 @@ class Settings:
             ),
             default_scope_fallback=os.getenv(
                 "GENERATION_SCOPE_FALLBACK_TEXT", "This is beyond my scope."
+            ),
+            evaluation_reports_dir=os.getenv(
+                "GENERATION_EVALUATION_REPORTS_DIR",
+                str(_PROJECT_ROOT / "docs" / "evaluation_reports"),
             ),
         )
