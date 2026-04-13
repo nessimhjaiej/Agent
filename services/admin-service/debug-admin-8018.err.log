@@ -1,9 +1,0 @@
-INFO:     Will watch for changes in these directories: ['C:\\Users\\NESSIM\\Desktop\\agentic\\services\\admin-service']
-INFO:     Uvicorn running on http://0.0.0.0:8018 (Press CTRL+C to quit)
-INFO:     Started reloader process [17368] using WatchFiles
-INFO:     Started server process [14548]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-C:\Users\NESSIM\AppData\Local\Programs\Python\Python312\Lib\site-packages\langchain_openai\chat_models\base.py:521: UserWarning: Invalid schema for OpenAI's structured output feature, which is the default method for `with_structured_output` as of langchain-openai==0.3. Specify `method="function_calling"` instead or update your schema. See supported schemas: https://platform.openai.com/docs/guides/structured-outputs#supported-schemas
-  warnings.warn(message)
-WARNING:  WatchFiles detected changes in 'app\config.py'. Reloading...

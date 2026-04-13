@@ -87,3 +87,44 @@ class TranscriptionResponse(BaseModel):
     text: str = Field(..., min_length=1)
     model: str = Field(..., min_length=1)
     filename: str = Field(..., min_length=1)
+
+
+class EvaluationRunRequest(BaseModel):
+    dataset_path: str = Field(default="evals/sample_eval_dataset.json", min_length=1)
+
+
+class EvaluationReportSummaryResponse(BaseModel):
+    report_id: str = Field(..., min_length=1)
+    filename: str = Field(..., min_length=1)
+    generated_at_utc: str
+    sample_count: int = Field(..., ge=0)
+    dataset_path: str
+    summary: dict[str, float] = Field(default_factory=dict)
+
+
+class EvaluationRunResponse(BaseModel):
+    status: str = Field(default="ok", pattern="^(ok)$")
+    report: EvaluationReportSummaryResponse
+
+
+class EvaluationListResponse(BaseModel):
+    status: str = Field(default="ok", pattern="^(ok)$")
+    reports: list[EvaluationReportSummaryResponse] = Field(default_factory=list)
+
+
+class EvaluationCompareRequest(BaseModel):
+    baseline_report_id: str = Field(..., min_length=1)
+    candidate_report_id: str = Field(..., min_length=1)
+
+
+class EvaluationMetricDelta(BaseModel):
+    baseline: float | None = None
+    candidate: float | None = None
+    delta: float | None = None
+
+
+class EvaluationCompareResponse(BaseModel):
+    status: str = Field(default="ok", pattern="^(ok)$")
+    baseline_report_id: str = Field(..., min_length=1)
+    candidate_report_id: str = Field(..., min_length=1)
+    metrics: dict[str, EvaluationMetricDelta] = Field(default_factory=dict)

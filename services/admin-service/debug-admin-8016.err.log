@@ -1,6 +1,0 @@
-INFO:     Started server process [15612]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:8016 (Press CTRL+C to quit)
-C:\Users\NESSIM\AppData\Local\Programs\Python\Python312\Lib\site-packages\langchain_openai\chat_models\base.py:521: UserWarning: Invalid schema for OpenAI's structured output feature, which is the default method for `with_structured_output` as of langchain-openai==0.3. Specify `method="function_calling"` instead or update your schema. See supported schemas: https://platform.openai.com/docs/guides/structured-outputs#supported-schemas
-  warnings.warn(message)

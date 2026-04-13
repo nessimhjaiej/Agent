@@ -1,0 +1,192 @@
+{
+  "f7914c5c-319e-49e3-8a59-77a28d88fb32": {
+    "history": [
+      {
+        "role": "user",
+        "content": "hello"
+      },
+      {
+        "role": "assistant",
+        "content": "Hi! How can I help today? I can check document ingestion status, reindex documents, run or compare evaluation reports, or review retrieval/generation settings\u2014just tell me what you\u2019d like to do."
+      }
+    ],
+    "last_message": "hello",
+    "pending_action": null,
+    "last_response": "Hi! How can I help today? I can check document ingestion status, reindex documents, run or compare evaluation reports, or review retrieval/generation settings\u2014just tell me what you\u2019d like to do.",
+    "last_route": "advisory",
+    "last_topic": "greeting",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": null,
+    "tool_cache": {}
+  },
+  "15752d33-5d12-442a-9fa2-4e6fa971cc1b": {
+    "history": [
+      {
+        "role": "user",
+        "content": "hello"
+      },
+      {
+        "role": "assistant",
+        "content": "Hi! How can I help today? \n- Check document ingestion status\n- Reindex or refresh embeddings\n- Run or compare evaluation reports\n- Review current documents and their states\n\nTell me what you\u2019d like to do."
+      }
+    ],
+    "last_message": "hello",
+    "pending_action": null,
+    "last_response": "Hi! How can I help today? \n- Check document ingestion status\n- Reindex or refresh embeddings\n- Run or compare evaluation reports\n- Review current documents and their states\n\nTell me what you\u2019d like to do.",
+    "last_route": "advisory",
+    "last_topic": "greeting/no-action",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": null,
+    "tool_cache": {}
+  },
+  "3a5b7a09-903d-4787-9bbc-a0cc976882d1": {
+    "history": [
+      {
+        "role": "user",
+        "content": "hello"
+      },
+      {
+        "role": "assistant",
+        "content": "Hi there! How can I help you today?"
+      }
+    ],
+    "last_message": "hello",
+    "pending_action": null,
+    "last_response": "Hi there! How can I help you today?",
+    "last_route": "advisory",
+    "last_topic": "greeting/opening",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": null,
+    "tool_cache": {}
+  },
+  "097aee91-55c0-45ac-9157-49e40e11e176": {
+    "history": [
+      {
+        "role": "user",
+        "content": "hello"
+      },
+      {
+        "role": "assistant",
+        "content": "Hi there! How can I help today? I can check document ingestion status, reindex documents, run evaluation reports, or review current configs\u2014just say what you need."
+      }
+    ],
+    "last_message": "hello",
+    "pending_action": null,
+    "last_response": "Hi there! How can I help today? I can check document ingestion status, reindex documents, run evaluation reports, or review current configs\u2014just say what you need.",
+    "last_route": "advisory",
+    "last_topic": "Greeting (no actionable admin request)",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": null,
+    "tool_cache": {}
+  },
+  "6c55cb1f-31a0-44be-b29c-d0aacda3819f": {
+    "history": [
+      {
+        "role": "user",
+        "content": "c'est quoi la start\u00e9gie de d\u00e9coupage actuelle ?"
+      },
+      {
+        "role": "assistant",
+        "content": "Voici la configuration de d\u00e9coupage actuelle:\n- Strat\u00e9gie: late (d\u00e9coupage tardif)\n- Taille des chunks: 750\n- Chevauchement: 120\n\nSouhaitez-vous que je l\u2019ajuste ?"
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": "late",
+            "chunk_size": 750,
+            "chunk_overlap": 120,
+            "pipeline_version": "v1"
+          },
+          "sources": {
+            "chunk_strategy": ".env.local",
+            "chunk_size": ".env.local",
+            "chunk_overlap": ".env.local",
+            "pipeline_version": ".env"
+          }
+        },
+        "created_at": 1776006756.049372,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "last_message": "c'est quoi la start\u00e9gie de d\u00e9coupage actuelle ?",
+    "pending_action": null,
+    "last_response": "Voici la configuration de d\u00e9coupage actuelle:\n- Strat\u00e9gie: late (d\u00e9coupage tardif)\n- Taille des chunks: 750\n- Chevauchement: 120\n\nSouhaitez-vous que je l\u2019ajuste ?",
+    "last_route": "inspect",
+    "last_topic": "Retrieve the current segmentation/slicing strategy setting",
+    "last_result": {
+      "route": "inspect",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 750,
+          "chunk_overlap": 120,
+          "pipeline_version": "v1"
+        },
+        "sources": {
+          "chunk_strategy": ".env.local",
+          "chunk_size": ".env.local",
+          "chunk_overlap": ".env.local",
+          "pipeline_version": ".env"
+        }
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDEwMzI5LCJpYXQiOjE3NzYwMDY3MjksImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiIiLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImhqYWllam5lc3NpbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc1OTE5NzY4fV0sInNlc3Npb25faWQiOiJhNGQ0OWU0Yy04YTkxLTRkODQtYTJiZS00OTY4NjZmOTAyNDUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.sZQmcfVDDh7MffELr0OIA70YToIX9Zim9BYLBKoieYxOVcZdQG99ynsZgraYP5nCEjA_wLE_gTTab99mUE0zEQ"
+  },
+  "c4a6e112-b6c2-488e-9ccc-03dcd0c3da46": {
+    "history": [
+      {
+        "role": "user",
+        "content": "change chunk size to 800"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the preprocessing settings with {'chunk_size': 800}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Confirmed action executed successfully."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Confirmed action executed successfully.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDEwMzI5LCJpYXQiOjE3NzYwMDY3MjksImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiIiLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImhqYWllam5lc3NpbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc1OTE5NzY4fV0sInNlc3Npb25faWQiOiJhNGQ0OWU0Yy04YTkxLTRkODQtYTJiZS00OTY4NjZmOTAyNDUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.sZQmcfVDDh7MffELr0OIA70YToIX9Zim9BYLBKoieYxOVcZdQG99ynsZgraYP5nCEjA_wLE_gTTab99mUE0zEQ",
+    "cache_invalidated_at": 1776007048.0002286
+  }
+}

@@ -12,6 +12,7 @@
 
 const API = {
   auth: '/api/auth',
+  admin: '/api/admin',
   preprocessing: '/api/preprocessing',
   embedding: '/api/embedding',
   retrieval: '/api/retrieval',
@@ -118,6 +119,40 @@ export async function askGeneration({ query, chatHistory = [] }) {
     query,
     chat_history: chatHistory,
   });
+}
+
+export async function streamAdmin(payload, onEvent) {
+  const response = await fetch(`${API.admin}/admin/chat/stream`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok || !response.body) {
+    const detail = await parseResponse(response);
+    return detail;
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      onEvent(JSON.parse(line));
+    }
+  }
+
+  if (buffer.trim()) {
+    onEvent(JSON.parse(buffer));
+  }
 }
 
 export async function listDocuments(accessToken, userId) {
