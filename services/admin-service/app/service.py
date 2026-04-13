@@ -1,3 +1,6 @@
+from queue import Queue
+from threading import Thread
+
 from app.config import Settings
 from app.graph import run_graph
 from app.schemas import AdminActivityItem, AdminAgentRunState, AdminChatRequest, AdminChatResponse, AdminPendingAction
@@ -12,6 +15,67 @@ class AdminService:
         self._toolbox = AdminToolbox(self._settings)
 
     def chat(self, payload: AdminChatRequest) -> AdminChatResponse:
+        return self.chat_with_progress(payload)
+
+    def chat_events(self, payload: AdminChatRequest):
+        session_id = self._sessions.ensure_session_id(payload.session_id)
+        yield {
+            "type": "status",
+            "status": "started",
+            "session_id": session_id,
+            "message": payload.message,
+        }
+
+        event_queue: Queue[dict] = Queue()
+
+        def _worker() -> None:
+            try:
+                response = self.chat_with_progress(
+                    payload.model_copy(update={"session_id": session_id}),
+                    lambda activity_item: event_queue.put(
+                        {
+                            "type": "activity",
+                            "session_id": session_id,
+                            "data": activity_item,
+                        }
+                    ),
+                )
+                if response.pending_action is not None:
+                    event_queue.put(
+                        {
+                            "type": "confirmation",
+                            "session_id": session_id,
+                            "data": response.pending_action.model_dump(),
+                        }
+                    )
+                event_queue.put(
+                    {
+                        "type": "response",
+                        "session_id": session_id,
+                        "data": response.model_dump(),
+                    }
+                )
+            except Exception as exc:
+                event_queue.put(
+                    {
+                        "type": "error",
+                        "session_id": session_id,
+                        "message": str(exc),
+                    }
+                )
+            finally:
+                event_queue.put({"type": "done", "session_id": session_id})
+
+        worker = Thread(target=_worker, daemon=True)
+        worker.start()
+
+        while True:
+            event = event_queue.get()
+            yield event
+            if event.get("type") == "done":
+                break
+
+    def chat_with_progress(self, payload: AdminChatRequest, progress_callback=None) -> AdminChatResponse:
         session_id = self._sessions.ensure_session_id(payload.session_id)
         session = self._sessions.load(session_id)
         access_token = payload.access_token or session.get("access_token")
@@ -35,6 +99,7 @@ class AdminService:
             ),
             self._settings,
             session_context=self._memory_snapshot(session),
+            progress_callback=progress_callback,
         )
         self._sessions.append_turn(session_id, "user", payload.message)
         self._sessions.append_turn(session_id, "assistant", response.answer)
@@ -55,41 +120,6 @@ class AdminService:
             },
         )
         return response
-
-    def chat_events(self, payload: AdminChatRequest):
-        session_id = self._sessions.ensure_session_id(payload.session_id)
-        yield {
-            "type": "status",
-            "status": "started",
-            "session_id": session_id,
-            "message": payload.message,
-        }
-
-        response = self.chat(payload.model_copy(update={"session_id": session_id}))
-
-        for item in response.activity:
-            yield {
-                "type": "activity",
-                "session_id": session_id,
-                "data": item.model_dump(),
-            }
-
-        if response.pending_action is not None:
-            yield {
-                "type": "confirmation",
-                "session_id": session_id,
-                "data": response.pending_action.model_dump(),
-            }
-
-        yield {
-            "type": "response",
-            "session_id": session_id,
-            "data": response.model_dump(),
-        }
-        yield {
-            "type": "done",
-            "session_id": session_id,
-        }
 
     def _execute_confirmed_action(
         self,

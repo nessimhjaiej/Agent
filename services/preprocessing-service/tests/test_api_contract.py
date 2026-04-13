@@ -49,6 +49,58 @@ def test_process_source_txt_endpoint(tmp_path: Path) -> None:
     assert payload["chunks"][0]["metadata"]["chunking_strategy"] == "overlap"
 
 
+def test_get_config_returns_runtime_chunk_settings() -> None:
+    app = create_app(
+        Settings(
+            chunk_strategy="semantic",
+            chunk_size=640,
+            chunk_overlap=80,
+            pipeline_version="v2",
+        )
+    )
+    client = TestClient(app)
+
+    response = client.get("/preprocessing/config")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["config"]["chunk_strategy"] == "semantic"
+    assert payload["config"]["chunk_size"] == 640
+    assert payload["config"]["chunk_overlap"] == 80
+    assert payload["config"]["pipeline_version"] == "v2"
+
+
+def test_update_config_updates_runtime_and_process_source(tmp_path: Path) -> None:
+    source = tmp_path / "sample.txt"
+    source.write_text("One two three four five six seven", encoding="utf-8")
+    app = create_app(Settings(chunk_strategy="late", chunk_size=800, chunk_overlap=120, pipeline_version="v1"))
+    app.state.env_local_path = tmp_path / ".env.local"
+    client = TestClient(app)
+
+    update_response = client.put(
+        "/preprocessing/config",
+        json={"chunk_strategy": "overlap", "chunk_size": 32, "chunk_overlap": 4},
+    )
+
+    assert update_response.status_code == 200
+    updated = update_response.json()
+    assert updated["updated"]["chunk_strategy"] == "overlap"
+    assert updated["updated"]["chunk_size"] == 32
+    assert updated["updated"]["chunk_overlap"] == 4
+
+    config_response = client.get("/preprocessing/config")
+    assert config_response.status_code == 200
+    config_payload = config_response.json()
+    assert config_payload["config"]["chunk_strategy"] == "overlap"
+    assert config_payload["config"]["chunk_size"] == 32
+    assert config_payload["config"]["chunk_overlap"] == 4
+
+    process_response = client.post("/preprocessing/process-source", json={"source_path": str(source)})
+    assert process_response.status_code == 200
+    process_payload = process_response.json()
+    assert process_payload["chunks"][0]["metadata"]["chunking_strategy"] == "overlap"
+
+
 def test_process_source_accepts_document_id_override(tmp_path: Path) -> None:
     source = tmp_path / "sample.txt"
     source.write_text("One two three four five six seven", encoding="utf-8")

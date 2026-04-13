@@ -12,6 +12,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         title=runtime_settings.app_name,
         version=runtime_settings.app_version,
     )
+    app.state.settings = runtime_settings
     app.add_middleware(
         RequestSizeLimitMiddleware,
         max_request_size_bytes=runtime_settings.max_request_size_bytes,

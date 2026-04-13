@@ -1,0 +1,116 @@
+{
+  "925cc6d5-32d7-42d1-a902-ff4237ed01d2": {
+    "history": [
+      {
+        "role": "user",
+        "content": "set chunk_strategy to semantic"
+      },
+      {
+        "role": "assistant",
+        "content": "Available chunking methods are late, overlap, semantic. sentence exists in the pipeline but is not implemented yet. the current default strategy is late. the current chunk size is 800 with overlap 120."
+      }
+    ],
+    "last_message": "set chunk_strategy to semantic",
+    "pending_action": null,
+    "last_response": "Available chunking methods are late, overlap, semantic. sentence exists in the pipeline but is not implemented yet. the current default strategy is late. the current chunk size is 800 with overlap 120.",
+    "last_route": "inspect",
+    "last_topic": "chunking",
+    "last_result": {
+      "route": "inspect",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "current_strategy": "late",
+        "current_chunk_size": 800,
+        "current_chunk_overlap": 120,
+        "methods": [
+          {
+            "name": "late",
+            "implemented": true
+          },
+          {
+            "name": "overlap",
+            "implemented": true
+          },
+          {
+            "name": "semantic",
+            "implemented": true
+          },
+          {
+            "name": "sentence",
+            "implemented": false
+          }
+        ]
+      }
+    },
+    "access_token": null,
+    "tool_cache": {}
+  },
+  "d128900f-09c3-4013-a211-17754d8447f2": {
+    "history": [
+      {
+        "role": "user",
+        "content": "change chunk size to 900"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the preprocessing settings with {'chunk_size': 900}. Confirm if you want me to apply that change."
+      }
+    ],
+    "last_message": "change chunk size to 900",
+    "pending_action": {
+      "intent": "mutation",
+      "tool": "update_repo_config",
+      "arguments": {
+        "service_name": "preprocessing",
+        "changes": {
+          "chunk_size": 900
+        }
+      },
+      "steps": []
+    },
+    "last_response": "I am ready to update the preprocessing settings with {'chunk_size': 900}. Confirm if you want me to apply that change.",
+    "last_route": "mutate",
+    "last_topic": "chunking",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "access_token": null,
+    "tool_cache": {}
+  },
+  "82ff45cc-bc74-4219-9c8e-b47d345131f6": {
+    "history": [
+      {
+        "role": "user",
+        "content": "update chunk_overlap to 64"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the preprocessing settings with {'chunk_strategy': 'overlap', 'chunk_overlap': 64}. Confirm if you want me to apply that change."
+      }
+    ],
+    "last_message": "update chunk_overlap to 64",
+    "pending_action": {
+      "intent": "mutation",
+      "tool": "update_repo_config",
+      "arguments": {
+        "service_name": "preprocessing",
+        "changes": {
+          "chunk_strategy": "overlap",
+          "chunk_overlap": 64
+        }
+      },
+      "steps": []
+    },
+    "last_response": "I am ready to update the preprocessing settings with {'chunk_strategy': 'overlap', 'chunk_overlap': 64}. Confirm if you want me to apply that change.",
+    "last_route": "mutate",
+    "last_topic": "chunking",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "access_token": null,
+    "tool_cache": {}
+  }
+}

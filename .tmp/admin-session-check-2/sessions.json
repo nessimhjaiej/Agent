@@ -1,0 +1,41 @@
+{
+  "89e72e7f-2063-47a4-9183-ee4b4f13db34": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what are the available chunking methods"
+      },
+      {
+        "role": "assistant",
+        "content": "Available chunking methods are late, overlap, semantic. sentence exists in the pipeline but is not implemented yet. the current default strategy is late. the current chunk size is 800 with overlap 120."
+      },
+      {
+        "role": "user",
+        "content": "and what is the current chunk size?"
+      },
+      {
+        "role": "assistant",
+        "content": "The lowest-cost setup is the simplest one: fewer retrieval steps, no reranking unless quality needs it, and evaluation before changing production. If you want, I can compare that advice with your current reports or documents."
+      },
+      {
+        "role": "user",
+        "content": "and overlap?"
+      },
+      {
+        "role": "assistant",
+        "content": "The lowest-cost setup is the simplest one: fewer retrieval steps, no reranking unless quality needs it, and evaluation before changing production. If you want, I can compare that advice with your current reports or documents."
+      }
+    ],
+    "last_message": "and overlap?",
+    "pending_action": null,
+    "last_response": "The lowest-cost setup is the simplest one: fewer retrieval steps, no reranking unless quality needs it, and evaluation before changing production. If you want, I can compare that advice with your current reports or documents.",
+    "last_route": "advisory",
+    "last_topic": "chunking",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": null,
+    "tool_cache": {}
+  }
+}

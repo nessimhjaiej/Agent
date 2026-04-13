@@ -24,13 +24,14 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> "Settings":
+        defaults = cls()
         return cls(
             app_name=os.getenv("PREPROCESSING_APP_NAME", "preprocessing-service"),
             app_version=os.getenv("PREPROCESSING_APP_VERSION", "0.1.0"),
-            chunk_strategy=os.getenv("PREPROCESSING_CHUNK_STRATEGY", "late"),
-            chunk_size=int(os.getenv("PREPROCESSING_CHUNK_SIZE", "800")),
-            chunk_overlap=int(os.getenv("PREPROCESSING_CHUNK_OVERLAP", "120")),
-            pipeline_version=os.getenv("PREPROCESSING_PIPELINE_VERSION", "v1"),
+            chunk_strategy=defaults.chunk_strategy,
+            chunk_size=defaults.chunk_size,
+            chunk_overlap=defaults.chunk_overlap,
+            pipeline_version=os.getenv("PREPROCESSING_PIPELINE_VERSION", defaults.pipeline_version),
             rate_limit_requests=int(os.getenv("PREPROCESSING_RATE_LIMIT_REQUESTS", "60")),
             rate_limit_window_seconds=int(os.getenv("PREPROCESSING_RATE_LIMIT_WINDOW_SECONDS", "60")),
             max_request_size_bytes=int(os.getenv("PREPROCESSING_MAX_REQUEST_SIZE_BYTES", "1048576")),

@@ -31,6 +31,7 @@ class Settings:
     max_iterations: int = 8
     max_tool_calls: int = 8
     ingestion_base_url: str = "http://localhost:8005"
+    preprocessing_base_url: str = "http://localhost:8000"
     embedding_base_url: str = "http://localhost:8002"
     generation_base_url: str = "http://localhost:8004"
     retrieval_base_url: str = "http://localhost:8003"
@@ -50,6 +51,7 @@ class Settings:
             max_iterations=_parse_int("ADMIN_MAX_ITERATIONS", 8),
             max_tool_calls=_parse_int("ADMIN_MAX_TOOL_CALLS", 8),
             ingestion_base_url=os.getenv("INGESTION_BASE_URL", "http://localhost:8005"),
+            preprocessing_base_url=os.getenv("PREPROCESSING_BASE_URL", "http://localhost:8000"),
             embedding_base_url=os.getenv("EMBEDDING_BASE_URL", "http://localhost:8002"),
             generation_base_url=os.getenv("GENERATION_BASE_URL", "http://localhost:8004"),
             retrieval_base_url=os.getenv("RETRIEVAL_BASE_URL", "http://localhost:8003"),
