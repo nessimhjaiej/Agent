@@ -88,6 +88,36 @@ def test_run_graph_routes_to_inspect(monkeypatch) -> None:  # noqa: ANN001
     assert response.mode == "inspect"
 
 
+def test_run_graph_downgrades_unsupported_workflow(monkeypatch) -> None:  # noqa: ANN001
+    classifier = IntentClassification(category="workflow", intent="workflow", reasoning="test")
+    monkeypatch.setattr(IntentClassifier, "classify", lambda self, message: classifier)
+
+    response = run_graph(AdminChatRequest(message="do the best procedure for current documents"), _settings())
+
+    assert response.mode != "workflow"
+    assert response.status == "ok"
+
+
+def test_run_graph_builds_compound_plan(tmp_path: Path) -> None:
+    settings = Settings(project_root=tmp_path, openai_key="", max_iterations=8, max_tool_calls=8)
+    (tmp_path / ".env").write_text(
+        "RETRIEVAL_DEFAULT_RANKER=none\nPREPROCESSING_CHUNK_OVERLAP=120\n",
+        encoding="utf-8",
+    )
+
+    response = run_graph(
+        AdminChatRequest(message="change chunk overlap to 115 and also check the current reranking options"),
+        settings,
+    )
+
+    assert response.status == "needs_confirmation"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "compound_action"
+    assert len(response.pending_action.steps) == 2
+    assert response.pending_action.steps[0].tool == "update_repo_config"
+    assert response.pending_action.steps[1].tool == "get_repo_config"
+
+
 def test_run_graph_answers_available_chunking_methods(tmp_path: Path) -> None:
     settings = Settings(
         project_root=tmp_path,

@@ -54,6 +54,62 @@ def test_service_executes_confirmed_action(monkeypatch, tmp_path: Path) -> None:
     assert second.result["index_result"]["document_id"] == "doc-1"
 
 
+def test_service_executes_compound_confirmed_action(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "pending_action": {
+                "intent": "mutation",
+                "tool": "compound_action",
+                "arguments": {},
+                "steps": [
+                    {"tool": "update_repo_config", "arguments": {"service_name": "preprocessing", "changes": {"chunk_overlap": 115}}},
+                    {"tool": "get_repo_config", "arguments": {"service_name": "retrieval"}},
+                ],
+            }
+        },
+    )
+
+    monkeypatch.setattr(
+        service._toolbox,
+        "execute_pending_action",
+        lambda pending_action: {
+            "status": "ok",
+            "results": [
+                {
+                    "tool": "update_repo_config",
+                    "result": {
+                        "scope": "preprocessing",
+                        "updated": {"chunk_overlap": 115},
+                    },
+                },
+                {
+                    "tool": "get_repo_config",
+                    "result": {
+                        "scope": "retrieval",
+                        "config": {
+                            "ranker": "cross_encoder",
+                            "rerank_top_n": 8,
+                            "top_k_retrieve": 24,
+                            "top_k_return": 6,
+                        },
+                    },
+                },
+            ],
+        },
+    )
+
+    second = service.chat(AdminChatRequest(message="confirm", session_id=session_id, confirm=True))
+
+    assert second.executed is True
+    assert second.result["results"][0]["tool"] == "update_repo_config"
+    assert second.result["results"][1]["tool"] == "get_repo_config"
+    assert "chunk overlap set to 115" in second.answer
+    assert "current reranking strategy is cross_encoder" in second.answer
+
+
 def test_service_persists_run_evaluation_arguments(tmp_path: Path) -> None:
     service = AdminService(_settings(tmp_path))
     response = service.chat(AdminChatRequest(message="run evaluation"))

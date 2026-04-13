@@ -466,6 +466,111 @@ def _plan_workflow(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] 
     return None, "I could not map that workflow to a supported operation yet."
 
 
+def _plan_inspection_step(message: str, toolbox: AdminToolbox) -> dict[str, Any] | None:
+    lowered = message.lower()
+    if _is_chunking_methods_question(message):
+        return {"tool": "get_chunking_methods", "arguments": {}}
+    if any(token in lowered for token in ["rerank", "reranking", "reranker", "ranker"]):
+        return {"tool": "get_repo_config", "arguments": {"service_name": "retrieval"}}
+    if any(token in lowered for token in ["chunk", "chunking", "chunk overlap", "chunk size"]):
+        return {"tool": "get_repo_config", "arguments": {"service_name": "preprocessing"}}
+    if "evaluation" in lowered and any(token in lowered for token in ["report", "reports", "latest", "recent", "current"]):
+        return {"tool": "list_evaluation_reports", "arguments": {}}
+    if any(token in lowered for token in ["ingestion", "document status", "status"]) and "document" not in lowered:
+        return {"tool": "get_ingestion_status", "arguments": {}}
+    if "document" in lowered:
+        return {"tool": "list_loaded_documents", "arguments": {}}
+    return None
+
+
+def _split_into_clauses(message: str) -> list[str]:
+    clauses = [
+        clause.strip(" ,;")
+        for clause in re.split(r"\b(?:and also|also|and then|then|and|et aussi|et puis|puis|ensuite)\b", message, flags=re.IGNORECASE)
+        if clause.strip(" ,;")
+    ]
+    return clauses or [message.strip()]
+
+
+def _build_compound_pending_action(steps: list[dict[str, Any]]) -> dict[str, Any]:
+    has_workflow = any(step.get("tool") in {"reindex_document", "reindex_validated_documents", "run_evaluation", "compare_evaluation_reports"} for step in steps)
+    return {
+        "intent": "workflow" if has_workflow else "mutation",
+        "tool": "compound_action",
+        "arguments": {},
+        "steps": [{"tool": step["tool"], "arguments": step.get("arguments", {})} for step in steps],
+        "summary": "Execute the planned admin actions in order.",
+    }
+
+
+def _summarize_compound_plan(steps: list[dict[str, Any]]) -> str:
+    readable = []
+    for step in steps:
+        tool = str(step.get("tool") or "")
+        args = step.get("arguments", {})
+        if tool == "update_repo_config":
+            readable.append(f"update {args.get('service_name')} settings")
+        elif tool == "get_repo_config":
+            readable.append(f"check current {args.get('service_name')} settings")
+        elif tool == "get_chunking_methods":
+            readable.append("check current chunking methods")
+        elif tool == "reindex_validated_documents":
+            readable.append("reindex validated documents")
+        elif tool == "reindex_document":
+            readable.append("reindex one document")
+        elif tool == "run_evaluation":
+            readable.append("run an evaluation")
+        elif tool == "compare_evaluation_reports":
+            readable.append("compare evaluation reports")
+        else:
+            readable.append(tool.replace("_", " "))
+    return f"I planned these actions in order: {', '.join(readable)}. Confirm if you want me to execute them."
+
+
+def _plan_request(message: str, requested_route: str, toolbox: AdminToolbox) -> tuple[str, dict[str, Any] | None, str | None]:
+    clauses = _split_into_clauses(message)
+    if len(clauses) <= 1:
+        if requested_route == "workflow":
+            pending_action, answer = _plan_workflow(message, toolbox)
+            if pending_action is not None:
+                return "workflow", pending_action, answer
+            return "advisory", None, None
+        if requested_route == "mutate":
+            pending_action, answer = _plan_mutation(message, toolbox)
+            if pending_action is not None:
+                return "mutate", pending_action, answer
+            return "advisory", None, None
+        return requested_route, None, None
+
+    planned_steps: list[dict[str, Any]] = []
+    has_mutation_like = False
+    has_workflow = False
+
+    for clause in clauses:
+        workflow_action, _ = _plan_workflow(clause, toolbox)
+        if workflow_action is not None:
+            planned_steps.append({"tool": workflow_action["tool"], "arguments": workflow_action.get("arguments", {})})
+            has_workflow = True
+            has_mutation_like = True
+            continue
+
+        mutation_action, _ = _plan_mutation(clause, toolbox)
+        if mutation_action is not None:
+            planned_steps.append({"tool": mutation_action["tool"], "arguments": mutation_action.get("arguments", {})})
+            has_mutation_like = True
+            continue
+
+        inspect_step = _plan_inspection_step(clause, toolbox)
+        if inspect_step is not None:
+            planned_steps.append(inspect_step)
+
+    if len(planned_steps) > 1 and has_mutation_like:
+        pending_action = _build_compound_pending_action(planned_steps)
+        return ("workflow" if has_workflow else "mutate"), pending_action, _summarize_compound_plan(planned_steps)
+
+    return requested_route, None, None
+
+
 def _run_llm_tool_loop(
     *,
     settings: Settings,
@@ -622,13 +727,17 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
         )
         activity.append(completed_item)
         _emit_progress(progress_callback, completed_item)
+        toolbox = AdminToolbox(settings, access_token=state.get("access_token") or access_token)
+        route, planned_pending_action, planned_answer = _plan_request(state["message"], result.category, toolbox)
         return {
             **state,
-            "route": result.category,
+            "route": route,
             "intent": result.intent,
             "status": "running",
             "activity": activity,
             "current_step": "route",
+            "planned_pending_action": planned_pending_action,
+            "planned_answer": planned_answer,
         }
 
     def advisory_node(state: AdminState) -> AdminState:
@@ -774,7 +883,6 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
         }
 
     def mutate_node(state: AdminState) -> AdminState:
-        toolbox = AdminToolbox(settings, access_token=state.get("access_token") or access_token)
         mutate_started = _progress_item(
             phase="mutate",
             status="in_progress",
@@ -782,7 +890,11 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
             detail="Checking whether the requested change can be applied safely.",
         )
         _emit_progress(progress_callback, mutate_started)
-        pending_action, answer = _plan_mutation(state["message"], toolbox)
+        toolbox = AdminToolbox(settings, access_token=state.get("access_token") or access_token)
+        pending_action = state.get("planned_pending_action")
+        answer = state.get("planned_answer")
+        if pending_action is None:
+            pending_action, answer = _plan_mutation(state["message"], toolbox)
         activity = list(state.get("activity", []))
         activity.append(mutate_started)
         mutate_finished = _progress_item(
@@ -806,7 +918,6 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
         }
 
     def workflow_node(state: AdminState) -> AdminState:
-        toolbox = AdminToolbox(settings, access_token=state.get("access_token") or access_token)
         workflow_started = _progress_item(
             phase="workflow",
             status="in_progress",
@@ -814,7 +925,11 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
             detail="Mapping the request to the supported admin workflow steps.",
         )
         _emit_progress(progress_callback, workflow_started)
-        pending_action, answer = _plan_workflow(state["message"], toolbox)
+        toolbox = AdminToolbox(settings, access_token=state.get("access_token") or access_token)
+        pending_action = state.get("planned_pending_action")
+        answer = state.get("planned_answer")
+        if pending_action is None:
+            pending_action, answer = _plan_workflow(state["message"], toolbox)
         activity = list(state.get("activity", []))
         activity.append(workflow_started)
         workflow_finished = _progress_item(

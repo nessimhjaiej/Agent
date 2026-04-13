@@ -29,3 +29,5 @@ class AdminState(TypedDict, total=False):
     tool_result: dict | None
     tool_call_count: int
     tool_cache_updates: dict
+    planned_answer: str | None
+    planned_pending_action: dict | None

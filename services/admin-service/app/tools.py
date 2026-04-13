@@ -396,6 +396,27 @@ class AdminToolbox:
         if not isinstance(arguments, dict):
             arguments = {}
 
+        if tool_name == "compound_action":
+            steps = pending_action.get("steps", [])
+            results = []
+            if not isinstance(steps, list):
+                steps = []
+            for step in steps:
+                if not isinstance(step, dict):
+                    continue
+                results.append(
+                    {
+                        "tool": str(step.get("tool") or ""),
+                        "result": self.execute_pending_action(
+                            {
+                                "tool": str(step.get("tool") or ""),
+                                "arguments": step.get("arguments", {}) if isinstance(step.get("arguments"), dict) else {},
+                            }
+                        ),
+                    }
+                )
+            return {"status": "ok", "results": results}
+
         if tool_name == "run_evaluation":
             return self.run_evaluation(str(arguments.get("dataset_path") or "evals/sample_eval_dataset.json"))
         if tool_name == "compare_evaluation_reports":
@@ -414,6 +435,16 @@ class AdminToolbox:
                 str(arguments.get("service_name") or ""),
                 arguments.get("changes", {}),
             )
+        if tool_name == "get_repo_config":
+            return self.get_repo_config(str(arguments.get("service_name") or ""))
+        if tool_name == "get_chunking_methods":
+            return self.get_chunking_methods()
+        if tool_name == "get_ingestion_status":
+            return self.get_ingestion_status()
+        if tool_name == "list_loaded_documents":
+            return self.list_loaded_documents()
+        if tool_name == "list_evaluation_reports":
+            return self.list_evaluation_reports()
         raise ValueError(f"Unsupported pending action tool: {tool_name}")
 
 
