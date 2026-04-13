@@ -204,8 +204,10 @@ def _normalize_user_answer(answer: str) -> str:
 
 def _is_chunking_methods_question(message: str) -> bool:
     lowered = message.lower()
-    asks_about_chunking = any(token in lowered for token in ["chunking", "chunk", "chunks"])
-    asks_for_options = any(token in lowered for token in ["available", "supported", "methods", "method", "strategies", "strategy", "options", "types"])
+    if any(token in lowered for token in ["chunk_strategy", "chunk_size", "chunk_overlap"]):
+        return False
+    asks_about_chunking = bool(re.search(r"\b(chunking|chunk|chunks)\b", lowered))
+    asks_for_options = bool(re.search(r"\b(available|supported|methods|method|strategies|options|types)\b", lowered))
     return asks_about_chunking and asks_for_options
 
 
@@ -284,6 +286,29 @@ def _extract_dataset_path(message: str) -> str:
     return match.group(1) if match else "evals/sample_eval_dataset.json"
 
 
+def _extract_int_setting(message: str, patterns: list[str]) -> int | None:
+    for pattern in patterns:
+        match = re.search(pattern, message)
+        if match:
+            return int(match.group(1))
+    return None
+
+
+def _extract_chunk_strategy(message: str) -> str | None:
+    patterns = [
+        r"chunk[_ ]strategy(?:\s+to)?\s+(late|overlap|semantic|sentence)",
+        r"set\s+chunk[_ ]strategy\s+(?:to\s+)?(late|overlap|semantic|sentence)",
+        r"change\s+chunk[_ ]strategy\s+(?:to\s+)?(late|overlap|semantic|sentence)",
+        r"update\s+chunk[_ ]strategy\s+(?:to\s+)?(late|overlap|semantic|sentence)",
+        r"(?:use|switch to)\s+(late|overlap|semantic|sentence)(?:\s+chunk(?:ing)?(?:\s+strategy)?)?",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, message)
+        if match:
+            return match.group(1)
+    return None
+
+
 def _plan_mutation(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] | None, str]:
     lowered = message.lower()
     if any(token in lowered for token in ["change", "set", "switch", "update"]) and any(
@@ -295,18 +320,30 @@ def _plan_mutation(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] 
             scope = ""
         changes: dict[str, Any] = {}
         if scope == "preprocessing":
-            size_match = re.search(r"chunk size(?:\s+to)?\s+(\d+)", lowered)
-            overlap_match = re.search(r"chunk overlap(?:\s+to)?\s+(\d+)", lowered)
-            if "late" in lowered:
-                changes["chunk_strategy"] = "late"
-            elif "overlap" in lowered:
-                changes["chunk_strategy"] = "overlap"
-            elif "semantic" in lowered:
-                changes["chunk_strategy"] = "semantic"
-            if size_match:
-                changes["chunk_size"] = int(size_match.group(1))
-            if overlap_match:
-                changes["chunk_overlap"] = int(overlap_match.group(1))
+            chunk_strategy = _extract_chunk_strategy(lowered)
+            chunk_size = _extract_int_setting(
+                lowered,
+                [
+                    r"chunk[_ ]size(?:\s+to)?\s+(\d+)",
+                    r"set\s+chunk[_ ]size\s+(?:to\s+)?(\d+)",
+                    r"change\s+chunk[_ ]size\s+(?:to\s+)?(\d+)",
+                ],
+            )
+            chunk_overlap = _extract_int_setting(
+                lowered,
+                [
+                    r"chunk[_ ]overlap(?:\s+to)?\s+(\d+)",
+                    r"set\s+chunk[_ ]overlap\s+(?:to\s+)?(\d+)",
+                    r"change\s+chunk[_ ]overlap\s+(?:to\s+)?(\d+)",
+                ],
+            )
+            if chunk_strategy is not None:
+                changes["chunk_strategy"] = chunk_strategy
+
+            if chunk_size is not None:
+                changes["chunk_size"] = chunk_size
+            if chunk_overlap is not None:
+                changes["chunk_overlap"] = chunk_overlap
         elif scope == "retrieval":
             if "cross_encoder" in lowered or "cross encoder" in lowered:
                 changes["ranker"] = "cross_encoder"

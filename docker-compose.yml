@@ -32,6 +32,7 @@ services:
       dockerfile: services/preprocessing-service/Dockerfile
     container_name: preprocessing-service
     volumes:
+      - ./services/preprocessing-service/app/config.py:/app/services/preprocessing-service/app/config.py
       - ./shared:/shared
       - ./shared/raw_data:/shared/raw-data:ro
     env_file:

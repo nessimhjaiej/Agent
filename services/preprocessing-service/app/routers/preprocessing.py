@@ -26,6 +26,7 @@ def _runtime_settings(request: Request) -> Settings:
         request.app.state.settings = settings
     return settings
 
+
 def _config_payload(settings: Settings) -> dict[str, int | str]:
     return {
         "chunk_strategy": settings.chunk_strategy,
@@ -36,13 +37,45 @@ def _config_payload(settings: Settings) -> dict[str, int | str]:
 
 
 def _source_payload() -> dict[str, str]:
-    source = "preprocessing-service runtime"
+    source = "services/preprocessing-service/app/config.py"
     return {
         "chunk_strategy": source,
         "chunk_size": source,
         "chunk_overlap": source,
         "pipeline_version": source,
     }
+
+
+def _config_path(request: Request) -> Path:
+    override = getattr(request.app.state, "config_path", None)
+    if override:
+        return Path(str(override))
+    return Path(__file__).resolve().parents[1] / "config.py"
+
+
+def _rewrite_config_defaults(updated: dict[str, int | str], request: Request) -> None:
+    config_path = _config_path(request)
+    content = config_path.read_text(encoding="utf-8")
+    field_patterns = {
+        "chunk_strategy": r'chunk_strategy: str = "[^"]*"',
+        "chunk_size": r"chunk_size: int = \d+",
+        "chunk_overlap": r"chunk_overlap: int = \d+",
+        "pipeline_version": r'pipeline_version: str = "[^"]*"',
+    }
+
+    for field_name, value in updated.items():
+        pattern = field_patterns[field_name]
+        replacement_value = f'"{value}"' if isinstance(value, str) else str(value)
+        content, count = re.subn(
+            pattern,
+            f"{field_name}: {'str' if isinstance(value, str) else 'int'} = {replacement_value}",
+            content,
+            count=1,
+        )
+        if count != 1:
+            raise HTTPException(status_code=500, detail=f"Could not persist {field_name} into preprocessing config.py.")
+
+    config_path.write_text(content, encoding="utf-8")
 
 
 def _env_local_path(request: Request) -> Path:
@@ -52,34 +85,28 @@ def _env_local_path(request: Request) -> Path:
     return Path(__file__).resolve().parents[3] / ".env.local"
 
 
-def _persist_runtime_overrides(updated: dict[str, int | str], request: Request) -> None:
+def _remove_chunking_overrides_from_env_local(request: Request) -> None:
     env_local = _env_local_path(request)
-    lines: list[str] = []
-    if env_local.exists():
-        lines = env_local.read_text(encoding="utf-8").splitlines()
+    if not env_local.exists():
+        return
 
-    env_mapping = {
-        "chunk_strategy": "PREPROCESSING_CHUNK_STRATEGY",
-        "chunk_size": "PREPROCESSING_CHUNK_SIZE",
-        "chunk_overlap": "PREPROCESSING_CHUNK_OVERLAP",
-        "pipeline_version": "PREPROCESSING_PIPELINE_VERSION",
+    forbidden = {
+        "PREPROCESSING_CHUNK_STRATEGY",
+        "PREPROCESSING_CHUNK_SIZE",
+        "PREPROCESSING_CHUNK_OVERLAP",
     }
+    kept_lines = []
+    changed = False
+    for raw_line in env_local.read_text(encoding="utf-8").splitlines():
+        stripped = raw_line.strip()
+        key = stripped.split("=", 1)[0].strip() if "=" in stripped else ""
+        if key in forbidden:
+            changed = True
+            continue
+        kept_lines.append(raw_line)
 
-    for field_name, value in updated.items():
-        env_name = env_mapping[field_name]
-        pattern = re.compile(rf"^\s*{re.escape(env_name)}=")
-        rendered = str(value)
-        replaced = False
-        for index, line in enumerate(lines):
-            if pattern.match(line):
-                lines[index] = f"{env_name}={rendered}"
-                replaced = True
-                break
-        if not replaced:
-            lines.append(f"{env_name}={rendered}")
-
-    env_local.parent.mkdir(parents=True, exist_ok=True)
-    env_local.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
+    if changed:
+        env_local.write_text("\n".join(kept_lines) + ("\n" if kept_lines else ""), encoding="utf-8")
 
 
 @router.post("/process-source", response_model=ProcessSourceResponse)
@@ -134,7 +161,8 @@ def update_config(payload: UpdatePreprocessingConfigRequest, request: Request) -
         setattr(settings, field_name, value)
         updated[field_name] = value
 
-    _persist_runtime_overrides(updated, request)
+    _rewrite_config_defaults(updated, request)
+    _remove_chunking_overrides_from_env_local(request)
     return UpdatePreprocessingConfigResponse(
         status="ok",
         scope="preprocessing",

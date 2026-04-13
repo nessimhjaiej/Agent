@@ -73,6 +73,28 @@ def test_service_plans_chunking_config_change(tmp_path: Path) -> None:
     assert ".env" not in response.answer
 
 
+def test_service_plans_chunk_strategy_change(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+    response = service.chat(AdminChatRequest(message="set chunk_strategy to semantic"))
+
+    assert response.status == "needs_confirmation"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "update_repo_config"
+    assert response.pending_action.arguments["service_name"] == "preprocessing"
+    assert response.pending_action.arguments["changes"]["chunk_strategy"] == "semantic"
+
+
+def test_service_plans_chunk_overlap_change(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+    response = service.chat(AdminChatRequest(message="update chunk_overlap to 64"))
+
+    assert response.status == "needs_confirmation"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "update_repo_config"
+    assert response.pending_action.arguments["service_name"] == "preprocessing"
+    assert response.pending_action.arguments["changes"]["chunk_overlap"] == 64
+
+
 def test_service_invalidates_cache_after_confirmed_change(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
     import app.service as service_module  # noqa: PLC0415
 
