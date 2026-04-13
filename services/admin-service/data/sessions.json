@@ -649,48 +649,83 @@
     "history": [
       {
         "role": "user",
-        "content": "change it to 800"
+        "content": "what are the available chunking strategies ?"
       },
       {
         "role": "assistant",
-        "content": "That change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluation workflows."
+        "content": "Available chunking strategies are late, overlap, semantic. you can change the chunking strategy to any of these: late, overlap, semantic. sentence exists in the pipeline but is not implemented yet. the current chunking strategy is late. the current chunk size is 800 with overlap 120."
       },
       {
         "role": "user",
-        "content": "change it to 800"
+        "content": "what is the current used chunking strategy ?"
       },
       {
         "role": "assistant",
-        "content": "That change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluation workflows."
+        "content": "The current chunking strategy is: late."
       },
       {
         "role": "user",
-        "content": "change chunk size to 800"
+        "content": "and what other options do we have ?"
       },
       {
         "role": "assistant",
-        "content": "I am ready to update the preprocessing settings with {'chunk_size': 800}. Confirm if you want me to apply that change."
-      },
-      {
-        "role": "user",
-        "content": "confirm"
-      },
-      {
-        "role": "assistant",
-        "content": "Confirmed action executed successfully."
+        "content": "Other options you can choose from:\n- overlap: fixed-size chunks with a sliding window (uses chunk size and overlap)\n- semantic: splits along meaning-based boundaries (e.g., sections/headings)\n- sentence: exists in the pipeline but isn\u2019t enabled yet\n\nCurrent setting is late. Current defaults are chunk size 800 and overlap 120.\n\nIf you want to try overlap or semantic, tell me which one and I\u2019ll arrange the change and reindex the documents so it takes effect."
       }
     ],
-    "tool_cache": {},
-    "pending_action": null,
-    "last_message": "confirm",
-    "last_response": "Confirmed action executed successfully.",
-    "last_route": "mutate",
-    "last_topic": "update_repo_config",
-    "last_result": {
-      "route": null,
-      "tool_result": {}
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": "late",
+            "chunk_size": 800,
+            "chunk_overlap": 120,
+            "pipeline_version": "v1"
+          },
+          "sources": {
+            "chunk_strategy": "services/preprocessing-service/app/config.py",
+            "chunk_size": "services/preprocessing-service/app/config.py",
+            "chunk_overlap": "services/preprocessing-service/app/config.py",
+            "pipeline_version": "services/preprocessing-service/app/config.py"
+          }
+        },
+        "created_at": 1776088439.0398886,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
     },
-    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDg1NjM4LCJpYXQiOjE3NzYwODIwMzgsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0._VLP0dLx4fQOQrtXNprMh4hC07LZIz3npkJ7Y3CB60dtILscSFxNP2yLNXaDeGMcjrvzQiXN6tA2eN2xXFXVag",
+    "pending_action": null,
+    "last_message": "and what other options do we have ?",
+    "last_response": "Other options you can choose from:\n- overlap: fixed-size chunks with a sliding window (uses chunk size and overlap)\n- semantic: splits along meaning-based boundaries (e.g., sections/headings)\n- sentence: exists in the pipeline but isn\u2019t enabled yet\n\nCurrent setting is late. Current defaults are chunk size 800 and overlap 120.\n\nIf you want to try overlap or semantic, tell me which one and I\u2019ll arrange the change and reindex the documents so it takes effect.",
+    "last_route": "advisory",
+    "last_topic": "Describe available chunking strategy options and when to use each",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 800,
+          "chunk_overlap": 120,
+          "pipeline_version": "v1"
+        },
+        "sources": {
+          "chunk_strategy": "services/preprocessing-service/app/config.py",
+          "chunk_size": "services/preprocessing-service/app/config.py",
+          "chunk_overlap": "services/preprocessing-service/app/config.py",
+          "pipeline_version": "services/preprocessing-service/app/config.py"
+        }
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDg5MTQ5LCJpYXQiOjE3NzYwODU1NDksImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.D6nBVMYxGbZ2ZjaiOfnJ45WunVQRid0qrMWDD3_DQxAn-emodwXlVEwpTwDA77fOw5xDKGDeJdGcUY5t1ijpYA",
     "cache_invalidated_at": 1776085438.9688463
   }
 }

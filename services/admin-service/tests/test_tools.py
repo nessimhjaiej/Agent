@@ -159,13 +159,15 @@ def test_get_chunking_methods_reads_current_preprocessing_settings(monkeypatch) 
             {
                 "status": "ok",
                 "scope": "preprocessing",
-                "config": {"chunk_size": 800, "chunk_overlap": 120, "chunk_strategy": "late", "pipeline_version": "v1"},
-                "sources": {
-                    "chunk_size": "preprocessing-service runtime",
-                    "chunk_overlap": "preprocessing-service runtime",
-                    "chunk_strategy": "preprocessing-service runtime",
-                    "pipeline_version": "preprocessing-service runtime",
-                },
+                "current_strategy": "late",
+                "current_chunk_size": 800,
+                "current_chunk_overlap": 120,
+                "methods": [
+                    {"name": "late", "exists": True, "implemented": True},
+                    {"name": "overlap", "exists": True, "implemented": True},
+                    {"name": "semantic", "exists": True, "implemented": True},
+                    {"name": "sentence", "exists": True, "implemented": False},
+                ],
             },
         )
     ]

@@ -64,6 +64,21 @@ class UpdatePreprocessingConfigResponse(BaseModel):
     restart_required: bool = False
 
 
+class ChunkingStrategyItem(BaseModel):
+    name: str
+    exists: bool = True
+    implemented: bool
+
+
+class ChunkingStrategiesResponse(BaseModel):
+    status: str = "ok"
+    scope: str = "preprocessing"
+    current_strategy: str
+    current_chunk_size: int
+    current_chunk_overlap: int
+    methods: list[ChunkingStrategyItem]
+
+
 class HealthResponse(BaseModel):
     status: str = "ok"
     service: str
