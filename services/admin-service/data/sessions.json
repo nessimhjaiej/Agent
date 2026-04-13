@@ -188,5 +188,192 @@
     },
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDEwMzI5LCJpYXQiOjE3NzYwMDY3MjksImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiIiLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImhqYWllam5lc3NpbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc1OTE5NzY4fV0sInNlc3Npb25faWQiOiJhNGQ0OWU0Yy04YTkxLTRkODQtYTJiZS00OTY4NjZmOTAyNDUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.sZQmcfVDDh7MffELr0OIA70YToIX9Zim9BYLBKoieYxOVcZdQG99ynsZgraYP5nCEjA_wLE_gTTab99mUE0zEQ",
     "cache_invalidated_at": 1776007048.0002286
+  },
+  "7f1ed571-736d-4a91-aae7-ccc2a91dfb3c": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what's the current chunkign startegy"
+      },
+      {
+        "role": "assistant",
+        "content": "Current chunking strategy: late\n- Chunk size: 800\n- Overlap: 120\n\nWant me to adjust any of these?"
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": "late",
+            "chunk_size": 800,
+            "chunk_overlap": 120,
+            "pipeline_version": "v1"
+          },
+          "sources": {
+            "chunk_strategy": ".env.local",
+            "chunk_size": ".env.local",
+            "chunk_overlap": ".env.local",
+            "pipeline_version": ".env"
+          }
+        },
+        "created_at": 1776076912.6577954,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "last_message": "what's the current chunkign startegy",
+    "pending_action": null,
+    "last_response": "Current chunking strategy: late\n- Chunk size: 800\n- Overlap: 120\n\nWant me to adjust any of these?",
+    "last_route": "inspect",
+    "last_topic": "Retrieve the current chunking strategy configuration",
+    "last_result": {
+      "route": "inspect",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 800,
+          "chunk_overlap": 120,
+          "pipeline_version": "v1"
+        },
+        "sources": {
+          "chunk_strategy": ".env.local",
+          "chunk_size": ".env.local",
+          "chunk_overlap": ".env.local",
+          "pipeline_version": ".env"
+        }
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDgwNDEzLCJpYXQiOjE3NzYwNzY4MTMsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiIiLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImhqYWllam5lc3NpbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc1OTE5NzY4fV0sInNlc3Npb25faWQiOiJhNGQ0OWU0Yy04YTkxLTRkODQtYTJiZS00OTY4NjZmOTAyNDUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.NuDvjAa0fNQdvCMXn6kwxIVrCeEozFJzm3eJY71XSK4PWxpKrw_wTlBtOkI7woY2FjMkqN893Ut7oUusx-boSw"
+  },
+  "326b133d-6450-44c2-b441-685d1ac7d197": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what is the chunking strategy ?"
+      },
+      {
+        "role": "assistant",
+        "content": "We\u2019re using a \u201clate\u201d chunking strategy.\n\n- Chunking mode: late (we keep larger sections together during preprocessing and split later in the pipeline)\n- Chunk size: ~800 (with ~120 overlap between adjacent chunks)\n\nIf you want to adjust size or overlap, tell me your target values and I\u2019ll update it."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": "late",
+            "chunk_size": 800,
+            "chunk_overlap": 120,
+            "pipeline_version": "v1"
+          },
+          "sources": {
+            "chunk_strategy": ".env.local",
+            "chunk_size": ".env.local",
+            "chunk_overlap": ".env.local",
+            "pipeline_version": ".env"
+          }
+        },
+        "created_at": 1776077279.523512,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "last_message": "what is the chunking strategy ?",
+    "pending_action": null,
+    "last_response": "We\u2019re using a \u201clate\u201d chunking strategy.\n\n- Chunking mode: late (we keep larger sections together during preprocessing and split later in the pipeline)\n- Chunk size: ~800 (with ~120 overlap between adjacent chunks)\n\nIf you want to adjust size or overlap, tell me your target values and I\u2019ll update it.",
+    "last_route": "advisory",
+    "last_topic": "Explain the concept and recommended approaches for a 'chunking strategy' (e.g., how to segment text for retrieval/embedding).",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 800,
+          "chunk_overlap": 120,
+          "pipeline_version": "v1"
+        },
+        "sources": {
+          "chunk_strategy": ".env.local",
+          "chunk_size": ".env.local",
+          "chunk_overlap": ".env.local",
+          "pipeline_version": ".env"
+        }
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDgwNDEzLCJpYXQiOjE3NzYwNzY4MTMsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiIiLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImhqYWllam5lc3NpbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc1OTE5NzY4fV0sInNlc3Npb25faWQiOiJhNGQ0OWU0Yy04YTkxLTRkODQtYTJiZS00OTY4NjZmOTAyNDUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.NuDvjAa0fNQdvCMXn6kwxIVrCeEozFJzm3eJY71XSK4PWxpKrw_wTlBtOkI7woY2FjMkqN893Ut7oUusx-boSw"
+  },
+  "6667411f-16f4-4377-b4bf-0e9412b0d047": {
+    "history": [
+      {
+        "role": "user",
+        "content": "replace PREPROCESSING_CHUNK_SIZE to 750"
+      },
+      {
+        "role": "assistant",
+        "content": "That change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluation workflows."
+      }
+    ],
+    "last_message": "replace PREPROCESSING_CHUNK_SIZE to 750",
+    "pending_action": null,
+    "last_response": "That change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluation workflows.",
+    "last_route": "mutate",
+    "last_topic": "Update PREPROCESSING_CHUNK_SIZE to 750",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDgwNDEzLCJpYXQiOjE3NzYwNzY4MTMsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiIiLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImhqYWllam5lc3NpbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc1OTE5NzY4fV0sInNlc3Npb25faWQiOiJhNGQ0OWU0Yy04YTkxLTRkODQtYTJiZS00OTY4NjZmOTAyNDUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.NuDvjAa0fNQdvCMXn6kwxIVrCeEozFJzm3eJY71XSK4PWxpKrw_wTlBtOkI7woY2FjMkqN893Ut7oUusx-boSw",
+    "tool_cache": {}
+  },
+  "9315ebe5-2180-44d3-9cc4-f748965dc4c3": {
+    "history": [
+      {
+        "role": "user",
+        "content": "change the chunk size to 750"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the preprocessing settings with {'chunk_size': 750}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Confirmed action executed successfully."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Confirmed action executed successfully.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDgwNDEzLCJpYXQiOjE3NzYwNzY4MTMsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiIiLCJyb2xlIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImhqYWllam5lc3NpbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzc1OTE5NzY4fV0sInNlc3Npb25faWQiOiJhNGQ0OWU0Yy04YTkxLTRkODQtYTJiZS00OTY4NjZmOTAyNDUiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.NuDvjAa0fNQdvCMXn6kwxIVrCeEozFJzm3eJY71XSK4PWxpKrw_wTlBtOkI7woY2FjMkqN893Ut7oUusx-boSw",
+    "cache_invalidated_at": 1776077694.840775
   }
 }
