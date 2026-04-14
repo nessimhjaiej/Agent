@@ -1,0 +1,35 @@
+{
+  "90f7e17b-e454-41a7-987f-a4a9a46c3ab8": {
+    "last_route": "mutate",
+    "last_topic": "reranking_strategy",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "history": [
+      {
+        "role": "user",
+        "content": "switch it to none"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'none'}. Confirm if you want me to apply that change."
+      }
+    ],
+    "tool_cache": {},
+    "last_message": "switch it to none",
+    "pending_action": {
+      "intent": "mutation",
+      "tool": "update_repo_config",
+      "arguments": {
+        "service_name": "retrieval",
+        "changes": {
+          "ranker": "none"
+        }
+      },
+      "steps": []
+    },
+    "last_response": "I am ready to update the retrieval settings with {'ranker': 'none'}. Confirm if you want me to apply that change.",
+    "access_token": null
+  }
+}

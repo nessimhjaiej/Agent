@@ -35,7 +35,7 @@ class Settings:
     default_fusion_type: str = "alpha"
     default_alpha: float = 0.7
     default_rrf_k: int = 60
-    default_ranker_type: str = "cross_encoder"
+    default_ranker_type: str = "llm_batch"
     default_rerank_top_n: int = 20
     enforce_embedding_model_match: bool = True
 

@@ -1,0 +1,470 @@
+{
+  "2327e442-bccc-44f0-9e4a-14c41e1fdff7": {
+    "history": [
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. I updated retrieval settings."
+      },
+      {
+        "role": "user",
+        "content": "what is the current reranking strategy?"
+      },
+      {
+        "role": "assistant",
+        "content": "The current retrieval settings are: default_ranker_type=none, top_k_retrieve=10, top_k_return=6."
+      },
+      {
+        "role": "user",
+        "content": "switch it back to cross encoder"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'cross_encoder'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. I updated retrieval settings."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done. I updated retrieval settings.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": null,
+    "cache_invalidated_at": 1776175515.433539
+  },
+  "4a39df82-3814-48d1-ab3e-2076a4b34d9f": {
+    "history": [
+      {
+        "role": "user",
+        "content": "quelles sont les strategies de reranking disponibles ?"
+      },
+      {
+        "role": "assistant",
+        "content": "Available reranking methods are cross_encoder, llm_batch, none. you can change the reranking method to any of these: cross_encoder, llm_batch, none. the current default reranking method is cross_encoder."
+      },
+      {
+        "role": "user",
+        "content": "remplacer la avec llm batch"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'llm_batch'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirmer"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. I updated retrieval settings."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirmer",
+    "last_response": "Done. I updated retrieval settings.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": null,
+    "cache_invalidated_at": 1776175523.0195227
+  },
+  "d108ada4-f189-414e-84a5-66ca1140db89": {
+    "history": [
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. I updated retrieval settings."
+      },
+      {
+        "role": "user",
+        "content": "what is the current reranking strategy?"
+      },
+      {
+        "role": "assistant",
+        "content": "Reranking is currently disabled (strategy: none). Results are returned based on vector similarity only. Want me to switch to cross_encoder or llm_batch?"
+      },
+      {
+        "role": "user",
+        "content": "switch it back to cross encoder"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'cross_encoder'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. I updated retrieval settings."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done. I updated retrieval settings.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": null,
+    "cache_invalidated_at": 1776175766.9091966
+  },
+  "3e180295-b1ea-4c86-98fd-0cfd6356fe1d": {
+    "history": [
+      {
+        "role": "user",
+        "content": "quelles sont les strategies de reranking disponibles ?"
+      },
+      {
+        "role": "assistant",
+        "content": "Available reranking methods are cross_encoder, llm_batch, none. you can change the reranking method to any of these: cross_encoder, llm_batch, none. the current default reranking method is cross_encoder."
+      },
+      {
+        "role": "user",
+        "content": "remplacer la avec llm batch"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'llm_batch'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirmer"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. I updated retrieval settings."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirmer",
+    "last_response": "Done. I updated retrieval settings.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": null,
+    "cache_invalidated_at": 1776175811.0102937
+  },
+  "34b1cd9d-0767-4ce3-b855-26ed2b66ebc9": {
+    "history": [
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. I updated retrieval settings."
+      },
+      {
+        "role": "user",
+        "content": "what is the current reranking strategy?"
+      },
+      {
+        "role": "assistant",
+        "content": "The current reranking strategy is: none. Available options remain: cross_encoder, llm_batch, none."
+      },
+      {
+        "role": "user",
+        "content": "switch it back to cross encoder"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'cross_encoder'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. I updated retrieval settings."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done. I updated retrieval settings.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": null,
+    "cache_invalidated_at": 1776175910.7890527
+  },
+  "310407a5-f4d4-4b15-95c9-57c9b6676b61": {
+    "history": [
+      {
+        "role": "user",
+        "content": "confirmer"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. I updated retrieval settings."
+      },
+      {
+        "role": "user",
+        "content": "quelle est la strategie de reranking actuelle ?"
+      },
+      {
+        "role": "assistant",
+        "content": "La strat\u00e9gie de reranking actuelle est: llm_batch."
+      },
+      {
+        "role": "user",
+        "content": "none"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'none'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. I updated retrieval settings."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done. I updated retrieval settings.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": null,
+    "cache_invalidated_at": 1776175968.6177528
+  },
+  "d763a81c-7548-4e06-96ea-3140ca539bd9": {
+    "history": [
+      {
+        "role": "user",
+        "content": "use semantic"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the preprocessing settings with {'chunk_strategy': 'semantic'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. I chunking strategy set to semantic."
+      },
+      {
+        "role": "user",
+        "content": "what is the current chunking strategy now?"
+      },
+      {
+        "role": "assistant",
+        "content": "Semantic. (Chunk size is 750 with 120 overlap.)"
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": "semantic",
+            "chunk_size": 750,
+            "chunk_overlap": 120,
+            "pipeline_version": "v1"
+          },
+          "sources": {
+            "chunk_strategy": "services/preprocessing-service/app/config.py",
+            "chunk_size": "services/preprocessing-service/app/config.py",
+            "chunk_overlap": "services/preprocessing-service/app/config.py",
+            "pipeline_version": "services/preprocessing-service/app/config.py"
+          }
+        },
+        "created_at": 1776176108.0168455,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "pending_action": null,
+    "last_message": "what is the current chunking strategy now?",
+    "last_response": "Semantic. (Chunk size is 750 with 120 overlap.)",
+    "last_route": "inspect",
+    "last_topic": "get_current_chunking_strategy",
+    "last_result": {
+      "route": "inspect",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "config": {
+          "chunk_strategy": "semantic",
+          "chunk_size": 750,
+          "chunk_overlap": 120,
+          "pipeline_version": "v1"
+        },
+        "sources": {
+          "chunk_strategy": "services/preprocessing-service/app/config.py",
+          "chunk_size": "services/preprocessing-service/app/config.py",
+          "chunk_overlap": "services/preprocessing-service/app/config.py",
+          "pipeline_version": "services/preprocessing-service/app/config.py"
+        }
+      }
+    },
+    "access_token": null,
+    "cache_invalidated_at": 1776176095.1087584
+  },
+  "1a7336ee-fc41-43c5-9f1e-89b13189809f": {
+    "history": [
+      {
+        "role": "user",
+        "content": "mettre a 750"
+      },
+      {
+        "role": "assistant",
+        "content": "C\u2019est d\u00e9j\u00e0 r\u00e9gl\u00e9 \u00e0 750 pour la taille des chunks (chevauchement 120, strat\u00e9gie s\u00e9mantique). Souhaitez-vous aussi ajuster le chevauchement ou la strat\u00e9gie, ou r\u00e9indexer les documents existants ?"
+      },
+      {
+        "role": "user",
+        "content": "remplacer la avec late"
+      },
+      {
+        "role": "assistant",
+        "content": "Je ne reconnais pas \u201clate\u201d comme une strat\u00e9gie valide dans notre configuration actuelle.\n\nSouhaitez-vous dire:\n- layout-aware (par titres/sections) ?\n- taille fixe (window) ?\n- par phrases/paragraphe (limites naturelles) ?\n- rester en s\u00e9mantique (actuel) ?\n\nDites-moi laquelle appliquer et si je dois r\u00e9indexer les documents existants.\n\nSi vous parliez plut\u00f4t du reranking \u201clate interaction\u201d c\u00f4t\u00e9 recherche: il n\u2019est pas disponible ici. Les rerankers disponibles sont cross_encoder et llm_batch (actuel: aucun)."
+      },
+      {
+        "role": "user",
+        "content": "quelle est la taille actuelle des chunks ?"
+      },
+      {
+        "role": "assistant",
+        "content": "750 (chevauchement 120, strat\u00e9gie s\u00e9mantique)."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": "semantic",
+            "chunk_size": 750,
+            "chunk_overlap": 120,
+            "pipeline_version": "v1"
+          },
+          "sources": {
+            "chunk_strategy": "services/preprocessing-service/app/config.py",
+            "chunk_size": "services/preprocessing-service/app/config.py",
+            "chunk_overlap": "services/preprocessing-service/app/config.py",
+            "pipeline_version": "services/preprocessing-service/app/config.py"
+          }
+        },
+        "created_at": 1776176277.7158809,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      },
+      "{\"args\": {}, \"name\": \"get_reranking_methods\"}": {
+        "tool": "get_reranking_methods",
+        "args": {},
+        "result": {
+          "status": "ok",
+          "scope": "retrieval",
+          "current_default_ranker_type": "none",
+          "methods": [
+            {
+              "name": "cross_encoder",
+              "exists": true,
+              "implemented": true
+            },
+            {
+              "name": "llm_batch",
+              "exists": true,
+              "implemented": true
+            },
+            {
+              "name": "none",
+              "exists": true,
+              "implemented": true
+            }
+          ]
+        },
+        "created_at": 1776176233.3848076,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "last_message": "quelle est la taille actuelle des chunks ?",
+    "pending_action": null,
+    "last_response": "750 (chevauchement 120, strat\u00e9gie s\u00e9mantique).",
+    "last_route": "inspect",
+    "last_topic": "Retrieve current chunk size",
+    "last_result": {
+      "route": "inspect",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "config": {
+          "chunk_strategy": "semantic",
+          "chunk_size": 750,
+          "chunk_overlap": 120,
+          "pipeline_version": "v1"
+        },
+        "sources": {
+          "chunk_strategy": "services/preprocessing-service/app/config.py",
+          "chunk_size": "services/preprocessing-service/app/config.py",
+          "chunk_overlap": "services/preprocessing-service/app/config.py",
+          "pipeline_version": "services/preprocessing-service/app/config.py"
+        }
+      }
+    },
+    "access_token": null
+  }
+}

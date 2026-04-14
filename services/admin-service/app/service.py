@@ -273,15 +273,18 @@ def _format_update_summary(scope: str, updated: dict) -> str:
 
     if scope == "retrieval":
         parts = []
-        if "ranker" in updated:
-            if str(updated["ranker"]).strip().lower() in {"none", "", "null"}:
+        ranker_value = updated.get("ranker", updated.get("default_ranker_type"))
+        if ranker_value is not None:
+            if str(ranker_value).strip().lower() in {"none", "", "null"}:
                 parts.append("reranking disabled")
             else:
-                parts.append(f"reranking strategy set to {updated['ranker']}")
+                parts.append(f"reranking strategy set to {ranker_value}")
         if "rerank_top_n" in updated:
             parts.append(f"reranking top-N set to {updated['rerank_top_n']}")
         if "top_k_retrieve" in updated:
             parts.append(f"retrieval top-K set to {updated['top_k_retrieve']}")
+        if "top_k_return" in updated:
+            parts.append(f"returned top-K set to {updated['top_k_return']}")
         return "; ".join(parts) if parts else f"updated {scope} settings"
 
     rendered = ", ".join(f"{key}={value}" for key, value in updated.items())
@@ -325,7 +328,10 @@ def _summarize_confirmed_result(pending_payload: dict, result: dict) -> str:
     if tool_name == "update_repo_config" and isinstance(result, dict):
         scope = result.get("scope") or "system"
         updated = result.get("updated", {})
-        return f"Done. I {_format_update_summary(str(scope), updated)}."
+        summary = _format_update_summary(str(scope), updated)
+        if summary:
+            return f"Done. {summary[:1].upper()}{summary[1:]}."
+        return "Done. The configuration change was applied."
     if tool_name == "get_repo_config" and isinstance(result, dict):
         scope = result.get("scope") or "system"
         config = result.get("config", {})

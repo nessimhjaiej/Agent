@@ -1,0 +1,83 @@
+{
+  "8260019c-6444-4037-a0ab-4e53ace8b733": {
+    "last_route": "mutate",
+    "last_topic": "Replace \"la\" with \"semantic\"",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "history": [
+      {
+        "role": "user",
+        "content": "semantic"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the preprocessing settings with {'chunk_strategy': 'semantic'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "780"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the preprocessing settings with {'chunk_size': 780}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "remplacer la avec semantic"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the preprocessing settings with {'chunk_strategy': 'semantic'}. Confirm if you want me to apply that change."
+      }
+    ],
+    "tool_cache": {},
+    "last_message": "remplacer la avec semantic",
+    "pending_action": {
+      "intent": "mutation",
+      "tool": "update_repo_config",
+      "arguments": {
+        "service_name": "preprocessing",
+        "changes": {
+          "chunk_strategy": "semantic"
+        }
+      },
+      "steps": []
+    },
+    "last_response": "I am ready to update the preprocessing settings with {'chunk_strategy': 'semantic'}. Confirm if you want me to apply that change.",
+    "access_token": null
+  },
+  "55d10e7e-e5dc-487c-89d9-766461849630": {
+    "history": [
+      {
+        "role": "user",
+        "content": "none"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'none'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. I reranking disabled."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done. I reranking disabled.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": null,
+    "cache_invalidated_at": 1776177441.8782864
+  }
+}

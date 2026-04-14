@@ -1,0 +1,35 @@
+{
+  "f1309a9f-54d6-4066-916b-98a9f8334c04": {
+    "last_route": "mutate",
+    "last_topic": "Replace the current reranking_strategy with the value \"llm-batch\" (user wrote \"llm batch\").",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "history": [
+      {
+        "role": "user",
+        "content": "remplacer la avec llm batch"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'llm_batch'}. Confirm if you want me to apply that change."
+      }
+    ],
+    "tool_cache": {},
+    "last_message": "remplacer la avec llm batch",
+    "pending_action": {
+      "intent": "mutation",
+      "tool": "update_repo_config",
+      "arguments": {
+        "service_name": "retrieval",
+        "changes": {
+          "ranker": "llm_batch"
+        }
+      },
+      "steps": []
+    },
+    "last_response": "I am ready to update the retrieval settings with {'ranker': 'llm_batch'}. Confirm if you want me to apply that change.",
+    "access_token": null
+  }
+}

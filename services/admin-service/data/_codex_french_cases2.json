@@ -1,0 +1,68 @@
+{
+  "116d4355-d9ef-4ca1-8a2e-6931d7b970c1": {
+    "last_route": "mutate",
+    "last_topic": "reranking_strategy",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "history": [
+      {
+        "role": "user",
+        "content": "remplacer la avec llm batch"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'llm_batch'}. Confirm if you want me to apply that change."
+      }
+    ],
+    "tool_cache": {},
+    "last_message": "remplacer la avec llm batch",
+    "pending_action": {
+      "intent": "mutation",
+      "tool": "update_repo_config",
+      "arguments": {
+        "service_name": "retrieval",
+        "changes": {
+          "ranker": "llm_batch"
+        }
+      },
+      "steps": []
+    },
+    "last_response": "I am ready to update the retrieval settings with {'ranker': 'llm_batch'}. Confirm if you want me to apply that change.",
+    "access_token": null
+  },
+  "74cfbbe4-5594-4339-bfc5-ecaf30830ce9": {
+    "history": [
+      {
+        "role": "user",
+        "content": "remplacer la strategie de reranking par llm batch"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'llm_batch'}. Confirm if you want me to apply that change."
+      }
+    ],
+    "last_message": "remplacer la strategie de reranking par llm batch",
+    "pending_action": {
+      "intent": "mutation",
+      "tool": "update_repo_config",
+      "arguments": {
+        "service_name": "retrieval",
+        "changes": {
+          "ranker": "llm_batch"
+        }
+      },
+      "steps": []
+    },
+    "last_response": "I am ready to update the retrieval settings with {'ranker': 'llm_batch'}. Confirm if you want me to apply that change.",
+    "last_route": "mutate",
+    "last_topic": "reranking_strategy",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "access_token": null,
+    "tool_cache": {}
+  }
+}

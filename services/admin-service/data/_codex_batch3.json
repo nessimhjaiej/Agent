@@ -1,0 +1,160 @@
+{
+  "fc832187-0d3b-41d2-a16b-0c8924c77f96": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what chunking strategies are available?"
+      },
+      {
+        "role": "assistant",
+        "content": "Here\u2019s what this system supports for chunking:\n\n- Late chunking (current): We first clean/structure the document, then split into chunks. This preserves sections/headings better. Current settings: chunk size 750, overlap 120.\n- Early chunking: We split the raw text first, then process each chunk. This can be faster on very large files but is less section-aware.\n\nNotes:\n- Both approaches use fixed-size windows with configurable overlap (i.e., sliding-window behavior).\n- If you\u2019re aiming for sentence- or semantic-based chunking, tell me your goal and I can check what\u2019s feasible for our setup."
+      },
+      {
+        "role": "user",
+        "content": "780"
+      },
+      {
+        "role": "assistant",
+        "content": "Got it\u2014do you want me to change the chunk size to 780 tokens?\n\n- Keep overlap at 120 (about 15%), or adjust it (e.g., 130\u2013160) for a bit more context?\n- We\u2019ll keep the current \u201clate chunking\u201d approach unless you want to switch.\n\nOnce you confirm, I\u2019ll proceed and reindex the validated documents so the change takes effect."
+      },
+      {
+        "role": "user",
+        "content": "semantic"
+      },
+      {
+        "role": "assistant",
+        "content": "Got it\u2014you want semantic chunking.\n\nHere\u2019s what I can set up:\n- Semantic (sentence/heading-aware) chunks that keep sentences intact, respect headings/lists, and aim for a target size of 780 tokens.\n- Soft context carryover of ~15% so adjacent chunks share a bit of context without hard mid-sentence overlaps.\n\nQuick confirm:\n1) Apply to all validated documents?\n2) Keep the ~15% carryover, or prefer more/less?\n\nAfter switching, I can reindex and (optionally) run an A/B evaluation to confirm it improves answer quality."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": "late",
+            "chunk_size": 750,
+            "chunk_overlap": 120,
+            "pipeline_version": "v1"
+          },
+          "sources": {
+            "chunk_strategy": "services/preprocessing-service/app/config.py",
+            "chunk_size": "services/preprocessing-service/app/config.py",
+            "chunk_overlap": "services/preprocessing-service/app/config.py",
+            "pipeline_version": "services/preprocessing-service/app/config.py"
+          }
+        },
+        "created_at": 1776176747.7611685,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "last_message": "semantic",
+    "pending_action": null,
+    "last_response": "Got it\u2014you want semantic chunking.\n\nHere\u2019s what I can set up:\n- Semantic (sentence/heading-aware) chunks that keep sentences intact, respect headings/lists, and aim for a target size of 780 tokens.\n- Soft context carryover of ~15% so adjacent chunks share a bit of context without hard mid-sentence overlaps.\n\nQuick confirm:\n1) Apply to all validated documents?\n2) Keep the ~15% carryover, or prefer more/less?\n\nAfter switching, I can reindex and (optionally) run an A/B evaluation to confirm it improves answer quality.",
+    "last_route": "advisory",
+    "last_topic": "Set the document chunking strategy/mode to 'semantic'.",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "config": {
+          "chunk_strategy": "late",
+          "chunk_size": 750,
+          "chunk_overlap": 120,
+          "pipeline_version": "v1"
+        },
+        "sources": {
+          "chunk_strategy": "services/preprocessing-service/app/config.py",
+          "chunk_size": "services/preprocessing-service/app/config.py",
+          "chunk_overlap": "services/preprocessing-service/app/config.py",
+          "pipeline_version": "services/preprocessing-service/app/config.py"
+        }
+      }
+    },
+    "access_token": null
+  },
+  "d2c96c02-8527-41f7-a848-79228e15eb8d": {
+    "last_route": "advisory",
+    "last_topic": "Switch the chunking method to semantic chunking",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {
+        "status": "ok",
+        "scope": "retrieval",
+        "current_default_ranker_type": "llm_batch",
+        "methods": [
+          {
+            "name": "cross_encoder",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "llm_batch",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "none",
+            "exists": true,
+            "implemented": true
+          }
+        ]
+      }
+    },
+    "history": [
+      {
+        "role": "user",
+        "content": "remplacer la avec semantic"
+      },
+      {
+        "role": "assistant",
+        "content": "Je veux \u00eatre s\u00fbr de ce que vous entendez par \u201csemantic\u201d. C\u00f4t\u00e9 classement des r\u00e9sultats, voici ce qui est dispo actuellement:\n- D\u00e9faut actuel: llm_batch\n- Options possibles: cross_encoder (reranking s\u00e9mantique), none (pas de reranking, uniquement similarit\u00e9 vectorielle)\n\nSouhaitez-vous:\n1) Remplacer par cross_encoder (reranker s\u00e9mantique), ou\n2) Mettre none pour n\u2019utiliser que la recherche s\u00e9mantique sans reranking ?\n\nDites-moi laquelle appliquer."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {}, \"name\": \"get_reranking_methods\"}": {
+        "tool": "get_reranking_methods",
+        "args": {},
+        "result": {
+          "status": "ok",
+          "scope": "retrieval",
+          "current_default_ranker_type": "llm_batch",
+          "methods": [
+            {
+              "name": "cross_encoder",
+              "exists": true,
+              "implemented": true
+            },
+            {
+              "name": "llm_batch",
+              "exists": true,
+              "implemented": true
+            },
+            {
+              "name": "none",
+              "exists": true,
+              "implemented": true
+            }
+          ]
+        },
+        "created_at": 1776176808.759133,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "last_message": "remplacer la avec semantic",
+    "pending_action": null,
+    "last_response": "Je veux \u00eatre s\u00fbr de ce que vous entendez par \u201csemantic\u201d. C\u00f4t\u00e9 classement des r\u00e9sultats, voici ce qui est dispo actuellement:\n- D\u00e9faut actuel: llm_batch\n- Options possibles: cross_encoder (reranking s\u00e9mantique), none (pas de reranking, uniquement similarit\u00e9 vectorielle)\n\nSouhaitez-vous:\n1) Remplacer par cross_encoder (reranker s\u00e9mantique), ou\n2) Mettre none pour n\u2019utiliser que la recherche s\u00e9mantique sans reranking ?\n\nDites-moi laquelle appliquer.",
+    "access_token": null
+  }
+}

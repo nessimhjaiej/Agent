@@ -9,6 +9,8 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, Tool
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
+from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field
 
 from app.config import Settings
 from app.schemas import AdminActivityItem, AdminAgentRunState, AdminChatRequest, AdminChatResponse, IntentClassification
@@ -17,6 +19,34 @@ from app.tools import AdminToolbox, build_tools, is_generic_follow_up
 
 
 ProgressCallback = Callable[[dict[str, Any]], None]
+
+
+class SemanticActionPlan(BaseModel):
+    action_type: str = Field(
+        default="none",
+        pattern="^(none|update_config|delete_document|reindex_document|reindex_validated_documents|run_evaluation|compare_evaluation_reports)$",
+    )
+    service_name: str | None = Field(default=None, pattern="^(preprocessing|retrieval|embedding|generation)$")
+    changes: dict[str, Any] = Field(default_factory=dict)
+    document_query: str | None = None
+    dataset_path: str | None = None
+    baseline_report_id: str | None = None
+    candidate_report_id: str | None = None
+    reasoning: str = ""
+
+
+class SemanticActionPlan(BaseModel):
+    action_type: str = Field(
+        default="none",
+        pattern="^(none|update_config|delete_document|reindex_document|reindex_validated_documents|run_evaluation|compare_evaluation_reports)$",
+    )
+    service_name: str | None = Field(default=None, pattern="^(preprocessing|retrieval|embedding|generation)$")
+    changes: dict[str, Any] = Field(default_factory=dict)
+    document_query: str | None = None
+    dataset_path: str | None = None
+    baseline_report_id: str | None = None
+    candidate_report_id: str | None = None
+    reasoning: str = ""
 
 
 def _progress_item(
@@ -70,7 +100,7 @@ class IntentClassifier:
         model = _make_model(self._settings)
         if model is not None:
             try:
-                structured = model.with_structured_output(IntentClassification)
+                structured = model.with_structured_output(IntentClassification, method="function_calling")
                 return structured.invoke(
                     [
                         SystemMessage(
@@ -102,7 +132,7 @@ class IntentClassifier:
             category: Literal["inspect"] = "inspect"
         elif any(token in lowered for token in ["reindex", "run evaluation", "compare evaluation", "compare reports", "réindex", "evaluer", "évaluation"]):
             category: Literal["workflow"] = "workflow"
-        elif any(token in lowered for token in ["delete document", "remove document", "delete file", "change", "set", "switch", "update", "changer", "modifier", "supprimer"]):
+        elif any(token in lowered for token in ["delete document", "remove document", "delete file", "change", "set", "switch", "update", "changer", "modifier", "remplacer", "supprimer"]):
             category = "mutate"
         elif (
             any(token in lowered for token in ["config", "configuration", "settings", "current", "what is the current"])
@@ -202,6 +232,29 @@ def _normalize_user_answer(answer: str) -> str:
     return normalized
 
 
+def _prefers_french(message: str) -> bool:
+    lowered = message.lower()
+    return bool(
+        re.search(r"[àâçéèêëîïôùûü]", lowered)
+        or any(
+            token in lowered
+            for token in [
+                "quelle",
+                "quelles",
+                "strategie",
+                "stratég",
+                "rempla",
+                "changer",
+                "modifier",
+                "mettre",
+                "taille",
+                "actuelle",
+                "disponibles",
+            ]
+        )
+    )
+
+
 def _is_chunking_methods_question(message: str) -> bool:
     lowered = message.lower()
     if any(token in lowered for token in ["chunk_strategy", "chunk_size", "chunk_overlap"]):
@@ -223,12 +276,13 @@ def _is_reranking_methods_question(message: str) -> bool:
 
 
 def _summarize_inspection_result(tool_result: dict[str, Any], message: str, session_context: dict) -> str:
+    prefers_french = _prefers_french(message)
     if not tool_result:
         last_result = session_context.get("last_result")
         if isinstance(last_result, dict):
             tool_result = last_result
         else:
-            return "I could not collect live inspection data."
+            return "Je n'ai pas pu collecter les informations d'inspection en direct." if prefers_french else "I could not collect live inspection data."
 
     if "reports" in tool_result:
         reports = tool_result.get("reports", [])
@@ -277,30 +331,58 @@ def _summarize_inspection_result(tool_result: dict[str, Any], message: str, sess
         segments = []
         if tool_result.get("scope") == "retrieval":
             if implemented:
-                segments.append(f"Available reranking methods are {', '.join(implemented)}")
-                segments.append(f"you can change the reranking method to any of these: {', '.join(implemented)}")
+                if prefers_french:
+                    segments.append(f"Les methodes de reranking disponibles sont {', '.join(implemented)}")
+                    segments.append(f"vous pouvez changer la methode de reranking vers l'une de celles-ci : {', '.join(implemented)}")
+                else:
+                    segments.append(f"Available reranking methods are {', '.join(implemented)}")
+                    segments.append(f"you can change the reranking method to any of these: {', '.join(implemented)}")
             if pending:
-                segments.append(f"{', '.join(pending)} exists in the pipeline but is not implemented yet")
+                segments.append(
+                    f"{', '.join(pending)} existe dans le pipeline mais n'est pas encore implemente"
+                    if prefers_french
+                    else f"{', '.join(pending)} exists in the pipeline but is not implemented yet"
+                )
             current_ranker = tool_result.get("current_default_ranker_type")
             if current_ranker:
-                segments.append(f"the current default reranking method is {current_ranker}")
+                segments.append(
+                    f"la methode de reranking par defaut actuelle est {current_ranker}"
+                    if prefers_french
+                    else f"the current default reranking method is {current_ranker}"
+                )
         else:
             if implemented:
-                segments.append(f"Available chunking strategies are {', '.join(implemented)}")
-                segments.append(f"you can change the chunking strategy to any of these: {', '.join(implemented)}")
+                if prefers_french:
+                    segments.append(f"Les strategies de chunking disponibles sont {', '.join(implemented)}")
+                    segments.append(f"vous pouvez changer la strategie de chunking vers l'une de celles-ci : {', '.join(implemented)}")
+                else:
+                    segments.append(f"Available chunking strategies are {', '.join(implemented)}")
+                    segments.append(f"you can change the chunking strategy to any of these: {', '.join(implemented)}")
             if pending:
-                segments.append(f"{', '.join(pending)} exists in the pipeline but is not implemented yet")
+                segments.append(
+                    f"{', '.join(pending)} existe dans le pipeline mais n'est pas encore implemente"
+                    if prefers_french
+                    else f"{', '.join(pending)} exists in the pipeline but is not implemented yet"
+                )
             current_strategy = tool_result.get("current_strategy")
             if current_strategy:
-                segments.append(f"the current chunking strategy is {current_strategy}")
+                segments.append(
+                    f"la strategie de chunking actuelle est {current_strategy}"
+                    if prefers_french
+                    else f"the current chunking strategy is {current_strategy}"
+                )
             chunk_size = tool_result.get("current_chunk_size")
             chunk_overlap = tool_result.get("current_chunk_overlap")
             if chunk_size is not None and chunk_overlap is not None:
-                segments.append(f"the current chunk size is {chunk_size} with overlap {chunk_overlap}")
+                segments.append(
+                    f"la taille actuelle des chunks est {chunk_size} avec un overlap de {chunk_overlap}"
+                    if prefers_french
+                    else f"the current chunk size is {chunk_size} with overlap {chunk_overlap}"
+                )
         if segments:
             return ". ".join(segments) + "."
 
-    return f"I inspected the system and got: {tool_result}."
+    return f"J'ai inspecte le systeme et obtenu : {tool_result}." if prefers_french else f"I inspected the system and got: {tool_result}."
 
 
 def _extract_dataset_path(message: str) -> str:
@@ -328,74 +410,256 @@ def _extract_chunk_strategy(message: str) -> str | None:
         match = re.search(pattern, message)
         if match:
             return match.group(1)
+    bare = re.search(r"\b(late|overlap|semantic|sentence)\b", message)
+    if bare:
+        return bare.group(1)
     return None
 
 
-def _plan_mutation(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] | None, str]:
-    lowered = message.lower()
-    if any(token in lowered for token in ["change", "set", "switch", "update"]) and any(
-        token in lowered for token in ["chunk", "rerank", "retrieval", "embedding", "generation"]
-    ):
-        try:
-            scope = toolbox.resolve_config_scope(message)
-        except ValueError:
-            scope = ""
-        changes: dict[str, Any] = {}
-        if scope == "preprocessing":
-            chunk_strategy = _extract_chunk_strategy(lowered)
-            chunk_size = _extract_int_setting(
-                lowered,
-                [
-                    r"chunk[_ ]size(?:\s+to)?\s+(\d+)",
-                    r"set\s+chunk[_ ]size\s+(?:to\s+)?(\d+)",
-                    r"change\s+chunk[_ ]size\s+(?:to\s+)?(\d+)",
-                ],
-            )
-            chunk_overlap = _extract_int_setting(
-                lowered,
-                [
-                    r"chunk[_ ]overlap(?:\s+to)?\s+(\d+)",
-                    r"set\s+chunk[_ ]overlap\s+(?:to\s+)?(\d+)",
-                    r"change\s+chunk[_ ]overlap\s+(?:to\s+)?(\d+)",
-                ],
-            )
-            if chunk_strategy is not None:
-                changes["chunk_strategy"] = chunk_strategy
+def _infer_scope_from_context(message: str, toolbox: AdminToolbox, session_context: dict | None = None) -> str:
+    try:
+        return toolbox.resolve_config_scope(message)
+    except ValueError:
+        pass
 
-            if chunk_size is not None:
-                changes["chunk_size"] = chunk_size
-            if chunk_overlap is not None:
-                changes["chunk_overlap"] = chunk_overlap
-        elif scope == "retrieval":
-            if "cross_encoder" in lowered or "cross encoder" in lowered or "cross-encoder" in lowered:
+    context = session_context or {}
+    previous_topic = str(context.get("last_topic") or "").lower()
+    pending_action = context.get("pending_action")
+    if isinstance(pending_action, dict) and str(pending_action.get("tool") or "") == "update_repo_config":
+        arguments = pending_action.get("arguments", {})
+        if isinstance(arguments, dict):
+            pending_scope = str(arguments.get("service_name") or "").lower()
+            if pending_scope in {"preprocessing", "retrieval", "embedding", "generation"}:
+                return pending_scope
+
+    last_result = context.get("last_result")
+    if isinstance(last_result, dict):
+        tool_result = last_result.get("tool_result")
+        if isinstance(tool_result, dict):
+            result_scope = str(tool_result.get("scope") or "").lower()
+            if result_scope in {"preprocessing", "retrieval", "embedding", "generation"}:
+                return result_scope
+            if "current_default_ranker_type" in tool_result or "methods" in tool_result:
+                return "retrieval"
+            if "current_strategy" in tool_result or "current_chunk_size" in tool_result:
+                return "preprocessing"
+
+    if previous_topic in {"reranking_strategy", "update_repo_config"}:
+        lowered = message.lower()
+        if any(token in lowered for token in ["none", "cross", "llm", "rank", "rerank", "top k", "top-k"]):
+            return "retrieval"
+    if previous_topic in {"chunking"}:
+        return "preprocessing"
+
+    return ""
+
+
+def _semantic_action_planner(
+    message: str,
+    settings: Settings,
+    session_context: dict | None = None,
+) -> SemanticActionPlan | None:
+    model = _make_model(settings)
+    if model is None:
+        return None
+
+    context = session_context or {}
+    previous_route = str(context.get("last_route") or "none")
+    previous_topic = str(context.get("last_topic") or "none")
+    last_result = context.get("last_result", {})
+    if not isinstance(last_result, dict):
+        last_result = {}
+
+    try:
+        structured = model.with_structured_output(SemanticActionPlan, method="function_calling")
+        return structured.invoke(
+            [
+                SystemMessage(
+                    content=(
+                        "Infer whether the user is asking to execute one supported admin task. "
+                        "Do not require exact technical wording. Understand paraphrases, French phrasing, and follow-ups like 'it', 'la', or 'that'. "
+                        "Return action_type='none' unless the user is asking to do a task. "
+                        "Supported actions are: "
+                        "update_config, delete_document, reindex_document, reindex_validated_documents, run_evaluation, compare_evaluation_reports. "
+                        "For update_config, use only normalized keys already supported by the system. "
+                        "Retrieval changes use: ranker, top_k_retrieve, top_k_return. "
+                        "Use previous session context when the user refers to an already discussed setting. "
+                        f"Previous route: {previous_route}. Previous topic: {previous_topic}. "
+                        f"Last result snapshot: {json.dumps(last_result, ensure_ascii=True)}"
+                    )
+                ),
+                HumanMessage(content=message),
+            ]
+        )
+    except Exception:
+        return None
+
+
+def _pending_action_from_semantic_plan(
+    plan: SemanticActionPlan,
+    message: str,
+    toolbox: AdminToolbox,
+    session_context: dict | None = None,
+) -> tuple[str, dict[str, Any] | None, str | None]:
+    prefers_french = _prefers_french(message)
+    if plan.action_type == "none":
+        return "advisory", None, None
+
+    if plan.action_type == "update_config":
+        scope = str(plan.service_name or "").strip().lower()
+        if scope not in {"preprocessing", "retrieval", "embedding", "generation"}:
+            scope = _infer_scope_from_context(message, toolbox, session_context)
+        changes = dict(plan.changes)
+        lowered = message.lower()
+        if scope == "retrieval" and "ranker" not in changes:
+            if "cross encoder" in lowered or "cross_encoder" in lowered or "cross-encoder" in lowered:
                 changes["ranker"] = "cross_encoder"
-            elif "llm_batch" in lowered or "llm rerank" in lowered:
+            elif "llm batch" in lowered or "llm_batch" in lowered:
                 changes["ranker"] = "llm_batch"
-            elif "no rerank" in lowered or "no reranking" in lowered or "without reranking" in lowered:
+            elif re.search(r"\bnone\b", lowered) or re.search(r"\boff\b", lowered) or re.search(r"\bdisable\b", lowered):
                 changes["ranker"] = "none"
-            topk_match = re.search(r"top k(?: retrieve)?(?:\s+to)?\s+(\d+)", lowered)
-            if topk_match:
-                changes["top_k_retrieve"] = int(topk_match.group(1))
-        elif scope == "embedding":
-            model_match = re.search(r"(text-embedding-[\\w-]+)", lowered)
-            if model_match:
-                changes["embedding_model"] = model_match.group(1)
-        elif scope == "generation":
-            model_match = re.search(r"(gpt-[\\w.-]+)", lowered)
-            if model_match:
-                changes["generation_model"] = model_match.group(1)
-
-        if scope and changes:
-            return (
-                {
-                    "intent": "mutation",
-                    "tool": "update_repo_config",
-                    "arguments": {"service_name": scope, "changes": changes},
-                    "steps": [],
+        if not scope or not changes:
+            return "advisory", None, None
+        return (
+            "mutate",
+            {
+                "intent": "mutation",
+                "tool": "update_repo_config",
+                "arguments": {"service_name": scope, "changes": changes},
+                "steps": [],
                 "summary": f"Update {scope} config with {changes}.",
             },
-                f"I am ready to update the {scope} settings with {changes}. Confirm if you want me to apply that change.",
-            )
+            (
+                f"Je suis pret a mettre a jour les parametres {scope} avec {changes}. Confirmez-vous que je dois appliquer ce changement ?"
+                if prefers_french
+                else f"I am ready to update the {scope} settings with {changes}. Confirm if you want me to apply that change."
+            ),
+        )
+
+    if plan.action_type == "reindex_validated_documents":
+        return (
+            "workflow",
+            {
+                "intent": "workflow",
+                "tool": "reindex_validated_documents",
+                "arguments": {},
+                "steps": [],
+                "summary": "Reindex every validated document currently tracked by ingestion.",
+            },
+            "I am ready to reindex every validated document. Confirm to start the workflow.",
+        )
+
+    if plan.action_type == "run_evaluation":
+        dataset_path = str(plan.dataset_path or _extract_dataset_path(message))
+        return (
+            "workflow",
+            {
+                "intent": "workflow",
+                "tool": "run_evaluation",
+                "arguments": {"dataset_path": dataset_path},
+                "steps": [],
+                "summary": f"Run evaluation with dataset '{dataset_path}'.",
+            },
+            f"I am ready to run the evaluation with '{dataset_path}'. Confirm to start it.",
+        )
+
+    if plan.action_type == "compare_evaluation_reports":
+        baseline = str(plan.baseline_report_id or "").strip()
+        candidate = str(plan.candidate_report_id or "").strip()
+        if not baseline or not candidate:
+            pair = toolbox.resolve_report_pair(message)
+            if pair is None:
+                return "advisory", None, None
+            baseline, candidate = pair
+        return (
+            "workflow",
+            {
+                "intent": "workflow",
+                "tool": "compare_evaluation_reports",
+                "arguments": {"baseline_report_id": baseline, "candidate_report_id": candidate},
+                "steps": [],
+                "summary": f"Compare evaluation reports '{baseline}' and '{candidate}'.",
+            },
+            f"I am ready to compare report '{baseline}' against '{candidate}'. Confirm to run it.",
+        )
+
+    return "advisory", None, None
+
+
+def _plan_mutation(message: str, toolbox: AdminToolbox, session_context: dict | None = None) -> tuple[dict[str, Any] | None, str]:
+    lowered = message.lower()
+    prefers_french = _prefers_french(message)
+    scope = _infer_scope_from_context(message, toolbox, session_context)
+    changes: dict[str, Any] = {}
+    if scope == "preprocessing":
+        chunk_strategy = _extract_chunk_strategy(lowered)
+        chunk_size = _extract_int_setting(
+            lowered,
+            [
+                r"chunk[_ ]size(?:\s+to)?\s+(\d+)",
+                r"set\s+chunk[_ ]size\s+(?:to\s+)?(\d+)",
+                r"change\s+chunk[_ ]size\s+(?:to\s+)?(\d+)",
+            ],
+        )
+        if chunk_size is None:
+            bare_size = re.fullmatch(r"\s*(\d+)\s*", lowered)
+            if bare_size:
+                chunk_size = int(bare_size.group(1))
+        chunk_overlap = _extract_int_setting(
+            lowered,
+            [
+                r"chunk[_ ]overlap(?:\s+to)?\s+(\d+)",
+                r"set\s+chunk[_ ]overlap\s+(?:to\s+)?(\d+)",
+                r"change\s+chunk[_ ]overlap\s+(?:to\s+)?(\d+)",
+            ],
+        )
+        if chunk_strategy is not None:
+            changes["chunk_strategy"] = chunk_strategy
+        if chunk_size is not None:
+            changes["chunk_size"] = chunk_size
+        if chunk_overlap is not None:
+            changes["chunk_overlap"] = chunk_overlap
+    elif scope == "retrieval":
+        if "cross_encoder" in lowered or "cross encoder" in lowered or "cross-encoder" in lowered:
+            changes["ranker"] = "cross_encoder"
+        elif "llm_batch" in lowered or "llm batch" in lowered or "llm rerank" in lowered:
+            changes["ranker"] = "llm_batch"
+        elif (
+            "no rerank" in lowered
+            or "no reranking" in lowered
+            or "without reranking" in lowered
+            or re.search(r"\bnone\b", lowered)
+            or re.search(r"\boff\b", lowered)
+            or re.search(r"\bdisable\b", lowered)
+        ):
+            changes["ranker"] = "none"
+        topk_match = re.search(r"top k(?: retrieve)?(?:\s+to)?\s+(\d+)", lowered)
+        if topk_match:
+            changes["top_k_retrieve"] = int(topk_match.group(1))
+    elif scope == "embedding":
+        model_match = re.search(r"(text-embedding-[\\w-]+)", lowered)
+        if model_match:
+            changes["embedding_model"] = model_match.group(1)
+    elif scope == "generation":
+        model_match = re.search(r"(gpt-[\\w.-]+)", lowered)
+        if model_match:
+            changes["generation_model"] = model_match.group(1)
+
+    if scope and changes:
+        return (
+            {
+                "intent": "mutation",
+                "tool": "update_repo_config",
+                "arguments": {"service_name": scope, "changes": changes},
+                "steps": [],
+            "summary": f"Update {scope} config with {changes}.",
+        },
+            (
+                f"Je suis pret a mettre a jour les parametres {scope} avec {changes}. Confirmez-vous que je dois appliquer ce changement ?"
+                if prefers_french
+                else f"I am ready to update the {scope} settings with {changes}. Confirm if you want me to apply that change."
+            ),
+        )
 
     if "document" in lowered and any(token in lowered for token in ["delete", "remove"]):
         guess = message
@@ -403,7 +667,7 @@ def _plan_mutation(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] 
             guess = re.sub(prefix, "", guess, flags=re.IGNORECASE).strip(" :")
         target = toolbox.find_document(guess) if guess else None
         if target is None:
-            return None, "I can delete a document if you tell me the exact document name or ID."
+            return None, "Je peux supprimer un document si vous me donnez son nom exact ou son identifiant." if prefers_french else "I can delete a document if you tell me the exact document name or ID."
         summary = str(target.get("original_name") or target.get("storage_path") or target.get("id") or "document")
         return (
             {
@@ -413,12 +677,17 @@ def _plan_mutation(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] 
                 "steps": [],
                 "summary": f"Delete document '{summary}' and remove its indexed vectors.",
             },
-            f"I found the document '{summary}'. Confirm if you want me to delete it and clean up its vectors.",
+            (
+                f"J'ai trouve le document '{summary}'. Confirmez-vous que je dois le supprimer et nettoyer ses vecteurs ?"
+                if prefers_french
+                else f"I found the document '{summary}'. Confirm if you want me to delete it and clean up its vectors."
+            ),
         )
 
     return None, (
-        "That change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, "
-        "and evaluation workflows."
+        "Ce changement n'est pas encore expose par admin-service. Le service actuel peut executer la suppression de documents, le reindexing et les workflows d'evaluation."
+        if prefers_french
+        else "That change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluation workflows."
     )
 
 
@@ -549,18 +818,40 @@ def _summarize_compound_plan(steps: list[dict[str, Any]]) -> str:
     return f"I planned these actions in order: {', '.join(readable)}. Confirm if you want me to execute them."
 
 
-def _plan_request(message: str, requested_route: str, toolbox: AdminToolbox) -> tuple[str, dict[str, Any] | None, str | None]:
+def _plan_request(
+    message: str,
+    requested_route: str,
+    toolbox: AdminToolbox,
+    settings: Settings,
+    session_context: dict | None = None,
+) -> tuple[str, dict[str, Any] | None, str | None]:
     clauses = _split_into_clauses(message)
     if len(clauses) <= 1:
+        semantic_plan = _semantic_action_planner(message, settings, session_context)
+        if semantic_plan is not None:
+            semantic_route, semantic_action, semantic_answer = _pending_action_from_semantic_plan(
+                semantic_plan,
+                message,
+                toolbox,
+                session_context,
+            )
+            if semantic_action is not None:
+                return semantic_route, semantic_action, semantic_answer
         if requested_route == "workflow":
             pending_action, answer = _plan_workflow(message, toolbox)
             if pending_action is not None:
                 return "workflow", pending_action, answer
-            return "advisory", None, None
         if requested_route == "mutate":
-            pending_action, answer = _plan_mutation(message, toolbox)
+            pending_action, answer = _plan_mutation(message, toolbox, session_context)
             if pending_action is not None:
                 return "mutate", pending_action, answer
+        pending_action, answer = _plan_workflow(message, toolbox)
+        if pending_action is not None:
+            return "workflow", pending_action, answer
+        pending_action, answer = _plan_mutation(message, toolbox, session_context)
+        if pending_action is not None:
+            return "mutate", pending_action, answer
+        if requested_route in {"workflow", "mutate"}:
             return "advisory", None, None
         return requested_route, None, None
 
@@ -569,6 +860,20 @@ def _plan_request(message: str, requested_route: str, toolbox: AdminToolbox) -> 
     has_workflow = False
 
     for clause in clauses:
+        semantic_plan = _semantic_action_planner(clause, settings, session_context)
+        if semantic_plan is not None:
+            semantic_route, semantic_action, _ = _pending_action_from_semantic_plan(
+                semantic_plan,
+                clause,
+                toolbox,
+                session_context,
+            )
+            if semantic_action is not None:
+                planned_steps.append({"tool": semantic_action["tool"], "arguments": semantic_action.get("arguments", {})})
+                has_mutation_like = True
+                if semantic_route == "workflow":
+                    has_workflow = True
+                continue
         workflow_action, _ = _plan_workflow(clause, toolbox)
         if workflow_action is not None:
             planned_steps.append({"tool": workflow_action["tool"], "arguments": workflow_action.get("arguments", {})})
@@ -576,7 +881,7 @@ def _plan_request(message: str, requested_route: str, toolbox: AdminToolbox) -> 
             has_mutation_like = True
             continue
 
-        mutation_action, _ = _plan_mutation(clause, toolbox)
+        mutation_action, _ = _plan_mutation(clause, toolbox, session_context)
         if mutation_action is not None:
             planned_steps.append({"tool": mutation_action["tool"], "arguments": mutation_action.get("arguments", {})})
             has_mutation_like = True
@@ -750,7 +1055,13 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
         activity.append(completed_item)
         _emit_progress(progress_callback, completed_item)
         toolbox = AdminToolbox(settings, access_token=state.get("access_token") or access_token)
-        route, planned_pending_action, planned_answer = _plan_request(state["message"], result.category, toolbox)
+        route, planned_pending_action, planned_answer = _plan_request(
+            state["message"],
+            result.category,
+            toolbox,
+            settings,
+            state.get("session_context", {}),
+        )
         return {
             **state,
             "route": route,
@@ -1001,7 +1312,7 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
         pending_action = state.get("planned_pending_action")
         answer = state.get("planned_answer")
         if pending_action is None:
-            pending_action, answer = _plan_mutation(state["message"], toolbox)
+            pending_action, answer = _plan_mutation(state["message"], toolbox, state.get("session_context", {}))
         activity = list(state.get("activity", []))
         activity.append(mutate_started)
         mutate_finished = _progress_item(

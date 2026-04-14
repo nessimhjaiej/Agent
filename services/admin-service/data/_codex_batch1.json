@@ -1,0 +1,52 @@
+{
+  "c3088e99-fcfb-4761-a719-78b21027c9ed": {
+    "history": [
+      {
+        "role": "user",
+        "content": "none"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'none'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. I updated retrieval settings."
+      },
+      {
+        "role": "user",
+        "content": "switch it back to cross encoder"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'cross_encoder'}. Confirm if you want me to apply that change."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": {
+      "intent": "mutation",
+      "tool": "update_repo_config",
+      "arguments": {
+        "service_name": "retrieval",
+        "changes": {
+          "ranker": "cross_encoder"
+        }
+      },
+      "steps": []
+    },
+    "last_message": "switch it back to cross encoder",
+    "last_response": "I am ready to update the retrieval settings with {'ranker': 'cross_encoder'}. Confirm if you want me to apply that change.",
+    "last_route": "mutate",
+    "last_topic": "Revert the repository configuration to use the cross-encoder model.",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "access_token": null,
+    "cache_invalidated_at": 1776176358.7607818
+  }
+}

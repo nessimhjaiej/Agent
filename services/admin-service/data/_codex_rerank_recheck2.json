@@ -1,0 +1,34 @@
+{
+  "6fb68edc-d9f5-480f-ba6c-dde6088a967e": {
+    "history": [
+      {
+        "role": "user",
+        "content": "none"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'none'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. Reranking disabled."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done. Reranking disabled.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": null,
+    "cache_invalidated_at": 1776177695.7749074
+  }
+}

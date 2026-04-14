@@ -163,6 +163,193 @@ def test_service_plans_hyphenated_cross_encoder_reranker_change(tmp_path: Path) 
     assert response.pending_action.arguments["changes"]["ranker"] == "cross_encoder"
 
 
+def test_service_plans_follow_up_reranker_disable_from_pending_context(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "last_route": "mutate",
+            "last_topic": "reranking_strategy",
+            "pending_action": {
+                "intent": "mutation",
+                "tool": "update_repo_config",
+                "arguments": {"service_name": "retrieval", "changes": {"ranker": "cross_encoder"}},
+                "steps": [],
+            },
+        },
+    )
+
+    response = service.chat(AdminChatRequest(message="switch it to none", session_id=session_id))
+
+    assert response.status == "needs_confirmation"
+    assert response.mode == "mutate"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "update_repo_config"
+    assert response.pending_action.arguments["service_name"] == "retrieval"
+    assert response.pending_action.arguments["changes"]["ranker"] == "none"
+
+
+def test_service_plans_follow_up_reranker_disable_from_cached_methods(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "last_route": "inspect",
+            "last_topic": "reranking_strategy",
+            "last_result": {
+                "route": "inspect",
+                "tool_result": {
+                    "status": "ok",
+                    "scope": "retrieval",
+                    "current_default_ranker_type": "cross_encoder",
+                    "methods": [
+                        {"name": "cross_encoder", "exists": True, "implemented": True},
+                        {"name": "llm_batch", "exists": True, "implemented": True},
+                        {"name": "none", "exists": True, "implemented": True},
+                    ],
+                },
+            },
+        },
+    )
+
+    response = service.chat(AdminChatRequest(message="switch it to none", session_id=session_id))
+
+    assert response.status == "needs_confirmation"
+    assert response.mode == "mutate"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "update_repo_config"
+    assert response.pending_action.arguments["service_name"] == "retrieval"
+    assert response.pending_action.arguments["changes"]["ranker"] == "none"
+
+
+def test_service_uses_semantic_plan_for_french_reranker_follow_up(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
+    import app.graph as graph_module  # noqa: PLC0415
+
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "last_route": "inspect",
+            "last_topic": "reranking_strategy",
+            "last_result": {
+                "route": "inspect",
+                "tool_result": {
+                    "status": "ok",
+                    "scope": "retrieval",
+                    "current_default_ranker_type": "cross_encoder",
+                    "methods": [
+                        {"name": "cross_encoder", "exists": True, "implemented": True},
+                        {"name": "llm_batch", "exists": True, "implemented": True},
+                        {"name": "none", "exists": True, "implemented": True},
+                    ],
+                },
+            },
+        },
+    )
+
+    monkeypatch.setattr(
+        graph_module,
+        "_semantic_action_planner",
+        lambda message, settings, session_context=None: graph_module.SemanticActionPlan(
+            action_type="update_config",
+            service_name="retrieval",
+            changes={"ranker": "llm_batch"},
+        ),
+    )
+
+    response = service.chat(AdminChatRequest(message="remplacer la avec llm batch", session_id=session_id))
+
+    assert response.status == "needs_confirmation"
+    assert response.mode == "mutate"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "update_repo_config"
+    assert response.pending_action.arguments["service_name"] == "retrieval"
+    assert response.pending_action.arguments["changes"]["ranker"] == "llm_batch"
+
+
+def test_service_plans_remplacer_la_avec_llm_batch(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "last_route": "inspect",
+            "last_topic": "reranking_strategy",
+            "last_result": {
+                "route": "inspect",
+                "tool_result": {
+                    "status": "ok",
+                    "scope": "retrieval",
+                    "current_default_ranker_type": "cross_encoder",
+                    "methods": [
+                        {"name": "cross_encoder", "exists": True, "implemented": True},
+                        {"name": "llm_batch", "exists": True, "implemented": True},
+                        {"name": "none", "exists": True, "implemented": True},
+                    ],
+                },
+            },
+        },
+    )
+
+    response = service.chat(AdminChatRequest(message="remplacer la avec llm batch", session_id=session_id))
+
+    assert response.status == "needs_confirmation"
+    assert response.mode == "mutate"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "update_repo_config"
+    assert response.pending_action.arguments["service_name"] == "retrieval"
+    assert response.pending_action.arguments["changes"]["ranker"] == "llm_batch"
+
+
+def test_service_plans_remplacer_reranking_strategy_with_llm_batch(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+    response = service.chat(AdminChatRequest(message="remplacer la strategie de reranking par llm batch"))
+
+    assert response.status == "needs_confirmation"
+    assert response.mode == "mutate"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "update_repo_config"
+    assert response.pending_action.arguments["service_name"] == "retrieval"
+    assert response.pending_action.arguments["changes"]["ranker"] == "llm_batch"
+
+
+def test_service_plans_value_only_follow_up_without_trigger_keyword(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "last_route": "inspect",
+            "last_topic": "reranking_strategy",
+            "last_result": {
+                "route": "inspect",
+                "tool_result": {
+                    "status": "ok",
+                    "scope": "retrieval",
+                    "current_default_ranker_type": "cross_encoder",
+                    "methods": [
+                        {"name": "cross_encoder", "exists": True, "implemented": True},
+                        {"name": "llm_batch", "exists": True, "implemented": True},
+                        {"name": "none", "exists": True, "implemented": True},
+                    ],
+                },
+            },
+        },
+    )
+
+    response = service.chat(AdminChatRequest(message="llm batch", session_id=session_id))
+
+    assert response.status == "needs_confirmation"
+    assert response.mode == "mutate"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "update_repo_config"
+    assert response.pending_action.arguments["service_name"] == "retrieval"
+    assert response.pending_action.arguments["changes"]["ranker"] == "llm_batch"
+
+
 def test_service_invalidates_cache_after_confirmed_change(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
     import app.service as service_module  # noqa: PLC0415
 
