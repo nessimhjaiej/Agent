@@ -616,5 +616,291 @@
     },
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MDg5MTQ5LCJpYXQiOjE3NzYwODU1NDksImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.D6nBVMYxGbZ2ZjaiOfnJ45WunVQRid0qrMWDD3_DQxAn-emodwXlVEwpTwDA77fOw5xDKGDeJdGcUY5t1ijpYA",
     "cache_invalidated_at": 1776085438.9688463
+  },
+  "4e67a05f-b0e1-48c2-892f-a855acbdb0b6": {
+    "history": [
+      {
+        "role": "user",
+        "content": "tell me what is the difference between them"
+      },
+      {
+        "role": "assistant",
+        "content": "Here\u2019s the practical difference:\n\n- Cross-encoder reranker\n  - How it works: Scores each query\u2013passage pair with a compact neural model and sorts by those scores.\n  - Strengths: Fast, cheap, and stable; very strong on factual relevance; good for high throughput.\n  - Trade-offs: Computes per candidate (cost scales with top-k); limited \u201creasoning\u201d depth compared to an LLM.\n\n- LLM batch reranker\n  - How it works: Sends the query plus a batch of candidate passages to an LLM and asks it to rank/score them.\n  - Strengths: Better at nuanced, multi-step, or domain-heavy queries; can follow instructions; often stronger on tricky semantics and multilingual.\n  - Trade-offs: Slower and more expensive; non\u2011deterministic; limited by the LLM\u2019s context window and prompt design.\n\nRule of thumb:\n- Need speed, low cost, predictable behavior at scale \u2192 cross-encoder.\n- Fewer queries, higher stakes, or very nuanced/language-heavy content \u2192 LLM batch.\n\nIf you tell me your typical traffic and content type, I can recommend (and enable) the best option."
+      },
+      {
+        "role": "user",
+        "content": "change it to cross-encoder"
+      },
+      {
+        "role": "assistant",
+        "content": "I can\u2019t flip that switch directly from here, but it\u2019s available and currently disabled.\n\nQuick steps to enable cross\u2011encoder:\n- Open Settings \u2192 Retrieval\n- Under Reranking, choose \u201cCross\u2011encoder\u201d as the default\n- Save\n\nOptional (recommended): set \u201cRerank top K\u201d to 50 for a good balance of cost and quality.\n\nTell me when you\u2019ve saved it and I\u2019ll verify it\u2019s active. If you prefer different K (e.g., 20 for speed or 100 for quality), say the number and I\u2019ll guide you."
+      },
+      {
+        "role": "user",
+        "content": "i want you to change the reranking strategy to cross-encoder."
+      },
+      {
+        "role": "assistant",
+        "content": "I can\u2019t change that from here, but I checked and reranking is currently disabled and \u201ccross_encoder\u201d is available.\n\nDo this to enable it:\n- Go to Settings \u2192 Retrieval\n- Under Reranking, select \u201cCross-encoder\u201d\n- (Optional) Set \u201cRerank top K\u201d to 50 for a good balance of cost and quality\n- Save\n\nTell me when you\u2019ve saved it and I\u2019ll verify it\u2019s active. If you prefer a different K (e.g., 20 for speed or 100 for quality), say the number and I\u2019ll guide you."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"retrieval\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "retrieval"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "retrieval",
+          "config": {
+            "default_ranker_type": "none"
+          },
+          "sources": {
+            "default_ranker_type": "services/retrieval-service/app/config.py"
+          }
+        },
+        "created_at": 1776160559.2394593,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      },
+      "{\"args\": {}, \"name\": \"get_reranking_methods\"}": {
+        "tool": "get_reranking_methods",
+        "args": {},
+        "result": {
+          "status": "ok",
+          "scope": "retrieval",
+          "current_default_ranker_type": "none",
+          "methods": [
+            {
+              "name": "cross_encoder",
+              "exists": true,
+              "implemented": true
+            },
+            {
+              "name": "llm_batch",
+              "exists": true,
+              "implemented": true
+            },
+            {
+              "name": "none",
+              "exists": true,
+              "implemented": true
+            }
+          ]
+        },
+        "created_at": 1776160551.480033,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "last_message": "i want you to change the reranking strategy to cross-encoder.",
+    "pending_action": null,
+    "last_response": "I can\u2019t change that from here, but I checked and reranking is currently disabled and \u201ccross_encoder\u201d is available.\n\nDo this to enable it:\n- Go to Settings \u2192 Retrieval\n- Under Reranking, select \u201cCross-encoder\u201d\n- (Optional) Set \u201cRerank top K\u201d to 50 for a good balance of cost and quality\n- Save\n\nTell me when you\u2019ve saved it and I\u2019ll verify it\u2019s active. If you prefer a different K (e.g., 20 for speed or 100 for quality), say the number and I\u2019ll guide you.",
+    "last_route": "advisory",
+    "last_topic": "Change reranking strategy to cross-encoder",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {
+        "status": "ok",
+        "scope": "retrieval",
+        "config": {
+          "default_ranker_type": "none"
+        },
+        "sources": {
+          "default_ranker_type": "services/retrieval-service/app/config.py"
+        }
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MTYzODY4LCJpYXQiOjE3NzYxNjAyNjgsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.hhaEkDg6rNTVieu-TOFO1l9UR2_F7tOASPzwCTNKgGAeB70tSb4_AhAcCwWmdU_wP2EKOYU8PnJLBiHKnq2N-A"
+  },
+  "4eb176ee-9374-4381-8cf3-85e7de08e851": {
+    "history": [
+      {
+        "role": "user",
+        "content": "change the reranking strategy to cross-encoder"
+      },
+      {
+        "role": "assistant",
+        "content": "I checked: reranking is currently off (default = none), and cross-encoder is available.\n\nBefore I flip it, a quick note: cross-encoder improves answer quality but adds noticeable per-query latency. Recommended default is to rerank the top 50 retrieved items.\n\nDo you want me to apply this globally now (cross-encoder, rerank top 50)? \n- If you prefer different settings, tell me the rerank top-K you want."
+      },
+      {
+        "role": "user",
+        "content": "yes apply this"
+      },
+      {
+        "role": "assistant",
+        "content": "Great \u2014 we\u2019ll switch to cross\u2011encoder reranking with Top\u2011K = 50.\n\nI can\u2019t flip this setting directly from chat in this environment. Please apply it in the admin console:\n- Go to Settings \u2192 Retrieval \u2192 Reranking\n- Choose \u201cCross\u2011Encoder\u201d as the reranker\n- Set Rerank Top\u2011K to 50\n- Save/Deploy\n\nReply \u201cdone\u201d when it\u2019s applied, and I\u2019ll verify it and run a quick quality check. Expect a noticeable increase in per\u2011query latency. If you want a lighter option, we can try Top\u2011K = 20."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"retrieval\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "retrieval"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "retrieval",
+          "config": {
+            "default_ranker_type": "none"
+          },
+          "sources": {
+            "default_ranker_type": "services/retrieval-service/app/config.py"
+          }
+        },
+        "created_at": 1776160707.2891927,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      },
+      "{\"args\": {}, \"name\": \"get_reranking_methods\"}": {
+        "tool": "get_reranking_methods",
+        "args": {},
+        "result": {
+          "status": "ok",
+          "scope": "retrieval",
+          "current_default_ranker_type": "none",
+          "methods": [
+            {
+              "name": "cross_encoder",
+              "exists": true,
+              "implemented": true
+            },
+            {
+              "name": "llm_batch",
+              "exists": true,
+              "implemented": true
+            },
+            {
+              "name": "none",
+              "exists": true,
+              "implemented": true
+            }
+          ]
+        },
+        "created_at": 1776160707.289155,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "last_message": "yes apply this",
+    "pending_action": null,
+    "last_response": "Great \u2014 we\u2019ll switch to cross\u2011encoder reranking with Top\u2011K = 50.\n\nI can\u2019t flip this setting directly from chat in this environment. Please apply it in the admin console:\n- Go to Settings \u2192 Retrieval \u2192 Reranking\n- Choose \u201cCross\u2011Encoder\u201d as the reranker\n- Set Rerank Top\u2011K to 50\n- Save/Deploy\n\nReply \u201cdone\u201d when it\u2019s applied, and I\u2019ll verify it and run a quick quality check. Expect a noticeable increase in per\u2011query latency. If you want a lighter option, we can try Top\u2011K = 20.",
+    "last_route": "advisory",
+    "last_topic": "Apply the change to switch the reranking strategy to a cross-encoder model.",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {
+        "status": "ok",
+        "scope": "retrieval",
+        "config": {
+          "default_ranker_type": "none"
+        },
+        "sources": {
+          "default_ranker_type": "services/retrieval-service/app/config.py"
+        }
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MTYzODY4LCJpYXQiOjE3NzYxNjAyNjgsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.hhaEkDg6rNTVieu-TOFO1l9UR2_F7tOASPzwCTNKgGAeB70tSb4_AhAcCwWmdU_wP2EKOYU8PnJLBiHKnq2N-A"
+  },
+  "6b5a5929-e550-4198-8fdc-52a162ca3c11": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what are all available reranking strategies and tell me what does what you know"
+      },
+      {
+        "role": "assistant",
+        "content": "Here\u2019s what\u2019s available right now, and what each one does:\n\n- cross_encoder (current default)\n  - What it does: Re-scores the top retrieved passages by looking at the query and each passage together in one model pass.\n  - Why use it: Best accuracy for most QA/search use cases; especially good at sorting out near-duplicates and subtle relevance.\n  - Trade-offs: Extra latency and compute vs. \u201cnone,\u201d but usually faster/cheaper than using a full LLM for reranking.\n\n- llm_batch\n  - What it does: Uses an LLM to judge relevance for batches of passages at once. Can follow instructions (e.g., prefer recent info, exclude opinions).\n  - Why use it: Handles nuanced queries and long, messy passages well; can apply complex relevance rules.\n  - Trade-offs: Highest latency and cost; tune batch size and candidate count to control this.\n\n- none\n  - What it does: No reranking. Results stay in the order returned by the vector search.\n  - Why use it: Fastest and cheapest.\n  - Trade-offs: Lower precision on ambiguous or subtle queries; more sensitive to embedding quality and chunking.\n\nQuick guidance\n- Need the best overall precision without huge cost? Stick with cross_encoder (default).\n- Need instruction-aware or very nuanced relevance on long text? Use llm_batch with a small candidate set.\n- Need maximum speed/throughput and your corpus is clean and well-embedded? Use none.\n\nIf you tell me your priority (speed, cost, or accuracy) and typical query load, I can recommend settings or run a quick evaluation comparing these."
+      },
+      {
+        "role": "user",
+        "content": "change it to none"
+      },
+      {
+        "role": "assistant",
+        "content": "I checked: the current default reranker is cross_encoder. \u201cnone\u201d is available and supported.\n\nI can\u2019t flip this setting directly from chat in this environment. To switch to none, do one of the following:\n- If you have a settings console: open Retrieval settings, set Reranker = none, then save and reload the service.\n- If your team manages this via config/deploys: ask them to set the default reranker to \u201cnone\u201d for retrieval and redeploy/reload.\n\nAfter you (or your admin) make the change, tell me and I\u2019ll verify the default is updated and can run a quick spot-check to confirm results look good.\n\nHeads-up: turning off reranking usually speeds things up but can reduce precision on ambiguous queries. If you notice quality drops, consider:\n- Returning fewer candidates from vector search (smaller top_k)\n- Tightening filters (e.g., by source or section) to reduce noise\n\nWant me to draft a short change request you can paste to your platform/admin?"
+      },
+      {
+        "role": "user",
+        "content": "change the reranking strategy to none"
+      },
+      {
+        "role": "assistant",
+        "content": "I checked: the current default reranker is cross_encoder. \u201cnone\u201d is available.\n\nI can\u2019t flip this from chat in this environment. Here\u2019s how to change it:\n\n- If you have a settings console: open Retrieval settings, set Reranker = none, save, and restart/reload the service.\n- If your platform team manages this, send them this request:\n  - Please set the retrieval default reranker to \u201cnone\u201d and redeploy/reload the service.\n  - Reason: reduce latency and increase throughput. Note: may reduce precision on ambiguous queries. Rollback option: switch back to \u201ccross_encoder\u201d.\n\nAfter it\u2019s applied, tell me and I\u2019ll verify the default is updated and can do a quick spot-check.\n\nTip after turning reranking off:\n- Consider lowering vector search top_k and tightening filters to keep precision acceptable while benefiting from the speedup."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {}, \"name\": \"get_reranking_methods\"}": {
+        "tool": "get_reranking_methods",
+        "args": {},
+        "result": {
+          "status": "ok",
+          "scope": "retrieval",
+          "current_default_ranker_type": "cross_encoder",
+          "methods": [
+            {
+              "name": "cross_encoder",
+              "exists": true,
+              "implemented": true
+            },
+            {
+              "name": "llm_batch",
+              "exists": true,
+              "implemented": true
+            },
+            {
+              "name": "none",
+              "exists": true,
+              "implemented": true
+            }
+          ]
+        },
+        "created_at": 1776161581.0635884,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "last_message": "change the reranking strategy to none",
+    "pending_action": null,
+    "last_response": "I checked: the current default reranker is cross_encoder. \u201cnone\u201d is available.\n\nI can\u2019t flip this from chat in this environment. Here\u2019s how to change it:\n\n- If you have a settings console: open Retrieval settings, set Reranker = none, save, and restart/reload the service.\n- If your platform team manages this, send them this request:\n  - Please set the retrieval default reranker to \u201cnone\u201d and redeploy/reload the service.\n  - Reason: reduce latency and increase throughput. Note: may reduce precision on ambiguous queries. Rollback option: switch back to \u201ccross_encoder\u201d.\n\nAfter it\u2019s applied, tell me and I\u2019ll verify the default is updated and can do a quick spot-check.\n\nTip after turning reranking off:\n- Consider lowering vector search top_k and tightening filters to keep precision acceptable while benefiting from the speedup.",
+    "last_route": "advisory",
+    "last_topic": "Set the reranking strategy to \"none\"",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {
+        "status": "ok",
+        "scope": "retrieval",
+        "current_default_ranker_type": "cross_encoder",
+        "methods": [
+          {
+            "name": "cross_encoder",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "llm_batch",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "none",
+            "exists": true,
+            "implemented": true
+          }
+        ]
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MTYzODY4LCJpYXQiOjE3NzYxNjAyNjgsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.hhaEkDg6rNTVieu-TOFO1l9UR2_F7tOASPzwCTNKgGAeB70tSb4_AhAcCwWmdU_wP2EKOYU8PnJLBiHKnq2N-A"
   }
 }

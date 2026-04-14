@@ -178,3 +178,74 @@ def test_get_chunking_methods_reads_current_preprocessing_settings(monkeypatch) 
     assert result["current_chunk_overlap"] == 120
     names = {item["name"] for item in result["methods"]}
     assert {"late", "overlap", "semantic", "sentence"} <= names
+
+
+def test_get_repo_config_reads_retrieval_service(monkeypatch) -> None:  # noqa: ANN001
+    responses = [
+        _MockResponse(
+            200,
+            {
+                "status": "ok",
+                "scope": "retrieval",
+                "config": {"default_ranker_type": "cross_encoder", "top_k_retrieve": 9, "top_k_return": 4},
+                "sources": {
+                    "default_ranker_type": "services/retrieval-service/app/config.py",
+                    "top_k_retrieve": "services/retrieval-service/app/config.py",
+                    "top_k_return": "services/retrieval-service/app/config.py",
+                },
+            },
+        )
+    ]
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    result = AdminToolbox(_settings()).get_repo_config("retrieval")
+    assert result["scope"] == "retrieval"
+    assert result["config"]["default_ranker_type"] == "cross_encoder"
+    assert result["config"]["top_k_retrieve"] == 9
+    assert result["config"]["top_k_return"] == 4
+
+
+def test_get_reranking_methods_reads_current_retrieval_settings(monkeypatch) -> None:  # noqa: ANN001
+    responses = [
+        _MockResponse(
+            200,
+            {
+                "status": "ok",
+                "scope": "retrieval",
+                "current_default_ranker_type": "llm_batch",
+                "methods": [
+                    {"name": "none", "exists": True, "implemented": True},
+                    {"name": "cross_encoder", "exists": True, "implemented": True},
+                    {"name": "llm_batch", "exists": True, "implemented": True},
+                ],
+            },
+        )
+    ]
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    result = AdminToolbox(_settings()).get_reranking_methods()
+    assert result["current_default_ranker_type"] == "llm_batch"
+    names = {item["name"] for item in result["methods"]}
+    assert {"none", "cross_encoder", "llm_batch"} <= names
+
+
+def test_update_repo_config_calls_retrieval_service(monkeypatch) -> None:  # noqa: ANN001
+    responses = [
+        _MockResponse(
+            200,
+            {
+                "status": "ok",
+                "scope": "retrieval",
+                "updated": {"default_ranker_type": "cross_encoder", "top_k_retrieve": 11, "top_k_return": 6},
+                "applied_via": "retrieval-service",
+                "restart_required": False,
+            },
+        )
+    ]
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    result = AdminToolbox(_settings()).update_repo_config(
+        "retrieval",
+        {"ranker": "cross_encoder", "top_k_retrieve": 11, "top_k_return": 6},
+    )
+    assert result["updated"]["default_ranker_type"] == "cross_encoder"
+    assert result["updated"]["top_k_retrieve"] == 11
+    assert result["updated"]["top_k_return"] == 6
+    assert result["applied_via"] == "retrieval-service"

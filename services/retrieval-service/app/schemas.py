@@ -60,3 +60,37 @@ class SearchResponse(BaseModel):
     rerank_type: str
     chunks: list[SearchChunkResult]
     documents: list[SearchDocumentResult]
+
+
+class RetrievalConfigResponse(BaseModel):
+    status: str = "ok"
+    scope: str = "retrieval"
+    config: dict[str, str | int]
+    sources: dict[str, str]
+
+
+class UpdateRetrievalConfigRequest(BaseModel):
+    default_ranker_type: str | None = Field(default=None, pattern="^(none|cross_encoder|llm_batch)$")
+    top_k_retrieve: int | None = Field(default=None, ge=1)
+    top_k_return: int | None = Field(default=None, ge=1)
+
+
+class UpdateRetrievalConfigResponse(BaseModel):
+    status: str = "ok"
+    scope: str = "retrieval"
+    updated: dict[str, str | int]
+    applied_via: str
+    restart_required: bool = False
+
+
+class RerankerMethodItem(BaseModel):
+    name: str
+    exists: bool = True
+    implemented: bool
+
+
+class RetrievalRerankersResponse(BaseModel):
+    status: str = "ok"
+    scope: str = "retrieval"
+    current_default_ranker_type: str
+    methods: list[RerankerMethodItem]

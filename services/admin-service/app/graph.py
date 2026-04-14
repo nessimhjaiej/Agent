@@ -98,7 +98,7 @@ class IntentClassifier:
                 category=previous_route, intent=previous_topic or previous_route, reasoning="Generic follow-up reused the previous route.",
             )
 
-        if _is_chunking_methods_question(message):
+        if _is_chunking_methods_question(message) or _is_reranking_methods_question(message):
             category: Literal["inspect"] = "inspect"
         elif any(token in lowered for token in ["reindex", "run evaluation", "compare evaluation", "compare reports", "réindex", "evaluer", "évaluation"]):
             category: Literal["workflow"] = "workflow"
@@ -211,6 +211,17 @@ def _is_chunking_methods_question(message: str) -> bool:
     return asks_about_chunking and asks_for_options
 
 
+def _is_reranking_methods_question(message: str) -> bool:
+    lowered = message.lower()
+    if "default_ranker_type" in lowered:
+        return False
+    if any(token in lowered for token in ["change", "set", "switch", "update"]):
+        return False
+    asks_about_reranking = bool(re.search(r"\b(rerank|reranking|reranker|ranker|ranking)\b", lowered))
+    asks_for_options = bool(re.search(r"\b(available|supported|methods|strategies|options|types)\b", lowered))
+    return asks_about_reranking and asks_for_options
+
+
 def _summarize_inspection_result(tool_result: dict[str, Any], message: str, session_context: dict) -> str:
     if not tool_result:
         last_result = session_context.get("last_result")
@@ -264,18 +275,28 @@ def _summarize_inspection_result(tool_result: dict[str, Any], message: str, sess
                 pending.append(name)
 
         segments = []
-        if implemented:
-            segments.append(f"Available chunking strategies are {', '.join(implemented)}")
-            segments.append(f"you can change the chunking strategy to any of these: {', '.join(implemented)}")
-        if pending:
-            segments.append(f"{', '.join(pending)} exists in the pipeline but is not implemented yet")
-        current_strategy = tool_result.get("current_strategy")
-        if current_strategy:
-            segments.append(f"the current chunking strategy is {current_strategy}")
-        chunk_size = tool_result.get("current_chunk_size")
-        chunk_overlap = tool_result.get("current_chunk_overlap")
-        if chunk_size is not None and chunk_overlap is not None:
-            segments.append(f"the current chunk size is {chunk_size} with overlap {chunk_overlap}")
+        if tool_result.get("scope") == "retrieval":
+            if implemented:
+                segments.append(f"Available reranking methods are {', '.join(implemented)}")
+                segments.append(f"you can change the reranking method to any of these: {', '.join(implemented)}")
+            if pending:
+                segments.append(f"{', '.join(pending)} exists in the pipeline but is not implemented yet")
+            current_ranker = tool_result.get("current_default_ranker_type")
+            if current_ranker:
+                segments.append(f"the current default reranking method is {current_ranker}")
+        else:
+            if implemented:
+                segments.append(f"Available chunking strategies are {', '.join(implemented)}")
+                segments.append(f"you can change the chunking strategy to any of these: {', '.join(implemented)}")
+            if pending:
+                segments.append(f"{', '.join(pending)} exists in the pipeline but is not implemented yet")
+            current_strategy = tool_result.get("current_strategy")
+            if current_strategy:
+                segments.append(f"the current chunking strategy is {current_strategy}")
+            chunk_size = tool_result.get("current_chunk_size")
+            chunk_overlap = tool_result.get("current_chunk_overlap")
+            if chunk_size is not None and chunk_overlap is not None:
+                segments.append(f"the current chunk size is {chunk_size} with overlap {chunk_overlap}")
         if segments:
             return ". ".join(segments) + "."
 
@@ -346,7 +367,7 @@ def _plan_mutation(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] 
             if chunk_overlap is not None:
                 changes["chunk_overlap"] = chunk_overlap
         elif scope == "retrieval":
-            if "cross_encoder" in lowered or "cross encoder" in lowered:
+            if "cross_encoder" in lowered or "cross encoder" in lowered or "cross-encoder" in lowered:
                 changes["ranker"] = "cross_encoder"
             elif "llm_batch" in lowered or "llm rerank" in lowered:
                 changes["ranker"] = "llm_batch"
@@ -692,7 +713,7 @@ def _run_llm_tool_loop(
 
 
 def _tool_cache_policy(tool_name: str) -> tuple[int, list[str]]:
-    if tool_name == "get_repo_config":
+    if tool_name in {"get_repo_config", "get_reranking_methods"}:
         return 600, ["config"]
     if tool_name in {"get_ingestion_status", "list_loaded_documents"}:
         return 90, ["documents", "ingestion"]
@@ -836,6 +857,41 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
                 "tool_call_count": 1,
                 "tool_cache_updates": {},
             }
+        if _is_reranking_methods_question(state["message"]):
+            tool_result = toolbox.get_reranking_methods()
+            tool_activity = [
+                {
+                    "phase": "tool",
+                    "status": "completed",
+                    "title": "Reranking methods inspected",
+                    "detail": "The agent read the current retrieval reranking methods and the active default.",
+                    "tool": "get_reranking_methods",
+                    "arguments": {},
+                }
+            ]
+            if progress_callback is not None:
+                progress_callback(tool_activity[-1])
+            answer = _summarize_inspection_result(tool_result, state["message"], state.get("session_context", {}))
+            answer = _normalize_user_answer(answer)
+            activity.extend(tool_activity)
+            inspect_finished = _progress_item(
+                phase="inspect",
+                status="completed",
+                title="Inspection finished",
+                detail="Live reranking method information was prepared for the admin.",
+            )
+            activity.append(inspect_finished)
+            _emit_progress(progress_callback, inspect_finished)
+            return {
+                **state,
+                "status": "completed",
+                "final_answer": answer,
+                "current_step": "summarize",
+                "activity": activity,
+                "tool_result": tool_result,
+                "tool_call_count": 1,
+                "tool_cache_updates": {},
+            }
 
         try:
             answer, tool_result, tool_activity, tool_call_count, cache_updates = _run_llm_tool_loop(
@@ -872,6 +928,20 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
                             "title": "Chunking methods inspected",
                             "detail": "The agent read the current preprocessing chunking options.",
                             "tool": "get_chunking_methods",
+                            "arguments": {},
+                        }
+                    )
+                    if progress_callback is not None:
+                        progress_callback(tool_activity[-1])
+                elif _is_reranking_methods_question(state["message"]):
+                    tool_result = toolbox.get_reranking_methods()
+                    tool_activity.append(
+                        {
+                            "phase": "tool",
+                            "status": "completed",
+                            "title": "Reranking methods inspected",
+                            "detail": "The agent read the current retrieval reranking methods.",
+                            "tool": "get_reranking_methods",
                             "arguments": {},
                         }
                     )

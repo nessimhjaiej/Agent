@@ -112,6 +112,30 @@ class AdminToolbox:
             response.raise_for_status()
             return response.json()
 
+    def _get_retrieval_config(self) -> dict[str, Any]:
+        with self._client() as client:
+            response = client.get(f"{self._settings.retrieval_base_url.rstrip('/')}/retrieval/config")
+            response.raise_for_status()
+            return response.json()
+
+    def _update_retrieval_config(self, changes: dict[str, Any]) -> dict[str, Any]:
+        payload = dict(changes)
+        if "ranker" in payload and "default_ranker_type" not in payload:
+            payload["default_ranker_type"] = payload.pop("ranker")
+        with self._client() as client:
+            response = client.put(
+                f"{self._settings.retrieval_base_url.rstrip('/')}/retrieval/config",
+                json=payload,
+            )
+            response.raise_for_status()
+            return response.json()
+
+    def _get_retrieval_rerankers(self) -> dict[str, Any]:
+        with self._client() as client:
+            response = client.get(f"{self._settings.retrieval_base_url.rstrip('/')}/retrieval/rerankers")
+            response.raise_for_status()
+            return response.json()
+
     def get_repo_config(self, service_name: str) -> dict[str, Any]:
         normalized = self.resolve_config_scope(service_name)
         scope = CONFIG_SCOPES.get(normalized)
@@ -120,6 +144,8 @@ class AdminToolbox:
 
         if normalized == "preprocessing":
             return self._get_preprocessing_config()
+        if normalized == "retrieval":
+            return self._get_retrieval_config()
 
         values, sources = self._read_env_map()
         config: dict[str, Any] = {}
@@ -133,6 +159,9 @@ class AdminToolbox:
     def get_chunking_methods(self) -> dict[str, Any]:
         return self._get_preprocessing_chunking_strategies()
 
+    def get_reranking_methods(self) -> dict[str, Any]:
+        return self._get_retrieval_rerankers()
+
     def update_repo_config(self, service_name: str, changes: dict[str, Any]) -> dict[str, Any]:
         normalized = self.resolve_config_scope(service_name)
         scope = CONFIG_SCOPES.get(normalized)
@@ -143,6 +172,8 @@ class AdminToolbox:
 
         if normalized == "preprocessing":
             return self._update_preprocessing_config(changes)
+        if normalized == "retrieval":
+            return self._update_retrieval_config(changes)
 
         lines: list[str] = []
         env_local = self._settings.project_root / ".env.local"
@@ -479,6 +510,11 @@ def build_tools(toolbox: AdminToolbox, include_mutations: bool = True) -> list:
         return toolbox.get_repo_config(service_name)
 
     @tool
+    def get_reranking_methods() -> dict[str, Any]:
+        """Return the available retrieval reranking methods and the current default reranker."""
+        return toolbox.get_reranking_methods()
+
+    @tool
     def update_repo_config(service_name: str, changes: dict[str, Any]) -> dict[str, Any]:
         """Update supported repo config values by writing overrides into .env.local. Use only for confirmed admin changes."""
         return toolbox.update_repo_config(service_name, changes)
@@ -492,6 +528,7 @@ def build_tools(toolbox: AdminToolbox, include_mutations: bool = True) -> list:
         reindex_document,
         reindex_validated_documents,
         get_repo_config,
+        get_reranking_methods,
     ]
 
     if include_mutations:

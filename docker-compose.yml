@@ -67,6 +67,8 @@ services:
       context: .
       dockerfile: services/retrieval-service/Dockerfile
     container_name: retrieval-service
+    volumes:
+      - ./services/retrieval-service/app/config.py:/app/services/retrieval-service/app/config.py
     env_file:
       - .env
     environment:
