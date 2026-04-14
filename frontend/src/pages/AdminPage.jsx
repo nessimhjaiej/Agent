@@ -1220,15 +1220,14 @@ export default function AdminPage() {
                                     className="mt-3 rounded-xl p-3"
                                     style={{
                                       background: 'rgba(15,23,42,0.04)',
-                                      border: '1px solid var(--border-color)',
                                     }}
                                   >
                                     {Array.isArray(msg.activity) && msg.activity.length > 0 && (
-                                      <div className="space-y-2">
+                                      <div className="space-y-3">
                                         {msg.activity.map((activity, index) => (
                                           <div
                                             key={`${msg.id}-activity-${index}`}
-                                            className="rounded-xl px-3 py-2 text-xs"
+                                            className="rounded-xl px-4 text-xs"
                                             style={{
                                               background: activity.status === 'failed'
                                                 ? 'rgba(239,68,68,0.08)'
@@ -1241,11 +1240,25 @@ export default function AdminPage() {
                                                   ? '1px solid rgba(16,185,129,0.18)'
                                                   : '1px solid rgba(245,158,11,0.18)',
                                               color: 'var(--text-secondary)',
+                                              marginTop: '4px',
+                                              marginBottom: '4px',
+                                              paddingTop: '16px',
+                                              paddingBottom: '16px',
                                             }}
                                           >
-                                            <div className="flex items-center justify-between gap-3">
-                                              <span>{formatActivityLine(activity)}</span>
-                                              <span className="uppercase tracking-wide" style={{ fontSize: '10px' }}>
+                                            <div
+                                              style={{
+                                                display: 'grid',
+                                                gridTemplateColumns: 'minmax(0, 1fr) 88px',
+                                                alignItems: 'center',
+                                                columnGap: '12px',
+                                              }}
+                                            >
+                                              <span style={{ minWidth: 0, paddingLeft: '8px' }}>{formatActivityLine(activity)}</span>
+                                              <span
+                                                className="uppercase tracking-wide"
+                                                style={{ fontSize: '10px', whiteSpace: 'nowrap', opacity: 0.9, textAlign: 'left' }}
+                                              >
                                                 {activity.status}
                                               </span>
                                             </div>
@@ -1269,7 +1282,12 @@ export default function AdminPage() {
                                 )}
                               </div>
                             )}
-                            <p className="text-sm leading-relaxed whitespace-pre-line my-2">{msg.content}</p>
+                            <p
+                              className="text-sm leading-relaxed whitespace-pre-line mb-2"
+                              style={{ marginTop: msg.role === 'assistant' && msg.detailsOpen ? '20px' : '8px' }}
+                            >
+                              {msg.content}
+                            </p>
                             <p className={`text-xs mt-2 ${msg.role === 'user' ? 'text-white/50' : ''}`} style={msg.role === 'assistant' ? { color: 'var(--text-muted)' } : {}}>{msg.timestamp}</p>
                           </div>
                           {msg.role === 'user' && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1" style={{ background: 'linear-gradient(135deg, #52525b, #27272a)' }}><User size={15} className="text-white" /></div>}

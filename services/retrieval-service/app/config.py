@@ -30,7 +30,7 @@ class Settings:
     weaviate_collection: str = "Chunk"
     openai_key: str = ""
     embedding_model: str = "text-embedding-3-small"
-    default_top_k_retrieve: int = 11
+    default_top_k_retrieve: int = 10
     default_top_k_return: int = 6
     default_fusion_type: str = "alpha"
     default_alpha: float = 0.7
