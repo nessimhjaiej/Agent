@@ -10,7 +10,6 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 from pydantic import BaseModel, Field
-from pydantic import BaseModel, Field
 
 from app.config import Settings
 from app.schemas import AdminActivityItem, AdminAgentRunState, AdminChatRequest, AdminChatResponse, IntentClassification
@@ -19,20 +18,6 @@ from app.tools import AdminToolbox, build_tools, is_generic_follow_up
 
 
 ProgressCallback = Callable[[dict[str, Any]], None]
-
-
-class SemanticActionPlan(BaseModel):
-    action_type: str = Field(
-        default="none",
-        pattern="^(none|update_config|delete_document|reindex_document|reindex_validated_documents|run_evaluation|compare_evaluation_reports)$",
-    )
-    service_name: str | None = Field(default=None, pattern="^(preprocessing|retrieval|embedding|generation)$")
-    changes: dict[str, Any] = Field(default_factory=dict)
-    document_query: str | None = None
-    dataset_path: str | None = None
-    baseline_report_id: str | None = None
-    candidate_report_id: str | None = None
-    reasoning: str = ""
 
 
 class SemanticActionPlan(BaseModel):

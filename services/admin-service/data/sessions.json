@@ -1335,5 +1335,345 @@
     },
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MTc3ODg2LCJpYXQiOjE3NzYxNzQyODYsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.UBwC_GyBKfxajsANklwjl24ut7p74hecfzuvqeX5b4cMUzM7wspwX8Ifw9SajKWeDiK7Wcv-1rEyvbaJ4mOdiQ",
     "cache_invalidated_at": 1776174284.206389
+  },
+  "fc97ff0e-0ad1-4865-a5b6-8fb7115ce12f": {
+    "history": [
+      {
+        "role": "user",
+        "content": "bonjour"
+      },
+      {
+        "role": "assistant",
+        "content": "Bonjour ! Comment puis-je vous aider aujourd\u2019hui ?"
+      },
+      {
+        "role": "user",
+        "content": "donner moi les strategie par defauts et tout les strategies disponibles de reranking"
+      },
+      {
+        "role": "assistant",
+        "content": "Les methodes de reranking disponibles sont cross_encoder, llm_batch, none. vous pouvez changer la methode de reranking vers l'une de celles-ci : cross_encoder, llm_batch, none. la methode de reranking par defaut actuelle est llm_batch."
+      },
+      {
+        "role": "user",
+        "content": "changer la en none"
+      },
+      {
+        "role": "assistant",
+        "content": "Je suis pret a mettre a jour les parametres retrieval avec {'ranker': 'none'}. Confirmez-vous que je dois appliquer ce changement ?"
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. Reranking disabled."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done. Reranking disabled.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MjQ0OTQ2LCJpYXQiOjE3NzYyNDEzNDYsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.lwVDgD586DQld_yXosm_E3hX7CcThsAikUJ9v5HnyLdsVtuZZgVXgrQTrRfnWfNjmvU4OGgXVq125FPS1CaRMQ",
+    "cache_invalidated_at": 1776242563.0539486
+  },
+  "45607500-9012-4913-899d-739fd76ac5ae": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what's all bad things about each strategy"
+      },
+      {
+        "role": "assistant",
+        "content": "Here are the main downsides of each reranking strategy:\n\n- none\n  - Lower relevance on tricky queries; easy to miss the \u201cright\u201d doc\n  - Very sensitive to embedding quality, chunking, and index tuning (no safety net)\n  - Struggles with subtle intent, synonyms, and multi-hop questions\n  - If you raise top_k_return, you often add noisy or off-topic context\n\n- cross_encoder\n  - Extra latency and compute scale with how many candidates you rerank\n  - Can overweight exact wording/lexical overlap; less robust to paraphrases or mixed languages\n  - Fixed behavior: can\u2019t follow custom domain instructions or reason across passages\n  - Gains taper off if chunks are long/noisy; still needs good retrieval to start with\n  - Operational overhead (model hosting, throughput limits, version drift)\n\n- llm_batch\n  - Highest cost and latency (token-heavy, grows with candidates and chunk length)\n  - Non\u2011deterministic: results can vary slightly; harder to debug and reproduce\n  - Prompt\u2011sensitive; may \u201cbelieve\u201d well\u2011written but off\u2011topic text and mis-rank it\n  - Throughput/rate\u2011limit constraints; behavior can change with upstream model updates\n  - Requires tight control of chunk size and candidate count to avoid token blowups\n  - Potential exposure to prompt\u2011injection content during rerank unless guarded\n\nIf you share your priorities (speed, cost, consistency, or max quality), I can recommend which to use and set it up."
+      },
+      {
+        "role": "user",
+        "content": "switch to llm_batch"
+      },
+      {
+        "role": "assistant",
+        "content": "I can switch the reranker to llm_batch. Do you want to keep the current k values or use the recommended ones for llm_batch?\n\nOptions:\n- Keep as-is: retrieve 10, return 6\n- Recommended: retrieve 20, return 5 (better recall, but higher cost/latency)\n\nReply with \u201cUse llm_batch 10/6\u201d or \u201cUse llm_batch 20/5\u201d. I can also run a quick evaluation after the switch to verify quality and latency."
+      },
+      {
+        "role": "user",
+        "content": "switch it to llm batch"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'llm_batch'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. Reranking strategy set to llm_batch."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done. Reranking strategy set to llm_batch.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MjQ0OTQ2LCJpYXQiOjE3NzYyNDEzNDYsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.lwVDgD586DQld_yXosm_E3hX7CcThsAikUJ9v5HnyLdsVtuZZgVXgrQTrRfnWfNjmvU4OGgXVq125FPS1CaRMQ",
+    "cache_invalidated_at": 1776243954.0143664
+  },
+  "06e21792-df0d-46fa-84fd-7326f6d9b572": {
+    "history": [
+      {
+        "role": "user",
+        "content": "c'est quoi les rerankers disponibles ?"
+      },
+      {
+        "role": "assistant",
+        "content": "Voici les rerankers disponibles actuellement, avec le d\u00e9faut indiqu\u00e9:\n\n- llm_batch (d\u00e9faut): un LLM r\u00e9\u00e9value les passages en lot. Tr\u00e8s pr\u00e9cis, plus co\u00fbteux et plus lent.\n- cross_encoder: mod\u00e8le d\u00e9di\u00e9 de ranking (type cross-encoder). Bon compromis pr\u00e9cision/latence, moins cher que le LLM, plus lent que \u201cnone\u201d.\n- none: pas de reranking. Le plus rapide et le moins co\u00fbteux, mais souvent moins pr\u00e9cis.\n\nSouhaitez-vous des recommandations selon vos objectifs (vitesse vs pr\u00e9cision), ou un ajustement des param\u00e8tres top_k pour votre cas d\u2019usage ?"
+      },
+      {
+        "role": "user",
+        "content": "c'est quoi la meilleures reranker disponible ?"
+      },
+      {
+        "role": "assistant",
+        "content": "En termes de qualit\u00e9 pure, le meilleur reranker disponible est llm_batch.\n\n- llm_batch: meilleure pertinence des passages, mais plus lent et plus co\u00fbteux.\n- cross_encoder: presque aussi bon, nettement plus rapide/\u00e9conomique.\n- none: le plus rapide, mais souvent moins pr\u00e9cis.\n\nSi votre priorit\u00e9 est la pr\u00e9cision, gardez llm_batch. Si vous voulez un bon compromis co\u00fbt/latence, passez \u00e0 cross_encoder. Voulez-vous que je lance une \u00e9valuation rapide pour comparer sur vos donn\u00e9es ou que je change le reranker par d\u00e9faut ?"
+      },
+      {
+        "role": "user",
+        "content": "je veux chancher le reranker en none"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'none'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. Reranking disabled."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done. Reranking disabled.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MjQ0OTQ2LCJpYXQiOjE3NzYyNDEzNDYsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.lwVDgD586DQld_yXosm_E3hX7CcThsAikUJ9v5HnyLdsVtuZZgVXgrQTrRfnWfNjmvU4OGgXVq125FPS1CaRMQ",
+    "cache_invalidated_at": 1776244769.2751186
+  },
+  "1561bd0c-2b89-455d-8591-8d97d2163125": {
+    "history": [
+      {
+        "role": "user",
+        "content": "can you check all documents available ?"
+      },
+      {
+        "role": "assistant",
+        "content": "Here\u2019s what I found:\n\n- Total documents: 11\n- Validated and searchable: 10\n- Rejected (not used): 1\n\nValidated and searchable:\n- ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf\n- 2025-ICC-Policy-Paper-AI-governance-and-standards.pdf\n- 2025-ICC-Data-flows-in-supply-chains.pdf\n- 2025-ICC-Achieving-inclusive-AI.pdf\n- 2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf\n- 2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf\n- 2022-icc-white-paper-delivering-connectivity.pdf\n- ICC_PolicyPrimer_NonPersonalData_October2023.pdf\n- icc-policy-primer-on-cybersecurity.pdf\n- 2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf\n\nRejected (not indexed/searchable):\n- 02-Roadmap-ICC-Tunisie-2025-V1.pdf\n\nAll validated documents are already indexed and ready for search. Would you like me to try reprocessing the rejected document or take any other action?"
+      },
+      {
+        "role": "user",
+        "content": "what is icc ?"
+      },
+      {
+        "role": "assistant",
+        "content": "ICC most likely refers to the International Chamber of Commerce\u2014the world business organization that represents companies globally. It sets widely used rules (like Incoterms), provides dispute resolution through the ICC International Court of Arbitration, and advocates on trade, digital policy, and sustainability.\n\nNote: ICC can also mean the International Criminal Court (in The Hague) or the International Cricket Council. Which one did you mean?"
+      },
+      {
+        "role": "user",
+        "content": "can you read what is inside the docs ? or summarize what's in anyone or tell me any info inside it ?"
+      },
+      {
+        "role": "assistant",
+        "content": "Short answer: I can\u2019t open or read the file contents from this admin chat. I can see which documents are loaded and searchable, but not their text.\n\nIf helpful, here\u2019s a high\u2011level take on what each likely covers based on the titles:\n\n- ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf: Securing critical infrastructure and vendor/supply\u2011chain risk; public\u2013private cooperation; good practices and standards.\n- 2025-ICC-Policy-Paper-AI-governance-and-standards.pdf: Risk\u2011based AI governance, interoperability, international standards and conformity assessment.\n- 2025-ICC-Data-flows-in-supply-chains.pdf: Cross\u2011border data flows for trade; privacy/localization barriers; frameworks to enable trusted data sharing.\n- 2025-ICC-Achieving-inclusive-AI.pdf: Ensuring AI benefits are broad (SMEs, developing economies); bias, skills, accessibility, and capacity building.\n- 2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf: Additional detail/recommendations to a prior ICC cybersecurity brief.\n- 2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf: How digitalization supports growth, inclusion, and sustainability goals.\n- 2022-icc-white-paper-delivering-connectivity.pdf: Closing connectivity gaps; infrastructure investment, spectrum/policy, rural access.\n- ICC_PolicyPrimer_NonPersonalData_October2023.pdf: Governance and sharing of non\u2011personal/industrial data; interoperability and safeguards.\n- icc-policy-primer-on-cybersecurity.pdf: Cybersecurity basics for businesses; common threats and baseline practices.\n- 2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf: Government actions to strengthen cybersecurity\u2014harmonization, info sharing, incident reporting.\n- 02-Roadmap-ICC-Tunisie-2025-V1.pdf (rejected): Likely a Tunisia\u2011focused ICC roadmap for 2025.\n\nWays I can help next:\n- If you paste a section or upload text from any document, I can summarize it.\n- Tell me which document you care about and what you want to know (e.g., key recommendations, executive summary). I\u2019ll guide you on getting the exact text so I can summarize it.\n- I can try reprocessing the rejected file so it becomes searchable."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {}, \"name\": \"get_ingestion_status\"}": {
+        "tool": "get_ingestion_status",
+        "args": {},
+        "result": {
+          "status": "ok",
+          "total_documents": 11,
+          "embedded_documents": 10,
+          "validated_not_embedded": 0,
+          "status_counts": {
+            "validated": 10,
+            "rejected": 1
+          }
+        },
+        "created_at": 1776252570.1232557,
+        "ttl_seconds": 90,
+        "tags": [
+          "documents",
+          "ingestion"
+        ]
+      },
+      "{\"args\": {}, \"name\": \"list_loaded_documents\"}": {
+        "tool": "list_loaded_documents",
+        "args": {},
+        "result": {
+          "status": "ok",
+          "documents": [
+            {
+              "id": "bfd1224f-4618-4451-b91d-5c4bd937204d",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1773315721945-2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 454010,
+              "created_at": "2026-03-12T11:42:02.804906+00:00",
+              "embedded_at": "2026-04-06T12:46:35.371356+00:00"
+            },
+            {
+              "id": "65320889-47ca-4c6d-ba39-b894ffe2f412",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "02-Roadmap-ICC-Tunisie-2025-V1.pdf",
+              "storage_path": "rejected/bdcae110-faf5-47f7-b50e-e51616c048d7/1772722572012-02-Roadmap-ICC-Tunisie-2025-V1.pdf",
+              "status": "rejected",
+              "embedded": false,
+              "size_bytes": 118845,
+              "created_at": "2026-03-05T14:56:20.473057+00:00",
+              "embedded_at": null
+            },
+            {
+              "id": "2120f479-c3c4-4b60-a3a7-972084efb67b",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "icc-policy-primer-on-cybersecurity.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710314231-icc-policy-primer-on-cybersecurity.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 1642083,
+              "created_at": "2026-03-05T11:32:03.618998+00:00",
+              "embedded_at": "2026-04-06T12:46:53.088089+00:00"
+            },
+            {
+              "id": "a8a4adf2-a891-4f28-940a-cb54d9e62e79",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710278835-ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 5508412,
+              "created_at": "2026-03-05T11:31:53.209062+00:00",
+              "embedded_at": "2026-04-06T12:47:32.678524+00:00"
+            },
+            {
+              "id": "6fb4458a-ab45-44e7-8641-516113b7ad02",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "ICC_PolicyPrimer_NonPersonalData_October2023.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710275624-ICC_PolicyPrimer_NonPersonalData_October2023.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 321856,
+              "created_at": "2026-03-05T11:31:18.20431+00:00",
+              "embedded_at": "2026-04-06T12:47:48.063715+00:00"
+            },
+            {
+              "id": "b49a2bcd-0b91-4477-a5df-cd9d5e5f9772",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2025-ICC-Policy-Paper-AI-governance-and-standards.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710272526-2025-ICC-Policy-Paper-AI-governance-and-standards.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 325627,
+              "created_at": "2026-03-05T11:31:15.013245+00:00",
+              "embedded_at": "2026-04-06T12:48:06.498737+00:00"
+            },
+            {
+              "id": "6a99a16c-c21e-4a8c-b4ee-e1de7e66195a",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2025-ICC-Data-flows-in-supply-chains.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710269950-2025-ICC-Data-flows-in-supply-chains.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 570497,
+              "created_at": "2026-03-05T11:31:11.99133+00:00",
+              "embedded_at": "2026-04-06T12:48:20.038844+00:00"
+            },
+            {
+              "id": "76ce78b7-3266-456d-85be-12c694749059",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2025-ICC-Achieving-inclusive-AI.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710268337-2025-ICC-Achieving-inclusive-AI.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 215471,
+              "created_at": "2026-03-05T11:31:09.469426+00:00",
+              "embedded_at": "2026-04-06T12:48:34.422635+00:00"
+            },
+            {
+              "id": "ca004e28-58bc-47f7-9698-a26095ca41fe",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710266879-2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 131280,
+              "created_at": "2026-03-05T11:31:07.952588+00:00",
+              "embedded_at": "2026-04-06T12:48:49.589737+00:00"
+            },
+            {
+              "id": "c1682cef-b0bb-418f-878b-89909ca25cce",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710259149-2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 727543,
+              "created_at": "2026-03-05T11:31:05.939863+00:00",
+              "embedded_at": "2026-04-06T12:49:02.695221+00:00"
+            },
+            {
+              "id": "852eea3a-6d74-4dba-94c0-c67ff38ddf34",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2022-icc-white-paper-delivering-connectivity.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772709695730-2022-icc-white-paper-delivering-connectivity.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 1792221,
+              "created_at": "2026-03-05T11:21:45.561039+00:00",
+              "embedded_at": "2026-04-06T12:49:24.92+00:00"
+            }
+          ]
+        },
+        "created_at": 1776252570.1231782,
+        "ttl_seconds": 90,
+        "tags": [
+          "documents",
+          "ingestion"
+        ]
+      }
+    },
+    "last_message": "can you read what is inside the docs ? or summarize what's in anyone or tell me any info inside it ?",
+    "pending_action": null,
+    "last_response": "Short answer: I can\u2019t open or read the file contents from this admin chat. I can see which documents are loaded and searchable, but not their text.\n\nIf helpful, here\u2019s a high\u2011level take on what each likely covers based on the titles:\n\n- ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf: Securing critical infrastructure and vendor/supply\u2011chain risk; public\u2013private cooperation; good practices and standards.\n- 2025-ICC-Policy-Paper-AI-governance-and-standards.pdf: Risk\u2011based AI governance, interoperability, international standards and conformity assessment.\n- 2025-ICC-Data-flows-in-supply-chains.pdf: Cross\u2011border data flows for trade; privacy/localization barriers; frameworks to enable trusted data sharing.\n- 2025-ICC-Achieving-inclusive-AI.pdf: Ensuring AI benefits are broad (SMEs, developing economies); bias, skills, accessibility, and capacity building.\n- 2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf: Additional detail/recommendations to a prior ICC cybersecurity brief.\n- 2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf: How digitalization supports growth, inclusion, and sustainability goals.\n- 2022-icc-white-paper-delivering-connectivity.pdf: Closing connectivity gaps; infrastructure investment, spectrum/policy, rural access.\n- ICC_PolicyPrimer_NonPersonalData_October2023.pdf: Governance and sharing of non\u2011personal/industrial data; interoperability and safeguards.\n- icc-policy-primer-on-cybersecurity.pdf: Cybersecurity basics for businesses; common threats and baseline practices.\n- 2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf: Government actions to strengthen cybersecurity\u2014harmonization, info sharing, incident reporting.\n- 02-Roadmap-ICC-Tunisie-2025-V1.pdf (rejected): Likely a Tunisia\u2011focused ICC roadmap for 2025.\n\nWays I can help next:\n- If you paste a section or upload text from any document, I can summarize it.\n- Tell me which document you care about and what you want to know (e.g., key recommendations, executive summary). I\u2019ll guide you on getting the exact text so I can summarize it.\n- I can try reprocessing the rejected file so it becomes searchable.",
+    "last_route": "advisory",
+    "last_topic": "Explain ability to read/summarize documents and request the user to provide the document or text, plus preferences for the summary.",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MjU0NzU5LCJpYXQiOjE3NzYyNTExNTksImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.pQWwKNWoIMKIWwyfn9FAcPxu4zEDAGIlu7ntDH3OS9zfm4pwZ89bmYiRQakBwVs_QSoRXyeSgXLBKiZmaz4_4A"
   }
 }

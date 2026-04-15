@@ -14,6 +14,7 @@ import {
   Eye,
   Trash2,
   Ban,
+  AlertTriangle,
 } from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
 import TypingIndicator from '../components/TypingIndicator';
@@ -36,6 +37,8 @@ import {
 } from '../config/api';
 
 const DOCS_TABLE = import.meta.env.VITE_SUPABASE_DOCS_TABLE || 'documents';
+const ADMIN_AGENT_WARNING =
+  'Admin actions can change live data and system behavior. You are responsible for reviewing every suggestion, confirming only changes you understand, and accepting the outcome of any update you choose to apply.';
 
 function formatBytes(bytes) {
   if (!bytes || Number.isNaN(bytes)) return '-';
@@ -132,6 +135,9 @@ export default function AdminPage() {
   const [typing, setTyping] = useState(false);
   const [agentSessionId, setAgentSessionId] = useState(null);
   const [agentPendingAction, setAgentPendingAction] = useState(null);
+  const [agentWarningConfirmed, setAgentWarningConfirmed] = useState(false);
+  const [showAgentWarningModal, setShowAgentWarningModal] = useState(false);
+  const [hoveredWarningButton, setHoveredWarningButton] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -344,6 +350,17 @@ export default function AdminPage() {
     if (!user || user.user_metadata?.role !== 'admin') return;
     loadManagedUsersData();
   }, [user?.id]);
+
+  useEffect(() => {
+    setAgentWarningConfirmed(false);
+    setShowAgentWarningModal(tab === 'agent');
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (tab === 'agent' && !agentWarningConfirmed) {
+      setShowAgentWarningModal(true);
+    }
+  }, [tab, agentWarningConfirmed]);
 
   useEffect(() => {
     if (tab === 'users') {
@@ -765,6 +782,23 @@ export default function AdminPage() {
     }
   };
 
+  const handleTabChange = (nextTab) => {
+    setTab(nextTab);
+    if (nextTab === 'agent' && !agentWarningConfirmed) {
+      setShowAgentWarningModal(true);
+    }
+  };
+
+  const confirmAgentWarning = () => {
+    setAgentWarningConfirmed(true);
+    setShowAgentWarningModal(false);
+  };
+
+  const cancelAgentWarning = () => {
+    setShowAgentWarningModal(false);
+    setTab('documents');
+  };
+
   const tabs = [
     { key: 'documents', label: 'Document Management', icon: FileText },
     { key: 'users', label: 'User Management', icon: User },
@@ -830,7 +864,7 @@ export default function AdminPage() {
 
         <div className="flex gap-0 shrink-0 max-w-[1400px] mx-auto px-5 md:px-8" style={{ marginBottom: '24px' }}>
           {tabs.map(({ key, label, icon: Icon }) => (
-            <button key={key} onClick={() => setTab(key)} className="flex items-center gap-2 px-6 text-sm font-medium transition-all" style={{ background: tab === key ? 'linear-gradient(135deg, #7c3aed, #06b6d4)' : 'var(--bg-secondary)', border: tab === key ? 'none' : '1px solid var(--border-color)', color: tab === key ? 'white' : 'var(--text-secondary)', boxShadow: tab === key ? '0 0 20px rgba(139,92,246,0.3)' : 'none', borderRadius: key === 'documents' ? '12px 0 0 50px' : key === 'agent' ? '0 12px 50px 0' : '0', padding: '16px 24px', minHeight: '56px', display: 'flex', alignItems: 'center' }}>
+            <button key={key} onClick={() => handleTabChange(key)} className="flex items-center gap-2 px-6 text-sm font-medium transition-all" style={{ background: tab === key ? 'linear-gradient(135deg, #7c3aed, #06b6d4)' : 'var(--bg-secondary)', border: tab === key ? 'none' : '1px solid var(--border-color)', color: tab === key ? 'white' : 'var(--text-secondary)', boxShadow: tab === key ? '0 0 20px rgba(139,92,246,0.3)' : 'none', borderRadius: key === 'documents' ? '12px 0 0 50px' : key === 'agent' ? '0 12px 50px 0' : '0', padding: '16px 24px', minHeight: '56px', display: 'flex', alignItems: 'center' }}>
               <Icon size={16} /> {label}
             </button>
           ))}
@@ -1333,8 +1367,8 @@ export default function AdminPage() {
                           </div>
                         )}
                         <div className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-                          <textarea id="admin-agent-input" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }} placeholder='Try: "refresh status", "embed validated", or "run evaluation"' rows={3} className="flex-1 bg-transparent outline-none text-sm resize-none max-h-56" style={{ color: 'var(--text-primary)', padding: '16px 24px' }} />
-                          <motion.button id="admin-send" onClick={sendAgent} disabled={!agentInput.trim() || typing} className="rounded-xl disabled:opacity-20 shrink-0" style={{ padding: '16px 22px', marginRight: '8px' }}>
+                          <textarea id="admin-agent-input" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }} placeholder='Try: "refresh status", "embed validated", or "run evaluation"' rows={3} disabled={!agentWarningConfirmed} className="flex-1 bg-transparent outline-none text-sm resize-none max-h-56 disabled:opacity-50" style={{ color: 'var(--text-primary)', padding: '16px 24px' }} />
+                          <motion.button id="admin-send" onClick={sendAgent} disabled={!agentWarningConfirmed || !agentInput.trim() || typing} className="rounded-xl disabled:opacity-20 shrink-0" style={{ padding: '16px 22px', marginRight: '8px' }}>
                             <Send size={16} color={agentInput.trim() && !typing ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
                           </motion.button>
                         </div>
@@ -1382,6 +1416,88 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {showAgentWarningModal && tab === 'agent' && (
+          <>
+            <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md" />
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-10 md:p-16">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.97, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className="flex w-full max-w-2xl flex-col items-center justify-center gap-10 rounded-3xl p-12 text-center md:p-16"
+                style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid rgba(245,158,11,0.22)',
+                  boxShadow: '0 24px 80px rgba(2,6,23,0.35)',
+                  minHeight: '420px',
+                }}
+              >
+                <div className="flex flex-col items-center justify-center gap-8">
+                  <div
+                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl"
+                    style={{ background: 'rgba(245,158,11,0.14)', color: '#f59e0b' }}
+                  >
+                    <AlertTriangle size={24} />
+                  </div>
+                  <div className="min-w-0 max-w-3xl">
+                    <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      Confirm before opening admin chat
+                    </h2>
+                    <p className="mt-6 text-base leading-7" style={{ color: 'var(--text-secondary)' }}>
+                      {ADMIN_AGENT_WARNING}
+                    </p>
+                    <p className="mt-6 text-base leading-7" style={{ color: 'var(--text-secondary)' }}>
+                      Continue only if you understand that this assistant can guide changes, but the final decision and its consequences remain yours.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-center gap-4">
+                  <button
+                    type="button"
+                    onClick={cancelAgentWarning}
+                    onMouseEnter={() => setHoveredWarningButton('cancel')}
+                    onMouseLeave={() => setHoveredWarningButton(null)}
+                    className="rounded-xl px-8 py-4 text-sm font-medium"
+                    style={{
+                      border: hoveredWarningButton === 'cancel'
+                        ? '1px solid rgba(239,68,68,0.3)'
+                        : '1px solid var(--border-color)',
+                      color: hoveredWarningButton === 'cancel' ? '#ffffff' : 'var(--text-secondary)',
+                      background: hoveredWarningButton === 'cancel'
+                        ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+                        : 'transparent',
+                      minWidth: '148px',
+                      minHeight: '56px',
+                      transition: 'all 160ms ease',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmAgentWarning}
+                    onMouseEnter={() => setHoveredWarningButton('confirm')}
+                    onMouseLeave={() => setHoveredWarningButton(null)}
+                    className="rounded-xl px-10 py-4 text-sm font-medium text-white"
+                    style={{
+                      background: hoveredWarningButton === 'confirm'
+                        ? 'linear-gradient(135deg, #06b6d4, #2563eb)'
+                        : 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                      boxShadow: hoveredWarningButton === 'confirm'
+                        ? '0 14px 34px rgba(37,99,235,0.24)'
+                        : '0 12px 30px rgba(239,68,68,0.18)',
+                      minWidth: '168px',
+                      minHeight: '56px',
+                      transition: 'all 160ms ease',
+                    }}
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          </>
         )}
       </div>
     </AnimatedPage>
