@@ -62,6 +62,13 @@ class AdminToolbox:
     def _client(self) -> httpx.Client:
         return httpx.Client(timeout=60.0)
 
+    def _raise_generation_endpoint_not_found(self, action: str, endpoint: str, exc: httpx.HTTPStatusError) -> None:
+        raise ValueError(
+            f"Could not {action} because generation-service returned 404 for '{endpoint}'. "
+            "This usually means the running generation-service is out of date and needs to be rebuilt/restarted "
+            "with the evaluation routes enabled."
+        ) from exc
+
     def _env_files(self) -> list[Path]:
         root = self._settings.project_root
         return [root / ".env", root / ".env.local"]
@@ -263,7 +270,16 @@ class AdminToolbox:
     def list_evaluation_reports(self) -> dict[str, Any]:
         with self._client() as client:
             response = client.get(f"{self._settings.generation_base_url.rstrip('/')}/generation/evaluations")
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                if response.status_code == 404:
+                    self._raise_generation_endpoint_not_found(
+                        "list evaluation reports",
+                        "/generation/evaluations",
+                        exc,
+                    )
+                raise
             return response.json()
 
     def run_evaluation(self, dataset_path: str = "evals/sample_eval_dataset.json") -> dict[str, Any]:
@@ -272,7 +288,16 @@ class AdminToolbox:
                 f"{self._settings.generation_base_url.rstrip('/')}/generation/evaluations/run",
                 json={"dataset_path": dataset_path},
             )
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                if response.status_code == 404:
+                    self._raise_generation_endpoint_not_found(
+                        "run the evaluation",
+                        "/generation/evaluations/run",
+                        exc,
+                    )
+                raise
             return response.json()
 
     def compare_evaluation_reports(self, baseline_report_id: str, candidate_report_id: str) -> dict[str, Any]:
@@ -284,7 +309,16 @@ class AdminToolbox:
                     "candidate_report_id": candidate_report_id,
                 },
             )
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                if response.status_code == 404:
+                    self._raise_generation_endpoint_not_found(
+                        "compare evaluation reports",
+                        "/generation/evaluations/compare",
+                        exc,
+                    )
+                raise
             return response.json()
 
     def remove_document_chunks(self, document_id: str) -> dict[str, Any]:

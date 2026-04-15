@@ -22,7 +22,9 @@ class _MockResponse:
 
     def raise_for_status(self) -> None:
         if self.status_code >= 400:
-            raise httpx.HTTPStatusError("error", request=None, response=None)
+            request = httpx.Request("GET", "http://testserver")
+            response = httpx.Response(self.status_code, request=request, json=self._payload)
+            raise httpx.HTTPStatusError("error", request=request, response=response)
 
 
 class _MockClient:
@@ -81,6 +83,21 @@ def test_run_evaluation_calls_generation_api(monkeypatch) -> None:  # noqa: ANN0
     monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
     result = AdminToolbox(_settings()).run_evaluation("evals/sample_eval_dataset.json")
     assert result["report"]["report_id"] == "r1"
+
+
+def test_run_evaluation_404_raises_actionable_message(monkeypatch) -> None:  # noqa: ANN001
+    responses = [_MockResponse(404, {"detail": "Not Found"})]
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+
+    try:
+        AdminToolbox(_settings()).run_evaluation("evals/sample_eval_dataset.json")
+    except ValueError as exc:
+        message = str(exc)
+    else:
+        raise AssertionError("Expected ValueError for missing evaluation endpoint")
+
+    assert "generation-service returned 404" in message
+    assert "/generation/evaluations/run" in message
 
 
 def test_reindex_document_chains_remove_then_index(monkeypatch) -> None:  # noqa: ANN001

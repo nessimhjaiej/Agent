@@ -1675,5 +1675,112 @@
       "tool_result": {}
     },
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MjU0NzU5LCJpYXQiOjE3NzYyNTExNTksImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.pQWwKNWoIMKIWwyfn9FAcPxu4zEDAGIlu7ntDH3OS9zfm4pwZ89bmYiRQakBwVs_QSoRXyeSgXLBKiZmaz4_4A"
+  },
+  "af6ff993-7a96-4131-8cda-7c40fb539337": {
+    "history": [
+      {
+        "role": "user",
+        "content": "i want an evalutation for this system"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to run the evaluation with 'evals/sample_eval_dataset.json'. Confirm to start it."
+      }
+    ],
+    "last_message": "i want an evalutation for this system",
+    "pending_action": {
+      "intent": "workflow",
+      "tool": "run_evaluation",
+      "arguments": {
+        "dataset_path": "evals/sample_eval_dataset.json"
+      },
+      "steps": []
+    },
+    "last_response": "I am ready to run the evaluation with 'evals/sample_eval_dataset.json'. Confirm to start it.",
+    "last_route": "workflow",
+    "last_topic": "User requests an evaluation/assessment of the system.",
+    "last_result": {
+      "route": "workflow",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MjY1NTMyLCJpYXQiOjE3NzYyNjE5MzIsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.-5R4fbw8tc0RzIdrsTjiX__dmZz6Xt9xsytHMqq44KgnnIcK4pOXUofTHQz2f5Q6Ogh0qRiq5rfj-Mr6B822ow",
+    "tool_cache": {}
+  },
+  "85c77a91-a948-4136-873f-0f609319f2e3": {
+    "history": [
+      {
+        "role": "user",
+        "content": "i want an evalutation for this system"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to run the evaluation with 'evals/sample_eval_dataset.json'. Confirm to start it."
+      }
+    ],
+    "last_message": "i want an evalutation for this system",
+    "pending_action": {
+      "intent": "workflow",
+      "tool": "run_evaluation",
+      "arguments": {
+        "dataset_path": "evals/sample_eval_dataset.json"
+      },
+      "steps": []
+    },
+    "last_response": "I am ready to run the evaluation with 'evals/sample_eval_dataset.json'. Confirm to start it.",
+    "last_route": "workflow",
+    "last_topic": "Provide an evaluation/assessment of the system and recommendations for improvement.",
+    "last_result": {
+      "route": "workflow",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MjY1NTMyLCJpYXQiOjE3NzYyNjE5MzIsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjA3NDk1M31dLCJzZXNzaW9uX2lkIjoiYTczZGZiZDItMGMzMS00ZjhjLTgxNTMtM2Q5MjZkYWEzMmQyIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.-5R4fbw8tc0RzIdrsTjiX__dmZz6Xt9xsytHMqq44KgnnIcK4pOXUofTHQz2f5Q6Ogh0qRiq5rfj-Mr6B822ow",
+    "tool_cache": {}
+  },
+  "f91b069f-9399-442e-94d0-17f98e55b0c7": {
+    "history": [
+      {
+        "role": "user",
+        "content": "change the reranking strategy to cross encoder"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'cross_encoder'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. Reranking strategy set to cross_encoder."
+      },
+      {
+        "role": "user",
+        "content": "trigger the evaluation system for this system"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to run the evaluation with 'evals/sample_eval_dataset.json'. Confirm to start it."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": {
+      "intent": "workflow",
+      "tool": "run_evaluation",
+      "arguments": {
+        "dataset_path": "evals/sample_eval_dataset.json"
+      },
+      "steps": []
+    },
+    "last_message": "trigger the evaluation system for this system",
+    "last_response": "I am ready to run the evaluation with 'evals/sample_eval_dataset.json'. Confirm to start it.",
+    "last_route": "workflow",
+    "last_topic": "trigger_evaluation_system",
+    "last_result": {
+      "route": "workflow",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MjY4MDE2LCJpYXQiOjE3NzYyNjQ0MTYsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjI2NDQxNn1dLCJzZXNzaW9uX2lkIjoiZDdhYzgwMWUtNmI5Ny00ZTFhLWE0ZTItN2FmNWUyMWZiODZmIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.HFBxGnzVcDEYrtbWkPu3eLw0u8yXqInNnnnRL2IT2xlfLcNFFVHsZAZJs9AfCrBw2DcLSxLV_noNi2ILUWV4aQ",
+    "cache_invalidated_at": 1776264548.3922818
   }
 }

@@ -54,7 +54,7 @@ class Settings:
     retrieval_timeout_seconds: float = 20.0
     generation_http_max_retries: int = 2
     generation_retry_base_seconds: float = 0.5
-    generation_block_prompt_attack_queries: bool = True
+    generation_block_prompt_attack_queries: bool = False
     generation_temperature: float = 0.0
     generation_timeout_seconds: float = 30.0
     generation_max_context_chunks: int = 8
@@ -72,43 +72,74 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> "Settings":
+        defaults = cls()
         return cls(
-            app_name=os.getenv("GENERATION_APP_NAME", "generation-service"),
-            app_version=os.getenv("GENERATION_APP_VERSION", "0.1.0"),
+            app_name=os.getenv("GENERATION_APP_NAME", defaults.app_name),
+            app_version=os.getenv("GENERATION_APP_VERSION", defaults.app_version),
             project_root=_PROJECT_ROOT,
             openai_key=os.getenv("OPENAI_KEY", ""),
-            generation_model=os.getenv("GENERATION_MODEL", "gpt-4o"),
+            generation_model=os.getenv("GENERATION_MODEL", defaults.generation_model),
             transcription_model=os.getenv(
-                "TRANSCRIPTION_MODEL", "gpt-4o-mini-transcribe"
+                "TRANSCRIPTION_MODEL", defaults.transcription_model
             ),
-            retrieval_base_url=os.getenv("RETRIEVAL_BASE_URL", "http://localhost:8003"),
-            retrieval_timeout_seconds=_parse_float("RETRIEVAL_TIMEOUT_SECONDS", 20.0),
-            generation_http_max_retries=_parse_int("GENERATION_HTTP_MAX_RETRIES", 2),
-            generation_retry_base_seconds=_parse_float("GENERATION_RETRY_BASE_SECONDS", 0.5),
+            retrieval_base_url=os.getenv(
+                "RETRIEVAL_BASE_URL", defaults.retrieval_base_url
+            ),
+            retrieval_timeout_seconds=_parse_float(
+                "RETRIEVAL_TIMEOUT_SECONDS", defaults.retrieval_timeout_seconds
+            ),
+            generation_http_max_retries=_parse_int(
+                "GENERATION_HTTP_MAX_RETRIES", defaults.generation_http_max_retries
+            ),
+            generation_retry_base_seconds=_parse_float(
+                "GENERATION_RETRY_BASE_SECONDS", defaults.generation_retry_base_seconds
+            ),
             generation_block_prompt_attack_queries=_parse_bool(
-                "GENERATION_BLOCK_PROMPT_ATTACK_QUERIES", True
+                "GENERATION_BLOCK_PROMPT_ATTACK_QUERIES",
+                defaults.generation_block_prompt_attack_queries,
             ),
-            generation_temperature=_parse_float("GENERATION_TEMPERATURE", 0.0),
-            generation_timeout_seconds=_parse_float("GENERATION_TIMEOUT_SECONDS", 30.0),
-            generation_max_context_chunks=_parse_int("GENERATION_MAX_CONTEXT_CHUNKS", 8),
-            generation_max_history_turns=_parse_int("GENERATION_MAX_HISTORY_TURNS", 6),
-            generation_max_history_chars=_parse_int("GENERATION_MAX_HISTORY_CHARS", 4000),
-            generation_max_chunk_chars=_parse_int("GENERATION_MAX_CHUNK_CHARS", 1200),
+            generation_temperature=_parse_float(
+                "GENERATION_TEMPERATURE", defaults.generation_temperature
+            ),
+            generation_timeout_seconds=_parse_float(
+                "GENERATION_TIMEOUT_SECONDS", defaults.generation_timeout_seconds
+            ),
+            generation_max_context_chunks=_parse_int(
+                "GENERATION_MAX_CONTEXT_CHUNKS", defaults.generation_max_context_chunks
+            ),
+            generation_max_history_turns=_parse_int(
+                "GENERATION_MAX_HISTORY_TURNS", defaults.generation_max_history_turns
+            ),
+            generation_max_history_chars=_parse_int(
+                "GENERATION_MAX_HISTORY_CHARS", defaults.generation_max_history_chars
+            ),
+            generation_max_chunk_chars=_parse_int(
+                "GENERATION_MAX_CHUNK_CHARS", defaults.generation_max_chunk_chars
+            ),
             generation_ollama_base_url=os.getenv(
-                "GENERATION_OLLAMA_BASE_URL", "http://localhost:11434"
+                "GENERATION_OLLAMA_BASE_URL", defaults.generation_ollama_base_url
             ),
-            generation_fallback_enabled=_parse_bool("GENERATION_FALLBACK_ENABLED", True),
-            generation_fallback_provider=os.getenv("GENERATION_FALLBACK_PROVIDER", "ollama"),
-            generation_fallback_model=os.getenv("GENERATION_FALLBACK_MODEL", "qwen2.5:7b"),
-            generation_require_citations=_parse_bool("GENERATION_REQUIRE_CITATIONS", True),
+            generation_fallback_enabled=_parse_bool(
+                "GENERATION_FALLBACK_ENABLED", defaults.generation_fallback_enabled
+            ),
+            generation_fallback_provider=os.getenv(
+                "GENERATION_FALLBACK_PROVIDER", defaults.generation_fallback_provider
+            ),
+            generation_fallback_model=os.getenv(
+                "GENERATION_FALLBACK_MODEL", defaults.generation_fallback_model
+            ),
+            generation_require_citations=_parse_bool(
+                "GENERATION_REQUIRE_CITATIONS", defaults.generation_require_citations
+            ),
             generation_strict_citation_validation=_parse_bool(
-                "GENERATION_STRICT_CITATION_VALIDATION", True
+                "GENERATION_STRICT_CITATION_VALIDATION",
+                defaults.generation_strict_citation_validation,
             ),
             default_scope_fallback=os.getenv(
-                "GENERATION_SCOPE_FALLBACK_TEXT", "This is beyond my scope."
+                "GENERATION_SCOPE_FALLBACK_TEXT", defaults.default_scope_fallback
             ),
             evaluation_reports_dir=os.getenv(
                 "GENERATION_EVALUATION_REPORTS_DIR",
-                str(_PROJECT_ROOT / "docs" / "evaluation_reports"),
+                defaults.evaluation_reports_dir,
             ),
         )

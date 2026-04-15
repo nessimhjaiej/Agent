@@ -33,15 +33,16 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> "Settings":
+        defaults = cls()
         return cls(
-            app_name=os.getenv("INGESTION_APP_NAME", "ingestion-service"),
-            app_version=os.getenv("INGESTION_APP_VERSION", "0.1.0"),
+            app_name=os.getenv("INGESTION_APP_NAME", defaults.app_name),
+            app_version=os.getenv("INGESTION_APP_VERSION", defaults.app_version),
             supabase_url=os.getenv("INGESTION_SUPABASE_URL", os.getenv("AUTH_SUPABASE_URL", "")).strip(),
             supabase_key=os.getenv("INGESTION_SUPABASE_KEY", os.getenv("AUTH_SUPABASE_KEY", "")).strip(),
-            supabase_docs_bucket=os.getenv("INGESTION_SUPABASE_DOCS_BUCKET", os.getenv("VITE_SUPABASE_DOCS_BUCKET", "documents")).strip(),
-            supabase_docs_table=os.getenv("INGESTION_SUPABASE_DOCS_TABLE", os.getenv("VITE_SUPABASE_DOCS_TABLE", "documents")).strip(),
-            signed_url_ttl_seconds=_parse_int("INGESTION_SIGNED_URL_TTL_SECONDS", 3600),
-            http_timeout_seconds=float(os.getenv("INGESTION_HTTP_TIMEOUT_SECONDS", "30.0")),
+            supabase_docs_bucket=os.getenv("INGESTION_SUPABASE_DOCS_BUCKET", os.getenv("VITE_SUPABASE_DOCS_BUCKET", defaults.supabase_docs_bucket)).strip(),
+            supabase_docs_table=os.getenv("INGESTION_SUPABASE_DOCS_TABLE", os.getenv("VITE_SUPABASE_DOCS_TABLE", defaults.supabase_docs_table)).strip(),
+            signed_url_ttl_seconds=_parse_int("INGESTION_SIGNED_URL_TTL_SECONDS", defaults.signed_url_ttl_seconds),
+            http_timeout_seconds=float(os.getenv("INGESTION_HTTP_TIMEOUT_SECONDS", str(defaults.http_timeout_seconds))),
         )
 
     def validate(self) -> None:

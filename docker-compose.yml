@@ -20,8 +20,13 @@ services:
       context: .
       dockerfile: services/auth-service/Dockerfile
     container_name: auth-service
-    env_file:
-      - .env
+    environment:
+      AUTH_SUPABASE_URL: ${AUTH_SUPABASE_URL}
+      AUTH_SUPABASE_KEY: ${AUTH_SUPABASE_KEY}
+      AUTH_SMTP_HOST: ${AUTH_SMTP_HOST:-}
+      AUTH_SMTP_USERNAME: ${AUTH_SMTP_USERNAME:-}
+      AUTH_SMTP_PASSWORD: ${AUTH_SMTP_PASSWORD:-}
+      AUTH_SMTP_FROM_EMAIL: ${AUTH_SMTP_FROM_EMAIL:-}
     ports:
       - "8001:8001"
     restart: unless-stopped
@@ -35,8 +40,6 @@ services:
       - ./services/preprocessing-service/app/config.py:/app/services/preprocessing-service/app/config.py
       - ./shared:/shared
       - ./shared/raw_data:/shared/raw-data:ro
-    env_file:
-      - .env
     ports:
       - "8000:8000"
     restart: unless-stopped
@@ -46,9 +49,10 @@ services:
       context: .
       dockerfile: services/embedding-service/Dockerfile
     container_name: embedding-service
-    env_file:
-      - .env
     environment:
+      OPENAI_KEY: ${OPENAI_KEY}
+      AUTH_SUPABASE_URL: ${AUTH_SUPABASE_URL}
+      AUTH_SUPABASE_KEY: ${AUTH_SUPABASE_KEY}
       WEAVIATE_HTTP_URL: http://weaviate:8080
       WEAVIATE_GRPC_HOST: weaviate
       EMBEDDING_PREPROCESSING_BASE_URL: http://preprocessing-service:8000
@@ -69,9 +73,8 @@ services:
     container_name: retrieval-service
     volumes:
       - ./services/retrieval-service/app/config.py:/app/services/retrieval-service/app/config.py
-    env_file:
-      - .env
     environment:
+      OPENAI_KEY: ${OPENAI_KEY}
       WEAVIATE_HTTP_URL: http://weaviate:8080
       WEAVIATE_GRPC_HOST: weaviate
     ports:
@@ -85,9 +88,8 @@ services:
       context: .
       dockerfile: services/generation-service/Dockerfile
     container_name: generation-service
-    env_file:
-      - .env
     environment:
+      OPENAI_KEY: ${OPENAI_KEY}
       RETRIEVAL_BASE_URL: http://retrieval-service:8003
     ports:
       - "8004:8004"
@@ -100,8 +102,9 @@ services:
       context: .
       dockerfile: services/ingestion-service/Dockerfile
     container_name: ingestion-service
-    env_file:
-      - .env
+    environment:
+      AUTH_SUPABASE_URL: ${AUTH_SUPABASE_URL}
+      AUTH_SUPABASE_KEY: ${AUTH_SUPABASE_KEY}
     ports:
       - "8005:8005"
     restart: unless-stopped
@@ -113,9 +116,8 @@ services:
       context: .
       dockerfile: services/admin-service/Dockerfile
     container_name: admin-service
-    env_file:
-      - .env
     environment:
+      OPENAI_KEY: ${OPENAI_KEY}
       INGESTION_BASE_URL: http://ingestion-service:8005
       PREPROCESSING_BASE_URL: http://preprocessing-service:8000
       EMBEDDING_BASE_URL: http://embedding-service:8002
