@@ -90,6 +90,17 @@ function formatActivityLine(activity) {
   return title || detail || '';
 }
 
+function buildAdminGreeting(currentUser) {
+  const username = currentUser?.user_metadata?.username?.trim()
+    || currentUser?.user_metadata?.full_name?.trim()
+    || currentUser?.email?.split('@')[0]?.trim()
+    || '';
+
+  return username
+    ? `Hello ${username}, how can I help you today?`
+    : 'Hello, how can I help you today?';
+}
+
 function StatusBadge({ status }) {
   const cfg = {
     validated: { bg: 'rgba(16,185,129,0.1)', text: '#10b981', border: 'rgba(16,185,129,0.2)', icon: Check, label: 'Validated' },
@@ -125,7 +136,7 @@ export default function AdminPage() {
       id: '0',
       role: 'assistant',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      content: 'Documents now track embedded state in Supabase. Validate to index once, then it is skipped.',
+      content: buildAdminGreeting(user),
       sources: [],
       detailsOpen: false,
       activity: [],
@@ -355,6 +366,24 @@ export default function AdminPage() {
     setAgentWarningConfirmed(false);
     setShowAgentWarningModal(tab === 'agent');
   }, [user?.id]);
+
+  useEffect(() => {
+    setAgentMsgs((prev) => {
+      if (prev.length !== 1 || prev[0]?.id !== '0' || prev[0]?.role !== 'assistant') {
+        return prev;
+      }
+
+      const greeting = buildAdminGreeting(user);
+      if (prev[0].content === greeting) return prev;
+
+      return [
+        {
+          ...prev[0],
+          content: greeting,
+        },
+      ];
+    });
+  }, [user?.id, user?.email, user?.user_metadata?.username, user?.user_metadata?.full_name]);
 
   useEffect(() => {
     if (tab === 'agent' && !agentWarningConfirmed) {
