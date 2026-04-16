@@ -17,7 +17,6 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import AnimatedPage from '../components/AnimatedPage';
-import TypingIndicator from '../components/TypingIndicator';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -39,6 +38,7 @@ import {
 const DOCS_TABLE = import.meta.env.VITE_SUPABASE_DOCS_TABLE || 'documents';
 const ADMIN_AGENT_WARNING =
   'Admin actions can change live data and system behavior. You are responsible for reviewing every suggestion, confirming only changes you understand, and accepting the outcome of any update you choose to apply.';
+const MESSAGE_TYPING_INTERVAL_MS = 38;
 
 function formatBytes(bytes) {
   if (!bytes || Number.isNaN(bytes)) return '-';
@@ -101,6 +101,63 @@ function buildAdminGreeting(currentUser) {
     : 'Hello, how can I help you today?';
 }
 
+function AnimatedAssistantText({ text, animate }) {
+  const [visibleLength, setVisibleLength] = useState(animate ? 0 : text.length);
+  const previousTextRef = useRef(text);
+
+  useEffect(() => {
+    if (!animate) {
+      setVisibleLength(text.length);
+      previousTextRef.current = text;
+      return;
+    }
+
+    const previousText = previousTextRef.current;
+    previousTextRef.current = text;
+
+    if (text !== previousText && !text.startsWith(previousText)) {
+      setVisibleLength(0);
+    }
+  }, [animate, text]);
+
+  useEffect(() => {
+    if (!animate || visibleLength >= text.length) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setVisibleLength((current) => {
+        const remaining = text.length - current;
+        const nextStep = remaining > 24 ? 3 : remaining > 12 ? 2 : 1;
+        return Math.min(text.length, current + nextStep);
+      });
+    }, MESSAGE_TYPING_INTERVAL_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [animate, text, visibleLength]);
+
+  const renderedText = animate ? text.slice(0, visibleLength) : text;
+
+  return (
+    <span>
+      {renderedText}
+      {animate && (
+        <motion.span
+          aria-hidden="true"
+          className="inline-block align-middle"
+          style={{
+            width: '0.45em',
+            height: '1.05em',
+            marginLeft: '2px',
+            borderRadius: '999px',
+            background: 'currentColor',
+          }}
+          animate={{ opacity: [0.2, 1, 0.2] }}
+          transition={{ duration: 0.9, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
+    </span>
+  );
+}
+
 function StatusBadge({ status }) {
   const cfg = {
     validated: { bg: 'rgba(16,185,129,0.1)', text: '#10b981', border: 'rgba(16,185,129,0.2)', icon: Check, label: 'Validated' },
@@ -140,6 +197,7 @@ export default function AdminPage() {
       sources: [],
       detailsOpen: false,
       activity: [],
+      isStreaming: false,
     },
   ]);
   const [agentInput, setAgentInput] = useState('');
@@ -177,6 +235,7 @@ export default function AdminPage() {
         sources: [],
         activity: [],
         detailsOpen: false,
+        isStreaming: true,
       },
     ]);
   };
@@ -189,6 +248,19 @@ export default function AdminPage() {
         return { ...msg, ...patch };
       })
     );
+  };
+
+  const finishAssistantStreaming = (messageId, finalText = '') => {
+    const estimatedDelay = Math.max(
+      260,
+      Math.min(1800, Math.ceil((finalText.length || 0) / 2) * MESSAGE_TYPING_INTERVAL_MS)
+    );
+
+    window.setTimeout(() => {
+      updateAssistantPlaceholder(messageId, () => ({
+        isStreaming: false,
+      }));
+    }, estimatedDelay);
   };
 
   const toggleAssistantDetails = (messageId) => {
@@ -661,6 +733,7 @@ export default function AdminPage() {
     setAgentInput('');
     setTyping(true);
     const assistantMessageId = `${Date.now()}-assistant`;
+    let finalDisplayText = '';
     try {
       const normalized = userText.toLowerCase();
       let content = '';
@@ -687,12 +760,14 @@ export default function AdminPage() {
               setAgentSessionId(event.session_id);
             }
             if (event.type === 'status') {
+              finalDisplayText = 'Working on your request...';
               updateAssistantPlaceholder(assistantMessageId, () => ({
-                content: 'Working on your request...',
+                content: finalDisplayText,
               }));
             }
             if (event.type === 'activity') {
               const activityText = formatActivityLine(event.data) || 'Working on your request...';
+              finalDisplayText = activityText;
               updateAssistantPlaceholder(assistantMessageId, (msg) => ({
                 content: activityText,
                 activity: [...(Array.isArray(msg.activity) ? msg.activity : []), event.data],
@@ -702,13 +777,15 @@ export default function AdminPage() {
               setAgentPendingAction(event.data);
             }
             if (event.type === 'error') {
+              finalDisplayText = `Request failed: ${event.message || 'Unknown admin-service error'}`;
               updateAssistantPlaceholder(assistantMessageId, () => ({
-                content: `Request failed: ${event.message || 'Unknown admin-service error'}`,
+                content: finalDisplayText,
               }));
             }
             const resolvedResponse = extractAdminStreamResponse(event);
             if (resolvedResponse) {
               finalResponse = resolvedResponse;
+              finalDisplayText = resolvedResponse.answer || finalDisplayText || 'No answer returned by admin service.';
               updateAssistantPlaceholder(assistantMessageId, (msg) => ({
                 content: resolvedResponse.answer || msg.content || 'No answer returned by admin service.',
                 sources: Array.isArray(resolvedResponse.citations)
@@ -722,6 +799,7 @@ export default function AdminPage() {
           }
         );
         content = finalResponse?.answer || 'No answer returned by admin service.';
+        finalDisplayText = content;
         sources = Array.isArray(finalResponse?.citations)
           ? [...new Set(finalResponse.citations.map((citation) => citation.document_name).filter(Boolean))]
           : [];
@@ -735,14 +813,16 @@ export default function AdminPage() {
         }));
       }
       if (normalized.includes('embed validated') || normalized.includes('refresh') || normalized.includes('status')) {
-        setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources, activity: [], detailsOpen: false }]);
+        setAgentMsgs((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), sources, activity: [], detailsOpen: false, isStreaming: false }]);
       }
     } catch (error) {
+      finalDisplayText = `Request failed: ${error.message}`;
       updateAssistantPlaceholder(assistantMessageId, () => ({
-        content: `Request failed: ${error.message}`,
+        content: finalDisplayText,
         activity: [],
       }));
     } finally {
+      finishAssistantStreaming(assistantMessageId, finalDisplayText);
       setTyping(false);
     }
   };
@@ -752,6 +832,7 @@ export default function AdminPage() {
     setTyping(true);
     const assistantMessageId = `${Date.now()}-confirm`;
     appendAssistantPlaceholder(assistantMessageId);
+    let finalDisplayText = '';
     try {
       const accessToken = await getAccessToken();
       let finalResponse = null;
@@ -769,25 +850,29 @@ export default function AdminPage() {
             setAgentSessionId(event.session_id);
           }
           if (event.type === 'status') {
+            finalDisplayText = 'Executing the confirmed action...';
             updateAssistantPlaceholder(assistantMessageId, () => ({
-              content: 'Executing the confirmed action...',
+              content: finalDisplayText,
             }));
           }
           if (event.type === 'activity') {
             const activityText = formatActivityLine(event.data) || 'Executing the confirmed action...';
+            finalDisplayText = activityText;
             updateAssistantPlaceholder(assistantMessageId, (msg) => ({
               content: activityText,
               activity: [...(Array.isArray(msg.activity) ? msg.activity : []), event.data],
             }));
           }
           if (event.type === 'error') {
+            finalDisplayText = `Confirmation failed: ${event.message || 'Unknown admin-service error'}`;
             updateAssistantPlaceholder(assistantMessageId, () => ({
-              content: `Confirmation failed: ${event.message || 'Unknown admin-service error'}`,
+              content: finalDisplayText,
             }));
           }
           const resolvedResponse = extractAdminStreamResponse(event);
           if (resolvedResponse) {
             finalResponse = resolvedResponse;
+            finalDisplayText = resolvedResponse.answer || finalDisplayText || 'Action confirmed.';
             updateAssistantPlaceholder(assistantMessageId, (msg) => ({
               content: resolvedResponse.answer || msg.content || 'Action confirmed.',
               activity: Array.isArray(resolvedResponse.activity) && resolvedResponse.activity.length > 0
@@ -798,15 +883,18 @@ export default function AdminPage() {
         }
       );
       setAgentPendingAction(null);
+      finalDisplayText = finalResponse?.answer || finalDisplayText || 'Action confirmed.';
       updateAssistantPlaceholder(assistantMessageId, (msg) => ({
         content: finalResponse?.answer || msg.content || 'Action confirmed.',
       }));
     } catch (error) {
+      finalDisplayText = `Confirmation failed: ${error.message}`;
       updateAssistantPlaceholder(assistantMessageId, () => ({
-        content: `Confirmation failed: ${error.message}`,
+        content: finalDisplayText,
         activity: [],
       }));
     } finally {
+      finishAssistantStreaming(assistantMessageId, finalDisplayText);
       setTyping(false);
     }
   };
@@ -1260,7 +1348,14 @@ export default function AdminPage() {
                       {agentMsgs.map((msg) => (
                         <motion.div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`} style={{ marginBottom: '32px' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                           {msg.role === 'assistant' && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', boxShadow: '0 0 12px rgba(245,158,11,0.3)' }}><Bot size={15} className="text-white" /></div>}
-                          <div className={`max-w-[80%] rounded-2xl ${msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'}`} style={msg.role === 'user' ? { background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', color: 'white', boxShadow: '0 4px 15px rgba(139,92,246,0.2)', padding: '16px 24px' } : { background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '16px 24px' }}>
+                          <div
+                            className={`max-w-[80%] rounded-2xl ${msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'}`}
+                            style={msg.role === 'user'
+                              ? { background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', color: 'white', boxShadow: '0 4px 15px rgba(139,92,246,0.2)', padding: '16px 24px' }
+                              : msg.isStreaming
+                                ? { background: 'var(--bg-tertiary)', color: 'var(--text-muted)', padding: '16px 24px' }
+                                : { background: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '16px 24px' }}
+                          >
                             {msg.role === 'assistant' && ((Array.isArray(msg.activity) && msg.activity.length > 0) || (Array.isArray(msg.sources) && msg.sources.length > 0)) && (
                               <div className="mb-3">
                                 <button
@@ -1347,16 +1442,22 @@ export default function AdminPage() {
                             )}
                             <p
                               className="text-sm leading-relaxed whitespace-pre-line mb-2"
-                              style={{ marginTop: msg.role === 'assistant' && msg.detailsOpen ? '20px' : '8px' }}
+                              style={{
+                                marginTop: msg.role === 'assistant' && msg.detailsOpen ? '20px' : '8px',
+                                color: msg.role === 'assistant' && msg.isStreaming ? 'var(--text-muted)' : undefined,
+                              }}
                             >
-                              {msg.content}
+                              {msg.role === 'assistant' ? (
+                                <AnimatedAssistantText text={msg.content} animate={Boolean(msg.isStreaming)} />
+                              ) : (
+                                msg.content
+                              )}
                             </p>
                             <p className={`text-xs mt-2 ${msg.role === 'user' ? 'text-white/50' : ''}`} style={msg.role === 'assistant' ? { color: 'var(--text-muted)' } : {}}>{msg.timestamp}</p>
                           </div>
                           {msg.role === 'user' && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1" style={{ background: 'linear-gradient(135deg, #52525b, #27272a)' }}><User size={15} className="text-white" /></div>}
                         </motion.div>
                       ))}
-                      {typing && <motion.div className="flex gap-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}><div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', boxShadow: '0 0 12px rgba(245,158,11,0.3)' }}><Bot size={15} className="text-white" /></div><div className="rounded-2xl rounded-bl-md" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', padding: '16px 24px' }}><TypingIndicator /></div></motion.div>}
                       <div ref={endRef} />
                     </div>
                   </div>

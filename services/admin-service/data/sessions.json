@@ -1782,5 +1782,122 @@
     },
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MjY4MDE2LCJpYXQiOjE3NzYyNjQ0MTYsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjI2NDQxNn1dLCJzZXNzaW9uX2lkIjoiZDdhYzgwMWUtNmI5Ny00ZTFhLWE0ZTItN2FmNWUyMWZiODZmIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.HFBxGnzVcDEYrtbWkPu3eLw0u8yXqInNnnnRL2IT2xlfLcNFFVHsZAZJs9AfCrBw2DcLSxLV_noNi2ILUWV4aQ",
     "cache_invalidated_at": 1776264548.3922818
+  },
+  "2eb975ee-024d-401a-a915-046671e039be": {
+    "history": [
+      {
+        "role": "user",
+        "content": "how can you help us today ?"
+      },
+      {
+        "role": "assistant",
+        "content": "I can assist you with a variety of tasks related to managing and evaluating document ingestion and processing systems. Here are some ways I can help:\n\n1. **Document Management**: Check the status of document ingestion, list loaded documents, and reindex documents if needed.\n\n2. **Evaluation**: Run evaluations on datasets, list saved evaluation reports, and compare different evaluation reports to understand performance changes.\n\n3. **Configuration**: Retrieve configuration settings for different service domains like preprocessing, retrieval, embedding, or generation.\n\n4. **Reranking Methods**: Provide information on available retrieval reranking methods and the current default reranker.\n\nIf you have a specific task in mind, feel free to let me know!"
+      }
+    ],
+    "last_message": "how can you help us today ?",
+    "pending_action": null,
+    "last_response": "I can assist you with a variety of tasks related to managing and evaluating document ingestion and processing systems. Here are some ways I can help:\n\n1. **Document Management**: Check the status of document ingestion, list loaded documents, and reindex documents if needed.\n\n2. **Evaluation**: Run evaluations on datasets, list saved evaluation reports, and compare different evaluation reports to understand performance changes.\n\n3. **Configuration**: Retrieve configuration settings for different service domains like preprocessing, retrieval, embedding, or generation.\n\n4. **Reranking Methods**: Provide information on available retrieval reranking methods and the current default reranker.\n\nIf you have a specific task in mind, feel free to let me know!",
+    "last_route": "advisory",
+    "last_topic": "Provide information on how assistance can be offered",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MzM5NTk5LCJpYXQiOjE3NzYzMzU5OTksImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjI2NDQxNn1dLCJzZXNzaW9uX2lkIjoiZDdhYzgwMWUtNmI5Ny00ZTFhLWE0ZTItN2FmNWUyMWZiODZmIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.gIpWs3sUiSExCQ9qQZo78YBM8JIDcmh6FkYpZUGuwhNw5qO0TnXoBiW25ew9fxc0RwV6ypy6Ez-d9ANmmCviLQ",
+    "tool_cache": {}
+  },
+  "5a92bf76-8cb4-4e73-a629-5c934a25bbc1": {
+    "history": [
+      {
+        "role": "user",
+        "content": "how can you help us today ?"
+      },
+      {
+        "role": "assistant",
+        "content": "I can assist you with a variety of tasks related to managing and evaluating document ingestion and processing systems. Here are some ways I can help:\n\n1. **Document Management**: Check the status of document ingestion, list loaded documents, and reindex documents if needed.\n\n2. **Evaluation**: Run evaluations on datasets, list saved evaluation reports, and compare different evaluation reports to understand performance changes.\n\n3. **Configuration**: Retrieve configuration settings for different service domains like preprocessing, retrieval, embedding, or generation.\n\n4. **Reranking Methods**: Provide information on available retrieval reranking methods and the current default reranker.\n\nIf you have a specific task in mind, feel free to ask!"
+      }
+    ],
+    "last_message": "how can you help us today ?",
+    "pending_action": null,
+    "last_response": "I can assist you with a variety of tasks related to managing and evaluating document ingestion and processing systems. Here are some ways I can help:\n\n1. **Document Management**: Check the status of document ingestion, list loaded documents, and reindex documents if needed.\n\n2. **Evaluation**: Run evaluations on datasets, list saved evaluation reports, and compare different evaluation reports to understand performance changes.\n\n3. **Configuration**: Retrieve configuration settings for different service domains like preprocessing, retrieval, embedding, or generation.\n\n4. **Reranking Methods**: Provide information on available retrieval reranking methods and the current default reranker.\n\nIf you have a specific task in mind, feel free to ask!",
+    "last_route": "advisory",
+    "last_topic": "Explain how assistance can be provided",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MzM5NTk5LCJpYXQiOjE3NzYzMzU5OTksImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjI2NDQxNn1dLCJzZXNzaW9uX2lkIjoiZDdhYzgwMWUtNmI5Ny00ZTFhLWE0ZTItN2FmNWUyMWZiODZmIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.gIpWs3sUiSExCQ9qQZo78YBM8JIDcmh6FkYpZUGuwhNw5qO0TnXoBiW25ew9fxc0RwV6ypy6Ez-d9ANmmCviLQ",
+    "tool_cache": {}
+  },
+  "b69e53a5-812e-4ab2-ab4e-eadcdcc82bbc": {
+    "history": [
+      {
+        "role": "user",
+        "content": "how can you help us today ?"
+      },
+      {
+        "role": "assistant",
+        "content": "I can assist you with a variety of tasks related to managing and evaluating document ingestion and processing systems. Here are some ways I can help:\n\n1. **Document Ingestion**: Check the status of document ingestion, list loaded documents, and reindex documents if needed.\n\n2. **Evaluation**: Run evaluations on datasets, list saved evaluation reports, and compare different evaluation reports to understand performance changes.\n\n3. **Configuration**: Retrieve configuration settings for different service domains like preprocessing, retrieval, embedding, or generation.\n\n4. **Reranking Methods**: Provide information on available retrieval reranking methods and the current default reranker.\n\nIf you have a specific task in mind, feel free to let me know!"
+      }
+    ],
+    "last_message": "how can you help us today ?",
+    "pending_action": null,
+    "last_response": "I can assist you with a variety of tasks related to managing and evaluating document ingestion and processing systems. Here are some ways I can help:\n\n1. **Document Ingestion**: Check the status of document ingestion, list loaded documents, and reindex documents if needed.\n\n2. **Evaluation**: Run evaluations on datasets, list saved evaluation reports, and compare different evaluation reports to understand performance changes.\n\n3. **Configuration**: Retrieve configuration settings for different service domains like preprocessing, retrieval, embedding, or generation.\n\n4. **Reranking Methods**: Provide information on available retrieval reranking methods and the current default reranker.\n\nIf you have a specific task in mind, feel free to let me know!",
+    "last_route": "advisory",
+    "last_topic": "Explain how assistance can be provided",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MzM5NTk5LCJpYXQiOjE3NzYzMzU5OTksImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjI2NDQxNn1dLCJzZXNzaW9uX2lkIjoiZDdhYzgwMWUtNmI5Ny00ZTFhLWE0ZTItN2FmNWUyMWZiODZmIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.gIpWs3sUiSExCQ9qQZo78YBM8JIDcmh6FkYpZUGuwhNw5qO0TnXoBiW25ew9fxc0RwV6ypy6Ez-d9ANmmCviLQ",
+    "tool_cache": {}
+  },
+  "3f308ca8-710a-428c-b587-cddab4af125e": {
+    "history": [
+      {
+        "role": "user",
+        "content": "change the rerank strategy to none and top k to 10 and tell me when none is better and when others available are better"
+      },
+      {
+        "role": "assistant",
+        "content": "I could not map that workflow to a supported operation yet."
+      },
+      {
+        "role": "user",
+        "content": "change the rerank strategy to none and tell me when none is better and when others available are better"
+      },
+      {
+        "role": "assistant",
+        "content": "I could not map that workflow to a supported operation yet."
+      },
+      {
+        "role": "user",
+        "content": "change the rerank strategy to none"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'none'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. Reranking disabled."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done. Reranking disabled.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MzM5NTk5LCJpYXQiOjE3NzYzMzU5OTksImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjI2NDQxNn1dLCJzZXNzaW9uX2lkIjoiZDdhYzgwMWUtNmI5Ny00ZTFhLWE0ZTItN2FmNWUyMWZiODZmIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.gIpWs3sUiSExCQ9qQZo78YBM8JIDcmh6FkYpZUGuwhNw5qO0TnXoBiW25ew9fxc0RwV6ypy6Ez-d9ANmmCviLQ",
+    "cache_invalidated_at": 1776339101.33978
   }
 }
