@@ -33,8 +33,3 @@ sequenceDiagram
     Frontend-->>User: Show document ready for retrieval
 ```
 
-Notes:
-
-- Upload management is exposed through the ingestion API contract.
-- Chunk production happens in `preprocessing-service`.
-- Vector generation and Weaviate writes happen in `embedding-service`.

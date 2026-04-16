@@ -12,11 +12,6 @@ Current diagrams:
 
 These diagrams use Mermaid so they can be previewed directly in editors that support Markdown diagram rendering.
 
-Recommended workflow:
-
-1. Start with the system component diagram.
-2. Review the two sequence diagrams.
-3. Add service-level class diagrams only for the services you need to explain in detail.
 
 Primary source files used:
 
