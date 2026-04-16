@@ -31,9 +31,3 @@ sequenceDiagram
     Generation-->>Frontend: Answer + citations + model used
     Frontend-->>User: Render grounded response
 ```
-
-Notes:
-
-- `generation-service` exposes both `/generation/chat` and `/generation/ask`.
-- `/generation/ask` is the end-to-end path that first calls `retrieval-service`.
-- Retrieval supports fusion and optional reranking before generation.
