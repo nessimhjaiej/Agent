@@ -90,9 +90,9 @@ class IntentClassifier:
                     [
                         SystemMessage(
                             content=(
-                                "Classify the admin request into one category: advisory, inspect, mutate, workflow. "
+                                "Classify the admin request into one category: advisory, inspect, mutate. "
                                 "Use advisory for recommendations/explanations, inspect for information lookup, "
-                                "mutate for a single change, workflow for sequenced operations. "
+                                "mutate for requested changes and sequenced operations. "
                                 "The admin may write in any language or with non-technical phrasing. "
                                 "Infer intent from meaning, not exact keywords. "
                                 f"Previous route: {previous_route or 'none'}. Previous topic: {previous_topic or 'none'}."
@@ -116,7 +116,7 @@ class IntentClassifier:
         if _is_chunking_methods_question(message) or _is_reranking_methods_question(message):
             category: Literal["inspect"] = "inspect"
         elif any(token in lowered for token in ["reindex", "run evaluation", "compare evaluation", "compare reports", "réindex", "evaluer", "évaluation"]):
-            category: Literal["workflow"] = "workflow"
+            category: Literal["mutate"] = "mutate"
         elif any(token in lowered for token in ["delete document", "remove document", "delete file", "change", "set", "switch", "update", "changer", "modifier", "remplacer", "supprimer"]):
             category = "mutate"
         elif (
@@ -523,23 +523,23 @@ def _pending_action_from_semantic_plan(
 
     if plan.action_type == "reindex_validated_documents":
         return (
-            "workflow",
+            "mutate",
             {
-                "intent": "workflow",
+                "intent": "mutation",
                 "tool": "reindex_validated_documents",
                 "arguments": {},
                 "steps": [],
                 "summary": "Reindex every validated document currently tracked by ingestion.",
             },
-            "I am ready to reindex every validated document. Confirm to start the workflow.",
+            "I am ready to reindex every validated document. Confirm to start it.",
         )
 
     if plan.action_type == "run_evaluation":
         dataset_path = str(plan.dataset_path or _extract_dataset_path(message))
         return (
-            "workflow",
+            "mutate",
             {
-                "intent": "workflow",
+                "intent": "mutation",
                 "tool": "run_evaluation",
                 "arguments": {"dataset_path": dataset_path},
                 "steps": [],
@@ -557,9 +557,9 @@ def _pending_action_from_semantic_plan(
                 return "advisory", None, None
             baseline, candidate = pair
         return (
-            "workflow",
+            "mutate",
             {
-                "intent": "workflow",
+                "intent": "mutation",
                 "tool": "compare_evaluation_reports",
                 "arguments": {"baseline_report_id": baseline, "candidate_report_id": candidate},
                 "steps": [],
@@ -670,9 +670,9 @@ def _plan_mutation(message: str, toolbox: AdminToolbox, session_context: dict | 
         )
 
     return None, (
-        "Ce changement n'est pas encore expose par admin-service. Le service actuel peut executer la suppression de documents, le reindexing et les workflows d'evaluation."
+        "Ce changement n'est pas encore expose par admin-service. Le service actuel peut executer la suppression de documents, le reindexing et les evaluations."
         if prefers_french
-        else "That change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluation workflows."
+        else "That change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluations."
     )
 
 
@@ -685,7 +685,7 @@ def _plan_workflow(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] 
         baseline_report_id, candidate_report_id = pair
         return (
             {
-                "intent": "workflow",
+                "intent": "mutation",
                 "tool": "compare_evaluation_reports",
                 "arguments": {
                     "baseline_report_id": baseline_report_id,
@@ -701,7 +701,7 @@ def _plan_workflow(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] 
         dataset_path = _extract_dataset_path(message)
         return (
             {
-                "intent": "workflow",
+                "intent": "mutation",
                 "tool": "run_evaluation",
                 "arguments": {"dataset_path": dataset_path},
                 "steps": [],
@@ -713,13 +713,13 @@ def _plan_workflow(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] 
     if "reindex" in lowered and any(token in lowered for token in ["all", "validated", "documents"]):
         return (
             {
-                "intent": "workflow",
+                "intent": "mutation",
                 "tool": "reindex_validated_documents",
                 "arguments": {},
                 "steps": [],
                 "summary": "Reindex every validated document currently tracked by ingestion.",
             },
-            "I am ready to reindex every validated document. Confirm to start the workflow.",
+            "I am ready to reindex every validated document. Confirm to start it.",
         )
 
     if "reindex" in lowered:
@@ -730,7 +730,7 @@ def _plan_workflow(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] 
         summary = str(target.get("original_name") or target.get("storage_path") or target.get("id") or "document")
         return (
             {
-                "intent": "workflow",
+                "intent": "mutation",
                 "tool": "reindex_document",
                 "arguments": {"document_id": str(target.get("id") or "")},
                 "steps": [],
@@ -739,13 +739,17 @@ def _plan_workflow(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] 
             f"I found the document '{summary}'. Confirm if you want me to rebuild its embeddings.",
         )
 
-    return None, "I could not map that workflow to a supported operation yet."
+    return None, "I could not map that requested operation to a supported action yet."
 
 
 def _plan_inspection_step(message: str, toolbox: AdminToolbox) -> dict[str, Any] | None:
     lowered = message.lower()
     if _is_chunking_methods_question(message):
         return {"tool": "get_chunking_methods", "arguments": {}}
+    if any(token in lowered for token in ["embedding", "embeddings", "embedding model"]):
+        return {"tool": "get_repo_config", "arguments": {"service_name": "embedding"}}
+    if any(token in lowered for token in ["generation model", "generation settings"]):
+        return {"tool": "get_repo_config", "arguments": {"service_name": "generation"}}
     if any(token in lowered for token in ["rerank", "reranking", "reranker", "ranker"]):
         return {"tool": "get_repo_config", "arguments": {"service_name": "retrieval"}}
     if any(token in lowered for token in ["chunk", "chunking", "chunk overlap", "chunk size"]):
@@ -769,9 +773,8 @@ def _split_into_clauses(message: str) -> list[str]:
 
 
 def _build_compound_pending_action(steps: list[dict[str, Any]]) -> dict[str, Any]:
-    has_workflow = any(step.get("tool") in {"reindex_document", "reindex_validated_documents", "run_evaluation", "compare_evaluation_reports"} for step in steps)
     return {
-        "intent": "workflow" if has_workflow else "mutation",
+        "intent": "mutation",
         "tool": "compound_action",
         "arguments": {},
         "steps": [{"tool": step["tool"], "arguments": step.get("arguments", {})} for step in steps],
@@ -822,27 +825,25 @@ def _plan_request(
             )
             if semantic_action is not None:
                 return semantic_route, semantic_action, semantic_answer
-        if requested_route == "workflow":
-            pending_action, answer = _plan_workflow(message, toolbox)
-            if pending_action is not None:
-                return "workflow", pending_action, answer
         if requested_route == "mutate":
             pending_action, answer = _plan_mutation(message, toolbox, session_context)
             if pending_action is not None:
                 return "mutate", pending_action, answer
+            pending_action, answer = _plan_workflow(message, toolbox)
+            if pending_action is not None:
+                return "mutate", pending_action, answer
         pending_action, answer = _plan_workflow(message, toolbox)
         if pending_action is not None:
-            return "workflow", pending_action, answer
+            return "mutate", pending_action, answer
         pending_action, answer = _plan_mutation(message, toolbox, session_context)
         if pending_action is not None:
             return "mutate", pending_action, answer
-        if requested_route in {"workflow", "mutate"}:
+        if requested_route in {"mutate"}:
             return "advisory", None, None
         return requested_route, None, None
 
     planned_steps: list[dict[str, Any]] = []
     has_mutation_like = False
-    has_workflow = False
 
     for clause in clauses:
         semantic_plan = _semantic_action_planner(clause, settings, session_context)
@@ -856,13 +857,10 @@ def _plan_request(
             if semantic_action is not None:
                 planned_steps.append({"tool": semantic_action["tool"], "arguments": semantic_action.get("arguments", {})})
                 has_mutation_like = True
-                if semantic_route == "workflow":
-                    has_workflow = True
                 continue
         workflow_action, _ = _plan_workflow(clause, toolbox)
         if workflow_action is not None:
             planned_steps.append({"tool": workflow_action["tool"], "arguments": workflow_action.get("arguments", {})})
-            has_workflow = True
             has_mutation_like = True
             continue
 
@@ -876,9 +874,9 @@ def _plan_request(
         if inspect_step is not None:
             planned_steps.append(inspect_step)
 
-    if len(planned_steps) > 1 and has_mutation_like:
+    if len(planned_steps) > 1:
         pending_action = _build_compound_pending_action(planned_steps)
-        return ("workflow" if has_workflow else "mutate"), pending_action, _summarize_compound_plan(planned_steps)
+        return "mutate", pending_action, _summarize_compound_plan(planned_steps)
 
     return requested_route, None, None
 
@@ -1320,41 +1318,6 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
             "activity": activity,
         }
 
-    def workflow_node(state: AdminState) -> AdminState:
-        workflow_started = _progress_item(
-            phase="workflow",
-            status="in_progress",
-            title="Planning workflow",
-            detail="Mapping the request to the supported admin workflow steps.",
-        )
-        _emit_progress(progress_callback, workflow_started)
-        toolbox = AdminToolbox(settings, access_token=state.get("access_token") or access_token)
-        pending_action = state.get("planned_pending_action")
-        answer = state.get("planned_answer")
-        if pending_action is None:
-            pending_action, answer = _plan_workflow(state["message"], toolbox)
-        activity = list(state.get("activity", []))
-        activity.append(workflow_started)
-        workflow_finished = _progress_item(
-            phase="workflow",
-            status="completed" if pending_action else "failed",
-            title="Workflow planned" if pending_action else "Workflow could not be planned",
-            detail=answer,
-            tool=(pending_action or {}).get("tool"),
-            arguments=(pending_action or {}).get("arguments", {}),
-        )
-        activity.append(workflow_finished)
-        _emit_progress(progress_callback, workflow_finished)
-        return {
-            **state,
-            "status": "completed",
-            "requires_confirmation": pending_action is not None,
-            "pending_action": pending_action,
-            "final_answer": _normalize_user_answer(answer),
-            "current_step": "summarize",
-            "activity": activity,
-        }
-
     def summarize(state: AdminState) -> AdminState:
         activity = list(state.get("activity", []))
         summarize_started = _progress_item(
@@ -1382,7 +1345,6 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
     graph.add_node("advisory_agent", advisory_node)
     graph.add_node("inspect_agent", inspect_node)
     graph.add_node("mutate_executor", mutate_node)
-    graph.add_node("workflow_executor", workflow_node)
     graph.add_node("summarize_llm", summarize)
 
     graph.add_edge(START, "classify_intent_llm")
@@ -1393,13 +1355,11 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
             "advisory": "advisory_agent",
             "inspect": "inspect_agent",
             "mutate": "mutate_executor",
-            "workflow": "workflow_executor",
         },
     )
     graph.add_edge("advisory_agent", "summarize_llm")
     graph.add_edge("inspect_agent", "summarize_llm")
     graph.add_edge("mutate_executor", "summarize_llm")
-    graph.add_edge("workflow_executor", "summarize_llm")
     graph.add_edge("summarize_llm", END)
     return graph.compile()
 

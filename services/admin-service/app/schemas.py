@@ -50,7 +50,7 @@ class AdminAgentRunState(BaseModel):
 
 
 class IntentClassification(BaseModel):
-    category: str = Field(..., pattern="^(advisory|inspect|mutate|workflow)$")
+    category: str = Field(..., pattern="^(advisory|inspect|mutate)$")
     intent: str = Field(..., min_length=1)
     reasoning: str = Field(..., min_length=1)
 
@@ -74,7 +74,7 @@ class AdminCitationResponse(BaseModel):
 
 class AdminChatResponse(BaseModel):
     status: str = Field(default="ok", pattern="^(ok|needs_confirmation|error)$")
-    mode: str = Field(default="qa", pattern="^(qa|advisory|inspect|mutate|workflow|tool_call)$")
+    mode: str = Field(default="qa", pattern="^(qa|advisory|inspect|mutate|tool_call)$")
     selected_mode: str = Field(default="qa", pattern="^(qa|plan)$")
     session_id: str | None = None
     message: str

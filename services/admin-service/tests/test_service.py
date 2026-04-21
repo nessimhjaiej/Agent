@@ -72,42 +72,181 @@ def test_service_executes_compound_confirmed_action(monkeypatch, tmp_path: Path)
         },
     )
 
-    monkeypatch.setattr(
-        service._toolbox,
-        "execute_pending_action",
-        lambda pending_action: {
-            "status": "ok",
-            "results": [
-                {
-                    "tool": "update_repo_config",
-                    "result": {
-                        "scope": "preprocessing",
-                        "updated": {"chunk_overlap": 115},
-                    },
+    def _exec(pending_action: dict) -> dict:
+        tool = pending_action.get("tool")
+        if tool == "update_repo_config":
+            return {
+                "scope": "preprocessing",
+                "updated": {"chunk_overlap": 115},
+            }
+        if tool == "get_repo_config":
+            return {
+                "scope": "retrieval",
+                "config": {
+                    "ranker": "cross_encoder",
+                    "rerank_top_n": 8,
+                    "top_k_retrieve": 24,
+                    "top_k_return": 6,
                 },
-                {
-                    "tool": "get_repo_config",
-                    "result": {
-                        "scope": "retrieval",
-                        "config": {
-                            "ranker": "cross_encoder",
-                            "rerank_top_n": 8,
-                            "top_k_retrieve": 24,
-                            "top_k_return": 6,
-                        },
-                    },
-                },
-            ],
-        },
-    )
+            }
+        return {"status": "ok"}
+
+    monkeypatch.setattr(service._toolbox, "execute_pending_action", _exec)
 
     second = service.chat(AdminChatRequest(message="confirm", session_id=session_id, confirm=True))
 
     assert second.executed is True
-    assert second.result["results"][0]["tool"] == "update_repo_config"
-    assert second.result["results"][1]["tool"] == "get_repo_config"
+    assert second.result["executed_steps"][0]["tool"] == "update_repo_config"
+    assert second.result["executed_steps"][1]["tool"] == "get_repo_config"
     assert "chunk overlap set to 115" in second.answer
     assert "current reranking strategy is cross_encoder" in second.answer
+
+
+def test_service_runs_read_only_steps_before_first_mutation_confirmation(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
+    import app.service as service_module  # noqa: PLC0415
+
+    service = AdminService(_settings(tmp_path))
+
+    def _fake_run_graph(payload, settings, session_context=None, progress_callback=None):  # noqa: ANN001
+        return AdminChatResponse(
+            status="needs_confirmation",
+            mode="mutate",
+            selected_mode=payload.selected_mode,
+            session_id=payload.session_id,
+            message=payload.message,
+            answer="initial",
+            intent="mutation",
+            tool="compound_action",
+            arguments={},
+            requires_confirmation=True,
+            executed=False,
+            pending_action={
+                "intent": "mutation",
+                "tool": "compound_action",
+                "arguments": {},
+                "steps": [
+                    {"tool": "get_repo_config", "arguments": {"service_name": "embedding"}},
+                    {"tool": "update_repo_config", "arguments": {"service_name": "retrieval", "changes": {"ranker": "none"}}},
+                ],
+            },
+            citations=[],
+            thinking_summary="test",
+            activity=[],
+            result={"route": "mutate", "tool_result": None, "tool_cache_updates": {}},
+            agent_run=AdminAgentRunState(status="paused_for_confirmation"),
+        )
+
+    monkeypatch.setattr(service_module, "run_graph", _fake_run_graph)
+    monkeypatch.setattr(
+        service._toolbox,
+        "execute_pending_action",
+        lambda pending_action: {
+            "scope": "embedding",
+            "config": {"embedding_model": "text-embedding-3-small"},
+        }
+        if pending_action.get("tool") == "get_repo_config"
+        else {"status": "ok"},
+    )
+
+    response = service.chat(
+        AdminChatRequest(message="tell embeddings config then change reranking strategy to none"),
+    )
+
+    assert response.status == "needs_confirmation"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "update_repo_config"
+    assert response.pending_action.arguments["changes"]["ranker"] == "none"
+    assert "embedding model is text-embedding-3-small" in response.answer
+
+
+def test_service_confirm_keeps_prior_read_step_summary(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "pending_action": {
+                "intent": "mutation",
+                "tool": "update_repo_config",
+                "arguments": {"service_name": "retrieval", "changes": {"ranker": "none"}},
+                "steps": [],
+            },
+            "pending_executed_steps": [
+                {
+                    "tool": "get_repo_config",
+                    "result": {
+                        "scope": "embedding",
+                        "config": {
+                            "embedding_model": None,
+                            "embedding_dimensions": None,
+                            "embedding_batch_size": None,
+                        },
+                    },
+                }
+            ],
+        },
+    )
+
+    monkeypatch.setattr(
+        service._toolbox,
+        "execute_pending_action",
+        lambda pending_action: {
+            "scope": "retrieval",
+            "updated": {"default_ranker_type": "none"},
+        },
+    )
+
+    response = service.chat(AdminChatRequest(message="confirm", session_id=session_id, confirm=True))
+    assert response.status == "ok"
+    assert "embedding model is unset" in response.answer
+    assert "reranking disabled" in response.answer
+
+
+def test_service_confirm_keeps_prior_read_step_summary_across_persisted_streams(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "pending_action": {
+                "intent": "mutation",
+                "tool": "update_repo_config",
+                "arguments": {"service_name": "retrieval", "changes": {"ranker": "cross_encoder"}},
+                "steps": [],
+            },
+            "pending_executed_steps": [
+                {
+                    "tool": "get_repo_config",
+                    "result": {
+                        "scope": "embedding",
+                        "config": {
+                            "embedding_model": None,
+                            "embedding_dimensions": None,
+                            "embedding_batch_size": None,
+                        },
+                    },
+                }
+            ],
+        },
+    )
+    # Simulate a fresh request load (next stream): data must survive compaction in session store.
+    reloaded = service._sessions.load(session_id)
+    assert isinstance(reloaded.get("pending_executed_steps"), list)
+    assert len(reloaded["pending_executed_steps"]) == 1
+
+    monkeypatch.setattr(
+        service._toolbox,
+        "execute_pending_action",
+        lambda pending_action: {
+            "scope": "retrieval",
+            "updated": {"default_ranker_type": "cross_encoder"},
+        },
+    )
+
+    response = service.chat(AdminChatRequest(message="confirm", session_id=session_id, confirm=True))
+    assert response.status == "ok"
+    assert "embedding model is unset" in response.answer
+    assert "reranking strategy set to cross_encoder" in response.answer
 
 
 def test_service_persists_run_evaluation_arguments(tmp_path: Path) -> None:
@@ -404,12 +543,14 @@ def test_session_store_keeps_compact_memory(tmp_path: Path) -> None:
                 for index in range(20)
             },
             "last_result": {"route": "inspect", "tool_result": {"documents": list(range(20)), "reports": list(range(20))}},
+            "pending_executed_steps": [{"tool": "get_repo_config", "result": {"scope": "embedding"}} for _ in range(20)],
             "noise": "drop-me",
         },
     )
     stored = service._sessions.load(session_id)
     assert len(stored["history"]) == 6
     assert len(stored["tool_cache"]) == 8
+    assert len(stored["pending_executed_steps"]) == 10
     assert "noise" not in stored
 
 

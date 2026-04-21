@@ -12,7 +12,7 @@ if str(SERVICE_ROOT) not in sys.path:
     sys.path.insert(0, str(SERVICE_ROOT))
 
 from app.config import Settings  # noqa: E402
-from app.exceptions import InvalidUserStateException, UserAlreadyExistsException  # noqa: E402
+from app.exceptions import InvalidUserStateException, UnauthorizedException  # noqa: E402
 from app.service import AuthService  # noqa: E402
 import app.database as database_module  # noqa: E402
 
@@ -81,6 +81,7 @@ def test_map_admin_user_marks_recovery_completed_invite_as_validated(
     assert mapped["status"] == "validated"
     assert mapped["invited"] is False
     assert mapped["validated"] is True
+    assert mapped["role"] == "user"
 
 
 @patch.object(database_module, "create_client", return_value=MagicMock())
@@ -116,8 +117,11 @@ def test_invite_user_refreshes_existing_invited_user_without_duplicate(
 
     assert result["message"] == "Invitation refreshed"
     assert result["user_id"] == "invited-1"
+    assert result["generated_password"] == "TempPass1!"
     mock_client.auth.admin.create_user.assert_not_called()
     mock_client.auth.admin.update_user_by_id.assert_called_once()
+    payload = mock_client.auth.admin.update_user_by_id.call_args.args[1]
+    assert payload["user_metadata"]["role"] == "admin"
 
 
 @patch.object(database_module, "create_client", return_value=MagicMock())
@@ -157,10 +161,12 @@ def test_invite_user_finds_existing_invited_user_on_later_page(
     assert result["message"] == "Invitation refreshed"
     assert mock_client.auth.admin.list_users.call_count == 2
     mock_client.auth.admin.create_user.assert_not_called()
+    payload = mock_client.auth.admin.update_user_by_id.call_args.args[1]
+    assert payload["user_metadata"]["role"] == "admin"
 
 
 @patch.object(database_module, "create_client", return_value=MagicMock())
-def test_invite_user_rejects_existing_non_invited_user(mock_create: MagicMock) -> None:
+def test_invite_user_promotes_existing_user_to_admin(mock_create: MagicMock) -> None:
     mock_client = mock_create.return_value
     admin_user = _make_user(id="admin-1", email="admin@example.com", user_metadata={"role": "admin"})
     existing_validated_user = _make_user(
@@ -179,11 +185,81 @@ def test_invite_user_rejects_existing_non_invited_user(mock_create: MagicMock) -
 
     mock_client.auth.get_user.return_value = SimpleNamespace(user=admin_user)
     mock_client.auth.admin.list_users.return_value = [existing_validated_user]
+    mock_client.auth.admin.update_user_by_id.return_value = SimpleNamespace(user=existing_validated_user)
+
+    service = AuthService(Settings())
+    service._send_invite_email = MagicMock(return_value=(True, ""))
+
+    result = service.invite_user("admin-token", "existing@example.com")
+
+    assert result["message"] == "User promoted to admin"
+    assert result["generated_password"] == ""
+    assert result["email_sent"] is False
+    payload = mock_client.auth.admin.update_user_by_id.call_args.args[1]
+    assert payload["user_metadata"]["role"] == "admin"
+    assert payload["user_metadata"]["invite_onboarding_completed"] is True
+    service._send_invite_email.assert_not_called()
+
+
+@patch.object(database_module, "create_client", return_value=MagicMock())
+def test_signup_marks_new_users_as_pending_non_admin(mock_create: MagicMock) -> None:
+    mock_client = mock_create.return_value
+    created_user = _make_user(
+        id="new-user",
+        email="new@example.com",
+        user_metadata={"role": "admin"},
+        app_metadata={},
+    )
+    updated_user = _make_user(
+        id="new-user",
+        email="new@example.com",
+        user_metadata={"role": "user", "invite_onboarding_completed": True},
+        app_metadata={"account_validated": False, "account_blocked": False, "invited_by_admin": False},
+    )
+    mock_client.auth.sign_up.return_value = SimpleNamespace(
+        user=created_user,
+        session=SimpleNamespace(
+            access_token="token",
+            refresh_token="refresh",
+            expires_in=3600,
+        ),
+    )
+    mock_client.auth.admin.update_user_by_id.return_value = SimpleNamespace(user=updated_user)
 
     service = AuthService(Settings())
 
-    with pytest.raises(UserAlreadyExistsException):
-        service.invite_user("admin-token", "existing@example.com")
+    session = service.signup("new@example.com", "SecurePass1!", role="admin")
+
+    payload = mock_client.auth.sign_up.call_args.args[0]
+    assert payload["options"]["data"]["role"] == "user"
+    update_payload = mock_client.auth.admin.update_user_by_id.call_args.args[1]
+    assert update_payload["app_metadata"]["account_validated"] is False
+    assert session.user.role == "user"
+
+
+@patch.object(database_module, "create_client", return_value=MagicMock())
+def test_login_blocks_incomplete_admin_invites_until_password_reset(mock_create: MagicMock) -> None:
+    mock_client = mock_create.return_value
+    invited_admin = _make_user(
+        email="invitee@example.com",
+        user_metadata={"role": "admin", "invite_onboarding_completed": False},
+        app_metadata={"account_validated": True, "invited_by_admin": True},
+        last_sign_in_at="",
+    )
+    mock_client.auth.sign_in_with_password.return_value = SimpleNamespace(
+        user=invited_admin,
+        session=SimpleNamespace(access_token="token", refresh_token="refresh", expires_in=3600),
+    )
+    mock_client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value = MagicMock(
+        data=[]
+    )
+
+    service = AuthService(Settings())
+
+    with pytest.raises(UnauthorizedException, match="Account setup incomplete"):
+        service.login("invitee@example.com", "TempPass1!")
+
+    mock_client.auth.sign_out.assert_called_once()
 
 
 @patch.object(database_module, "create_client", return_value=MagicMock())

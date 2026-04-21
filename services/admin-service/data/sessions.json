@@ -1899,5 +1899,560 @@
     },
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MzM5NTk5LCJpYXQiOjE3NzYzMzU5OTksImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjI2NDQxNn1dLCJzZXNzaW9uX2lkIjoiZDdhYzgwMWUtNmI5Ny00ZTFhLWE0ZTItN2FmNWUyMWZiODZmIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.gIpWs3sUiSExCQ9qQZo78YBM8JIDcmh6FkYpZUGuwhNw5qO0TnXoBiW25ew9fxc0RwV6ypy6Ez-d9ANmmCviLQ",
     "cache_invalidated_at": 1776339101.33978
+  },
+  "257c7f3e-3287-4666-8ca0-ba5f73f6dcc6": {
+    "history": [
+      {
+        "role": "user",
+        "content": "change reranker strategy to cross encoder"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'cross_encoder'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. Reranking strategy set to cross_encoder."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done. Reranking strategy set to cross_encoder.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2NjkwMTQ5LCJpYXQiOjE3NzY2ODY1NDksImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.kpVPa98PMuQfHYepKFsDtpe-hJr28F4zilsxXt5QznrRlzLMm4ST3AxHIptoS-GW2jCyCphaNgUhxFzbeNAO4Q",
+    "cache_invalidated_at": 1776687129.9357555
+  },
+  "b4122287-ba1d-4f17-99f4-00b1a26cce58": {
+    "history": [
+      {
+        "role": "user",
+        "content": "i want you to change the reranking strategy to none and check what are the configuration of embeddings"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'none'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. Reranking disabled."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done. Reranking disabled.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2NzY2Mzc2LCJpYXQiOjE3NzY3NjI3NzYsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.4uKzmJDcxp21K53X5KkcYieVuNV26pI918VruUnKrcwpDdtodW7N3tqBwf8mY_44WuN1htu43O4RrnBUq6oFBA",
+    "cache_invalidated_at": 1776763554.956391
+  },
+  "211dfe06-05c9-4fae-83c5-6e36b51ace4e": {
+    "history": [
+      {
+        "role": "user",
+        "content": "give me the system evaluation"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to run the evaluation with 'evals/sample_eval_dataset.json'. Confirm to start it."
+      }
+    ],
+    "last_message": "give me the system evaluation",
+    "pending_action": {
+      "intent": "mutation",
+      "tool": "run_evaluation",
+      "arguments": {
+        "dataset_path": "evals/sample_eval_dataset.json"
+      },
+      "steps": []
+    },
+    "last_response": "I am ready to run the evaluation with 'evals/sample_eval_dataset.json'. Confirm to start it.",
+    "last_route": "mutate",
+    "last_topic": "Request for system evaluation information",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2NzY2Mzc2LCJpYXQiOjE3NzY3NjI3NzYsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.4uKzmJDcxp21K53X5KkcYieVuNV26pI918VruUnKrcwpDdtodW7N3tqBwf8mY_44WuN1htu43O4RrnBUq6oFBA",
+    "tool_cache": {}
+  },
+  "a59bebb4-21a9-4534-a386-981678c71dfe": {
+    "history": [
+      {
+        "role": "user",
+        "content": "i want you to check the embedding configuration and chenge the reranking strategy to cross encoder"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'cross_encoder'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. Reranking strategy set to cross_encoder."
+      },
+      {
+        "role": "user",
+        "content": "i want you to tell me what are all configurations of embeddings then change the reranking strategy to none"
+      },
+      {
+        "role": "assistant",
+        "content": "I am ready to update the retrieval settings with {'ranker': 'none'}. Confirm if you want me to apply that change."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done. Reranking disabled."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done. Reranking disabled.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2NzY5ODgzLCJpYXQiOjE3NzY3NjYyODMsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.Igre2xzmvi2ilbNdLximX66Fuw8qM4NpamrYDyOBruD6k8_gMTXVdggYUvbkMmY9xLaU2sL-EfET7hx9fa4Tmg",
+    "cache_invalidated_at": 1776767944.4540782
+  },
+  "38ce1c1a-f193-4c9e-9938-6fdd671a1f83": {
+    "history": [
+      {
+        "role": "user",
+        "content": "i want you to tell me what are all configurations of embeddings then change the reranking strategy to none"
+      },
+      {
+        "role": "assistant",
+        "content": "Done: current embedding settings checked. I am ready to update the retrieval settings with {'ranker': 'none'}. Confirm if you want me to continue."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done: reranking disabled."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done: reranking disabled.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2NzY5ODgzLCJpYXQiOjE3NzY3NjYyODMsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.Igre2xzmvi2ilbNdLximX66Fuw8qM4NpamrYDyOBruD6k8_gMTXVdggYUvbkMmY9xLaU2sL-EfET7hx9fa4Tmg",
+    "cache_invalidated_at": 1776769088.1372736
+  },
+  "13b06ca1-4598-47aa-95c3-29c4132eaeca": {
+    "history": [
+      {
+        "role": "user",
+        "content": "i want you to tell me what are all configurations of embeddings then change the reranking strategy to cross encoder"
+      },
+      {
+        "role": "assistant",
+        "content": "Done: embedding model is unset; embedding dimensions are unset; embedding batch size is unset. I am ready to update the retrieval settings with {'ranker': 'cross_encoder'}. Confirm if you want me to continue."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done: reranking strategy set to cross_encoder."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "last_message": "confirm",
+    "last_response": "Done: reranking strategy set to cross_encoder.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2NzczMzcwLCJpYXQiOjE3NzY3Njk3NzAsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.5zqZgU2nQIk5RN5sewDgIU6VdKXIuymzN4Eywf5rorRWVbWaZnRANBEB1kYT_MF7BYzUSzEp4EEwVr0VqS7pdQ",
+    "cache_invalidated_at": 1776769868.7721338
+  },
+  "f1d7ca62-4003-4692-a994-f2d7f3bdb8e6": {
+    "history": [
+      {
+        "role": "user",
+        "content": "i want you to tell me what are all chunking strategies available then change the reranking strategy to none"
+      },
+      {
+        "role": "assistant",
+        "content": "Done: chunking options checked; current strategy is late. I am ready to update the retrieval settings with {'ranker': 'none'}. Confirm if you want me to continue."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "Done: chunking options checked; current strategy is late; reranking disabled."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "last_message": "confirm",
+    "last_response": "Done: chunking options checked; current strategy is late; reranking disabled.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2NzczMzcwLCJpYXQiOjE3NzY3Njk3NzAsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.5zqZgU2nQIk5RN5sewDgIU6VdKXIuymzN4Eywf5rorRWVbWaZnRANBEB1kYT_MF7BYzUSzEp4EEwVr0VqS7pdQ",
+    "cache_invalidated_at": 1776770352.7397168
+  },
+  "d61c52df-387b-46e2-9ec4-6f2b01336395": {
+    "history": [
+      {
+        "role": "user",
+        "content": "i want you to tell me what are all chunking strategies available then change the reranking strategy to cross encoder"
+      },
+      {
+        "role": "assistant",
+        "content": "### Completed Steps\n- **Step 1:** chunking options checked; current strategy is late\n\n### Next Step (Confirmation Required)\n- I am ready to update the retrieval settings with {'ranker': 'cross_encoder'}.\n- Reply with `confirm` to continue."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "### Completed Steps\n- **Step 1:** chunking options checked; current strategy is late\n- **Step 2:** reranking strategy set to cross_encoder"
+      },
+      {
+        "role": "user",
+        "content": "what are all available chunking strategies ?"
+      },
+      {
+        "role": "assistant",
+        "content": "Les strategies de chunking disponibles sont late, overlap, semantic. vous pouvez changer la strategie de chunking vers l'une de celles-ci : late, overlap, semantic. sentence existe dans le pipeline mais n'est pas encore implemente. la strategie de chunking actuelle est late. la taille actuelle des chunks est 750 avec un overlap de 120."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "last_message": "what are all available chunking strategies ?",
+    "last_response": "Les strategies de chunking disponibles sont late, overlap, semantic. vous pouvez changer la strategie de chunking vers l'une de celles-ci : late, overlap, semantic. sentence existe dans le pipeline mais n'est pas encore implemente. la strategie de chunking actuelle est late. la taille actuelle des chunks est 750 avec un overlap de 120.",
+    "last_route": "inspect",
+    "last_topic": "List available chunking strategies",
+    "last_result": {
+      "route": "inspect",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "current_strategy": "late",
+        "current_chunk_size": 750,
+        "current_chunk_overlap": 120,
+        "methods": [
+          {
+            "name": "late",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "overlap",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "semantic",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "sentence",
+            "exists": true,
+            "implemented": false
+          }
+        ]
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2NzczMzcwLCJpYXQiOjE3NzY3Njk3NzAsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.5zqZgU2nQIk5RN5sewDgIU6VdKXIuymzN4Eywf5rorRWVbWaZnRANBEB1kYT_MF7BYzUSzEp4EEwVr0VqS7pdQ",
+    "cache_invalidated_at": 1776770713.1792347
+  },
+  "a390a454-4f2f-480c-9145-b5fd2f00dd89": {
+    "history": [
+      {
+        "role": "user",
+        "content": "i want you to tell me what are all chunking strategies available then change the reranking strategy to llm batch"
+      },
+      {
+        "role": "assistant",
+        "content": "## Completed Tasks\n\n### Step 1\n- **Tool:** `get_chunking_methods`\n- **Result:** chunking options checked; current strategy is late\n\n## Next Action\n\n### Confirmation Required\n- **Planned tool:** `update_repo_config`\n- **What will happen:** update the retrieval settings with {'ranker': 'llm_batch'}\n\nReply with **`confirm`** to continue."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "## Completed Tasks\n\n### Step 1\n- **Tool:** `get_chunking_methods`\n- **Result:** chunking options checked; current strategy is late\n\n### Step 2\n- **Tool:** `update_repo_config`\n- **Result:** reranking strategy set to llm_batch"
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "last_message": "confirm",
+    "last_response": "## Completed Tasks\n\n### Step 1\n- **Tool:** `get_chunking_methods`\n- **Result:** chunking options checked; current strategy is late\n\n### Step 2\n- **Tool:** `update_repo_config`\n- **Result:** reranking strategy set to llm_batch",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2NzczMzcwLCJpYXQiOjE3NzY3Njk3NzAsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.5zqZgU2nQIk5RN5sewDgIU6VdKXIuymzN4Eywf5rorRWVbWaZnRANBEB1kYT_MF7BYzUSzEp4EEwVr0VqS7pdQ",
+    "cache_invalidated_at": 1776771004.7674017
+  },
+  "6cdea596-8cde-45e3-879a-0c8c8f91dcbe": {
+    "history": [
+      {
+        "role": "user",
+        "content": "i want you to tell me what are all chunking strategies available then change the reranking strategy to llm batch"
+      },
+      {
+        "role": "assistant",
+        "content": "## Summary\n### Information Gathered\n- chunking options checked; current strategy is late\n\n## Next Action\n\n### Confirmation Required\n- update the retrieval settings with {'ranker': 'llm_batch'}\n\nReply with **`confirm`** to continue."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "## Summary\n### Information Gathered\n- chunking options checked; current strategy is late\n\n### Updates Applied\n- reranking strategy set to llm_batch"
+      },
+      {
+        "role": "user",
+        "content": "what are all available chunking strategies"
+      },
+      {
+        "role": "assistant",
+        "content": "Les strategies de chunking disponibles sont late, overlap, semantic. vous pouvez changer la strategie de chunking vers l'une de celles-ci : late, overlap, semantic. sentence existe dans le pipeline mais n'est pas encore implemente. la strategie de chunking actuelle est late. la taille actuelle des chunks est 750 avec un overlap de 120."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "last_message": "what are all available chunking strategies",
+    "last_response": "Les strategies de chunking disponibles sont late, overlap, semantic. vous pouvez changer la strategie de chunking vers l'une de celles-ci : late, overlap, semantic. sentence existe dans le pipeline mais n'est pas encore implemente. la strategie de chunking actuelle est late. la taille actuelle des chunks est 750 avec un overlap de 120.",
+    "last_route": "inspect",
+    "last_topic": "list available chunking strategies",
+    "last_result": {
+      "route": "inspect",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "current_strategy": "late",
+        "current_chunk_size": 750,
+        "current_chunk_overlap": 120,
+        "methods": [
+          {
+            "name": "late",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "overlap",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "semantic",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "sentence",
+            "exists": true,
+            "implemented": false
+          }
+        ]
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2NzczMzcwLCJpYXQiOjE3NzY3Njk3NzAsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.5zqZgU2nQIk5RN5sewDgIU6VdKXIuymzN4Eywf5rorRWVbWaZnRANBEB1kYT_MF7BYzUSzEp4EEwVr0VqS7pdQ",
+    "cache_invalidated_at": 1776771444.234873
+  },
+  "f7010790-0dac-440f-b0fc-4fe8a26de76e": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what are all available chunking strategies"
+      },
+      {
+        "role": "assistant",
+        "content": "## Inspection\n\nLes strategies de chunking disponibles sont late, overlap, semantic. vous pouvez changer la strategie de chunking vers l'une de celles-ci : late, overlap, semantic. sentence existe dans le pipeline mais n'est pas encore implemente. la strategie de chunking actuelle est late. la taille actuelle des chunks est 750 avec un overlap de 120."
+      },
+      {
+        "role": "user",
+        "content": "what are all available chunking strategies and all retreval configurations"
+      },
+      {
+        "role": "assistant",
+        "content": "## Inspection\n\nLes strategies de chunking disponibles sont late, overlap, semantic. vous pouvez changer la strategie de chunking vers l'une de celles-ci : late, overlap, semantic. sentence existe dans le pipeline mais n'est pas encore implemente. la strategie de chunking actuelle est late. la taille actuelle des chunks est 750 avec un overlap de 120."
+      }
+    ],
+    "last_message": "what are all available chunking strategies and all retreval configurations",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "last_response": "## Inspection\n\nLes strategies de chunking disponibles sont late, overlap, semantic. vous pouvez changer la strategie de chunking vers l'une de celles-ci : late, overlap, semantic. sentence existe dans le pipeline mais n'est pas encore implemente. la strategie de chunking actuelle est late. la taille actuelle des chunks est 750 avec un overlap de 120.",
+    "last_route": "inspect",
+    "last_topic": "List available chunking strategies and retrieval configurations",
+    "last_result": {
+      "route": "inspect",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "current_strategy": "late",
+        "current_chunk_size": 750,
+        "current_chunk_overlap": 120,
+        "methods": [
+          {
+            "name": "late",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "overlap",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "semantic",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "sentence",
+            "exists": true,
+            "implemented": false
+          }
+        ]
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2NzczMzcwLCJpYXQiOjE3NzY3Njk3NzAsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.5zqZgU2nQIk5RN5sewDgIU6VdKXIuymzN4Eywf5rorRWVbWaZnRANBEB1kYT_MF7BYzUSzEp4EEwVr0VqS7pdQ",
+    "tool_cache": {}
+  },
+  "fe677176-ca40-400e-8edc-df66a78c629c": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what are all available chunking strategies and all retreval configurations"
+      },
+      {
+        "role": "assistant",
+        "content": "## Inspection\n\nLes strategies de chunking disponibles sont late, overlap, semantic. vous pouvez changer la strategie de chunking vers l'une de celles-ci : late, overlap, semantic. sentence existe dans le pipeline mais n'est pas encore implemente. la strategie de chunking actuelle est late. la taille actuelle des chunks est 750 avec un overlap de 120."
+      },
+      {
+        "role": "user",
+        "content": "what are all available chunking strategies and all reranking strategies"
+      },
+      {
+        "role": "assistant",
+        "content": "## Inspection\n\nLes strategies de chunking disponibles sont late, overlap, semantic. vous pouvez changer la strategie de chunking vers l'une de celles-ci : late, overlap, semantic. sentence existe dans le pipeline mais n'est pas encore implemente. la strategie de chunking actuelle est late. la taille actuelle des chunks est 750 avec un overlap de 120."
+      },
+      {
+        "role": "user",
+        "content": "what are all reranking strategies ?"
+      },
+      {
+        "role": "assistant",
+        "content": "## Inspection\n\nLes methodes de reranking disponibles sont cross_encoder, llm_batch, none. vous pouvez changer la methode de reranking vers l'une de celles-ci : cross_encoder, llm_batch, none. la methode de reranking par defaut actuelle est llm_batch."
+      }
+    ],
+    "last_message": "what are all reranking strategies ?",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "last_response": "## Inspection\n\nLes methodes de reranking disponibles sont cross_encoder, llm_batch, none. vous pouvez changer la methode de reranking vers l'une de celles-ci : cross_encoder, llm_batch, none. la methode de reranking par defaut actuelle est llm_batch.",
+    "last_route": "inspect",
+    "last_topic": "The user is asking for information about all reranking strategies, which involves looking up or providing existing information.",
+    "last_result": {
+      "route": "inspect",
+      "tool_result": {
+        "status": "ok",
+        "scope": "retrieval",
+        "current_default_ranker_type": "llm_batch",
+        "methods": [
+          {
+            "name": "cross_encoder",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "llm_batch",
+            "exists": true,
+            "implemented": true
+          },
+          {
+            "name": "none",
+            "exists": true,
+            "implemented": true
+          }
+        ]
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2NzczMzcwLCJpYXQiOjE3NzY3Njk3NzAsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.5zqZgU2nQIk5RN5sewDgIU6VdKXIuymzN4Eywf5rorRWVbWaZnRANBEB1kYT_MF7BYzUSzEp4EEwVr0VqS7pdQ",
+    "tool_cache": {}
+  },
+  "3a3c60d8-54ac-4319-aef0-e9c23ac1c83a": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what are all available chunking strategies and all reranking strategies"
+      },
+      {
+        "role": "assistant",
+        "content": "## Resume\n### Informations collectees\n- options de decoupage verifiees; strategie actuelle: `late`\n- **Retrieval window:** pull `5`, return `3`"
+      }
+    ],
+    "last_message": "what are all available chunking strategies and all reranking strategies",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "last_response": "## Resume\n### Informations collectees\n- options de decoupage verifiees; strategie actuelle: `late`\n- **Retrieval window:** pull `5`, return `3`",
+    "last_route": "mutate",
+    "last_topic": "The user is asking for information about available chunking and reranking strategies, which requires looking up or listing known strategies in these areas.",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2NzczMzcwLCJpYXQiOjE3NzY3Njk3NzAsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.5zqZgU2nQIk5RN5sewDgIU6VdKXIuymzN4Eywf5rorRWVbWaZnRANBEB1kYT_MF7BYzUSzEp4EEwVr0VqS7pdQ",
+    "tool_cache": {}
   }
 }
