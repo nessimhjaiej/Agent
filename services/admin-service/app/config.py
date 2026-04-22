@@ -20,6 +20,16 @@ def _parse_int(name: str, default: int) -> int:
         raise ValueError(f"{name} must be an integer") from exc
 
 
+def _parse_float(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        return float(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a number") from exc
+
+
 @dataclass(slots=True)
 class Settings:
     app_name: str = "admin-service"
@@ -31,6 +41,7 @@ class Settings:
     max_iterations: int = 8
     max_tool_calls: int = 8
     auth_base_url: str = "http://localhost:8001"
+    auth_validation_timeout_seconds: float = 5.0
     security_base_url: str = ""
     ingestion_base_url: str = "http://localhost:8005"
     preprocessing_base_url: str = "http://localhost:8000"
@@ -53,6 +64,7 @@ class Settings:
             max_iterations=_parse_int("ADMIN_MAX_ITERATIONS", 8),
             max_tool_calls=_parse_int("ADMIN_MAX_TOOL_CALLS", 8),
             auth_base_url=os.getenv("AUTH_BASE_URL", "http://localhost:8001"),
+            auth_validation_timeout_seconds=_parse_float("ADMIN_AUTH_VALIDATION_TIMEOUT_SECONDS", 5.0),
             security_base_url=os.getenv("SECURITY_BASE_URL", ""),
             ingestion_base_url=os.getenv("INGESTION_BASE_URL", "http://localhost:8005"),
             preprocessing_base_url=os.getenv("PREPROCESSING_BASE_URL", "http://localhost:8000"),

@@ -8,6 +8,46 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $pidFile = Join-Path $repoRoot ".local-backend-pids.json"
 
+function Read-PidEntries {
+    param(
+        [string]$Path
+    )
+
+    if (-not (Test-Path $Path)) {
+        return @()
+    }
+
+    $raw = Get-Content -Raw -Path $Path
+    if ([string]::IsNullOrWhiteSpace($raw)) {
+        return @()
+    }
+
+    $parsed = $raw | ConvertFrom-Json
+    if ($parsed -is [System.Collections.IEnumerable] -and -not ($parsed -is [string])) {
+        return @($parsed)
+    }
+
+    return @($parsed)
+}
+
+function Get-EntryPid {
+    param(
+        $Entry
+    )
+
+    $value = $Entry.pid
+    if ($value -is [array]) {
+        $value = $value | Select-Object -First 1
+    }
+
+    $parsedPid = 0
+    if ([int]::TryParse([string]$value, [ref]$parsedPid)) {
+        return $parsedPid
+    }
+
+    return $null
+}
+
 function Stop-ServiceProcessTree {
     param(
         [int]$RootPid
@@ -87,14 +127,17 @@ Start-Sleep -Seconds $DelaySeconds
 
 $entries = @()
 if (Test-Path $pidFile) {
-    $entries = @(Get-Content $pidFile | ConvertFrom-Json)
+    $entries = Read-PidEntries -Path $pidFile
 }
 
 $updatedEntries = @()
 foreach ($entry in $entries) {
     if ($Services -contains $entry.name) {
         try {
-            Stop-ServiceProcessTree -RootPid ([int]$entry.pid)
+            $entryPid = Get-EntryPid -Entry $entry
+            if ($null -ne $entryPid) {
+                Stop-ServiceProcessTree -RootPid $entryPid
+            }
             Write-Host ("Stopped {0} (PID {1})" -f $entry.name, $entry.pid)
         } catch {
             Write-Host ("Skipped {0} (PID {1})" -f $entry.name, $entry.pid)

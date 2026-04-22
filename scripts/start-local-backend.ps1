@@ -3,6 +3,46 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $pidFile = Join-Path $repoRoot ".local-backend-pids.json"
 
+function Read-PidEntries {
+    param(
+        [string]$Path
+    )
+
+    if (-not (Test-Path $Path)) {
+        return @()
+    }
+
+    $raw = Get-Content -Raw -Path $Path
+    if ([string]::IsNullOrWhiteSpace($raw)) {
+        return @()
+    }
+
+    $parsed = $raw | ConvertFrom-Json
+    if ($parsed -is [System.Collections.IEnumerable] -and -not ($parsed -is [string])) {
+        return @($parsed)
+    }
+
+    return @($parsed)
+}
+
+function Get-EntryPid {
+    param(
+        $Entry
+    )
+
+    $value = $Entry.pid
+    if ($value -is [array]) {
+        $value = $value | Select-Object -First 1
+    }
+
+    $parsedPid = 0
+    if ([int]::TryParse([string]$value, [ref]$parsedPid)) {
+        return $parsedPid
+    }
+
+    return $null
+}
+
 function Stop-ServiceProcessTree {
     param(
         [int]$RootPid
@@ -74,9 +114,12 @@ $services = @(
 )
 
 if (Test-Path $pidFile) {
-    $existingEntries = @(Get-Content $pidFile | ConvertFrom-Json)
+    $existingEntries = Read-PidEntries -Path $pidFile
     foreach ($entry in $existingEntries) {
-        Stop-ServiceProcessTree -RootPid ([int]$entry.pid)
+        $entryPid = Get-EntryPid -Entry $entry
+        if ($null -ne $entryPid) {
+            Stop-ServiceProcessTree -RootPid $entryPid
+        }
     }
     Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
 }

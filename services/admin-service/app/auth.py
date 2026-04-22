@@ -45,7 +45,7 @@ class AdminAccessChecker:
             method="GET",
         )
         try:
-            with request.urlopen(req, timeout=1.5) as response:
+            with request.urlopen(req, timeout=self._settings.auth_validation_timeout_seconds) as response:
                 payload = json.loads(response.read().decode("utf-8"))
         except error.HTTPError as exc:
             if exc.code == 401:

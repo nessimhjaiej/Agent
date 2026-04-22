@@ -7,7 +7,9 @@ SERVICE_ROOT = Path(__file__).resolve().parents[1]
 if str(SERVICE_ROOT) not in sys.path:
     sys.path.insert(0, str(SERVICE_ROOT))
 
+import app.auth as auth_module  # noqa: E402
 import app.routers.admin as admin_router_module  # noqa: E402
+from app.config import Settings  # noqa: E402
 from app.main import create_app  # noqa: E402
 
 
@@ -72,3 +74,66 @@ def test_admin_graph_returns_mermaid() -> None:
         assert "classify_intent_llm" in body["graph"]
     finally:
         admin_router_module.AdminAccessChecker.require_admin = original
+
+
+def test_admin_access_checker_uses_configured_timeout() -> None:
+    captured: dict[str, object] = {}
+
+    class _Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self) -> bytes:
+            return b'{"id":"u1","email":"admin@example.com","role":"admin"}'
+
+    def fake_urlopen(req, timeout):
+        captured["url"] = req.full_url
+        captured["timeout"] = timeout
+        captured["authorization"] = req.headers.get("Authorization")
+        return _Response()
+
+    original = auth_module.request.urlopen
+    auth_module.request.urlopen = fake_urlopen
+    try:
+        checker = auth_module.AdminAccessChecker(
+            Settings(auth_base_url="http://localhost:8001", auth_validation_timeout_seconds=4.25)
+        )
+        identity = checker.require_admin(
+            token="token-123",
+            path="/admin/chat/stream",
+            method="POST",
+            client_ip="127.0.0.1",
+        )
+    finally:
+        auth_module.request.urlopen = original
+
+    assert identity.role == "admin"
+    assert captured["url"] == "http://localhost:8001/auth/me"
+    assert captured["timeout"] == 4.25
+    assert captured["authorization"] == "Bearer token-123"
+
+
+def test_admin_access_checker_returns_502_when_auth_validation_times_out() -> None:
+    def fake_urlopen(req, timeout):
+        raise TimeoutError("timed out")
+
+    original = auth_module.request.urlopen
+    auth_module.request.urlopen = fake_urlopen
+    try:
+        checker = auth_module.AdminAccessChecker(Settings())
+        try:
+            checker.require_admin(
+                token="token-123",
+                path="/admin/chat/stream",
+                method="POST",
+                client_ip="127.0.0.1",
+            )
+            raise AssertionError("Expected AdminAccessDenied")
+        except auth_module.AdminAccessDenied as exc:
+            assert exc.status_code == 502
+            assert exc.detail == "Unable to validate admin access"
+    finally:
+        auth_module.request.urlopen = original

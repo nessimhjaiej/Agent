@@ -130,9 +130,13 @@ export async function loginWithPassword(email, password) {
 }
 
 export async function streamAdmin(payload, onEvent) {
+  const accessToken = typeof payload?.access_token === 'string' ? payload.access_token.trim() : '';
   const response = await fetch(`${API.admin}/admin/chat/stream`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
     body: JSON.stringify(payload),
   });
 
