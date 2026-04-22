@@ -15,11 +15,6 @@
         "port":  8003
     },
     {
-        "name":  "generation-service",
-        "pid":  27432,
-        "port":  8004
-    },
-    {
         "name":  "ingestion-service",
         "pid":  16092,
         "port":  8005
@@ -36,7 +31,12 @@
     },
     {
         "name":  "auth-service",
-        "pid":  31596,
+        "pid":  31008,
         "port":  8001
+    },
+    {
+        "name":  "generation-service",
+        "pid":  24488,
+        "port":  8004
     }
 ]

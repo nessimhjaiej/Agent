@@ -41,7 +41,24 @@ function formatLabel(value) {
 
 function extractAlertMetadataEntries(alert) {
   const metadata = alert?.metadata && typeof alert.metadata === 'object' ? alert.metadata : {};
-  const preferredOrder = ['email', 'role', 'client_ip', 'path', 'method', 'reason', 'user_id'];
+  const preferredOrder = [
+    'email',
+    'role',
+    'user_id',
+    'tool',
+    'service_name',
+    'document_id',
+    'dataset_path',
+    'change_summary',
+    'change_keys',
+    'client_ip',
+    'path',
+    'method',
+    'failed_attempts',
+    'window_minutes',
+    'query_preview',
+    'reason',
+  ];
 
   const orderedKeys = [
     ...preferredOrder.filter((key) => metadata[key]),
@@ -51,7 +68,7 @@ function extractAlertMetadataEntries(alert) {
   return orderedKeys.map((key) => ({
     key,
     label: formatLabel(key),
-    value: String(metadata[key]),
+    value: typeof metadata[key] === 'object' ? JSON.stringify(metadata[key]) : String(metadata[key]),
   }));
 }
 
@@ -179,10 +196,10 @@ export default function SecurityPage() {
       <div className="w-full max-w-[1560px] mx-auto space-y-4 md:space-y-5">
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
         {[
-          { label: 'Active Alerts', value: summary.active_alerts, sub: 'Needs review', icon: ShieldAlert, color: '#ef4444', glow: 'rgba(239,68,68,0.15)' },
+          { label: 'Active Alerts', value: summary.active_alerts, sub: 'Not resolved yet', icon: ShieldAlert, color: '#ef4444', glow: 'rgba(239,68,68,0.15)' },
           { label: 'Critical Alerts', value: summary.critical_alerts, sub: 'Highest priority', icon: AlertTriangle, color: '#f59e0b', glow: 'rgba(245,158,11,0.15)' },
           { label: 'Warning Alerts', value: summary.warning_alerts, sub: 'Watch closely', icon: TrendingUp, color: 'var(--color-primary-400)', glow: 'rgba(139,92,246,0.15)' },
-          { label: 'Info Alerts', value: summary.info_alerts, sub: 'Telemetry', icon: ShieldCheck, color: '#10b981', glow: 'rgba(16,185,129,0.15)' },
+          { label: 'Info Alerts', value: summary.info_alerts, sub: 'Confirmed changes and telemetry', icon: ShieldCheck, color: '#10b981', glow: 'rgba(16,185,129,0.15)' },
         ].map((card, i) => (
           <motion.div
             key={card.label}

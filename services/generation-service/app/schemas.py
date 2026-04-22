@@ -24,11 +24,18 @@ class ChatTurnInput(BaseModel):
     content: str = Field(..., min_length=1)
 
 
+class RequestActorInput(BaseModel):
+    user_id: str = ""
+    email: str = ""
+    role: str = ""
+
+
 class ChatRequest(BaseModel):
     query: str = Field(..., min_length=1)
     retrieved_chunks: list[RetrievedChunkInput] = Field(..., min_length=1)
     chat_history: list[ChatTurnInput] = Field(default_factory=list)
     session_id: str | None = None
+    actor: RequestActorInput | None = None
 
 
 class CitationResponse(BaseModel):
@@ -72,6 +79,7 @@ class AskRequest(BaseModel):
     rerank: RetrievalRerankOptions | None = None
     chat_history: list[ChatTurnInput] = Field(default_factory=list)
     session_id: str | None = None
+    actor: RequestActorInput | None = None
 
 
 class AskResponse(ChatResponse):

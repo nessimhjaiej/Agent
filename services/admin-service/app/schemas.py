@@ -75,6 +75,9 @@ class AdminChatRequest(BaseModel):
     pending_action: AdminPendingAction | None = None
     chat_history: list[AdminChatTurnInput] = Field(default_factory=list)
     access_token: str | None = None
+    actor_user_id: str | None = None
+    actor_email: str | None = None
+    actor_role: str | None = None
 
 
 class AdminCitationResponse(BaseModel):

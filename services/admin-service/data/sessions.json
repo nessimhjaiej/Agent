@@ -119,5 +119,144 @@
       }
     },
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2ODY3Mjg4LCJpYXQiOjE3NzY4NjM2ODgsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL3N0b3JhZ2UvdjEvb2JqZWN0L3B1YmxpYy9wcm9maWxlcy8yMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkvMTc3NjI1MTUxODEwNC5qcGVnIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJoamFpZWpuZXNzaW0ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3Njg2MzY4OH1dLCJzZXNzaW9uX2lkIjoiNDAyZmIwNDktY2M1Zi00OTYxLWFmMzQtMmJjNDlkNGExNmZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.92tAZ9BFDI_0OCMaMUPibWJjYSdfnIN0cFOQTQ-EccXxVbMw2B9Ijc3Zvavl2eDtiA-i7c28h0SGmyoixtwabA"
+  },
+  "962cec1c-6951-4958-b817-ee808aed0767": {
+    "history": [
+      {
+        "role": "user",
+        "content": "hello"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nHi there! How can I help you today?"
+      }
+    ],
+    "last_message": "hello",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_response": "## Advice\n\nHi there! How can I help you today?",
+    "last_route": "advisory",
+    "last_topic": "greeting",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": "token",
+    "tool_cache": {}
+  },
+  "7824e0bc-31b9-415b-8bdd-c4167750ecb1": {
+    "history": [
+      {
+        "role": "user",
+        "content": "hello"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nHi! How can I help you today?"
+      }
+    ],
+    "last_message": "hello",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_response": "## Advice\n\nHi! How can I help you today?",
+    "last_route": "advisory",
+    "last_topic": "greeting/clarify needs",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": "token",
+    "tool_cache": {}
+  },
+  "0a6975f5-1696-4691-abc4-6fd71c844ec9": {
+    "history": [
+      {
+        "role": "user",
+        "content": "hello"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nHi there! How can I help you today?"
+      }
+    ],
+    "last_message": "hello",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_response": "## Advice\n\nHi there! How can I help you today?",
+    "last_route": "advisory",
+    "last_topic": "greeting",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": "token",
+    "tool_cache": {}
+  },
+  "f074182a-257b-4536-a15b-29d3233ad680": {
+    "history": [
+      {
+        "role": "user",
+        "content": "hello"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nHi! How can I help today?\n- Check document ingestion status\n- Reindex or validate documents\n- Run or compare evaluation reports\n- Review retrieval/reranking settings\nOr tell me what you\u2019re trying to achieve."
+      }
+    ],
+    "last_message": "hello",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_response": "## Advice\n\nHi! How can I help today?\n- Check document ingestion status\n- Reindex or validate documents\n- Run or compare evaluation reports\n- Review retrieval/reranking settings\nOr tell me what you\u2019re trying to achieve.",
+    "last_route": "advisory",
+    "last_topic": "greeting/small talk",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": "token",
+    "tool_cache": {}
+  },
+  "62909162-ee49-4c34-bd3d-50cde35635dd": {
+    "history": [
+      {
+        "role": "user",
+        "content": "change chunking size to 800"
+      },
+      {
+        "role": "assistant",
+        "content": "## Next Action\n\n### Confirmation Required\n- update the preprocessing settings with {'chunk_size': 800}\n\nReply with **`confirm`** to continue."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "## Summary\n- Updated preprocessing chunk size to 800; effective immediately, no service restart required.\n\n### What mattered\n- Scope: preprocessing\n\n### Operational note\n- If prior outputs rely on the old chunking, consider reprocessing for consistency."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_message": "confirm",
+    "last_response": "## Summary\n- Updated preprocessing chunk size to 800; effective immediately, no service restart required.\n\n### What mattered\n- Scope: preprocessing\n\n### Operational note\n- If prior outputs rely on the old chunking, consider reprocessing for consistency.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2ODY5MDAwLCJpYXQiOjE3NzY4NjU0MDAsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL3N0b3JhZ2UvdjEvb2JqZWN0L3B1YmxpYy9wcm9maWxlcy8yMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkvMTc3NjI1MTUxODEwNC5qcGVnIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJoamFpZWpuZXNzaW0ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3Njg2NTQwMH1dLCJzZXNzaW9uX2lkIjoiZjljMjM4N2EtNjc1ZC00MTVmLWE2MTMtMzI3OWUzYWU4N2RjIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.TSGxOcJYgEsuKs9JVxvKsuDqZqb_9yia9lYSu-EFPhRpm705d7c5Kw7XrRKnk7UmB1DgIivFTxXa1Xki7Nv_Qg",
+    "cache_invalidated_at": 1776865834.1393664
   }
 }

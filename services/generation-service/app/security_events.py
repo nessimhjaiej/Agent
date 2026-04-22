@@ -14,6 +14,7 @@ def emit_security_event(
     title: str,
     message: str,
     metadata: dict | None = None,
+    fingerprint: str | None = None,
 ) -> None:
     if not settings.security_base_url:
         return
@@ -26,6 +27,7 @@ def emit_security_event(
             "title": title,
             "message": message,
             "metadata": metadata or {},
+            "fingerprint": fingerprint,
         }
     ).encode("utf-8")
     endpoint = f"{settings.security_base_url.rstrip('/')}/security/events"
@@ -40,4 +42,3 @@ def emit_security_event(
             pass
     except (error.URLError, TimeoutError, ValueError):
         pass
-

@@ -29,13 +29,13 @@ def _require_admin_token(
     *,
     access_token: str | None = None,
     authorization: str | None = None,
-) -> str:
+) -> tuple[str, object]:
     token = access_token
     if not token and authorization and authorization.startswith("Bearer "):
         token = authorization[7:]
     checker = AdminAccessChecker(Settings.from_env())
     try:
-        checker.require_admin(
+        identity = checker.require_admin(
             token=token,
             path=request.url.path,
             method=request.method,
@@ -43,7 +43,7 @@ def _require_admin_token(
         )
     except AdminAccessDenied as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.detail)
-    return token or ""
+    return token or "", identity
 
 
 @router.post("/chat", response_model=AdminChatResponse)
@@ -52,8 +52,16 @@ def chat(
     request: Request,
     authorization: str | None = Header(default=None),
 ) -> AdminChatResponse:
-    _require_admin_token(request, access_token=payload.access_token, authorization=authorization)
-    return _service().chat(payload)
+    token, identity = _require_admin_token(request, access_token=payload.access_token, authorization=authorization)
+    enriched_payload = payload.model_copy(
+        update={
+            "access_token": token,
+            "actor_user_id": getattr(identity, "user_id", "") or "",
+            "actor_email": getattr(identity, "email", "") or "",
+            "actor_role": getattr(identity, "role", "") or "",
+        }
+    )
+    return _service().chat(enriched_payload)
 
 
 @router.post("/chat/stream")
@@ -62,10 +70,18 @@ def chat_stream(
     request: Request,
     authorization: str | None = Header(default=None),
 ) -> StreamingResponse:
-    _require_admin_token(request, access_token=payload.access_token, authorization=authorization)
+    token, identity = _require_admin_token(request, access_token=payload.access_token, authorization=authorization)
+    enriched_payload = payload.model_copy(
+        update={
+            "access_token": token,
+            "actor_user_id": getattr(identity, "user_id", "") or "",
+            "actor_email": getattr(identity, "email", "") or "",
+            "actor_role": getattr(identity, "role", "") or "",
+        }
+    )
 
     def _iter():
-        for event in _service().chat_events(payload):
+        for event in _service().chat_events(enriched_payload):
             yield json.dumps(event) + "\n"
 
     return StreamingResponse(_iter(), media_type="application/x-ndjson")
