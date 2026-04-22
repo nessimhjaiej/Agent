@@ -14,13 +14,14 @@ load_dotenv(_PROJECT_ROOT / ".env.local", override=True)
 class Settings:
     app_name: str = "preprocessing-service"
     app_version: str = "0.1.0"
-    chunk_strategy: str = "late"
-    chunk_size: int = 750
-    chunk_overlap: int = 120
+    chunk_strategy: str = "overlap"
+    chunk_size: int = 32
+    chunk_overlap: int = 4
     pipeline_version: str = "v1"
     rate_limit_requests: int = 60
     rate_limit_window_seconds: int = 60
     max_request_size_bytes: int = 1_048_576
+    security_base_url: str = ""
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -35,4 +36,5 @@ class Settings:
             rate_limit_requests=int(os.getenv("PREPROCESSING_RATE_LIMIT_REQUESTS", "60")),
             rate_limit_window_seconds=int(os.getenv("PREPROCESSING_RATE_LIMIT_WINDOW_SECONDS", "60")),
             max_request_size_bytes=int(os.getenv("PREPROCESSING_MAX_REQUEST_SIZE_BYTES", "1048576")),
+            security_base_url=os.getenv("SECURITY_BASE_URL", defaults.security_base_url),
         )

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { isPasswordStrong, PASSWORD_POLICY_MESSAGE } from '../utils/passwordPolicy';
+import { loginWithPassword } from '../config/api';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -369,19 +370,22 @@ export function AuthProvider({ children }) {
 
   const signIn = async (email, password) => {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) {
-      const rawMessage = (error.message || '').toLowerCase();
-      if (rawMessage.includes('email not confirmed') || rawMessage.includes('email_not_confirmed')) {
-        throw new Error('Your account is validated but your email is not confirmed. Please check your inbox and validate your email first.');
-      }
-      throw error;
+    const data = await loginWithPassword(email, password);
+
+    const accessToken = data?.access_token || '';
+    const refreshToken = data?.refresh_token || '';
+    if (!accessToken || !refreshToken) {
+      throw new Error('Login succeeded but no session tokens were returned.');
     }
 
-    const { blocked } = getAccountFlags(data?.user);
+    const { data: sessionData, error } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    if (error) throw error;
+
+    const resolvedUser = sessionData?.user ?? null;
+    const { blocked } = getAccountFlags(resolvedUser);
     if (blocked) {
       clearUserState();
       bumpAuthRefreshKey();
@@ -390,9 +394,9 @@ export function AuthProvider({ children }) {
       throw new Error('Your account is blocked. Please contact an administrator.');
     }
 
-    applyUserState(data?.user ?? null);
+    applyUserState(resolvedUser);
     bumpAuthRefreshKey();
-    return data;
+    return sessionData;
   };
 
   const signUp = async ({ email, password, phoneNumber = '' }) => {

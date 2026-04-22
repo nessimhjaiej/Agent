@@ -1243,6 +1243,9 @@ export default function AdminPage() {
                       <tbody>
                         {filteredUsers.map((managedUser) => {
                           const status = getManagedUserStatus(managedUser);
+                          const isCurrentUser = managedUser.id === user?.id;
+                          const disableValidationAction = busyUserIds.has(managedUser.id) || managedUser.role === 'admin' || isCurrentUser;
+                          const disableBlockAction = busyUserIds.has(managedUser.id) || managedUser.role === 'admin' || isCurrentUser;
                           const statusCfg = status === 'validated'
                             ? { bg: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)', label: 'Validated' }
                             : status === 'invited'
@@ -1285,10 +1288,10 @@ export default function AdminPage() {
                                 {status !== 'validated' && status !== 'invited' ? (
                                   <button
                                     onClick={() => (status === 'blocked' ? validateAgain(managedUser) : updateValidation(managedUser))}
-                                    disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin'}
+                                    disabled={disableValidationAction}
                                     className="p-2.5 rounded-lg hover:bg-success/10 transition-colors disabled:opacity-50"
                                     style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }}
-                                    title={status === 'blocked' ? 'Validate again' : 'Validate user'}
+                                    title={isCurrentUser ? 'You cannot change your own validation status' : status === 'blocked' ? 'Validate again' : 'Validate user'}
                                   >
                                     <Check size={18} />
                                   </button>
@@ -1298,10 +1301,10 @@ export default function AdminPage() {
                                 {status !== 'blocked' ? (
                                   <button
                                     onClick={() => updateBlock(managedUser)}
-                                    disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin'}
+                                    disabled={disableBlockAction}
                                     className="p-2.5 rounded-lg hover:bg-warning/10 transition-colors disabled:opacity-50"
                                     style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }}
-                                    title="Block user"
+                                    title={isCurrentUser ? 'You cannot block your own account' : 'Block user'}
                                   >
                                     <Ban size={18} />
                                   </button>

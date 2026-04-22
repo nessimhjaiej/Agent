@@ -19,6 +19,8 @@ paths:
   /admin/chat:
     post:
       summary: Admin chat request
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationHeader"
       requestBody:
         required: true
         content:
@@ -34,6 +36,10 @@ paths:
                 $ref: "#/components/schemas/AdminChatResponse"
         "400":
           description: Invalid request or configuration
+        "401":
+          description: Missing or invalid admin access token
+        "403":
+          description: Admin access required
         "422":
           description: Invalid payload
         "500":
@@ -43,6 +49,8 @@ paths:
   /admin/chat/stream:
     post:
       summary: Stream admin chat response as NDJSON
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationHeader"
       requestBody:
         required: true
         content:
@@ -57,7 +65,45 @@ paths:
               schema:
                 type: string
                 description: NDJSON event stream produced by the admin service.
+        "401":
+          description: Missing or invalid admin access token
+        "403":
+          description: Admin access required
+  /admin/graph:
+    get:
+      summary: Get the admin graph in Mermaid format
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationHeader"
+      responses:
+        "200":
+          description: Mermaid graph
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, format, graph]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  format:
+                    type: string
+                    example: mermaid
+                  graph:
+                    type: string
+        "401":
+          description: Missing or invalid admin access token
+        "403":
+          description: Admin access required
 components:
+  parameters:
+    AuthorizationHeader:
+      name: Authorization
+      in: header
+      required: false
+      schema:
+        type: string
+      description: Bearer access token, for example `Bearer eyJ...`
   schemas:
     HealthResponse:
       type: object
@@ -134,6 +180,9 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AdminChatTurnInput"
+        access_token:
+          type: string
+          nullable: true
     AdminCitationResponse:
       type: object
       required: [chunk_id, document_id, document_name, chunk_text]

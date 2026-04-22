@@ -18,6 +18,7 @@ const API = {
   retrieval: '/api/retrieval',
   generation: '/api/generation',
   ingestion: '/api/ingestion',
+  security: '/api/security',
 };
 
 async function parseResponse(response) {
@@ -118,6 +119,13 @@ export async function askGeneration({ query, chatHistory = [] }) {
   return postJson(`${API.generation}/ask`, {
     query,
     chat_history: chatHistory,
+  });
+}
+
+export async function loginWithPassword(email, password) {
+  return postJson(`${API.auth}/login`, {
+    email,
+    password,
   });
 }
 
@@ -222,6 +230,23 @@ export async function setUserBlock(accessToken, userId, blocked) {
 
 export async function deleteManagedUser(accessToken, userId) {
   return deleteWithAuth(`${API.auth}/admin/users/${userId}`, accessToken);
+}
+
+export async function listSecurityAlerts(includeResolved = false) {
+  const query = includeResolved ? '?include_resolved=true' : '';
+  return getJson(`${API.security}/alerts${query}`);
+}
+
+export async function getSecurityAlertsSummary() {
+  return getJson(`${API.security}/alerts/summary`);
+}
+
+export async function getSecurityLoginAttemptsSummary() {
+  return getJson(`${API.security}/login-attempts/summary`);
+}
+
+export async function resolveSecurityAlert(alertId) {
+  return postJson(`${API.security}/alerts/${alertId}/resolve`, {});
 }
 
 export default API;

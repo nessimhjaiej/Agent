@@ -146,6 +146,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AdminUsersResponse"
+        "401":
+          description: Missing or invalid bearer token
         "403":
           description: Admin access required
         "500":
@@ -170,6 +172,8 @@ paths:
                 $ref: "#/components/schemas/AdminInviteResponse"
         "400":
           description: Invalid email or user state
+        "401":
+          description: Missing or invalid bearer token
         "403":
           description: Admin access required
         "422":
@@ -197,6 +201,8 @@ paths:
                 $ref: "#/components/schemas/AdminUserResponse"
         "400":
           description: Invalid user state
+        "401":
+          description: Missing or invalid bearer token
         "403":
           description: Admin access required
         "422":
@@ -222,6 +228,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AdminUserResponse"
+        "401":
+          description: Missing or invalid bearer token
         "403":
           description: Admin access required
         "422":
@@ -241,6 +249,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Missing or invalid bearer token
         "403":
           description: Admin access required or protected target
         "500":

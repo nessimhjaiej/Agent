@@ -196,6 +196,23 @@ def test_me_returns_user(mock_create: MagicMock) -> None:
     assert data["email_confirmed"] is True
 
 
+@patch.object(database_module, "create_client", return_value=MagicMock())
+def test_admin_users_requires_admin_role(mock_create: MagicMock) -> None:
+    mock_client = mock_create.return_value
+    mock_user = _make_mock_supabase_user(user_metadata={"role": "user"})
+    mock_client.auth.get_user.return_value = SimpleNamespace(user=mock_user)
+
+    app = create_app()
+    client = TestClient(app)
+
+    response = client.get(
+        "/auth/admin/users",
+        headers={"Authorization": "Bearer mock-token"},
+    )
+
+    assert response.status_code == 403
+
+
 # ── Password reset ────────────────────────────────────────────────────
 
 

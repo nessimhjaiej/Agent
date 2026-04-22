@@ -4,6 +4,7 @@ from app.config import Settings
 from app.guardrails import is_prompt_attack_query
 from app.models import ChatContext, ChatTurn, RetrievedChunk
 from app.orchestrator import GenerationOrchestrator
+from app.security_events import emit_security_event
 from app.schemas import (
     AskRequest,
     AskResponse,
@@ -172,7 +173,17 @@ class GenerationService:
     def _should_block_query(self, query: str) -> bool:
         if not self._settings.generation_block_prompt_attack_queries:
             return False
-        return is_prompt_attack_query(query)
+        blocked = is_prompt_attack_query(query)
+        if blocked:
+            emit_security_event(
+                self._settings,
+                event_type="PROMPT_INJECTION_DETECTED",
+                severity="critical",
+                title="Prompt injection attempt blocked",
+                message="A user query matched the prompt injection detection rules.",
+                metadata={"query_preview": query[:180]},
+            )
+        return blocked
 
     def _build_retrieval_query(self, query: str, chat_history: list[ChatTurn]) -> str:
         cleaned_query = query.strip()

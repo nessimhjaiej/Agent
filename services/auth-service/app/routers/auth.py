@@ -1,6 +1,6 @@
 """Auth router for signup/login/password and admin user management."""
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Request
 
 from app.config import Settings
 from app.exceptions import (
@@ -53,6 +53,21 @@ def _get_current_user(authorization: str | None) -> AuthUser:
         return service.get_current_user(token)
     except UnauthorizedException:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+
+def _require_admin_access(
+    request: Request,
+    authorization: str | None,
+) -> str:
+    token = _extract_token(authorization)
+    service = _get_service()
+    try:
+        user = service.get_current_user(token)
+    except UnauthorizedException:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return token
 
 
 @router.post("/signup", response_model=SessionResponse)
@@ -161,8 +176,11 @@ def logout(authorization: str | None = Header(default=None)) -> MessageResponse:
 
 
 @router.get("/admin/users", response_model=AdminUsersResponse)
-def list_users(authorization: str | None = Header(default=None)) -> AdminUsersResponse:
-    token = _extract_token(authorization)
+def list_users(
+    request: Request,
+    authorization: str | None = Header(default=None),
+) -> AdminUsersResponse:
+    token = _require_admin_access(request, authorization)
     service = _get_service()
     try:
         users = service.list_users(token)
@@ -177,9 +195,10 @@ def list_users(authorization: str | None = Header(default=None)) -> AdminUsersRe
 @router.post("/admin/invite", response_model=AdminInviteResponse)
 def invite_user(
     payload: AdminInviteRequest,
+    request: Request,
     authorization: str | None = Header(default=None),
 ) -> AdminInviteResponse:
-    token = _extract_token(authorization)
+    token = _require_admin_access(request, authorization)
     service = _get_service()
     try:
         result = service.invite_user(token, payload.email, payload.role)
@@ -201,9 +220,10 @@ def invite_user(
 def set_validation_status(
     user_id: str,
     payload: AdminValidationRequest,
+    request: Request,
     authorization: str | None = Header(default=None),
 ) -> AdminUserResponse:
-    token = _extract_token(authorization)
+    token = _require_admin_access(request, authorization)
     service = _get_service()
     try:
         updated = service.set_user_validation(token, user_id, payload.validated)
@@ -220,9 +240,10 @@ def set_validation_status(
 def set_block_status(
     user_id: str,
     payload: AdminBlockRequest,
+    request: Request,
     authorization: str | None = Header(default=None),
 ) -> AdminUserResponse:
-    token = _extract_token(authorization)
+    token = _require_admin_access(request, authorization)
     service = _get_service()
     try:
         updated = service.set_user_block(token, user_id, payload.blocked)
@@ -236,9 +257,10 @@ def set_block_status(
 @router.delete("/admin/users/{user_id}", response_model=MessageResponse)
 def delete_user(
     user_id: str,
+    request: Request,
     authorization: str | None = Header(default=None),
 ) -> MessageResponse:
-    token = _extract_token(authorization)
+    token = _require_admin_access(request, authorization)
     service = _get_service()
     try:
         service.delete_user(token, user_id)

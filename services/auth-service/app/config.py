@@ -21,10 +21,13 @@ class Settings:
     supabase_url: str = ""
     supabase_key: str = ""
     frontend_url: str = "http://localhost:5173"
+    security_base_url: str = ""
 
     # Rate limiting (kept for audit purposes)
     max_login_attempts: int = 5
     lockout_duration_minutes: int = 15
+    brute_force_warning_attempts: int = 10
+    brute_force_warning_window_minutes: int = 5
 
     # Optional SMTP for admin invitation emails
     smtp_host: str = ""
@@ -44,8 +47,21 @@ class Settings:
             supabase_url=os.getenv("AUTH_SUPABASE_URL", ""),
             supabase_key=os.getenv("AUTH_SUPABASE_KEY", ""),
             frontend_url=os.getenv("FRONTEND_URL", defaults.frontend_url),
+            security_base_url=os.getenv("SECURITY_BASE_URL", defaults.security_base_url),
             max_login_attempts=int(os.getenv("AUTH_MAX_LOGIN_ATTEMPTS", str(defaults.max_login_attempts))),
             lockout_duration_minutes=int(os.getenv("AUTH_LOCKOUT_DURATION_MINUTES", str(defaults.lockout_duration_minutes))),
+            brute_force_warning_attempts=int(
+                os.getenv(
+                    "AUTH_BRUTE_FORCE_WARNING_ATTEMPTS",
+                    str(defaults.brute_force_warning_attempts),
+                )
+            ),
+            brute_force_warning_window_minutes=int(
+                os.getenv(
+                    "AUTH_BRUTE_FORCE_WARNING_WINDOW_MINUTES",
+                    str(defaults.brute_force_warning_window_minutes),
+                )
+            ),
             smtp_host=os.getenv("AUTH_SMTP_HOST", ""),
             smtp_port=int(os.getenv("AUTH_SMTP_PORT", str(defaults.smtp_port))),
             smtp_username=os.getenv("AUTH_SMTP_USERNAME", ""),

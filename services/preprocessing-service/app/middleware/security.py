@@ -6,6 +6,8 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
+from app.security_events import emit_security_event
+
 
 class InMemoryRateLimiter:
     def __init__(self) -> None:
@@ -48,6 +50,20 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 window_seconds=self._window_seconds,
             )
             if not allowed:
+                settings = getattr(request.app.state, "settings", None)
+                emit_security_event(
+                    getattr(settings, "security_base_url", ""),
+                    source_service=getattr(settings, "app_name", "preprocessing-service"),
+                    event_type="RATE_LIMIT_EXCEEDED",
+                    severity="warning",
+                    title="Rate limit exceeded",
+                    message="A client exceeded the preprocessing request threshold.",
+                    metadata={
+                        "client_ip": client_host,
+                        "path": request.url.path,
+                        "retry_after": retry_after,
+                    },
+                )
                 return JSONResponse(
                     status_code=429,
                     content={"detail": "Rate limit exceeded"},
@@ -70,9 +86,22 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
                 except ValueError:
                     return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length"})
                 if content_length > self._max_request_size_bytes:
+                    settings = getattr(request.app.state, "settings", None)
+                    emit_security_event(
+                        getattr(settings, "security_base_url", ""),
+                        source_service=getattr(settings, "app_name", "preprocessing-service"),
+                        event_type="REQUEST_SIZE_LIMIT_EXCEEDED",
+                        severity="warning",
+                        title="Request body too large",
+                        message="A client sent a request larger than the configured preprocessing limit.",
+                        metadata={
+                            "path": request.url.path,
+                            "content_length": content_length,
+                            "max_request_size_bytes": self._max_request_size_bytes,
+                        },
+                    )
                     return JSONResponse(
                         status_code=413,
                         content={"detail": "Request body too large"},
                     )
         return await call_next(request)
-

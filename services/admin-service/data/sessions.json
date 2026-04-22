@@ -2208,5 +2208,71 @@
     },
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2MzQzOTU3LCJpYXQiOjE3NzYzNDAzNTcsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL3N0b3JhZ2UvdjEvb2JqZWN0L3B1YmxpYy9wcm9maWxlcy8yMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkvMTc3NjI1MTUxODEwNC5qcGVnIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJoamFpZWpuZXNzaW0ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjM0MDM1N31dLCJzZXNzaW9uX2lkIjoiZDgxOWY3ZDYtZTIxNi00ZDg2LWJjNDEtOTQ5YjU3YzE4OGI3IiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.EApNJqnsvIyq-eElB0hVBAmQ06iCIgHgF3tpm0MFLNifUSh2AQN879GdGH0kEDXGDtzThmB4KHu-jOibWijMzw",
     "tool_cache": {}
+  },
+  "d045da96-7545-4424-9a1f-1c5a64c3096a": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what is the chuncking strategy for the moment ?"
+      },
+      {
+        "role": "assistant",
+        "content": "Here\u2019s the current chunking setup:\n- Strategy: overlapping chunks\n- Chunk size: 32\n- Overlap: 4\n- Pipeline version: v1\n\nIf you\u2019d like different chunk sizes or overlap, tell me what you prefer and I can update it."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": "overlap",
+            "chunk_size": 32,
+            "chunk_overlap": 4,
+            "pipeline_version": "v1"
+          },
+          "sources": {
+            "chunk_strategy": "services/preprocessing-service/app/config.py",
+            "chunk_size": "services/preprocessing-service/app/config.py",
+            "chunk_overlap": "services/preprocessing-service/app/config.py",
+            "pipeline_version": "services/preprocessing-service/app/config.py"
+          }
+        },
+        "created_at": 1776851609.188811,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "last_message": "what is the chuncking strategy for the moment ?",
+    "pending_action": null,
+    "last_response": "Here\u2019s the current chunking setup:\n- Strategy: overlapping chunks\n- Chunk size: 32\n- Overlap: 4\n- Pipeline version: v1\n\nIf you\u2019d like different chunk sizes or overlap, tell me what you prefer and I can update it.",
+    "last_route": "inspect",
+    "last_topic": "Determine the currently used chunking strategy/configuration",
+    "last_result": {
+      "route": "inspect",
+      "tool_result": {
+        "status": "ok",
+        "scope": "preprocessing",
+        "config": {
+          "chunk_strategy": "overlap",
+          "chunk_size": 32,
+          "chunk_overlap": 4,
+          "pipeline_version": "v1"
+        },
+        "sources": {
+          "chunk_strategy": "services/preprocessing-service/app/config.py",
+          "chunk_size": "services/preprocessing-service/app/config.py",
+          "chunk_overlap": "services/preprocessing-service/app/config.py",
+          "pipeline_version": "services/preprocessing-service/app/config.py"
+        }
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2ODU1MDg5LCJpYXQiOjE3NzY4NTE0ODksImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL3N0b3JhZ2UvdjEvb2JqZWN0L3B1YmxpYy9wcm9maWxlcy8yMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkvMTc3NjI1MTUxODEwNC5qcGVnIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJoamFpZWpuZXNzaW0ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3Njg1MTQ4OX1dLCJzZXNzaW9uX2lkIjoiMDAzM2FlNmQtNGQ3Ni00ZTNlLWJjYzQtYjAwMTU1ODMyNzI4IiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.tN-HbOtiIBYZCWPsZjp3UHKaqVnRmv5RZ_Yazv2UtaBUypewsYiErWLYQ4DjPlz9GKT1--BM4iCN56AfWGbM-Q"
   }
 }

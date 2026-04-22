@@ -1,0 +1,239 @@
+openapi: 3.0.3
+info:
+  title: security-service API
+  version: 0.1.0
+  description: API for security alert ingestion, alert monitoring, alert resolution, and login-attempt analytics.
+servers:
+  - url: http://localhost:8007
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: Service health
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /security/alerts:
+    get:
+      summary: List security alerts
+      parameters:
+        - name: include_resolved
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Security alerts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecurityAlertsResponse"
+  /security/alerts/summary:
+    get:
+      summary: Get active-alert summary
+      responses:
+        "200":
+          description: Alert summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecuritySummaryResponse"
+  /security/login-attempts/summary:
+    get:
+      summary: Get login-attempt analytics summary
+      responses:
+        "200":
+          description: Login-attempt summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginAttemptSummaryResponse"
+  /security/events:
+    post:
+      summary: Record a security event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SecurityEventCreate"
+      responses:
+        "201":
+          description: Created or merged alert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecurityAlertResponse"
+        "422":
+          description: Invalid payload
+  /security/alerts/{alert_id}/resolve:
+    post:
+      summary: Resolve an alert
+      parameters:
+        - name: alert_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resolved alert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecurityAlertResponse"
+        "404":
+          description: Alert not found
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, version]
+      properties:
+        status:
+          type: string
+          example: ok
+        service:
+          type: string
+          example: security-service
+        version:
+          type: string
+          example: 0.1.0
+    SecurityEventCreate:
+      type: object
+      required: [event_type, source_service, severity, title, message]
+      properties:
+        event_type:
+          type: string
+        source_service:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        title:
+          type: string
+        message:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        fingerprint:
+          type: string
+          nullable: true
+    SecurityAlertResponse:
+      type: object
+      required:
+        - id
+        - event_type
+        - source_service
+        - severity
+        - status
+        - title
+        - message
+        - count
+        - metadata
+        - created_at
+        - last_seen_at
+      properties:
+        id:
+          type: string
+        event_type:
+          type: string
+        source_service:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        status:
+          type: string
+          enum: [active, resolved]
+        title:
+          type: string
+        message:
+          type: string
+        count:
+          type: integer
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+        last_seen_at:
+          type: string
+    SecurityAlertsResponse:
+      type: object
+      required: [alerts, active_count]
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/SecurityAlertResponse"
+        active_count:
+          type: integer
+    SecuritySummaryResponse:
+      type: object
+      required: [active_alerts, critical_alerts, warning_alerts, info_alerts]
+      properties:
+        active_alerts:
+          type: integer
+        critical_alerts:
+          type: integer
+        warning_alerts:
+          type: integer
+        info_alerts:
+          type: integer
+    LoginAttemptItemResponse:
+      type: object
+      required: [email, success, timestamp]
+      properties:
+        email:
+          type: string
+        success:
+          type: boolean
+        timestamp:
+          type: string
+    LoginAttemptTargetResponse:
+      type: object
+      required: [email, failed_attempts]
+      properties:
+        email:
+          type: string
+        failed_attempts:
+          type: integer
+    LoginAttemptSummaryResponse:
+      type: object
+      required:
+        - enabled
+        - window_hours
+        - total_attempts
+        - failed_attempts
+        - successful_attempts
+        - unique_emails
+        - recent_failed_attempts
+        - top_targeted_accounts
+      properties:
+        enabled:
+          type: boolean
+        window_hours:
+          type: integer
+        total_attempts:
+          type: integer
+        failed_attempts:
+          type: integer
+        successful_attempts:
+          type: integer
+        unique_emails:
+          type: integer
+        recent_failed_attempts:
+          type: array
+          items:
+            $ref: "#/components/schemas/LoginAttemptItemResponse"
+        top_targeted_accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/LoginAttemptTargetResponse"

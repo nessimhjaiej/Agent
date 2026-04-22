@@ -12,9 +12,16 @@ if str(SERVICE_ROOT) not in sys.path:
     sys.path.insert(0, str(SERVICE_ROOT))
 
 from app.config import Settings  # noqa: E402
-from app.exceptions import InvalidUserStateException, UserAlreadyExistsException  # noqa: E402
+from app.exceptions import (  # noqa: E402
+    AccountLockedException,
+    InvalidUserStateException,
+    InvalidCredentialsException,
+    UnauthorizedException,
+    UserAlreadyExistsException,
+)
 from app.service import AuthService  # noqa: E402
 import app.database as database_module  # noqa: E402
+import app.service as service_module  # noqa: E402
 
 
 def _make_user(**overrides):
@@ -211,6 +218,111 @@ def test_set_user_validation_blocks_incomplete_invites(mock_create: MagicMock) -
 
     with pytest.raises(InvalidUserStateException):
         service.set_user_validation("admin-token", "invited-1", True)
+
+
+@patch.object(database_module, "create_client", return_value=MagicMock())
+def test_set_user_validation_rejects_self_update(mock_create: MagicMock) -> None:
+    mock_client = mock_create.return_value
+    admin_user = _make_user(id="admin-1", email="admin@example.com", user_metadata={"role": "admin"})
+    mock_client.auth.get_user.return_value = SimpleNamespace(user=admin_user)
+
+    service = AuthService(Settings())
+
+    with pytest.raises(UnauthorizedException):
+        service.set_user_validation("admin-token", "admin-1", False)
+
+    mock_client.auth.admin.get_user_by_id.assert_not_called()
+
+
+@patch.object(database_module, "create_client", return_value=MagicMock())
+def test_set_user_block_rejects_self_block(mock_create: MagicMock) -> None:
+    mock_client = mock_create.return_value
+    admin_user = _make_user(id="admin-1", email="admin@example.com", user_metadata={"role": "admin"})
+    mock_client.auth.get_user.return_value = SimpleNamespace(user=admin_user)
+
+    service = AuthService(Settings())
+
+    with pytest.raises(UnauthorizedException):
+        service.set_user_block("admin-token", "admin-1", True)
+
+    mock_client.auth.admin.get_user_by_id.assert_not_called()
+
+
+@patch.object(database_module, "create_client", return_value=MagicMock())
+def test_login_passes_warning_threshold_to_helper(mock_create: MagicMock) -> None:
+    mock_client = mock_create.return_value
+    mock_client.auth.sign_in_with_password.side_effect = Exception("bad credentials")
+
+    service = AuthService(
+        Settings(
+            max_login_attempts=15,
+            lockout_duration_minutes=15,
+            brute_force_warning_attempts=10,
+            brute_force_warning_window_minutes=5,
+        )
+    )
+    service._db.get_failed_login_count = MagicMock(side_effect=[0, 9])
+    service._emit_brute_force_warning_if_needed = MagicMock()
+
+    with pytest.raises(InvalidCredentialsException):
+        service.login("alert@example.com", "wrong-password")
+
+    service._emit_brute_force_warning_if_needed.assert_called_once_with(
+        email="alert@example.com",
+        previous_attempts=9,
+        next_attempts=10,
+    )
+
+
+@patch.object(database_module, "create_client", return_value=MagicMock())
+def test_brute_force_helper_emits_warning_once_at_threshold(mock_create: MagicMock) -> None:
+    service = AuthService(
+        Settings(
+            brute_force_warning_attempts=10,
+            brute_force_warning_window_minutes=5,
+        )
+    )
+
+    with patch.object(service_module, "emit_security_event") as mock_emit_security_event:
+        service._emit_brute_force_warning_if_needed(
+            email="alert@example.com",
+            previous_attempts=9,
+            next_attempts=10,
+        )
+
+    mock_emit_security_event.assert_called_once_with(
+        service._settings,
+        event_type="BRUTE_FORCE_ATTEMPTS",
+        severity="warning",
+        title="Repeated failed login attempts",
+        message="A login identifier reached the failed login warning threshold.",
+        metadata={
+            "email": "alert@example.com",
+            "failed_attempts": 10,
+            "window_minutes": 5,
+        },
+    )
+
+
+@patch.object(database_module, "create_client", return_value=MagicMock())
+def test_login_does_not_repeat_warning_after_threshold(
+    mock_create: MagicMock,
+) -> None:
+    with patch("app.service.emit_security_event") as mock_emit_security_event:
+        service = AuthService(
+            Settings(
+                max_login_attempts=5,
+                lockout_duration_minutes=15,
+                brute_force_warning_attempts=10,
+                brute_force_warning_window_minutes=5,
+            )
+        )
+        service._db.get_failed_login_count = MagicMock(side_effect=[5, 10])
+
+        with pytest.raises(AccountLockedException):
+            service.login("alert@example.com", "wrong-password")
+
+        mock_emit_security_event.assert_not_called()
 
 
 @patch.object(database_module, "create_client", return_value=MagicMock())

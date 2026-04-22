@@ -51,6 +51,7 @@ class Settings:
     generation_model: str = "gpt-4o"
     transcription_model: str = "gpt-4o-mini-transcribe"
     retrieval_base_url: str = "http://localhost:8003"
+    security_base_url: str = ""
     retrieval_timeout_seconds: float = 20.0
     generation_http_max_retries: int = 2
     generation_retry_base_seconds: float = 0.5
@@ -85,6 +86,7 @@ class Settings:
             retrieval_base_url=os.getenv(
                 "RETRIEVAL_BASE_URL", defaults.retrieval_base_url
             ),
+            security_base_url=os.getenv("SECURITY_BASE_URL", defaults.security_base_url),
             retrieval_timeout_seconds=_parse_float(
                 "RETRIEVAL_TIMEOUT_SECONDS", defaults.retrieval_timeout_seconds
             ),

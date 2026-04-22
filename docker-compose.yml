@@ -27,6 +27,7 @@ services:
       AUTH_SMTP_USERNAME: ${AUTH_SMTP_USERNAME:-}
       AUTH_SMTP_PASSWORD: ${AUTH_SMTP_PASSWORD:-}
       AUTH_SMTP_FROM_EMAIL: ${AUTH_SMTP_FROM_EMAIL:-}
+      SECURITY_BASE_URL: http://security-service:8007
     ports:
       - "8001:8001"
     restart: unless-stopped
@@ -42,6 +43,8 @@ services:
       - ./shared/raw_data:/shared/raw-data:ro
     ports:
       - "8000:8000"
+    environment:
+      SECURITY_BASE_URL: http://security-service:8007
     restart: unless-stopped
 
   embedding-service:
@@ -91,6 +94,7 @@ services:
     environment:
       OPENAI_KEY: ${OPENAI_KEY}
       RETRIEVAL_BASE_URL: http://retrieval-service:8003
+      SECURITY_BASE_URL: http://security-service:8007
     ports:
       - "8004:8004"
     depends_on:
@@ -118,6 +122,8 @@ services:
     container_name: admin-service
     environment:
       OPENAI_KEY: ${OPENAI_KEY}
+      AUTH_BASE_URL: http://auth-service:8001
+      SECURITY_BASE_URL: http://security-service:8007
       INGESTION_BASE_URL: http://ingestion-service:8005
       PREPROCESSING_BASE_URL: http://preprocessing-service:8000
       EMBEDDING_BASE_URL: http://embedding-service:8002
@@ -131,8 +137,21 @@ services:
       - retrieval-service
       - generation-service
       - ingestion-service
+      - security-service
     volumes:
       - ./services/admin-service/data:/app/services/admin-service/data
+    restart: unless-stopped
+
+  security-service:
+    build:
+      context: .
+      dockerfile: services/security-service/Dockerfile
+    container_name: security-service
+    environment:
+      SECURITY_SUPABASE_URL: ${AUTH_SUPABASE_URL}
+      SECURITY_SUPABASE_KEY: ${AUTH_SUPABASE_KEY}
+    ports:
+      - "8007:8007"
     restart: unless-stopped
 
 volumes:

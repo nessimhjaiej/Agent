@@ -30,6 +30,8 @@ class Settings:
     session_store_path: str = str(_PROJECT_ROOT / "services" / "admin-service" / "data" / "sessions.json")
     max_iterations: int = 8
     max_tool_calls: int = 8
+    auth_base_url: str = "http://localhost:8001"
+    security_base_url: str = ""
     ingestion_base_url: str = "http://localhost:8005"
     preprocessing_base_url: str = "http://localhost:8000"
     embedding_base_url: str = "http://localhost:8002"
@@ -50,6 +52,8 @@ class Settings:
             ),
             max_iterations=_parse_int("ADMIN_MAX_ITERATIONS", 8),
             max_tool_calls=_parse_int("ADMIN_MAX_TOOL_CALLS", 8),
+            auth_base_url=os.getenv("AUTH_BASE_URL", "http://localhost:8001"),
+            security_base_url=os.getenv("SECURITY_BASE_URL", ""),
             ingestion_base_url=os.getenv("INGESTION_BASE_URL", "http://localhost:8005"),
             preprocessing_base_url=os.getenv("PREPROCESSING_BASE_URL", "http://localhost:8000"),
             embedding_base_url=os.getenv("EMBEDDING_BASE_URL", "http://localhost:8002"),

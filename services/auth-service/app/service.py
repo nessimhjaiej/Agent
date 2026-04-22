@@ -22,6 +22,7 @@ from app.exceptions import (
     UserAlreadyExistsException,
 )
 from app.models import AuthSession, AuthUser
+from app.security_events import emit_security_event
 
 
 class AuthService:
@@ -30,6 +31,32 @@ class AuthService:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
         self._db = SupabaseClient(settings)
+
+    def _emit_brute_force_warning_if_needed(
+        self,
+        *,
+        email: str,
+        previous_attempts: int,
+        next_attempts: int,
+    ) -> None:
+        threshold = self._settings.brute_force_warning_attempts
+        if threshold <= 0:
+            return
+        if previous_attempts >= threshold or next_attempts < threshold:
+            return
+
+        emit_security_event(
+            self._settings,
+            event_type="BRUTE_FORCE_ATTEMPTS",
+            severity="warning",
+            title="Repeated failed login attempts",
+            message="A login identifier reached the failed login warning threshold.",
+            metadata={
+                "email": email,
+                "failed_attempts": next_attempts,
+                "window_minutes": self._settings.brute_force_warning_window_minutes,
+            },
+        )
 
     @staticmethod
     def _map_user(supabase_user) -> AuthUser:
@@ -179,7 +206,17 @@ class AuthService:
         failed_attempts = self._db.get_failed_login_count(
             email, self._settings.lockout_duration_minutes
         )
+        warning_window_attempts = self._db.get_failed_login_count(
+            email, self._settings.brute_force_warning_window_minutes
+        )
         if failed_attempts >= self._settings.max_login_attempts:
+            self._db.record_login_attempt(email, False)
+            next_warning_window_attempts = warning_window_attempts + 1
+            self._emit_brute_force_warning_if_needed(
+                email=email,
+                previous_attempts=warning_window_attempts,
+                next_attempts=next_warning_window_attempts,
+            )
             raise AccountLockedException(
                 "Account locked due to too many failed login attempts"
             )
@@ -193,6 +230,12 @@ class AuthService:
             )
         except Exception as exc:
             self._db.record_login_attempt(email, False)
+            next_warning_window_attempts = warning_window_attempts + 1
+            self._emit_brute_force_warning_if_needed(
+                email=email,
+                previous_attempts=warning_window_attempts,
+                next_attempts=next_warning_window_attempts,
+            )
             raise InvalidCredentialsException("Invalid email or password") from exc
 
         if not response.user or not response.session:
@@ -485,6 +528,9 @@ class AuthService:
     def set_user_validation(self, access_token: str, user_id: str, validated: bool) -> dict[str, Any]:
         admin_user = self._require_admin_token(access_token)
 
+        if admin_user.id == user_id:
+            raise UnauthorizedException("Admin cannot change their own validation status")
+
         try:
             current = self._db.auth.admin.get_user_by_id(user_id)
             if validated and self._is_invited_pending(current.user):
@@ -518,6 +564,9 @@ class AuthService:
     def set_user_block(self, access_token: str, user_id: str, blocked: bool) -> dict[str, Any]:
         admin_user = self._require_admin_token(access_token)
         kicked_sessions = 0
+
+        if admin_user.id == user_id:
+            raise UnauthorizedException("Admin cannot change their own block status")
 
         try:
             current = self._db.auth.admin.get_user_by_id(user_id)
