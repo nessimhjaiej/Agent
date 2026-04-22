@@ -862,6 +862,35 @@ def test_service_plans_follow_up_reranker_disable_from_pending_context(tmp_path:
     assert response.pending_action.arguments["changes"]["ranker"] == "none"
 
 
+def test_service_capability_follow_up_ignores_prior_mutation_context(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "last_route": "mutate",
+            "last_topic": "documents",
+            "pending_action": {
+                "intent": "mutation",
+                "tool": "delete_document_completely",
+                "arguments": {"document_id": "doc-1"},
+                "steps": [],
+            },
+        },
+    )
+
+    response = service.chat(AdminChatRequest(message="i said what can you do?", session_id=session_id))
+
+    assert response.status == "ok"
+    assert response.mode == "advisory"
+    assert response.requires_confirmation is False
+    assert response.pending_action is None
+    assert "Read-Only Inspections" in response.answer
+    stored = service._sessions.load(session_id)
+    assert stored["pending_action"] is None
+    assert stored["last_topic"] == "capabilities"
+
+
 def test_service_plans_follow_up_reranker_disable_from_cached_methods(tmp_path: Path) -> None:
     service = AdminService(_settings(tmp_path))
     session_id = service._sessions.ensure_session_id(None)

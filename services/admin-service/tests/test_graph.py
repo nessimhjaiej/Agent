@@ -240,6 +240,71 @@ def test_run_graph_answers_available_chunking_methods(tmp_path: Path) -> None:
     assert "semantic" in response.answer
 
 
+def test_run_graph_answers_capabilities_without_confirmation(tmp_path: Path) -> None:
+    settings = Settings(project_root=tmp_path, openai_key="", max_iterations=8, max_tool_calls=8)
+
+    response = run_graph(AdminChatRequest(message="tell me all tasks you can do"), settings)
+
+    assert response.status == "ok"
+    assert response.mode == "advisory"
+    assert response.requires_confirmation is False
+    assert response.pending_action is None
+    assert "Read-Only Inspections" in response.answer
+    assert "Supported Configuration Changes" in response.answer
+
+
+def test_run_graph_answers_what_can_you_do_without_mutation(tmp_path: Path) -> None:
+    settings = Settings(project_root=tmp_path, openai_key="", max_iterations=8, max_tool_calls=8)
+
+    response = run_graph(AdminChatRequest(message="what can you do"), settings)
+
+    assert response.status == "ok"
+    assert response.mode == "advisory"
+    assert response.requires_confirmation is False
+    assert response.pending_action is None
+    assert "admin tasks" in response.answer
+    assert "Mutations only happen after an explicit confirmation" in response.answer
+
+
+def test_run_graph_answers_available_tools_without_mutation(tmp_path: Path) -> None:
+    settings = Settings(project_root=tmp_path, openai_key="", max_iterations=8, max_tool_calls=8)
+
+    response = run_graph(AdminChatRequest(message="i want you to tell me about all tools available"), settings)
+
+    assert response.status == "ok"
+    assert response.mode == "advisory"
+    assert response.requires_confirmation is False
+    assert response.pending_action is None
+    assert "Document And Evaluation Workflows" in response.answer
+
+
+def test_run_graph_capability_guard_ignores_malformed_semantic_mutation(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
+    settings = Settings(project_root=tmp_path, openai_key="", max_iterations=8, max_tool_calls=8)
+
+    monkeypatch.setattr(
+        graph_module,
+        "_semantic_task_planner",
+        lambda message, settings, toolbox, session_context=None: SemanticTaskPlan(
+            tasks=[
+                SemanticTask(
+                    task_type="workflow_action",
+                    tool_name="delete_document_completely",
+                    arguments={"document_id": ""},
+                    ordering_index=0,
+                )
+            ]
+        ),
+    )
+
+    response = run_graph(AdminChatRequest(message="what can you do"), settings)
+
+    assert response.status == "ok"
+    assert response.mode == "advisory"
+    assert response.requires_confirmation is False
+    assert response.pending_action is None
+    assert "delete document ''" not in response.answer
+
+
 def test_run_graph_builds_compound_plan_for_reranking_advantages_and_semantic_typo(tmp_path: Path) -> None:
     settings = Settings(
         project_root=tmp_path,
