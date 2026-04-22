@@ -158,6 +158,121 @@ function AnimatedAssistantText({ text, animate }) {
   );
 }
 
+function renderInlineMarkdown(text, keyPrefix = 'md-inline') {
+  const chunks = String(text || '').split(/(`[^`]+`|\*\*[^*]+\*\*)/g).filter(Boolean);
+  return chunks.map((chunk, index) => {
+    const key = `${keyPrefix}-${index}`;
+    if (chunk.startsWith('`') && chunk.endsWith('`') && chunk.length >= 2) {
+      return (
+        <code
+          key={key}
+          style={{
+            background: 'rgba(148,163,184,0.18)',
+            border: '1px solid rgba(148,163,184,0.25)',
+            borderRadius: '6px',
+            padding: '1px 6px',
+            fontSize: '0.92em',
+          }}
+        >
+          {chunk.slice(1, -1)}
+        </code>
+      );
+    }
+    if (chunk.startsWith('**') && chunk.endsWith('**') && chunk.length >= 4) {
+      return <strong key={key}>{chunk.slice(2, -2)}</strong>;
+    }
+    return <span key={key}>{chunk}</span>;
+  });
+}
+
+function MarkdownLite({ text }) {
+  const lines = String(text || '').split('\n');
+  const blocks = [];
+  let listItems = [];
+  let paragraphLines = [];
+
+  const flushList = () => {
+    if (listItems.length === 0) return;
+    const items = listItems;
+    listItems = [];
+    blocks.push(
+      <ul key={`md-ul-${blocks.length}`} style={{ margin: '10px 0 12px 20px', listStyle: 'disc' }}>
+        {items.map((item, index) => (
+          <li key={`md-li-${blocks.length}-${index}`} style={{ marginBottom: '6px' }}>
+            {renderInlineMarkdown(item, `md-li-inline-${blocks.length}-${index}`)}
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
+  const flushParagraph = () => {
+    if (paragraphLines.length === 0) return;
+    const content = paragraphLines.join(' ');
+    paragraphLines = [];
+    blocks.push(
+      <p key={`md-p-${blocks.length}`} style={{ margin: '8px 0 12px' }}>
+        {renderInlineMarkdown(content, `md-p-inline-${blocks.length}`)}
+      </p>
+    );
+  };
+
+  lines.forEach((rawLine) => {
+    const line = rawLine.trimEnd();
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushList();
+      flushParagraph();
+      return;
+    }
+    if (trimmed.startsWith('### ')) {
+      flushList();
+      flushParagraph();
+      blocks.push(
+        <h3 key={`md-h3-${blocks.length}`} style={{ margin: '14px 0 8px', fontSize: '15px', fontWeight: 700 }}>
+          {renderInlineMarkdown(trimmed.slice(4), `md-h3-inline-${blocks.length}`)}
+        </h3>
+      );
+      return;
+    }
+    if (trimmed.startsWith('## ')) {
+      flushList();
+      flushParagraph();
+      blocks.push(
+        <h2 key={`md-h2-${blocks.length}`} style={{ margin: '16px 0 10px', fontSize: '17px', fontWeight: 800 }}>
+          {renderInlineMarkdown(trimmed.slice(3), `md-h2-inline-${blocks.length}`)}
+        </h2>
+      );
+      return;
+    }
+    if (trimmed.startsWith('# ')) {
+      flushList();
+      flushParagraph();
+      blocks.push(
+        <h1 key={`md-h1-${blocks.length}`} style={{ margin: '18px 0 10px', fontSize: '19px', fontWeight: 800 }}>
+          {renderInlineMarkdown(trimmed.slice(2), `md-h1-inline-${blocks.length}`)}
+        </h1>
+      );
+      return;
+    }
+    if (trimmed.startsWith('- ')) {
+      flushParagraph();
+      listItems.push(trimmed.slice(2).trim());
+      return;
+    }
+    flushList();
+    paragraphLines.push(trimmed);
+  });
+
+  flushList();
+  flushParagraph();
+
+  if (blocks.length === 0) {
+    return <p style={{ margin: '8px 0 12px' }}>{text}</p>;
+  }
+  return <div>{blocks}</div>;
+}
+
 function StatusBadge({ status }) {
   const cfg = {
     validated: { bg: 'rgba(16,185,129,0.1)', text: '#10b981', border: 'rgba(16,185,129,0.2)', icon: Check, label: 'Validated' },
@@ -240,6 +355,16 @@ export default function AdminPage() {
     ]);
   };
 
+  const resumeAssistantStreaming = (messageId) => {
+    setAgentMsgs((prev) =>
+      prev.map((msg) => (
+        msg.id === messageId
+          ? { ...msg, isStreaming: true }
+          : msg
+      ))
+    );
+  };
+
   const updateAssistantPlaceholder = (messageId, updater) => {
     setAgentMsgs((prev) =>
       prev.map((msg) => {
@@ -248,6 +373,21 @@ export default function AdminPage() {
         return { ...msg, ...patch };
       })
     );
+  };
+
+  const mergeActivityItems = (existingItems = [], nextItems = []) => {
+    const merged = [];
+    const seen = new Set();
+
+    [...existingItems, ...nextItems].forEach((item) => {
+      if (!item || typeof item !== 'object') return;
+      const key = JSON.stringify(item);
+      if (seen.has(key)) return;
+      seen.add(key);
+      merged.push(item);
+    });
+
+    return merged;
   };
 
   const finishAssistantStreaming = (messageId, finalText = '') => {
@@ -352,12 +492,16 @@ export default function AdminPage() {
         email: inviteEmail.trim(),
         role: 'user',
       });
-      const deliveryNote = response.email_sent
-        ? 'Invitation email sent.'
-        : response.recovery_link
-          ? `Email could not be sent. Share this recovery link: ${response.recovery_link}`
-          : `Email could not be sent. Temporary password: ${response.generated_password}`;
-      setInviteMessage(`${deliveryNote} ${response.message} for ${response.email}. User status remains invited until account setup is completed.`);
+      if (response.message === 'User promoted to admin') {
+        setInviteMessage(`${response.email} turned into an admin.`);
+      } else {
+        const deliveryNote = response.email_sent
+          ? 'Invitation email sent.'
+          : response.recovery_link
+            ? `Email could not be sent. Share this recovery link: ${response.recovery_link}`
+            : `Email could not be sent. Temporary password: ${response.generated_password}`;
+        setInviteMessage(`${deliveryNote} ${response.message} for ${response.email}. User status remains invited until account setup is completed.`);
+      }
       setInviteEmail('');
       await loadManagedUsersData();
     } catch (error) {
@@ -791,9 +935,10 @@ export default function AdminPage() {
                 sources: Array.isArray(resolvedResponse.citations)
                   ? [...new Set(resolvedResponse.citations.map((citation) => citation.document_name).filter(Boolean))]
                   : [],
-                activity: Array.isArray(resolvedResponse.activity) && resolvedResponse.activity.length > 0
-                  ? resolvedResponse.activity
-                  : (Array.isArray(msg.activity) ? msg.activity : []),
+                activity: mergeActivityItems(
+                  Array.isArray(msg.activity) ? msg.activity : [],
+                  Array.isArray(resolvedResponse.activity) ? resolvedResponse.activity : [],
+                ),
               }));
             }
           }
@@ -830,8 +975,13 @@ export default function AdminPage() {
   const confirmAgentAction = async () => {
     if (!agentPendingAction || typing) return;
     setTyping(true);
-    const assistantMessageId = `${Date.now()}-confirm`;
-    appendAssistantPlaceholder(assistantMessageId);
+    const lastAssistantMessage = [...agentMsgs].reverse().find((msg) => msg.role === 'assistant');
+    const assistantMessageId = lastAssistantMessage?.id || `${Date.now()}-confirm`;
+    if (lastAssistantMessage) {
+      resumeAssistantStreaming(assistantMessageId);
+    } else {
+      appendAssistantPlaceholder(assistantMessageId);
+    }
     let finalDisplayText = '';
     try {
       const accessToken = await getAccessToken();
@@ -875,20 +1025,99 @@ export default function AdminPage() {
             finalDisplayText = resolvedResponse.answer || finalDisplayText || 'Action confirmed.';
             updateAssistantPlaceholder(assistantMessageId, (msg) => ({
               content: resolvedResponse.answer || msg.content || 'Action confirmed.',
-              activity: Array.isArray(resolvedResponse.activity) && resolvedResponse.activity.length > 0
-                ? resolvedResponse.activity
-                : (Array.isArray(msg.activity) ? msg.activity : []),
+              activity: mergeActivityItems(
+                Array.isArray(msg.activity) ? msg.activity : [],
+                Array.isArray(resolvedResponse.activity) ? resolvedResponse.activity : [],
+              ),
             }));
           }
         }
       );
-      setAgentPendingAction(null);
+      setAgentPendingAction(finalResponse?.pending_action || null);
       finalDisplayText = finalResponse?.answer || finalDisplayText || 'Action confirmed.';
       updateAssistantPlaceholder(assistantMessageId, (msg) => ({
         content: finalResponse?.answer || msg.content || 'Action confirmed.',
       }));
     } catch (error) {
       finalDisplayText = `Confirmation failed: ${error.message}`;
+      updateAssistantPlaceholder(assistantMessageId, () => ({
+        content: finalDisplayText,
+        activity: [],
+      }));
+    } finally {
+      finishAssistantStreaming(assistantMessageId, finalDisplayText);
+      setTyping(false);
+    }
+  };
+
+  const rejectAgentAction = async () => {
+    if (!agentPendingAction || typing) return;
+    setTyping(true);
+    const lastAssistantMessage = [...agentMsgs].reverse().find((msg) => msg.role === 'assistant');
+    const assistantMessageId = lastAssistantMessage?.id || `${Date.now()}-reject`;
+    if (lastAssistantMessage) {
+      resumeAssistantStreaming(assistantMessageId);
+    } else {
+      appendAssistantPlaceholder(assistantMessageId);
+    }
+    let finalDisplayText = '';
+    try {
+      const accessToken = await getAccessToken();
+      let finalResponse = null;
+      await streamAdmin(
+        {
+          message: 'reject',
+          session_id: agentSessionId,
+          selected_mode: 'qa',
+          reject: true,
+          pending_action: agentPendingAction,
+          access_token: accessToken,
+        },
+        (event) => {
+          if (event.session_id) {
+            setAgentSessionId(event.session_id);
+          }
+          if (event.type === 'status') {
+            finalDisplayText = 'Rejecting the pending action...';
+            updateAssistantPlaceholder(assistantMessageId, () => ({
+              content: finalDisplayText,
+            }));
+          }
+          if (event.type === 'activity') {
+            const activityText = formatActivityLine(event.data) || 'Rejecting the pending action...';
+            finalDisplayText = activityText;
+            updateAssistantPlaceholder(assistantMessageId, (msg) => ({
+              content: activityText,
+              activity: [...(Array.isArray(msg.activity) ? msg.activity : []), event.data],
+            }));
+          }
+          if (event.type === 'error') {
+            finalDisplayText = `Rejection failed: ${event.message || 'Unknown admin-service error'}`;
+            updateAssistantPlaceholder(assistantMessageId, () => ({
+              content: finalDisplayText,
+            }));
+          }
+          const resolvedResponse = extractAdminStreamResponse(event);
+          if (resolvedResponse) {
+            finalResponse = resolvedResponse;
+            finalDisplayText = resolvedResponse.answer || finalDisplayText || 'Action canceled.';
+            updateAssistantPlaceholder(assistantMessageId, (msg) => ({
+              content: resolvedResponse.answer || msg.content || 'Action canceled.',
+              activity: mergeActivityItems(
+                Array.isArray(msg.activity) ? msg.activity : [],
+                Array.isArray(resolvedResponse.activity) ? resolvedResponse.activity : [],
+              ),
+            }));
+          }
+        }
+      );
+      setAgentPendingAction(finalResponse?.pending_action || null);
+      finalDisplayText = finalResponse?.answer || finalDisplayText || 'Action canceled.';
+      updateAssistantPlaceholder(assistantMessageId, (msg) => ({
+        content: finalResponse?.answer || msg.content || 'Action canceled.',
+      }));
+    } catch (error) {
+      finalDisplayText = `Rejection failed: ${error.message}`;
       updateAssistantPlaceholder(assistantMessageId, () => ({
         content: finalDisplayText,
         activity: [],
@@ -1443,19 +1672,25 @@ export default function AdminPage() {
                                 )}
                               </div>
                             )}
-                            <p
-                              className="text-sm leading-relaxed whitespace-pre-line mb-2"
+                            <div
+                              className="text-sm leading-relaxed mb-2"
                               style={{
                                 marginTop: msg.role === 'assistant' && msg.detailsOpen ? '20px' : '8px',
                                 color: msg.role === 'assistant' && msg.isStreaming ? 'var(--text-muted)' : undefined,
                               }}
                             >
                               {msg.role === 'assistant' ? (
-                                <AnimatedAssistantText text={msg.content} animate={Boolean(msg.isStreaming)} />
+                                msg.isStreaming ? (
+                                  <p style={{ margin: '8px 0 12px', whiteSpace: 'pre-line' }}>
+                                    <AnimatedAssistantText text={msg.content} animate={Boolean(msg.isStreaming)} />
+                                  </p>
+                                ) : (
+                                  <MarkdownLite text={msg.content} />
+                                )
                               ) : (
-                                msg.content
+                                <p style={{ margin: '8px 0 12px', whiteSpace: 'pre-line' }}>{msg.content}</p>
                               )}
-                            </p>
+                            </div>
                             <p className={`text-xs mt-2 ${msg.role === 'user' ? 'text-white/50' : ''}`} style={msg.role === 'assistant' ? { color: 'var(--text-muted)' } : {}}>{msg.timestamp}</p>
                           </div>
                           {msg.role === 'user' && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1" style={{ background: 'linear-gradient(135deg, #52525b, #27272a)' }}><User size={15} className="text-white" /></div>}
@@ -1484,19 +1719,37 @@ export default function AdminPage() {
                                 {agentPendingAction.summary || 'This action needs your confirmation before execution.'}
                               </p>
                             </div>
-                            <motion.button
-                              onClick={confirmAgentAction}
-                              disabled={typing}
-                              className="rounded-xl text-sm font-medium text-white disabled:opacity-50 shrink-0"
-                              style={{
-                                background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                                minHeight: '42px',
-                                paddingLeft: '18px',
-                                paddingRight: '18px',
-                              }}
-                            >
-                              Confirm
-                            </motion.button>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <motion.button
+                                onClick={rejectAgentAction}
+                                disabled={typing}
+                                aria-label="Reject pending action"
+                                title="Reject pending action"
+                                className="rounded-xl disabled:opacity-50 flex items-center justify-center"
+                                style={{
+                                  minHeight: '42px',
+                                  minWidth: '42px',
+                                  border: '1px solid rgba(239,68,68,0.28)',
+                                  background: 'rgba(239,68,68,0.08)',
+                                  color: '#ef4444',
+                                }}
+                              >
+                                <X size={16} />
+                              </motion.button>
+                              <motion.button
+                                onClick={confirmAgentAction}
+                                disabled={typing}
+                                className="rounded-xl text-sm font-medium text-white disabled:opacity-50 shrink-0"
+                                style={{
+                                  background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                                  minHeight: '42px',
+                                  paddingLeft: '18px',
+                                  paddingRight: '18px',
+                                }}
+                              >
+                                Confirm
+                              </motion.button>
+                            </div>
                           </div>
                         )}
                         <div className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>

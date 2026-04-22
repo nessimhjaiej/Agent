@@ -14,9 +14,9 @@ load_dotenv(_PROJECT_ROOT / ".env.local", override=True)
 class Settings:
     app_name: str = "preprocessing-service"
     app_version: str = "0.1.0"
-    chunk_strategy: str = "overlap"
-    chunk_size: int = 32
-    chunk_overlap: int = 4
+    chunk_strategy: str = "semantic"
+    chunk_size: int = 750
+    chunk_overlap: int = 120
     pipeline_version: str = "v1"
     rate_limit_requests: int = 60
     rate_limit_window_seconds: int = 60

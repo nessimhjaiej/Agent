@@ -78,6 +78,16 @@ def test_get_ingestion_status_aggregates_counts(monkeypatch) -> None:  # noqa: A
     assert result["status_counts"]["validated"] == 2
 
 
+def test_get_capabilities_exposes_supported_services_and_subjects() -> None:
+    capabilities = AdminToolbox(_settings()).get_capabilities()
+
+    assert "retrieval" in capabilities["services"]
+    assert "top_k_retrieve" in capabilities["services"]["retrieval"]["config_keys"]
+    assert capabilities["services"]["retrieval"]["update_tool"] == "update_repo_config"
+    assert capabilities["subjects"]["reranking"]["read_tool"] == "get_reranking_methods"
+    assert "llm_batch" in capabilities["subjects"]["reranking"]["enum_values"]
+
+
 def test_run_evaluation_calls_generation_api(monkeypatch) -> None:  # noqa: ANN001
     responses = [_MockResponse(200, {"status": "ok", "report": {"report_id": "r1"}})]
     monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))

@@ -42,6 +42,9 @@ class SessionStore:
         session = payload.get(session_id, {})
         if isinstance(session, dict):
             session["pending_action"] = None
+            session["pending_executed_steps"] = []
+            session["workflow_tasks"] = []
+            session["active_task_index"] = 0
             payload[session_id] = session
             self._path.parent.mkdir(parents=True, exist_ok=True)
             self._path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -130,6 +133,9 @@ class SessionStore:
                 "history",
                 "tool_cache",
                 "pending_action",
+                "pending_executed_steps",
+                "workflow_tasks",
+                "active_task_index",
                 "last_message",
                 "last_response",
                 "last_route",
@@ -139,6 +145,18 @@ class SessionStore:
                 "cache_invalidated_at",
             }:
                 session.pop(key, None)
+        pending_steps = session.get("pending_executed_steps", [])
+        if isinstance(pending_steps, list):
+            session["pending_executed_steps"] = pending_steps[-10:]
+        else:
+            session["pending_executed_steps"] = []
+        workflow_tasks = session.get("workflow_tasks", [])
+        if isinstance(workflow_tasks, list):
+            session["workflow_tasks"] = workflow_tasks[-20:]
+        else:
+            session["workflow_tasks"] = []
+        active_task_index = session.get("active_task_index", 0)
+        session["active_task_index"] = active_task_index if isinstance(active_task_index, int) and active_task_index >= 0 else 0
         return session
 
     def _compact_tool_result(self, tool_result: object) -> dict:

@@ -17,11 +17,22 @@ class AdminPlanStep(BaseModel):
     arguments: dict = Field(default_factory=dict)
 
 
+class AdminWorkflowTask(BaseModel):
+    task_id: str = Field(..., min_length=1)
+    kind: str = Field(default="read", pattern="^(read|mutation|advice)$")
+    clause: str = ""
+    status: str = Field(default="pending", pattern="^(pending|completed|rejected|skipped)$")
+    steps: list[AdminPlanStep] = Field(default_factory=list)
+    outcome: dict = Field(default_factory=dict)
+
+
 class AdminPendingAction(BaseModel):
     intent: str = Field(..., min_length=1)
     tool: str = Field(..., min_length=1)
     arguments: dict = Field(default_factory=dict)
     steps: list[AdminPlanStep] = Field(default_factory=list)
+    task_index: int | None = None
+    workflow_tasks: list[AdminWorkflowTask] = Field(default_factory=list)
 
 
 class AdminActivityItem(BaseModel):
@@ -50,7 +61,7 @@ class AdminAgentRunState(BaseModel):
 
 
 class IntentClassification(BaseModel):
-    category: str = Field(..., pattern="^(advisory|inspect|mutate|workflow)$")
+    category: str = Field(..., pattern="^(advisory|inspect|mutate)$")
     intent: str = Field(..., min_length=1)
     reasoning: str = Field(..., min_length=1)
 
@@ -60,6 +71,7 @@ class AdminChatRequest(BaseModel):
     selected_mode: str = Field(default="qa", pattern="^(qa|plan)$")
     session_id: str | None = None
     confirm: bool = False
+    reject: bool = False
     pending_action: AdminPendingAction | None = None
     chat_history: list[AdminChatTurnInput] = Field(default_factory=list)
     access_token: str | None = None
@@ -74,7 +86,7 @@ class AdminCitationResponse(BaseModel):
 
 class AdminChatResponse(BaseModel):
     status: str = Field(default="ok", pattern="^(ok|needs_confirmation|error)$")
-    mode: str = Field(default="qa", pattern="^(qa|advisory|inspect|mutate|workflow|tool_call)$")
+    mode: str = Field(default="qa", pattern="^(qa|advisory|inspect|mutate|tool_call)$")
     selected_mode: str = Field(default="qa", pattern="^(qa|plan)$")
     session_id: str | None = None
     message: str

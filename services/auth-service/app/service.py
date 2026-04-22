@@ -166,7 +166,8 @@ class AuthService:
                     "password": password,
                     "options": {
                         "data": {
-                            "role": role,
+                            "role": "user",
+                            "invite_onboarding_completed": True,
                         },
                     },
                 }
@@ -184,10 +185,31 @@ class AuthService:
         if not response.user:
             raise AuthServiceException("Signup failed: no user returned")
 
-        user = self._map_user(response.user)
+        try:
+            updated = self._db.auth.admin.update_user_by_id(
+                response.user.id,
+                {
+                    "user_metadata": {
+                        **(response.user.user_metadata or {}),
+                        "role": "user",
+                        "invite_onboarding_completed": True,
+                    },
+                    "app_metadata": {
+                        **(response.user.app_metadata or {}),
+                        "account_validated": False,
+                        "account_blocked": False,
+                        "invited_by_admin": False,
+                    },
+                },
+            )
+            supabase_user = updated.user or response.user
+        except Exception:
+            supabase_user = response.user
+
+        user = self._map_user(supabase_user)
 
         try:
-            self._db.log_audit(user.id, "USER_SIGNUP", {"email": email, "role": role})
+            self._db.log_audit(user.id, "USER_SIGNUP", {"email": email, "role": "user"})
         except Exception:
             pass
 
@@ -246,6 +268,11 @@ class AuthService:
             self._db.record_login_attempt(email, False)
             self._db.auth.sign_out()
             raise UnauthorizedException("Account is blocked by an administrator")
+
+        if self._is_invited_pending(response.user):
+            self._db.record_login_attempt(email, False)
+            self._db.auth.sign_out()
+            raise UnauthorizedException("Account setup incomplete. Please use the invitation link.")
 
         if not self._is_user_validated(response.user):
             self._db.record_login_attempt(email, False)
@@ -450,6 +477,7 @@ class AuthService:
         generated_password = self._generate_password()
         existing_user = self._find_user_by_email(email)
         message = "Invitation created"
+        target_role = "admin"
 
         try:
             payload = {
@@ -457,7 +485,7 @@ class AuthService:
                 "password": generated_password,
                 "email_confirm": True,
                 "user_metadata": {
-                    "role": role,
+                    "role": target_role,
                     "username": "",
                     "phone_number": "",
                     "profile_picture": "",
@@ -473,16 +501,40 @@ class AuthService:
             }
 
             if existing_user:
-                if not self._is_invited_pending(existing_user):
-                    raise UserAlreadyExistsException("User with this email already exists")
-                response = self._db.auth.admin.update_user_by_id(
-                    existing_user.id,
-                    {
-                        **payload,
-                        "ban_duration": "none",
-                    },
-                )
-                message = "Invitation refreshed"
+                if self._is_invited_pending(existing_user):
+                    response = self._db.auth.admin.update_user_by_id(
+                        existing_user.id,
+                        {
+                            **payload,
+                            "ban_duration": "none",
+                        },
+                    )
+                    message = "Invitation refreshed"
+                else:
+                    existing_user_metadata = existing_user.user_metadata or {}
+                    existing_app_metadata = existing_user.app_metadata or {}
+                    response = self._db.auth.admin.update_user_by_id(
+                        existing_user.id,
+                        {
+                            "user_metadata": {
+                                **existing_user_metadata,
+                                "role": target_role,
+                                "invite_onboarding_completed": True,
+                            },
+                            "app_metadata": {
+                                **existing_app_metadata,
+                                "account_validated": True,
+                                "account_blocked": False,
+                                "invited_by_admin": True,
+                                "invited_by": admin_user.id,
+                                "invited_at": datetime.now(timezone.utc).isoformat(),
+                            },
+                            "ban_duration": "none",
+                        },
+                    )
+                    message = "User promoted to admin"
+                    generated_password = ""
+                    email = existing_user.email or email
             else:
                 response = self._db.auth.admin.create_user(payload)
         except Exception as exc:
@@ -500,17 +552,23 @@ class AuthService:
 
         email_sent = False
         recovery_link = ""
-        try:
-            email_sent, recovery_link = self._send_invite_email(email, generated_password)
-        except Exception:
-            email_sent = False
-            recovery_link = ""
+        if generated_password:
+            try:
+                email_sent, recovery_link = self._send_invite_email(email, generated_password)
+            except Exception:
+                email_sent = False
+                recovery_link = ""
 
         try:
             self._db.log_audit(
                 admin_user.id,
                 "USER_INVITE",
-                {"target_email": email, "target_user_id": response.user.id, "email_sent": email_sent},
+                {
+                    "target_email": email,
+                    "target_user_id": response.user.id,
+                    "email_sent": email_sent,
+                    "role": target_role,
+                },
             )
         except Exception:
             pass

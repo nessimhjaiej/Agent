@@ -143,6 +143,60 @@ class AdminToolbox:
             response.raise_for_status()
             return response.json()
 
+    def get_capabilities(self) -> dict[str, Any]:
+        return {
+            "services": {
+                scope_name: {
+                    "config_keys": sorted(meta["keys"].keys()),
+                    "aliases": sorted(meta["aliases"]),
+                    "read_tool": "get_repo_config",
+                    "update_tool": "update_repo_config",
+                }
+                for scope_name, meta in CONFIG_SCOPES.items()
+            },
+            "subjects": {
+                "chunking": {
+                    "service_name": "preprocessing",
+                    "read_tool": "get_chunking_methods",
+                    "explain_tool": "get_chunking_methods",
+                    "enum_values": ["late", "overlap", "semantic"],
+                },
+                "reranking": {
+                    "service_name": "retrieval",
+                    "read_tool": "get_reranking_methods",
+                    "explain_tool": "get_reranking_methods",
+                    "enum_values": ["cross_encoder", "llm_batch", "none"],
+                },
+                "retrieval_config": {
+                    "service_name": "retrieval",
+                    "read_tool": "get_repo_config",
+                    "update_tool": "update_repo_config",
+                },
+                "preprocessing_config": {
+                    "service_name": "preprocessing",
+                    "read_tool": "get_repo_config",
+                    "update_tool": "update_repo_config",
+                },
+                "embedding_config": {
+                    "service_name": "embedding",
+                    "read_tool": "get_repo_config",
+                    "update_tool": "update_repo_config",
+                },
+                "generation_config": {
+                    "service_name": "generation",
+                    "read_tool": "get_repo_config",
+                    "update_tool": "update_repo_config",
+                },
+            },
+            "workflow_tools": [
+                "delete_document_completely",
+                "reindex_document",
+                "reindex_validated_documents",
+                "run_evaluation",
+                "compare_evaluation_reports",
+            ],
+        }
+
     def get_repo_config(self, service_name: str) -> dict[str, Any]:
         normalized = self.resolve_config_scope(service_name)
         scope = CONFIG_SCOPES.get(normalized)
@@ -493,6 +547,8 @@ class AdminToolbox:
             return self.get_repo_config(str(arguments.get("service_name") or ""))
         if tool_name == "get_chunking_methods":
             return self.get_chunking_methods()
+        if tool_name == "get_reranking_methods":
+            return self.get_reranking_methods()
         if tool_name == "get_ingestion_status":
             return self.get_ingestion_status()
         if tool_name == "list_loaded_documents":
