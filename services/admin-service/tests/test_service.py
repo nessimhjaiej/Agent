@@ -156,7 +156,358 @@ def test_service_runs_read_only_steps_before_first_mutation_confirmation(monkeyp
     assert response.pending_action is not None
     assert response.pending_action.tool == "update_repo_config"
     assert response.pending_action.arguments["changes"]["ranker"] == "none"
-    assert "embedding model is text-embedding-3-small" in response.answer
+    assert response.answer.startswith("## Next Action")
+    assert "embedding model is text-embedding-3-small" not in response.answer
+
+
+def test_service_keeps_reranking_advantages_and_confirmation_for_compound_request(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
+    import app.service as service_module  # noqa: PLC0415
+
+    service = AdminService(_settings(tmp_path))
+
+    def _fake_run_graph(payload, settings, session_context=None, progress_callback=None):  # noqa: ANN001
+        return AdminChatResponse(
+            status="needs_confirmation",
+            mode="mutate",
+            selected_mode=payload.selected_mode,
+            session_id=payload.session_id,
+            message=payload.message,
+            answer="initial",
+            intent="mutation",
+            tool="compound_action",
+            arguments={},
+            requires_confirmation=True,
+            executed=False,
+            pending_action={
+                "intent": "mutation",
+                "tool": "compound_action",
+                "arguments": {},
+                "steps": [
+                    {"tool": "get_reranking_methods", "arguments": {}},
+                    {"tool": "update_repo_config", "arguments": {"service_name": "preprocessing", "changes": {"chunk_strategy": "semantic"}}},
+                ],
+            },
+            citations=[],
+            thinking_summary="test",
+            activity=[],
+            result={"route": "mutate", "tool_result": None, "tool_cache_updates": {}},
+            agent_run=AdminAgentRunState(status="paused_for_confirmation"),
+        )
+
+    monkeypatch.setattr(service_module, "run_graph", _fake_run_graph)
+    monkeypatch.setattr(
+        service._toolbox,
+        "execute_pending_action",
+        lambda pending_action: {
+            "status": "ok",
+            "scope": "retrieval",
+            "current_default_ranker_type": "llm_batch",
+            "methods": [
+                {"name": "cross_encoder", "exists": True, "implemented": True},
+                {"name": "llm_batch", "exists": True, "implemented": True},
+                {"name": "none", "exists": True, "implemented": True},
+            ],
+        }
+        if pending_action.get("tool") == "get_reranking_methods"
+        else {"status": "ok"},
+    )
+
+    response = service.chat(
+        AdminChatRequest(
+            message="i want the advantages of all available reranking strategies and update chunking strategy to sementic",
+        ),
+    )
+
+    assert response.status == "needs_confirmation"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "update_repo_config"
+    assert response.pending_action.arguments["service_name"] == "preprocessing"
+    assert response.pending_action.arguments["changes"]["chunk_strategy"] == "semantic"
+    assert len(response.result["executed_steps"]) == 1
+    assert response.result["executed_steps"][0]["tool"] == "get_reranking_methods"
+    assert response.answer.startswith("## Next Action")
+    assert "Advantages of Available Reranking Strategies" not in response.answer
+    assert "Information Gathered" not in response.answer
+    assert "update the preprocessing settings" in response.answer
+
+
+def test_service_rejects_pending_action_and_clears_session(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "pending_action": {
+                "intent": "mutation",
+                "tool": "update_repo_config",
+                "arguments": {"service_name": "preprocessing", "changes": {"chunk_strategy": "late"}},
+                "steps": [],
+            }
+        },
+    )
+
+    response = service.chat(
+        AdminChatRequest(message="reject", session_id=session_id, reject=True)
+    )
+
+    assert response.status == "ok"
+    assert response.requires_confirmation is False
+    assert response.pending_action is None
+    assert "Action Canceled" in response.answer
+    stored = service._sessions.load(session_id)
+    assert stored["pending_action"] is None
+    assert stored["pending_executed_steps"] == []
+
+
+def test_service_reject_summarizes_completed_and_rejected_steps(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "last_message": "i want the advantages of all available chunking strategies and update chunking strategy to semantic",
+            "pending_action": {
+                "intent": "mutation",
+                "tool": "update_repo_config",
+                "arguments": {"service_name": "retrieval", "changes": {"ranker": "none"}},
+                "steps": [],
+            },
+            "pending_executed_steps": [
+                {
+                    "tool": "update_repo_config",
+                    "result": {
+                        "status": "ok",
+                        "scope": "preprocessing",
+                        "updated": {"chunk_strategy": "semantic"},
+                    },
+                },
+                {
+                    "tool": "get_chunking_methods",
+                    "result": {
+                        "status": "ok",
+                        "scope": "preprocessing",
+                        "current_strategy": "semantic",
+                        "current_chunk_size": 750,
+                        "current_chunk_overlap": 120,
+                        "methods": [
+                            {"name": "late", "exists": True, "implemented": True},
+                            {"name": "overlap", "exists": True, "implemented": True},
+                            {"name": "semantic", "exists": True, "implemented": True},
+                        ],
+                    },
+                },
+            ],
+        },
+    )
+
+    response = service.chat(
+        AdminChatRequest(message="reject", session_id=session_id, reject=True)
+    )
+
+    assert response.status == "ok"
+    assert "chunking strategy set to semantic" in response.answer
+    assert "Rejected Action" in response.answer
+    assert "update the retrieval settings with {'ranker': 'none'}" in response.answer
+
+
+def test_service_reject_advances_to_next_mutation_in_chain(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "pending_action": {
+                "intent": "mutation",
+                "tool": "update_repo_config",
+                "arguments": {"service_name": "retrieval", "changes": {"ranker": "none"}},
+                "steps": [
+                    {
+                        "tool": "update_repo_config",
+                        "arguments": {"service_name": "preprocessing", "changes": {"chunk_strategy": "late"}},
+                    }
+                ],
+            }
+        },
+    )
+
+    response = service.chat(
+        AdminChatRequest(message="reject", session_id=session_id, reject=True)
+    )
+
+    assert response.status == "needs_confirmation"
+    assert response.requires_confirmation is True
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "update_repo_config"
+    assert response.pending_action.arguments["service_name"] == "preprocessing"
+    assert response.pending_action.arguments["changes"]["chunk_strategy"] == "late"
+    assert response.answer.startswith("## Next Action")
+
+
+def test_service_confirm_completes_all_requested_tasks_from_ledger(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "last_message": "i want the advantages of all available reranking strategies and update chunking strategy to semantic",
+            "pending_action": {
+                "intent": "mutation",
+                "tool": "update_repo_config",
+                "arguments": {"service_name": "preprocessing", "changes": {"chunk_strategy": "semantic"}},
+                "steps": [],
+                "task_index": 1,
+                "workflow_tasks": [
+                    {
+                        "task_id": "task_1",
+                        "kind": "advice",
+                        "clause": "advantages of all available reranking strategies",
+                        "status": "completed",
+                        "steps": [{"tool": "get_reranking_methods", "arguments": {}}],
+                        "outcome": {
+                            "executed_steps": [
+                                {
+                                    "tool": "get_reranking_methods",
+                                    "result": {
+                                        "status": "ok",
+                                        "scope": "retrieval",
+                                        "current_default_ranker_type": "llm_batch",
+                                        "methods": [
+                                            {"name": "cross_encoder", "exists": True, "implemented": True},
+                                            {"name": "llm_batch", "exists": True, "implemented": True},
+                                            {"name": "none", "exists": True, "implemented": True},
+                                        ],
+                                    },
+                                }
+                            ]
+                        },
+                    },
+                    {
+                        "task_id": "task_2",
+                        "kind": "mutation",
+                        "clause": "update chunking strategy to semantic",
+                        "status": "pending",
+                        "steps": [{"tool": "update_repo_config", "arguments": {"service_name": "preprocessing", "changes": {"chunk_strategy": "semantic"}}}],
+                        "outcome": {},
+                    },
+                ],
+            },
+            "workflow_tasks": [
+                {
+                    "task_id": "task_1",
+                    "kind": "advice",
+                    "clause": "advantages of all available reranking strategies",
+                    "status": "completed",
+                    "steps": [{"tool": "get_reranking_methods", "arguments": {}}],
+                    "outcome": {
+                        "executed_steps": [
+                            {
+                                "tool": "get_reranking_methods",
+                                "result": {
+                                    "status": "ok",
+                                    "scope": "retrieval",
+                                    "current_default_ranker_type": "llm_batch",
+                                    "methods": [
+                                        {"name": "cross_encoder", "exists": True, "implemented": True},
+                                        {"name": "llm_batch", "exists": True, "implemented": True},
+                                        {"name": "none", "exists": True, "implemented": True},
+                                    ],
+                                },
+                            }
+                        ]
+                    },
+                },
+                {
+                    "task_id": "task_2",
+                    "kind": "mutation",
+                    "clause": "update chunking strategy to semantic",
+                    "status": "pending",
+                    "steps": [{"tool": "update_repo_config", "arguments": {"service_name": "preprocessing", "changes": {"chunk_strategy": "semantic"}}}],
+                    "outcome": {},
+                },
+            ],
+            "active_task_index": 1,
+        },
+    )
+
+    monkeypatch.setattr(
+        service._toolbox,
+        "execute_pending_action",
+        lambda pending_action: {
+            "status": "ok",
+            "scope": "preprocessing",
+            "updated": {"chunk_strategy": "semantic"},
+        },
+    )
+
+    response = service.chat(AdminChatRequest(message="confirm", session_id=session_id, confirm=True))
+
+    assert response.status == "ok"
+    assert "cross_encoder" in response.answer
+    assert "llm_batch" in response.answer
+    assert "chunking strategy set to semantic" in response.answer
+
+
+def test_service_reject_keeps_completed_info_tasks_in_final_summary(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    workflow_tasks = [
+        {
+            "task_id": "task_1",
+            "kind": "advice",
+            "clause": "advantages of all available reranking strategies",
+            "status": "completed",
+            "steps": [{"tool": "get_reranking_methods", "arguments": {}}],
+            "outcome": {
+                "executed_steps": [
+                    {
+                        "tool": "get_reranking_methods",
+                        "result": {
+                            "status": "ok",
+                            "scope": "retrieval",
+                            "current_default_ranker_type": "llm_batch",
+                            "methods": [
+                                {"name": "cross_encoder", "exists": True, "implemented": True},
+                                {"name": "llm_batch", "exists": True, "implemented": True},
+                                {"name": "none", "exists": True, "implemented": True},
+                            ],
+                        },
+                    }
+                ]
+            },
+        },
+        {
+            "task_id": "task_2",
+            "kind": "mutation",
+            "clause": "update chunking strategy to semantic",
+            "status": "pending",
+            "steps": [{"tool": "update_repo_config", "arguments": {"service_name": "preprocessing", "changes": {"chunk_strategy": "semantic"}}}],
+            "outcome": {},
+        },
+    ]
+    service._sessions.save(
+        session_id,
+        {
+            "last_message": "i want the advantages of all available reranking strategies and update chunking strategy to semantic",
+            "pending_action": {
+                "intent": "mutation",
+                "tool": "update_repo_config",
+                "arguments": {"service_name": "preprocessing", "changes": {"chunk_strategy": "semantic"}},
+                "steps": [],
+                "task_index": 1,
+                "workflow_tasks": workflow_tasks,
+            },
+            "workflow_tasks": workflow_tasks,
+            "active_task_index": 1,
+        },
+    )
+
+    response = service.chat(AdminChatRequest(message="reject", session_id=session_id, reject=True))
+
+    assert response.status == "ok"
+    assert "cross_encoder" in response.answer
+    assert "llm_batch" in response.answer
+    assert "Rejected Action" in response.answer
+    assert "semantic" in response.answer
 
 
 def test_service_confirm_keeps_prior_read_step_summary(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
@@ -200,6 +551,150 @@ def test_service_confirm_keeps_prior_read_step_summary(monkeypatch, tmp_path: Pa
     assert response.status == "ok"
     assert "embedding model is unset" in response.answer
     assert "reranking disabled" in response.answer
+
+
+def test_service_confirm_prefers_latest_read_state_in_summary(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "last_message": "i want the advantages of all available chunking strategies and update chunking strategy to semantic",
+            "pending_action": {
+                "intent": "mutation",
+                "tool": "update_repo_config",
+                "arguments": {"service_name": "preprocessing", "changes": {"chunk_strategy": "semantic"}},
+                "steps": [{"tool": "get_chunking_methods", "arguments": {}}],
+            },
+            "pending_executed_steps": [
+                {
+                    "tool": "get_chunking_methods",
+                    "result": {
+                        "status": "ok",
+                        "scope": "preprocessing",
+                        "current_strategy": "late",
+                        "current_chunk_size": 750,
+                        "current_chunk_overlap": 120,
+                        "methods": [
+                            {"name": "late", "exists": True, "implemented": True},
+                            {"name": "overlap", "exists": True, "implemented": True},
+                            {"name": "semantic", "exists": True, "implemented": True},
+                        ],
+                    },
+                }
+            ],
+        },
+    )
+
+    def _exec(pending_action: dict) -> dict:
+        tool = pending_action.get("tool")
+        if tool == "update_repo_config":
+            return {
+                "status": "ok",
+                "scope": "preprocessing",
+                "updated": {"chunk_strategy": "semantic"},
+            }
+        if tool == "get_chunking_methods":
+            return {
+                "status": "ok",
+                "scope": "preprocessing",
+                "current_strategy": "semantic",
+                "current_chunk_size": 750,
+                "current_chunk_overlap": 120,
+                "methods": [
+                    {"name": "late", "exists": True, "implemented": True},
+                    {"name": "overlap", "exists": True, "implemented": True},
+                    {"name": "semantic", "exists": True, "implemented": True},
+                ],
+            }
+        return {"status": "ok"}
+
+    monkeypatch.setattr(service._toolbox, "execute_pending_action", _exec)
+
+    response = service.chat(AdminChatRequest(message="confirm", session_id=session_id, confirm=True))
+
+    assert response.status == "ok"
+    assert response.answer.count("available chunking strategies") == 1
+    assert "current strategy: `semantic`" in response.answer
+    assert "current strategy: `late`" not in response.answer
+
+
+def test_service_completed_mutation_summary_falls_back_without_openai_key(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "pending_action": {
+                "intent": "mutation",
+                "tool": "update_repo_config",
+                "arguments": {"service_name": "preprocessing", "changes": {"chunk_strategy": "semantic"}},
+                "steps": [],
+            }
+        },
+    )
+
+    monkeypatch.setattr(
+        service._toolbox,
+        "execute_pending_action",
+        lambda pending_action: {
+            "status": "ok",
+            "scope": "preprocessing",
+            "updated": {"chunk_strategy": "semantic"},
+        },
+    )
+
+    response = service.chat(AdminChatRequest(message="confirm", session_id=session_id, confirm=True))
+
+    assert response.status == "ok"
+    assert "chunking strategy set to semantic" in response.answer
+
+
+def test_service_completed_mutation_summary_uses_llm_when_available(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
+    import app.service as service_module  # noqa: PLC0415
+
+    settings = Settings(
+        openai_key="test-key",
+        session_store_path=str(tmp_path / "sessions.json"),
+        max_iterations=8,
+        max_tool_calls=8,
+    )
+    service = AdminService(settings)
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "pending_action": {
+                "intent": "mutation",
+                "tool": "update_repo_config",
+                "arguments": {"service_name": "preprocessing", "changes": {"chunk_strategy": "semantic"}},
+                "steps": [],
+            }
+        },
+    )
+
+    class _FakeModel:
+        def invoke(self, messages):  # noqa: ANN001
+            class _Response:
+                content = "## Summary\n\nLLM final summary."
+
+            return _Response()
+
+    monkeypatch.setattr(service_module, "_make_summary_model", lambda settings: _FakeModel())
+    monkeypatch.setattr(
+        service._toolbox,
+        "execute_pending_action",
+        lambda pending_action: {
+            "status": "ok",
+            "scope": "preprocessing",
+            "updated": {"chunk_strategy": "semantic"},
+        },
+    )
+
+    response = service.chat(AdminChatRequest(message="confirm", session_id=session_id, confirm=True))
+
+    assert response.status == "ok"
+    assert response.answer == "## Summary\n\nLLM final summary."
 
 
 def test_service_confirm_keeps_prior_read_step_summary_across_persisted_streams(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001

@@ -355,6 +355,16 @@ export default function AdminPage() {
     ]);
   };
 
+  const resumeAssistantStreaming = (messageId) => {
+    setAgentMsgs((prev) =>
+      prev.map((msg) => (
+        msg.id === messageId
+          ? { ...msg, isStreaming: true }
+          : msg
+      ))
+    );
+  };
+
   const updateAssistantPlaceholder = (messageId, updater) => {
     setAgentMsgs((prev) =>
       prev.map((msg) => {
@@ -363,6 +373,21 @@ export default function AdminPage() {
         return { ...msg, ...patch };
       })
     );
+  };
+
+  const mergeActivityItems = (existingItems = [], nextItems = []) => {
+    const merged = [];
+    const seen = new Set();
+
+    [...existingItems, ...nextItems].forEach((item) => {
+      if (!item || typeof item !== 'object') return;
+      const key = JSON.stringify(item);
+      if (seen.has(key)) return;
+      seen.add(key);
+      merged.push(item);
+    });
+
+    return merged;
   };
 
   const finishAssistantStreaming = (messageId, finalText = '') => {
@@ -910,9 +935,10 @@ export default function AdminPage() {
                 sources: Array.isArray(resolvedResponse.citations)
                   ? [...new Set(resolvedResponse.citations.map((citation) => citation.document_name).filter(Boolean))]
                   : [],
-                activity: Array.isArray(resolvedResponse.activity) && resolvedResponse.activity.length > 0
-                  ? resolvedResponse.activity
-                  : (Array.isArray(msg.activity) ? msg.activity : []),
+                activity: mergeActivityItems(
+                  Array.isArray(msg.activity) ? msg.activity : [],
+                  Array.isArray(resolvedResponse.activity) ? resolvedResponse.activity : [],
+                ),
               }));
             }
           }
@@ -949,8 +975,13 @@ export default function AdminPage() {
   const confirmAgentAction = async () => {
     if (!agentPendingAction || typing) return;
     setTyping(true);
-    const assistantMessageId = `${Date.now()}-confirm`;
-    appendAssistantPlaceholder(assistantMessageId);
+    const lastAssistantMessage = [...agentMsgs].reverse().find((msg) => msg.role === 'assistant');
+    const assistantMessageId = lastAssistantMessage?.id || `${Date.now()}-confirm`;
+    if (lastAssistantMessage) {
+      resumeAssistantStreaming(assistantMessageId);
+    } else {
+      appendAssistantPlaceholder(assistantMessageId);
+    }
     let finalDisplayText = '';
     try {
       const accessToken = await getAccessToken();
@@ -994,20 +1025,99 @@ export default function AdminPage() {
             finalDisplayText = resolvedResponse.answer || finalDisplayText || 'Action confirmed.';
             updateAssistantPlaceholder(assistantMessageId, (msg) => ({
               content: resolvedResponse.answer || msg.content || 'Action confirmed.',
-              activity: Array.isArray(resolvedResponse.activity) && resolvedResponse.activity.length > 0
-                ? resolvedResponse.activity
-                : (Array.isArray(msg.activity) ? msg.activity : []),
+              activity: mergeActivityItems(
+                Array.isArray(msg.activity) ? msg.activity : [],
+                Array.isArray(resolvedResponse.activity) ? resolvedResponse.activity : [],
+              ),
             }));
           }
         }
       );
-      setAgentPendingAction(null);
+      setAgentPendingAction(finalResponse?.pending_action || null);
       finalDisplayText = finalResponse?.answer || finalDisplayText || 'Action confirmed.';
       updateAssistantPlaceholder(assistantMessageId, (msg) => ({
         content: finalResponse?.answer || msg.content || 'Action confirmed.',
       }));
     } catch (error) {
       finalDisplayText = `Confirmation failed: ${error.message}`;
+      updateAssistantPlaceholder(assistantMessageId, () => ({
+        content: finalDisplayText,
+        activity: [],
+      }));
+    } finally {
+      finishAssistantStreaming(assistantMessageId, finalDisplayText);
+      setTyping(false);
+    }
+  };
+
+  const rejectAgentAction = async () => {
+    if (!agentPendingAction || typing) return;
+    setTyping(true);
+    const lastAssistantMessage = [...agentMsgs].reverse().find((msg) => msg.role === 'assistant');
+    const assistantMessageId = lastAssistantMessage?.id || `${Date.now()}-reject`;
+    if (lastAssistantMessage) {
+      resumeAssistantStreaming(assistantMessageId);
+    } else {
+      appendAssistantPlaceholder(assistantMessageId);
+    }
+    let finalDisplayText = '';
+    try {
+      const accessToken = await getAccessToken();
+      let finalResponse = null;
+      await streamAdmin(
+        {
+          message: 'reject',
+          session_id: agentSessionId,
+          selected_mode: 'qa',
+          reject: true,
+          pending_action: agentPendingAction,
+          access_token: accessToken,
+        },
+        (event) => {
+          if (event.session_id) {
+            setAgentSessionId(event.session_id);
+          }
+          if (event.type === 'status') {
+            finalDisplayText = 'Rejecting the pending action...';
+            updateAssistantPlaceholder(assistantMessageId, () => ({
+              content: finalDisplayText,
+            }));
+          }
+          if (event.type === 'activity') {
+            const activityText = formatActivityLine(event.data) || 'Rejecting the pending action...';
+            finalDisplayText = activityText;
+            updateAssistantPlaceholder(assistantMessageId, (msg) => ({
+              content: activityText,
+              activity: [...(Array.isArray(msg.activity) ? msg.activity : []), event.data],
+            }));
+          }
+          if (event.type === 'error') {
+            finalDisplayText = `Rejection failed: ${event.message || 'Unknown admin-service error'}`;
+            updateAssistantPlaceholder(assistantMessageId, () => ({
+              content: finalDisplayText,
+            }));
+          }
+          const resolvedResponse = extractAdminStreamResponse(event);
+          if (resolvedResponse) {
+            finalResponse = resolvedResponse;
+            finalDisplayText = resolvedResponse.answer || finalDisplayText || 'Action canceled.';
+            updateAssistantPlaceholder(assistantMessageId, (msg) => ({
+              content: resolvedResponse.answer || msg.content || 'Action canceled.',
+              activity: mergeActivityItems(
+                Array.isArray(msg.activity) ? msg.activity : [],
+                Array.isArray(resolvedResponse.activity) ? resolvedResponse.activity : [],
+              ),
+            }));
+          }
+        }
+      );
+      setAgentPendingAction(finalResponse?.pending_action || null);
+      finalDisplayText = finalResponse?.answer || finalDisplayText || 'Action canceled.';
+      updateAssistantPlaceholder(assistantMessageId, (msg) => ({
+        content: finalResponse?.answer || msg.content || 'Action canceled.',
+      }));
+    } catch (error) {
+      finalDisplayText = `Rejection failed: ${error.message}`;
       updateAssistantPlaceholder(assistantMessageId, () => ({
         content: finalDisplayText,
         activity: [],
@@ -1606,19 +1716,37 @@ export default function AdminPage() {
                                 {agentPendingAction.summary || 'This action needs your confirmation before execution.'}
                               </p>
                             </div>
-                            <motion.button
-                              onClick={confirmAgentAction}
-                              disabled={typing}
-                              className="rounded-xl text-sm font-medium text-white disabled:opacity-50 shrink-0"
-                              style={{
-                                background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                                minHeight: '42px',
-                                paddingLeft: '18px',
-                                paddingRight: '18px',
-                              }}
-                            >
-                              Confirm
-                            </motion.button>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <motion.button
+                                onClick={rejectAgentAction}
+                                disabled={typing}
+                                aria-label="Reject pending action"
+                                title="Reject pending action"
+                                className="rounded-xl disabled:opacity-50 flex items-center justify-center"
+                                style={{
+                                  minHeight: '42px',
+                                  minWidth: '42px',
+                                  border: '1px solid rgba(239,68,68,0.28)',
+                                  background: 'rgba(239,68,68,0.08)',
+                                  color: '#ef4444',
+                                }}
+                              >
+                                <X size={16} />
+                              </motion.button>
+                              <motion.button
+                                onClick={confirmAgentAction}
+                                disabled={typing}
+                                className="rounded-xl text-sm font-medium text-white disabled:opacity-50 shrink-0"
+                                style={{
+                                  background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                                  minHeight: '42px',
+                                  paddingLeft: '18px',
+                                  paddingRight: '18px',
+                                }}
+                              >
+                                Confirm
+                              </motion.button>
+                            </div>
                           </div>
                         )}
                         <div className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>

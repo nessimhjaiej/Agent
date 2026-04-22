@@ -6,7 +6,8 @@ if str(SERVICE_ROOT) not in sys.path:
     sys.path.insert(0, str(SERVICE_ROOT))
 
 from app.config import Settings  # noqa: E402
-from app.graph import IntentClassifier, run_graph  # noqa: E402
+import app.graph as graph_module  # noqa: E402
+from app.graph import IntentClassifier, SemanticTask, SemanticTaskPlan, run_graph  # noqa: E402
 from app.schemas import AdminChatRequest, IntentClassification  # noqa: E402
 from app.tools import AdminToolbox  # noqa: E402
 
@@ -139,6 +140,85 @@ def test_run_graph_builds_mixed_compound_plan_for_embedding_and_mutation(tmp_pat
     assert response.pending_action.steps[1].tool == "update_repo_config"
 
 
+def test_run_graph_builds_compound_plan_for_two_mutations_with_followup_clause(tmp_path: Path) -> None:
+    settings = Settings(project_root=tmp_path, openai_key="", max_iterations=8, max_tool_calls=8)
+    (tmp_path / ".env").write_text(
+        "RETRIEVAL_DEFAULT_RANKER=llm_batch\nRETRIEVAL_TOP_K_RETRIEVE=5\n",
+        encoding="utf-8",
+    )
+
+    response = run_graph(
+        AdminChatRequest(message="change reranking strategy to none and set top k to 7"),
+        settings,
+    )
+
+    assert response.status == "needs_confirmation"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "compound_action"
+    assert len(response.pending_action.steps) == 2
+    assert response.pending_action.steps[0].tool == "update_repo_config"
+    assert response.pending_action.steps[0].arguments["service_name"] == "retrieval"
+    assert response.pending_action.steps[0].arguments["changes"]["ranker"] == "none"
+    assert response.pending_action.steps[1].tool == "update_repo_config"
+    assert response.pending_action.steps[1].arguments["service_name"] == "retrieval"
+    assert response.pending_action.steps[1].arguments["changes"]["top_k_retrieve"] == 7
+
+
+def test_run_graph_plans_french_top_k_retrieve_mutation(tmp_path: Path) -> None:
+    settings = Settings(project_root=tmp_path, openai_key="", max_iterations=8, max_tool_calls=8)
+
+    response = run_graph(
+        AdminChatRequest(message="je veux changer le Top K à Récupérer a 8"),
+        settings,
+    )
+
+    assert response.status == "needs_confirmation"
+    assert response.mode == "mutate"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "update_repo_config"
+    assert response.pending_action.arguments["service_name"] == "retrieval"
+    assert response.pending_action.arguments["changes"]["top_k_retrieve"] == 8
+
+
+def test_run_graph_prefers_semantic_task_planner_for_multilingual_request(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
+    settings = Settings(project_root=tmp_path, openai_key="", max_iterations=8, max_tool_calls=8)
+
+    monkeypatch.setattr(
+        graph_module,
+        "_semantic_task_planner",
+        lambda message, settings, toolbox, session_context=None: SemanticTaskPlan(
+            tasks=[
+                SemanticTask(
+                    task_type="explain_methods",
+                    subject="reranking",
+                    ordering_index=0,
+                ),
+                SemanticTask(
+                    task_type="update_config",
+                    service_name="retrieval",
+                    config_key="top_k_retrieve",
+                    config_value=8,
+                    ordering_index=1,
+                ),
+            ]
+        ),
+    )
+
+    response = run_graph(
+        AdminChatRequest(message="peu importe la langue, explique le reranking puis change top k retrieve to 8"),
+        settings,
+    )
+
+    assert response.status == "needs_confirmation"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "compound_action"
+    assert len(response.pending_action.steps) == 2
+    assert response.pending_action.steps[0].tool == "get_reranking_methods"
+    assert response.pending_action.steps[1].tool == "update_repo_config"
+    assert response.pending_action.steps[1].arguments["service_name"] == "retrieval"
+    assert response.pending_action.steps[1].arguments["changes"]["top_k_retrieve"] == 8
+
+
 def test_run_graph_answers_available_chunking_methods(tmp_path: Path) -> None:
     settings = Settings(
         project_root=tmp_path,
@@ -158,3 +238,29 @@ def test_run_graph_answers_available_chunking_methods(tmp_path: Path) -> None:
     assert "late" in response.answer
     assert "overlap" in response.answer
     assert "semantic" in response.answer
+
+
+def test_run_graph_builds_compound_plan_for_reranking_advantages_and_semantic_typo(tmp_path: Path) -> None:
+    settings = Settings(
+        project_root=tmp_path,
+        openai_key="",
+        max_iterations=8,
+        max_tool_calls=8,
+    )
+
+    response = run_graph(
+        AdminChatRequest(
+            message="i want the advantages of all available reranking strategies and update chunking strategy to sementic"
+        ),
+        settings,
+    )
+
+    assert response.status == "needs_confirmation"
+    assert response.mode == "mutate"
+    assert response.pending_action is not None
+    assert response.pending_action.tool == "compound_action"
+    assert len(response.pending_action.steps) == 2
+    assert response.pending_action.steps[0].tool == "get_reranking_methods"
+    assert response.pending_action.steps[1].tool == "update_repo_config"
+    assert response.pending_action.steps[1].arguments["service_name"] == "preprocessing"
+    assert response.pending_action.steps[1].arguments["changes"]["chunk_strategy"] == "semantic"

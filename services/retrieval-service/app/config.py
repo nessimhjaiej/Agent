@@ -30,12 +30,12 @@ class Settings:
     weaviate_collection: str = "Chunk"
     openai_key: str = ""
     embedding_model: str = "text-embedding-3-small"
-    default_top_k_retrieve: int = 5
+    default_top_k_retrieve: int = 4
     default_top_k_return: int = 3
     default_fusion_type: str = "alpha"
     default_alpha: float = 0.7
     default_rrf_k: int = 60
-    default_ranker_type: str = "llm_batch"
+    default_ranker_type: str = "none"
     default_rerank_top_n: int = 20
     enforce_embedding_model_match: bool = True
 
