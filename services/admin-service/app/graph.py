@@ -96,6 +96,13 @@ class IntentClassifier:
         previous_route = str(session_context.get("last_route") or "").strip()
         previous_topic = str(session_context.get("last_topic") or "").strip()
 
+        if _is_capability_question(message, session_context):
+            return IntentClassification(
+                category="advisory",
+                intent="capabilities",
+                reasoning="The user is asking about available admin capabilities.",
+            )
+
         if is_generic_follow_up(message) and previous_route in {"advisory", "inspect"}:
             return IntentClassification(
                 category=previous_route, intent=previous_topic or previous_route, reasoning="Follow-up reused the previous route.",
@@ -127,6 +134,12 @@ class IntentClassifier:
 
     def _fallback(self, message: str, previous_route: str, previous_topic: str) -> IntentClassification:
         lowered = message.lower()
+        if _is_capability_question(message, {"last_route": previous_route, "last_topic": previous_topic}):
+            return IntentClassification(
+                category="advisory",
+                intent="capabilities",
+                reasoning="Capability request matched the deterministic capability detector.",
+            )
         if is_generic_follow_up(message) and previous_route in {"advisory", "inspect"}:
             return IntentClassification(
                 category=previous_route, intent=previous_topic or previous_route, reasoning="Generic follow-up reused the previous route.",
@@ -257,6 +270,69 @@ def _prefers_french(message: str) -> bool:
             ]
         )
     )
+
+
+def _is_capability_question(message: str, session_context: dict | None = None) -> bool:
+    lowered = re.sub(r"\s+", " ", str(message or "").strip().lower())
+    if not lowered:
+        return False
+
+    direct_patterns = [
+        r"\bwhat can you do\b",
+        r"\bwhat do you do\b",
+        r"\bhow can you assist\b",
+        r"\bhow can you help\b",
+        r"\bhow do you assist\b",
+        r"\bhow do you help\b",
+        r"\btell me all tasks you can do\b",
+        r"\bgive me all tasks you can do\b",
+        r"\blist (?:all )?(?:your )?(?:tools|tasks|capabilities)\b",
+        r"\ball (?:available )?(?:tools|tasks|capabilities)\b",
+        r"\btell me about (?:all )?(?:available )?(?:tools|tasks|capabilities)\b",
+        r"\bhow can you assist me\b",
+        r"\bhow can you help me\b",
+        r"\bi said what can you do\b",
+        r"\bjust list your tools\b",
+    ]
+    if any(re.search(pattern, lowered) for pattern in direct_patterns):
+        return True
+
+    asks_for_capabilities = any(
+        phrase in lowered
+        for phrase in [
+            "what are your capabilities",
+            "tell me your capabilities",
+            "available tools",
+            "available tasks",
+            "your tools",
+            "your tasks",
+            "what tools",
+            "what tasks",
+        ]
+    )
+    if asks_for_capabilities and not any(
+        token in lowered
+        for token in ["delete document", "reindex", "run evaluation", "compare evaluation", "change ", "set ", "switch ", "update "]
+    ):
+        return True
+
+    context = session_context or {}
+    previous_topic = str(context.get("last_topic") or "").strip().lower()
+    if previous_topic == "capabilities" and any(
+        phrase in lowered
+        for phrase in [
+            "what can you do",
+            "list your tools",
+            "list tools",
+            "list tasks",
+            "your capabilities",
+            "all tools",
+            "all tasks",
+        ]
+    ):
+        return True
+
+    return False
 
 
 def _is_chunking_methods_question(message: str) -> bool:
@@ -698,6 +774,8 @@ def _pending_action_from_semantic_plan(
     session_context: dict | None = None,
 ) -> tuple[str, dict[str, Any] | None, str | None]:
     prefers_french = _prefers_french(message)
+    if _is_capability_question(message, session_context):
+        return "advisory", None, None
     if plan.action_type == "none":
         return "advisory", None, None
 
@@ -785,6 +863,12 @@ def _pending_action_from_semantic_plan(
 def _plan_mutation(message: str, toolbox: AdminToolbox, session_context: dict | None = None) -> tuple[dict[str, Any] | None, str]:
     lowered = message.lower()
     prefers_french = _prefers_french(message)
+    if _is_capability_question(message, session_context):
+        return None, (
+            "Je peux decrire les capacites disponibles sans lancer d'action."
+            if prefers_french
+            else "I can describe the available capabilities without starting an action."
+        )
     scope = _infer_scope_from_context(message, toolbox, session_context)
     changes: dict[str, Any] = {}
     if scope == "preprocessing":
@@ -897,6 +981,8 @@ def _plan_mutation(message: str, toolbox: AdminToolbox, session_context: dict | 
 
 def _plan_workflow(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] | None, str]:
     lowered = message.lower()
+    if _is_capability_question(message):
+        return None, "I can summarize the available admin capabilities without starting a workflow."
     if "compare" in lowered and "evaluation" in lowered:
         pair = toolbox.resolve_report_pair(message)
         if pair is None:
@@ -963,6 +1049,8 @@ def _plan_workflow(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] 
 
 def _plan_inspection_step(message: str, toolbox: AdminToolbox) -> dict[str, Any] | None:
     lowered = message.lower()
+    if _is_capability_question(message):
+        return None
     if _is_chunking_methods_question(message):
         return {"tool": "get_chunking_methods", "arguments": {}}
     if _is_reranking_methods_question(message):
@@ -1058,6 +1146,227 @@ def _summarize_compound_plan(steps: list[dict[str, Any]]) -> str:
     return f"I planned these actions in order: {', '.join(readable)}. Confirm if you want me to execute them."
 
 
+def _safe_capability_call(
+    tool_name: str,
+    loader: Callable[[], dict[str, Any]],
+    activity: list[dict[str, Any]],
+    progress_callback: ProgressCallback | None,
+) -> dict[str, Any] | None:
+    started_item = _progress_item(
+        phase="tool",
+        status="in_progress",
+        title=f"Tool started: {tool_name}",
+        detail="Collecting live capability data from a backend service.",
+        tool=tool_name,
+        arguments={},
+    )
+    activity.append(started_item)
+    _emit_progress(progress_callback, started_item)
+    try:
+        result = loader()
+    except Exception as exc:
+        failed_item = _progress_item(
+            phase="tool",
+            status="failed",
+            title=f"Tool failed: {tool_name}",
+            detail=str(exc),
+            tool=tool_name,
+            arguments={},
+        )
+        activity.append(failed_item)
+        _emit_progress(progress_callback, failed_item)
+        return None
+
+    completed_item = _progress_item(
+        phase="tool",
+        status="completed",
+        title=f"Tool executed: {tool_name}",
+        detail="The agent collected live capability data.",
+        tool=tool_name,
+        arguments={},
+    )
+    activity.append(completed_item)
+    _emit_progress(progress_callback, completed_item)
+    return result
+
+
+def _build_capability_answer(
+    message: str,
+    toolbox: AdminToolbox,
+    activity: list[dict[str, Any]],
+    progress_callback: ProgressCallback | None = None,
+) -> tuple[str, dict[str, Any]]:
+    capabilities = toolbox.get_capabilities()
+    live_state: dict[str, Any] = {}
+
+    chunking = _safe_capability_call("get_chunking_methods", toolbox.get_chunking_methods, activity, progress_callback)
+    if isinstance(chunking, dict):
+        live_state["chunking"] = chunking
+
+    reranking = _safe_capability_call("get_reranking_methods", toolbox.get_reranking_methods, activity, progress_callback)
+    if isinstance(reranking, dict):
+        live_state["reranking"] = reranking
+
+    preprocessing_config = _safe_capability_call(
+        "get_repo_config",
+        lambda: toolbox.get_repo_config("preprocessing"),
+        activity,
+        progress_callback,
+    )
+    if isinstance(preprocessing_config, dict):
+        live_state["preprocessing_config"] = preprocessing_config
+
+    retrieval_config = _safe_capability_call(
+        "get_repo_config",
+        lambda: toolbox.get_repo_config("retrieval"),
+        activity,
+        progress_callback,
+    )
+    if isinstance(retrieval_config, dict):
+        live_state["retrieval_config"] = retrieval_config
+
+    embedding_config = _safe_capability_call(
+        "get_repo_config",
+        lambda: toolbox.get_repo_config("embedding"),
+        activity,
+        progress_callback,
+    )
+    if isinstance(embedding_config, dict):
+        live_state["embedding_config"] = embedding_config
+
+    generation_config = _safe_capability_call(
+        "get_repo_config",
+        lambda: toolbox.get_repo_config("generation"),
+        activity,
+        progress_callback,
+    )
+    if isinstance(generation_config, dict):
+        live_state["generation_config"] = generation_config
+
+    ingestion_status = _safe_capability_call("get_ingestion_status", toolbox.get_ingestion_status, activity, progress_callback)
+    if isinstance(ingestion_status, dict):
+        live_state["ingestion_status"] = ingestion_status
+
+    documents = _safe_capability_call("list_loaded_documents", toolbox.list_loaded_documents, activity, progress_callback)
+    if isinstance(documents, dict):
+        live_state["documents"] = documents
+
+    reports = _safe_capability_call("list_evaluation_reports", toolbox.list_evaluation_reports, activity, progress_callback)
+    if isinstance(reports, dict):
+        live_state["reports"] = reports
+
+    services = capabilities.get("services", {}) if isinstance(capabilities, dict) else {}
+    workflow_tools = capabilities.get("workflow_tools", []) if isinstance(capabilities, dict) else []
+
+    read_scopes = ", ".join(sorted(services.keys())) if isinstance(services, dict) else ""
+    update_scopes = ", ".join(sorted(services.keys())) if isinstance(services, dict) else ""
+    workflow_labels = []
+    for tool_name in workflow_tools if isinstance(workflow_tools, list) else []:
+        if tool_name == "delete_document_completely":
+            workflow_labels.append("delete a document and clean its vectors")
+        elif tool_name == "reindex_document":
+            workflow_labels.append("reindex one document")
+        elif tool_name == "reindex_validated_documents":
+            workflow_labels.append("reindex all validated documents")
+        elif tool_name == "run_evaluation":
+            workflow_labels.append("run an evaluation")
+        elif tool_name == "compare_evaluation_reports":
+            workflow_labels.append("compare evaluation reports")
+
+    chunking_methods = []
+    current_chunking = ""
+    if isinstance(chunking, dict):
+        chunking_methods = [
+            str(item.get("name") or "")
+            for item in chunking.get("methods", [])
+            if isinstance(item, dict) and item.get("implemented")
+        ]
+        current_chunking = str(chunking.get("current_strategy") or "")
+
+    reranking_methods = []
+    current_reranking = ""
+    if isinstance(reranking, dict):
+        reranking_methods = [
+            str(item.get("name") or "")
+            for item in reranking.get("methods", [])
+            if isinstance(item, dict) and item.get("implemented")
+        ]
+        current_reranking = str(reranking.get("current_default_ranker_type") or "")
+
+    live_lines: list[str] = []
+    if isinstance(ingestion_status, dict):
+        total_documents = ingestion_status.get("total_documents")
+        embedded_documents = ingestion_status.get("embedded_documents")
+        if total_documents is not None and embedded_documents is not None:
+            live_lines.append(f"- Documents in ingestion: {total_documents}; embedded: {embedded_documents}")
+    if isinstance(documents, dict):
+        docs = documents.get("documents", [])
+        if isinstance(docs, list):
+            live_lines.append(f"- Loaded documents visible right now: {len(docs)}")
+    if isinstance(reports, dict):
+        report_list = reports.get("reports", [])
+        if isinstance(report_list, list):
+            live_lines.append(f"- Saved evaluation reports: {len(report_list)}")
+    if current_chunking:
+        live_lines.append(f"- Current chunking strategy: `{current_chunking}`")
+    if current_reranking:
+        live_lines.append(f"- Current reranking strategy: `{current_reranking}`")
+
+    config_lines: list[str] = []
+    for label, payload in [
+        ("preprocessing", preprocessing_config),
+        ("retrieval", retrieval_config),
+        ("embedding", embedding_config),
+        ("generation", generation_config),
+    ]:
+        if not isinstance(payload, dict):
+            continue
+        config = payload.get("config", {})
+        if not isinstance(config, dict):
+            continue
+        keys = ", ".join(sorted(config.keys()))
+        if keys:
+            config_lines.append(f"- `{label}` settings: {keys}")
+
+    answer_lines = [
+        "I can help with these admin tasks:",
+        "",
+        "### Read-Only Inspections",
+        f"- Inspect current settings for `{read_scopes}`" if read_scopes else "- Inspect current system settings",
+        "- Show available chunking and reranking methods",
+        "- Check ingestion status, loaded documents, and saved evaluation reports",
+        "",
+        "### Supported Configuration Changes",
+        f"- Update supported settings for `{update_scopes}` after confirmation" if update_scopes else "- Update supported settings after confirmation",
+        "",
+        "### Document And Evaluation Workflows",
+    ]
+    answer_lines.extend(f"- {item}" for item in workflow_labels)
+
+    if chunking_methods or reranking_methods:
+        answer_lines.extend(
+            [
+                "",
+                "### Live Defaults",
+                f"- Available chunking strategies: {', '.join(chunking_methods)}" if chunking_methods else "- Chunking methods are available",
+                f"- Available reranking strategies: {', '.join(reranking_methods)}" if reranking_methods else "- Reranking methods are available",
+            ]
+        )
+    if live_lines:
+        answer_lines.extend(["", "### Live Status", *live_lines])
+    if config_lines:
+        answer_lines.extend(["", "### Configuration Areas", *config_lines])
+
+    answer_lines.extend(
+        [
+            "",
+            "I can describe or inspect any of these without starting a change. Mutations only happen after an explicit confirmation.",
+        ]
+    )
+
+    return "\n".join(answer_lines), {"capabilities": capabilities, "live_state": live_state}
+
+
 def _plan_request(
     message: str,
     requested_route: str,
@@ -1065,6 +1374,9 @@ def _plan_request(
     settings: Settings,
     session_context: dict | None = None,
 ) -> tuple[str, dict[str, Any] | None, str | None]:
+    if _is_capability_question(message, session_context):
+        return "advisory", None, None
+
     clauses = _split_into_clauses(message)
     planned_steps: list[dict[str, Any]] = []
     workflow_tasks: list[dict[str, Any]] = []
@@ -1354,7 +1666,6 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
 
     def advisory_node(state: AdminState) -> AdminState:
         toolbox = AdminToolbox(settings, access_token=state.get("access_token") or access_token)
-        read_tools = build_tools(toolbox, include_mutations=False)
         advisory_started = _progress_item(
             phase="advisory",
             status="in_progress",
@@ -1362,6 +1673,35 @@ def build_graph(settings: Settings, access_token: str | None = None, progress_ca
             detail="Gathering the context needed to answer the request clearly.",
         )
         _emit_progress(progress_callback, advisory_started)
+        if _is_capability_question(state["message"], state.get("session_context")):
+            activity = list(state.get("activity", []))
+            activity.append(advisory_started)
+            answer, tool_result = _build_capability_answer(
+                state["message"],
+                toolbox,
+                activity,
+                progress_callback,
+            )
+            advisory_completed = _progress_item(
+                phase="advisory",
+                status="completed",
+                title="Capabilities prepared",
+                detail="The available admin capabilities were summarized with safe live checks.",
+            )
+            activity.append(advisory_completed)
+            _emit_progress(progress_callback, advisory_completed)
+            return {
+                **state,
+                "status": "completed",
+                "final_answer": _normalize_user_answer(answer),
+                "current_step": "summarize",
+                "activity": activity,
+                "tool_result": tool_result,
+                "tool_call_count": len(tool_result.get("live_state", {})) if isinstance(tool_result, dict) else 0,
+                "tool_cache_updates": {},
+            }
+
+        read_tools = build_tools(toolbox, include_mutations=False)
         answer, tool_result, tool_activity, tool_call_count, cache_updates = _run_llm_tool_loop(
             settings=settings,
             tools=read_tools,
