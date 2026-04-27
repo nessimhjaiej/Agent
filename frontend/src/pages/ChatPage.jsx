@@ -271,6 +271,13 @@ export default function ChatPage() {
           query,
           mode: 'hybrid',
           chat_history: chatHistory,
+          actor: user
+            ? {
+                user_id: user.id || '',
+                email: user.email || '',
+                role: user.user_metadata?.role || 'user',
+              }
+            : undefined,
         }),
       });
 

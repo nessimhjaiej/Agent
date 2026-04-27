@@ -369,9 +369,9 @@ def test_brute_force_helper_emits_warning_once_at_threshold(mock_create: MagicMo
     mock_emit_security_event.assert_called_once_with(
         service._settings,
         event_type="BRUTE_FORCE_ATTEMPTS",
-        severity="warning",
-        title="Repeated failed login attempts",
-        message="A login identifier reached the failed login warning threshold.",
+        severity="critical",
+        title="Brute force login threshold reached",
+        message="A login identifier reached the brute force threshold.",
         metadata={
             "email": "alert@example.com",
             "failed_attempts": 10,

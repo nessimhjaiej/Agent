@@ -120,6 +120,20 @@
     },
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2ODY3Mjg4LCJpYXQiOjE3NzY4NjM2ODgsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL3N0b3JhZ2UvdjEvb2JqZWN0L3B1YmxpYy9wcm9maWxlcy8yMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkvMTc3NjI1MTUxODEwNC5qcGVnIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJoamFpZWpuZXNzaW0ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3Njg2MzY4OH1dLCJzZXNzaW9uX2lkIjoiNDAyZmIwNDktY2M1Zi00OTYxLWFmMzQtMmJjNDlkNGExNmZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.92tAZ9BFDI_0OCMaMUPibWJjYSdfnIN0cFOQTQ-EccXxVbMw2B9Ijc3Zvavl2eDtiA-i7c28h0SGmyoixtwabA"
   },
+<<<<<<< HEAD
+  "962cec1c-6951-4958-b817-ee808aed0767": {
+    "history": [
+      {
+        "role": "user",
+        "content": "hello"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nHi there! How can I help you today?"
+      }
+    ],
+    "last_message": "hello",
+=======
   "454edad4-5797-45d3-baea-ffece1e2c969": {
     "history": [
       {
@@ -148,10 +162,35 @@
       }
     ],
     "tool_cache": {},
+>>>>>>> 3a7ae935d82ddc5017f0ca57bf73a1d313f90952
     "pending_action": null,
     "pending_executed_steps": [],
     "workflow_tasks": [],
     "active_task_index": 0,
+<<<<<<< HEAD
+    "last_response": "## Advice\n\nHi there! How can I help you today?",
+    "last_route": "advisory",
+    "last_topic": "greeting",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": "token",
+    "tool_cache": {}
+  },
+  "7824e0bc-31b9-415b-8bdd-c4167750ecb1": {
+    "history": [
+      {
+        "role": "user",
+        "content": "hello"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nHi! How can I help you today?"
+      }
+    ],
+    "last_message": "hello",
+=======
     "last_message": "i said what can you do ?",
     "last_response": "## Summary\n\n### Information Gathered\n- **Reranking Strategies**: Available options are `cross_encoder`, `llm_batch`, and `none`. The current strategy is set to `none`.\n- **Chunking Strategies**: Available options are `late`, `overlap`, and `semantic`. The current strategy is set to `semantic`.",
     "last_route": "mutate",
@@ -383,17 +422,90 @@
       }
     ],
     "last_message": "i said tell me about all tasks you can help me with",
+>>>>>>> 3a7ae935d82ddc5017f0ca57bf73a1d313f90952
     "pending_action": null,
     "pending_executed_steps": [],
     "workflow_tasks": [],
     "active_task_index": 0,
+<<<<<<< HEAD
+    "last_response": "## Advice\n\nHi! How can I help you today?",
+    "last_route": "advisory",
+    "last_topic": "greeting/clarify needs",
+=======
     "last_response": "## Advice\n\nI can assist you with the following tasks:\n\n1. **Document Management**:\n   - Check the status of document ingestion.\n   - List documents that are currently loaded.\n   - Reindex documents to update their embeddings.\n\n2. **Evaluation**:\n   - Run evaluations on datasets to assess system performance.\n   - List saved evaluation reports for review.\n   - Compare evaluation reports to identify changes or improvements.\n\n3. **Configuration**:\n   - Retrieve configuration settings for various service domains like preprocessing, retrieval, embedding, or generation.\n\n4. **Reranking**:\n   - Provide information on available retrieval reranking methods and identify the current default reranker.\n\nIf you need help with any of these tasks or have specific questions, feel free to ask!",
     "last_route": "advisory",
     "last_topic": "List available tasks and capabilities",
+>>>>>>> 3a7ae935d82ddc5017f0ca57bf73a1d313f90952
     "last_result": {
       "route": "advisory",
       "tool_result": {}
     },
+<<<<<<< HEAD
+    "access_token": "token",
+    "tool_cache": {}
+  },
+  "0a6975f5-1696-4691-abc4-6fd71c844ec9": {
+    "history": [
+      {
+        "role": "user",
+        "content": "hello"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nHi there! How can I help you today?"
+      }
+    ],
+    "last_message": "hello",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_response": "## Advice\n\nHi there! How can I help you today?",
+    "last_route": "advisory",
+    "last_topic": "greeting",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": "token",
+    "tool_cache": {}
+  },
+  "f074182a-257b-4536-a15b-29d3233ad680": {
+    "history": [
+      {
+        "role": "user",
+        "content": "hello"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nHi! How can I help today?\n- Check document ingestion status\n- Reindex or validate documents\n- Run or compare evaluation reports\n- Review retrieval/reranking settings\nOr tell me what you\u2019re trying to achieve."
+      }
+    ],
+    "last_message": "hello",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_response": "## Advice\n\nHi! How can I help today?\n- Check document ingestion status\n- Reindex or validate documents\n- Run or compare evaluation reports\n- Review retrieval/reranking settings\nOr tell me what you\u2019re trying to achieve.",
+    "last_route": "advisory",
+    "last_topic": "greeting/small talk",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": "token",
+    "tool_cache": {}
+  },
+  "62909162-ee49-4c34-bd3d-50cde35635dd": {
+    "history": [
+      {
+        "role": "user",
+        "content": "change chunking size to 800"
+      },
+      {
+        "role": "assistant",
+        "content": "## Next Action\n\n### Confirmation Required\n- update the preprocessing settings with {'chunk_size': 800}\n\nReply with **`confirm`** to continue."
+=======
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2ODY2ODI4LCJpYXQiOjE3NzY4NjMyMjgsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.jIb_SLpgeoFi3z0dRIzV0DBiShRc92WiP4SUJNJcg5weus7nIG0L8LngCB0veM6KP1auNk654tKnb7AgNuLGlg",
     "tool_cache": {}
   },
@@ -406,6 +518,7 @@
       {
         "role": "assistant",
         "content": "## Next Action\n\n### Confirmation Required\n- update the preprocessing settings with {'chunk_strategy': 'late'}\n\nReply with **`confirm`** to continue."
+>>>>>>> 3a7ae935d82ddc5017f0ca57bf73a1d313f90952
       },
       {
         "role": "user",
@@ -413,7 +526,11 @@
       },
       {
         "role": "assistant",
+<<<<<<< HEAD
+        "content": "## Summary\n- Updated preprocessing chunk size to 800; effective immediately, no service restart required.\n\n### What mattered\n- Scope: preprocessing\n\n### Operational note\n- If prior outputs rely on the old chunking, consider reprocessing for consistency."
+=======
         "content": "## Summary\n\n### Updates Applied\n- reranking disabled\n\n### Rejected Action\n- update the preprocessing settings with {'chunk_strategy': 'late'}"
+<<<<<<< HEAD
       },
       {
         "role": "user",
@@ -430,6 +547,9 @@
       {
         "role": "assistant",
         "content": "## Summary\n\n### Updates Applied\n- The chunk size has been successfully changed to 800. No restart is required."
+=======
+>>>>>>> 3a7ae935d82ddc5017f0ca57bf73a1d313f90952
+>>>>>>> ae29037809bbf420c682584560806172cebf184d
       }
     ],
     "tool_cache": {},
@@ -438,14 +558,27 @@
     "workflow_tasks": [],
     "active_task_index": 0,
     "last_message": "confirm",
+<<<<<<< HEAD
     "last_response": "## Summary\n\n### Updates Applied\n- The chunk size has been successfully changed to 800. No restart is required.",
+=======
+<<<<<<< HEAD
+    "last_response": "## Summary\n- Updated preprocessing chunk size to 800; effective immediately, no service restart required.\n\n### What mattered\n- Scope: preprocessing\n\n### Operational note\n- If prior outputs rely on the old chunking, consider reprocessing for consistency.",
+=======
+    "last_response": "## Summary\n\n### Updates Applied\n- reranking disabled\n\n### Rejected Action\n- update the preprocessing settings with {'chunk_strategy': 'late'}",
+>>>>>>> 3a7ae935d82ddc5017f0ca57bf73a1d313f90952
+>>>>>>> ae29037809bbf420c682584560806172cebf184d
     "last_route": "mutate",
     "last_topic": "update_repo_config",
     "last_result": {
       "route": null,
       "tool_result": {}
     },
+<<<<<<< HEAD
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2ODY5MDAwLCJpYXQiOjE3NzY4NjU0MDAsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL3N0b3JhZ2UvdjEvb2JqZWN0L3B1YmxpYy9wcm9maWxlcy8yMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkvMTc3NjI1MTUxODEwNC5qcGVnIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJoamFpZWpuZXNzaW0ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3Njg2NTQwMH1dLCJzZXNzaW9uX2lkIjoiZjljMjM4N2EtNjc1ZC00MTVmLWE2MTMtMzI3OWUzYWU4N2RjIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.TSGxOcJYgEsuKs9JVxvKsuDqZqb_9yia9lYSu-EFPhRpm705d7c5Kw7XrRKnk7UmB1DgIivFTxXa1Xki7Nv_Qg",
+    "cache_invalidated_at": 1776865834.1393664
+=======
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc2ODY2ODI4LCJpYXQiOjE3NzY4NjMyMjgsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NjY4NjU0OX1dLCJzZXNzaW9uX2lkIjoiZTc5NTkzYjAtYzM0OC00YzFlLWFhZWYtYWQwNDU2NWY1ZjZiIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.jIb_SLpgeoFi3z0dRIzV0DBiShRc92WiP4SUJNJcg5weus7nIG0L8LngCB0veM6KP1auNk654tKnb7AgNuLGlg",
+<<<<<<< HEAD
     "cache_invalidated_at": 1776865847.6120129
   },
   "4f632724-6df5-4db4-a787-55784898016b": {
@@ -1237,5 +1370,9 @@
     },
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc3Mjk5NDEzLCJpYXQiOjE3NzcyOTU4MTMsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzc1NDg0Njk4OTk5LmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiQWRtaW4ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NzI5NTgxM31dLCJzZXNzaW9uX2lkIjoiMTAyM2M4YTktYmMzYi00MjMxLTliOTEtYWJjZWYzNjczZDM1IiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.6FeeKwKL_GVbIOy1ha55dhOhDMZREtDNA5mdfnBHH8F6rw1OHH8AUemSzfqrlfWW1X6OflDzrvCOgcy-LidRLA",
     "tool_cache": {}
+=======
+    "cache_invalidated_at": 1776865484.135932
+>>>>>>> 3a7ae935d82ddc5017f0ca57bf73a1d313f90952
+>>>>>>> ae29037809bbf420c682584560806172cebf184d
   }
 }

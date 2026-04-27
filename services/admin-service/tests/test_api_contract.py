@@ -8,6 +8,7 @@ if str(SERVICE_ROOT) not in sys.path:
     sys.path.insert(0, str(SERVICE_ROOT))
 
 import app.auth as auth_module  # noqa: E402
+from app.auth import AdminIdentity  # noqa: E402
 import app.routers.admin as admin_router_module  # noqa: E402
 from app.config import Settings  # noqa: E402
 from app.main import create_app  # noqa: E402
@@ -24,7 +25,11 @@ def test_health_endpoint() -> None:
 
 def test_admin_chat_returns_contract_shape() -> None:
     original = admin_router_module.AdminAccessChecker.require_admin
-    admin_router_module.AdminAccessChecker.require_admin = lambda self, **kwargs: None
+    admin_router_module.AdminAccessChecker.require_admin = lambda self, **kwargs: AdminIdentity(
+        user_id="admin-1",
+        email="admin@example.com",
+        role="admin",
+    )
     try:
         client = TestClient(create_app())
         response = client.post("/admin/chat", json={"message": "hello", "access_token": "token"})
@@ -46,7 +51,11 @@ def test_admin_chat_requires_admin_access() -> None:
 
 def test_admin_chat_stream_returns_ndjson() -> None:
     original = admin_router_module.AdminAccessChecker.require_admin
-    admin_router_module.AdminAccessChecker.require_admin = lambda self, **kwargs: None
+    admin_router_module.AdminAccessChecker.require_admin = lambda self, **kwargs: AdminIdentity(
+        user_id="admin-1",
+        email="admin@example.com",
+        role="admin",
+    )
     try:
         client = TestClient(create_app())
         response = client.post("/admin/chat/stream", json={"message": "hello", "access_token": "token"})
@@ -63,7 +72,11 @@ def test_admin_chat_stream_returns_ndjson() -> None:
 
 def test_admin_graph_returns_mermaid() -> None:
     original = admin_router_module.AdminAccessChecker.require_admin
-    admin_router_module.AdminAccessChecker.require_admin = lambda self, **kwargs: None
+    admin_router_module.AdminAccessChecker.require_admin = lambda self, **kwargs: AdminIdentity(
+        user_id="admin-1",
+        email="admin@example.com",
+        role="admin",
+    )
     try:
         client = TestClient(create_app())
         response = client.get("/admin/graph", headers={"Authorization": "Bearer token"})

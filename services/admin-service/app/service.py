@@ -2,12 +2,14 @@ from queue import Queue
 from threading import Thread
 from typing import Any
 import re
+from uuid import uuid4
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
 from app.config import Settings
 from app.graph import run_graph
+from app.security_events import emit_security_event
 from app.schemas import AdminActivityItem, AdminAgentRunState, AdminChatRequest, AdminChatResponse, AdminPendingAction, AdminWorkflowTask
 from app.session_store import SessionStore
 from app.tools import AdminToolbox
@@ -208,6 +210,11 @@ class AdminService:
             "arguments": pending_payload.get("arguments", {}) if isinstance(pending_payload.get("arguments"), dict) else {},
         }
         current_result = toolbox.execute_pending_action(current_step)
+        self._emit_confirmed_mutation_event(
+            payload=payload,
+            session_id=session_id,
+            pending_payload=pending_payload,
+        )
         self._emit_execution_activity(progress_callback, current_step["tool"], current_step["arguments"], current_result, language)
         workflow_tasks, current_steps = self._complete_mutation_task(
             workflow_tasks=workflow_tasks,
@@ -325,6 +332,49 @@ class AdminService:
             ),
         )
         return _ensure_markdown_response(raw_response, language)
+
+    def _emit_confirmed_mutation_event(
+        self,
+        *,
+        payload: AdminChatRequest,
+        session_id: str,
+        pending_payload: dict[str, Any],
+    ) -> None:
+        tool_name = str(pending_payload.get("tool") or "").strip()
+        if tool_name not in MUTATING_TOOLS:
+            return
+
+        arguments = pending_payload.get("arguments", {})
+        if not isinstance(arguments, dict):
+            arguments = {}
+
+        metadata: dict[str, Any] = {
+            "email": payload.actor_email or "",
+            "user_id": payload.actor_user_id or "",
+            "role": payload.actor_role or "",
+            "tool": tool_name,
+            "session_id": session_id,
+        }
+        for key in ("service_name", "document_id", "dataset_path", "baseline_report_id", "candidate_report_id"):
+            value = arguments.get(key)
+            if value not in ("", None):
+                metadata[key] = value
+        changes = arguments.get("changes")
+        if isinstance(changes, dict) and changes:
+            metadata["change_keys"] = sorted(changes.keys())
+            metadata["change_summary"] = ", ".join(
+                f"{key}={changes[key]}" for key in sorted(changes.keys())
+            )
+
+        emit_security_event(
+            self._settings,
+            event_type="ADMIN_MUTATION_CONFIRMED",
+            severity="info",
+            title="Admin mutation confirmed",
+            message="A confirmed admin chat mutation was executed.",
+            metadata={key: value for key, value in metadata.items() if value not in ("", None, [], {})},
+            fingerprint=f"admin-mutation-confirmed|{session_id}|{tool_name}|{uuid4()}",
+        )
 
     def _reject_pending_action(
         self,

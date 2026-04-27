@@ -7,6 +7,7 @@ if str(SERVICE_ROOT) not in sys.path:
 
 from app.config import Settings  # noqa: E402
 from app.schemas import AdminActivityItem, AdminAgentRunState, AdminChatRequest, AdminChatResponse  # noqa: E402
+import app.service as service_module  # noqa: E402
 from app.service import AdminService  # noqa: E402
 
 
@@ -52,6 +53,43 @@ def test_service_executes_confirmed_action(monkeypatch, tmp_path: Path) -> None:
     assert second.executed is True
     assert second.requires_confirmation is False
     assert second.result["index_result"]["document_id"] == "doc-1"
+
+
+def test_service_emits_info_event_for_confirmed_mutation(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
+    service = AdminService(_settings(tmp_path))
+    first = service.chat(AdminChatRequest(message="please reindex documents"))
+
+    monkeypatch.setattr(
+        service._toolbox,
+        "execute_pending_action",
+        lambda pending_action: {"status": "ok", "index_result": {"document_id": "doc-1"}},
+    )
+
+    emitted: list[dict] = []
+
+    def _capture_emit(settings, **kwargs):  # noqa: ANN001
+        emitted.append(kwargs)
+
+    monkeypatch.setattr(service_module, "emit_security_event", _capture_emit)
+
+    second = service.chat(
+        AdminChatRequest(
+            message="confirm",
+            session_id=first.session_id,
+            confirm=True,
+            actor_user_id="admin-1",
+            actor_email="admin@example.com",
+            actor_role="admin",
+        )
+    )
+
+    assert second.executed is True
+    assert len(emitted) == 1
+    assert emitted[0]["event_type"] == "ADMIN_MUTATION_CONFIRMED"
+    assert emitted[0]["severity"] == "info"
+    assert emitted[0]["metadata"]["email"] == "admin@example.com"
+    assert emitted[0]["metadata"]["tool"] == "reindex_validated_documents"
+    assert emitted[0]["metadata"]["session_id"] == first.session_id
 
 
 def test_service_executes_compound_confirmed_action(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001

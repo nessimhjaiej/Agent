@@ -48,9 +48,9 @@ class AuthService:
         emit_security_event(
             self._settings,
             event_type="BRUTE_FORCE_ATTEMPTS",
-            severity="warning",
-            title="Repeated failed login attempts",
-            message="A login identifier reached the failed login warning threshold.",
+            severity="critical",
+            title="Brute force login threshold reached",
+            message="A login identifier reached the brute force threshold.",
             metadata={
                 "email": email,
                 "failed_attempts": next_attempts,

@@ -11,6 +11,7 @@ from app.schemas import (
     ChatRequest,
     ChatResponse,
     CitationResponse,
+    RequestActorInput,
     TranscriptionResponse,
 )
 
@@ -39,7 +40,7 @@ class GenerationService:
         )
 
     def chat(self, payload: ChatRequest) -> ChatResponse:
-        if self._should_block_query(payload.query):
+        if self._should_block_query(payload.query, payload.actor):
             return self._scope_fallback_response(
                 query=payload.query,
                 session_id=payload.session_id,
@@ -71,7 +72,7 @@ class GenerationService:
         )
 
     def ask(self, payload: AskRequest) -> AskResponse:
-        if self._should_block_query(payload.query):
+        if self._should_block_query(payload.query, payload.actor):
             fallback = self._scope_fallback_response(
                 query=payload.query,
                 session_id=payload.session_id,
@@ -170,18 +171,35 @@ class GenerationService:
             model=self._settings.generation_model,
         )
 
-    def _should_block_query(self, query: str) -> bool:
+    def _should_block_query(self, query: str, actor: RequestActorInput | None = None) -> bool:
         if not self._settings.generation_block_prompt_attack_queries:
             return False
         blocked = is_prompt_attack_query(query)
         if blocked:
+            metadata = {"query_preview": query[:180]}
+            if actor is not None:
+                if actor.email:
+                    metadata["email"] = actor.email
+                if actor.user_id:
+                    metadata["user_id"] = actor.user_id
+                if actor.role:
+                    metadata["role"] = actor.role
             emit_security_event(
                 self._settings,
                 event_type="PROMPT_INJECTION_DETECTED",
-                severity="critical",
+                severity="warning",
                 title="Prompt injection attempt blocked",
                 message="A user query matched the prompt injection detection rules.",
-                metadata={"query_preview": query[:180]},
+                metadata=metadata,
+                fingerprint="|".join(
+                    part
+                    for part in [
+                        "prompt-injection-detected",
+                        metadata.get("email") or metadata.get("user_id") or "anonymous",
+                        query[:120].strip().lower(),
+                    ]
+                    if part
+                ),
             )
         return blocked
 
