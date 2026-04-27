@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText,
@@ -1152,6 +1152,7 @@ export default function AdminPage() {
   ];
 
   const getManagedUserStatus = (managedUser) => {
+    if (managedUser.role === 'admin') return 'admin';
     if (managedUser.status) return managedUser.status;
     if (managedUser.blocked) return 'blocked';
     if (managedUser.invited) return 'invited';
@@ -1161,6 +1162,7 @@ export default function AdminPage() {
 
   const userStats = useMemo(() => ({
     total: managedUsers.length,
+    admins: managedUsers.filter((managedUser) => managedUser.role === 'admin').length,
     validated: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'validated').length,
     invited: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'invited').length,
     pending: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'pending').length,
@@ -1175,6 +1177,7 @@ export default function AdminPage() {
       || (managedUser.username || '').toLowerCase().includes(query)
       || (managedUser.phone_number || '').toLowerCase().includes(query);
     if (!matchesSearch) return false;
+    if (userFilter === 'admin') return status === 'admin';
     if (userFilter === 'validated') return status === 'validated';
     if (userFilter === 'invited') return status === 'invited';
     if (userFilter === 'pending') return status === 'pending';
@@ -1182,10 +1185,96 @@ export default function AdminPage() {
     return true;
   });
 
+  const renderDocumentActions = (doc, mobile = false) => {
+    const buttonClassName = mobile
+      ? 'p-3.5 rounded-xl hover:bg-primary-500/10 transition-colors'
+      : 'p-2.5 rounded-lg hover:bg-primary-500/10 transition-colors';
+    const secondaryButtonClassName = mobile
+      ? 'p-3.5 rounded-xl transition-colors'
+      : 'p-2.5 rounded-lg transition-colors';
+    const placeholderClassName = mobile ? 'p-3.5 invisible' : 'p-2.5 invisible';
+    const iconSize = mobile ? 22 : 18;
+
+    return (
+    <>
+      <button className={buttonClassName} style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }} title="View document" disabled={busyDocIds.has(doc.id)} onClick={() => viewDocument(doc)}><Eye size={iconSize} /></button>
+      {doc.embedded || doc.status !== 'pending' || busyDocIds.has(doc.id) ? (
+        <>
+          <span className={placeholderClassName}><Check size={iconSize} /></span>
+          <span className={placeholderClassName}><X size={iconSize} /></span>
+        </>
+      ) : (
+        <>
+          <button className={`${secondaryButtonClassName} hover:bg-success/10`} style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }} title="Validate and index if needed" disabled={busyDocIds.has(doc.id)} onClick={() => validateDocument(doc)}><Check size={iconSize} /></button>
+          <button className={`${secondaryButtonClassName} hover:bg-warning/10`} style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }} title="Reject" disabled={busyDocIds.has(doc.id)} onClick={() => rejectDocument(doc)}><X size={iconSize} /></button>
+        </>
+      )}
+      <button className={`${secondaryButtonClassName} hover:bg-danger/10`} style={{ color: '#ef4444' }} title="Remove" disabled={busyDocIds.has(doc.id)} onClick={() => removeDocument(doc)}><Trash2 size={iconSize} /></button>
+    </>
+    );
+  };
+
+  const renderUserActions = (managedUser, status, isCurrentUser, disableValidationAction, disableBlockAction, mobile = false) => {
+    const buttonClassName = mobile
+      ? 'p-3.5 rounded-xl transition-colors disabled:opacity-50'
+      : 'p-2.5 rounded-lg transition-colors disabled:opacity-50';
+    const placeholderClassName = mobile ? 'p-3.5 invisible' : 'p-2.5 invisible';
+    const iconSize = mobile ? 22 : 18;
+
+    return (
+    <>
+      {status !== 'validated' && status !== 'invited' && status !== 'admin' ? (
+        <button
+          onClick={() => (status === 'blocked' ? validateAgain(managedUser) : updateValidation(managedUser))}
+          disabled={disableValidationAction}
+          className={`${buttonClassName} hover:bg-success/10`}
+          style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }}
+          title={isCurrentUser ? 'You cannot change your own validation status' : status === 'blocked' ? 'Validate again' : 'Validate user'}
+        >
+          <Check size={iconSize} />
+        </button>
+      ) : (
+        <span className={placeholderClassName}><Check size={iconSize} /></span>
+      )}
+      {status !== 'blocked' && status !== 'admin' ? (
+        <button
+          onClick={() => updateBlock(managedUser)}
+          disabled={disableBlockAction}
+          className={`${buttonClassName} hover:bg-warning/10`}
+          style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }}
+          title={isCurrentUser ? 'You cannot block your own account' : 'Block user'}
+        >
+          <Ban size={iconSize} />
+        </button>
+      ) : (
+        <span className={placeholderClassName}><Ban size={iconSize} /></span>
+      )}
+      <button
+        onClick={() => deleteUser(managedUser)}
+        disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin' || managedUser.id === user?.id}
+        className={`${buttonClassName} hover:bg-danger/10`}
+        style={{ color: '#ef4444' }}
+        title="Delete user"
+      >
+        <Trash2 size={iconSize} />
+      </button>
+    </>
+    );
+  };
+
   return (
-    <AnimatedPage className="h-full flex flex-col">
+    <AnimatedPage className="h-full min-h-0 w-full overflow-y-auto overflow-x-hidden">
+      <style>
+        {`
+          @media (max-width: 640px) {
+            .admin-page-mobile-rounded button {
+              border-radius: 9999px !important;
+            }
+          }
+        `}
+      </style>
       <div
-        className="w-full h-full flex flex-col items-center relative"
+        className="admin-page-mobile-rounded w-full min-h-full flex flex-col items-center relative overflow-x-hidden pb-8"
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragEnter={handleDragEnter}
@@ -1208,33 +1297,41 @@ export default function AdminPage() {
         )}
         <input ref={fileInputRef} type="file" accept=".pdf,.txt,.md" multiple className="hidden" onChange={(event) => uploadFiles(event.target.files)} />
 
-        <div className="flex gap-0 shrink-0 max-w-[1400px] mx-auto px-5 md:px-8" style={{ marginBottom: '24px' }}>
+          <div
+            className="w-full shrink-0 px-3 sm:px-5 md:px-8 lg:px-10 xl:px-12 flex justify-center"
+            style={{ marginBottom: '24px', overflowX: 'hidden' }}
+          >
+            <div className="flex w-fit max-w-full flex-wrap justify-center gap-0">
           {tabs.map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => handleTabChange(key)} className="flex items-center gap-2 px-6 text-sm font-medium transition-all" style={{ background: tab === key ? 'linear-gradient(135deg, #7c3aed, #06b6d4)' : 'var(--bg-secondary)', border: tab === key ? 'none' : '1px solid var(--border-color)', color: tab === key ? 'white' : 'var(--text-secondary)', boxShadow: tab === key ? '0 0 20px rgba(139,92,246,0.3)' : 'none', borderRadius: key === 'documents' ? '12px 0 0 50px' : key === 'agent' ? '0 12px 50px 0' : '0', padding: '16px 24px', minHeight: '56px', display: 'flex', alignItems: 'center' }}>
               <Icon size={16} /> {label}
             </button>
           ))}
+          </div>
         </div>
 
-        <div className="flex-1 w-screen flex justify-center" style={{ minHeight: 0 }}>
+        <div className="w-full flex justify-center" style={{ minHeight: 0 }}>
           <AnimatePresence mode="wait">
             {tab === 'documents' ? (
-              <motion.div key="docs" className="h-full w-full flex justify-center relative" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div className="h-full w-full max-w-[1400px] flex flex-col px-5 md:px-8 mt-8 md:mt-12 overflow-auto" style={{ minHeight: 0 }}>
+              <motion.div key="docs" className="min-h-full w-full flex justify-center relative" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <div
+                  className="min-h-full w-full mx-auto flex flex-col px-3 sm:px-5 md:px-8 lg:px-10 xl:px-12 mt-6 md:mt-12"
+                  style={{ minHeight: 0, width: '85vw', maxWidth: '85vw', marginLeft: 'auto', marginRight: 'auto', overflowX: 'hidden' }}
+                >
 
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0" style={{ marginTop: '24px', marginBottom: '16px' }}>
-                    <div className="flex items-center gap-2 flex-1 w-full sm:w-auto rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minHeight: '48px', paddingLeft: '24px', paddingRight: '24px' }}>
-                      <Search size={16} style={{ color: 'var(--text-muted)' }} />
-                      <input id="doc-search" type="text" placeholder="Search documents..." value={search} onChange={(e) => setSearch(e.target.value)} className="flex-1 bg-transparent outline-none text-sm" style={{ color: 'var(--text-primary)' }} />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
+                  <div className="flex flex-col gap-3 shrink-0" style={{ marginTop: '24px', marginBottom: '16px' }}>
+                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+                      <div className="flex items-center gap-2 flex-1 w-full rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minHeight: '48px', paddingLeft: '24px', paddingRight: '24px' }}>
+                        <Search size={16} style={{ color: 'var(--text-muted)' }} />
+                        <input id="doc-search" type="text" placeholder="Search documents..." value={search} onChange={(e) => setSearch(e.target.value)} className="flex-1 bg-transparent outline-none text-sm min-w-0" style={{ color: 'var(--text-primary)' }} />
+                      </div>
+                      <div className="relative w-full lg:w-auto">
                         <select
                           id="status-filter"
                           value={filter}
                           onChange={(e) => setFilter(e.target.value)}
                           className="rounded-xl text-sm outline-none appearance-none"
-                          style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', minWidth: '200px', paddingLeft: '24px', paddingRight: '48px' }}
+                          style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', width: '100%', minWidth: '0', paddingLeft: '24px', paddingRight: '48px' }}
                         >
                           <option value="all">All Status</option>
                           <option value="validated">Validated</option>
@@ -1247,22 +1344,24 @@ export default function AdminPage() {
                           style={{ right: '16px', color: 'var(--text-muted)' }}
                         />
                       </div>
-                      <motion.button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-6 rounded-xl text-sm font-medium text-white" style={{ background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', minHeight: '48px', minWidth: '140px', justifyContent: 'center' }}>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <motion.button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-6 rounded-xl text-sm font-medium text-white w-full justify-center" style={{ background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', minHeight: '48px', minWidth: '0' }}>
                         <Upload size={16} /> Upload
                       </motion.button>
                       <motion.button
                         onClick={validateSelected}
                         disabled={selectedDocIds.size === 0}
-                        className="flex items-center gap-2 px-6 rounded-xl text-sm font-medium text-white disabled:opacity-50"
-                        style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', minHeight: '48px', minWidth: '170px', justifyContent: 'center' }}
+                        className="flex items-center gap-2 px-6 rounded-xl text-sm font-medium text-white disabled:opacity-50 w-full justify-center"
+                        style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', minHeight: '48px', minWidth: '0' }}
                       >
                         <Check size={16} /> Validate Selected
                       </motion.button>
                       <motion.button
                         onClick={rejectSelected}
                         disabled={selectedDocIds.size === 0}
-                        className="flex items-center gap-2 px-6 rounded-xl text-sm font-medium text-white disabled:opacity-50"
-                        style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)', minHeight: '48px', minWidth: '170px', justifyContent: 'center' }}
+                        className="flex items-center gap-2 px-6 rounded-xl text-sm font-medium text-white disabled:opacity-50 w-full justify-center"
+                        style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)', minHeight: '48px', minWidth: '0' }}
                       >
                         <X size={16} /> Reject Selected
                       </motion.button>
@@ -1290,15 +1389,23 @@ export default function AdminPage() {
                   </div>
 
                   <div
-                    className="overflow-auto rounded-xl"
+                    className="rounded-xl overflow-x-auto overflow-y-visible sm:max-h-[58vh] sm:overflow-y-auto"
                     style={{
                       border: '1px solid var(--border-color)',
                       marginTop: '16px',
                       minHeight: filtered.length === 0 ? '210px' : 'auto',
-                      maxHeight: '58vh',
                     }}
                   >
-                    <table className="w-full text-sm">
+                    <table className="w-full min-w-[880px] text-sm table-fixed">
+                      <colgroup>
+                        <col className="w-10" />
+                        <col className="w-56" />
+                        <col className="w-44" />
+                        <col className="w-24" />
+                        <col className="w-28" />
+                        <col className="w-32" />
+                        <col className="hidden w-0 sm:table-column sm:w-48" />
+                      </colgroup>
                       <thead>
                         <tr className="sticky top-0 z-10" style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)', minHeight: '62px' }}>
                           <th className="px-3 text-center text-base font-semibold w-10" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>
@@ -1309,60 +1416,57 @@ export default function AdminPage() {
                               aria-label="Select all documents in current filter"
                             />
                           </th>
-                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Document</th>
-                          <th className="px-4 text-left text-base font-semibold hidden lg:table-cell" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Uploader</th>
-                          <th className="px-4 text-left text-base font-semibold hidden md:table-cell" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Size</th>
-                          <th className="px-4 text-left text-base font-semibold hidden sm:table-cell" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Date</th>
+                          <th className="px-5 sm:px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Document</th>
+                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Uploader</th>
+                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Size</th>
+                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Date</th>
                           <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Status</th>
-                          <th className="px-4 text-center text-base font-semibold w-48" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Actions</th>
+                          <th className="px-4 text-center text-base font-semibold w-48 hidden sm:table-cell" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filtered.map((doc) => (
-                          <motion.tr key={doc.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border-color)', height: '76px' }}>
-                            <td className="px-3 py-4 text-center align-middle">
-                              <input
-                                type="checkbox"
-                                checked={selectedDocIds.has(doc.id)}
-                                onChange={() => toggleDocSelection(doc.id)}
-                                aria-label={`Select ${doc.name}`}
-                              />
-                            </td>
-                            <td className="px-4 py-4 align-middle">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(139,92,246,0.08)' }}>
-                                  <FileText size={14} style={{ color: 'var(--color-primary-400)' }} />
+                          <Fragment key={doc.id}>
+                            <motion.tr className="transition-colors" style={{ borderBottom: '1px solid var(--border-color)', height: '76px' }}>
+                              <td className="px-3 py-4 text-center align-middle">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedDocIds.has(doc.id)}
+                                  onChange={() => toggleDocSelection(doc.id)}
+                                  aria-label={`Select ${doc.name}`}
+                                />
+                              </td>
+                              <td className="px-5 sm:px-4 py-4 align-middle">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(139,92,246,0.08)' }}>
+                                    <FileText size={14} style={{ color: 'var(--color-primary-400)' }} />
+                                  </div>
+                                  <div className="min-w-0 w-full">
+                                    <div className="font-medium truncate" title={doc.name} style={{ color: 'var(--text-primary)' }}>{doc.name}</div>
+                                    {doc.embedded && <div className="text-xs text-sky-400 truncate">Embedded</div>}
+                                  </div>
                                 </div>
-                                <div className="min-w-0">
-                                  <div className="font-medium truncate max-w-50" style={{ color: 'var(--text-primary)' }}>{doc.name}</div>
-                                  {doc.embedded && <div className="text-xs text-sky-400">Embedded</div>}
+                              </td>
+                              <td className="px-4 py-4 align-middle" style={{ color: 'var(--text-secondary)' }}>
+                                <div className="truncate" title={doc.uploaderLabel}>{doc.uploaderLabel}</div>
+                              </td>
+                              <td className="px-4 py-4 align-middle" style={{ color: 'var(--text-secondary)' }}>{doc.size}</td>
+                              <td className="px-4 py-4 align-middle" style={{ color: 'var(--text-secondary)' }}>{doc.date}</td>
+                              <td className="px-5 sm:px-4 py-4 align-middle"><StatusBadge status={doc.status} /></td>
+                              <td className="px-4 py-4 w-48 align-middle hidden sm:table-cell">
+                                <div className="grid grid-cols-4 justify-items-center items-center gap-2">
+                                  {renderDocumentActions(doc)}
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 hidden lg:table-cell align-middle" style={{ color: 'var(--text-secondary)' }}>
-                              {doc.uploaderLabel}
-                            </td>
-                            <td className="px-4 py-4 hidden md:table-cell align-middle" style={{ color: 'var(--text-secondary)' }}>{doc.size}</td>
-                            <td className="px-4 py-4 hidden sm:table-cell align-middle" style={{ color: 'var(--text-secondary)' }}>{doc.date}</td>
-                            <td className="px-4 py-4 align-middle"><StatusBadge status={doc.status} /></td>
-                            <td className="px-4 py-4 w-48 align-middle">
-                              <div className="grid grid-cols-4 justify-items-center items-center gap-2">
-                                <button className="p-2.5 rounded-lg hover:bg-primary-500/10 transition-colors" style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }} title="View document" disabled={busyDocIds.has(doc.id)} onClick={() => viewDocument(doc)}><Eye size={18} /></button>
-                                {doc.embedded || doc.status !== 'pending' || busyDocIds.has(doc.id) ? (
-                                  <>
-                                    <span className="p-2.5 invisible"><Check size={18} /></span>
-                                    <span className="p-2.5 invisible"><X size={18} /></span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <button className="p-2.5 rounded-lg hover:bg-success/10 transition-colors" style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }} title="Validate and index if needed" disabled={busyDocIds.has(doc.id)} onClick={() => validateDocument(doc)}><Check size={18} /></button>
-                                    <button className="p-2.5 rounded-lg hover:bg-warning/10 transition-colors" style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }} title="Reject" disabled={busyDocIds.has(doc.id)} onClick={() => rejectDocument(doc)}><X size={18} /></button>
-                                  </>
-                                )}
-                                <button className="p-2.5 rounded-lg hover:bg-danger/10 transition-colors" style={{ color: '#ef4444' }} title="Remove" disabled={busyDocIds.has(doc.id)} onClick={() => removeDocument(doc)}><Trash2 size={18} /></button>
-                              </div>
-                            </td>
-                          </motion.tr>
+                              </td>
+                            </motion.tr>
+                            <tr className="sm:hidden" style={{ borderBottom: '1px solid var(--border-color)', height: '76px' }}>
+                              <td colSpan={6} className="px-4 py-0">
+                                <div className="grid h-[76px] grid-cols-4 justify-items-center items-center gap-3">
+                                  {renderDocumentActions(doc, true)}
+                                </div>
+                              </td>
+                            </tr>
+                          </Fragment>
                         ))}
                         {filtered.length === 0 && (
                           <>
@@ -1371,9 +1475,11 @@ export default function AdminPage() {
                             </tr>
                             <tr>
                               <td colSpan={7} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
-                                <p className="text-lg font-semibold">
-                                  {loadingDocs ? 'Loading documents...' : 'No documents found'}
-                                </p>
+                                <div className="w-full text-center">
+                                  <p className="text-lg font-semibold">
+                                    {loadingDocs ? 'Loading documents...' : 'No documents found'}
+                                  </p>
+                                </div>
                               </td>
                             </tr>
                           </>
@@ -1384,29 +1490,34 @@ export default function AdminPage() {
                 </div>
               </motion.div>
             ) : tab === 'users' ? (
-              <motion.div key="users" className="h-full w-full flex justify-center relative" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div className="h-full w-full max-w-[1400px] flex flex-col px-5 md:px-8 mt-8 md:mt-12 overflow-auto" style={{ minHeight: 0 }}>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0" style={{ marginBottom: '16px' }}>
-                    <div className="flex-1 w-full sm:w-auto flex items-center gap-2 rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minHeight: '48px', paddingLeft: '24px', paddingRight: '24px' }}>
+              <motion.div key="users" className="min-h-full w-full flex justify-center relative" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <div
+                  className="min-h-full w-full mx-auto flex flex-col px-3 sm:px-5 md:px-8 lg:px-10 xl:px-12 mt-6 md:mt-12"
+                  style={{ minHeight: 0, width: '85vw', maxWidth: '85vw', marginLeft: 'auto', marginRight: 'auto', overflowX: 'hidden' }}
+                >
+                  <div className="flex flex-col gap-3 shrink-0" style={{ marginBottom: '16px' }}>
+                    <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+                    <div className="flex-1 w-full flex items-center gap-2 rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', minHeight: '48px', paddingLeft: '24px', paddingRight: '24px' }}>
                       <Search size={16} style={{ color: 'var(--text-muted)' }} />
                       <input
                         type="text"
                         placeholder="Search users by email..."
                         value={userSearch}
                         onChange={(event) => setUserSearch(event.target.value)}
-                        className="flex-1 bg-transparent outline-none text-sm"
+                        className="flex-1 bg-transparent outline-none text-sm min-w-0"
                         style={{ color: 'var(--text-primary)' }}
                       />
                     </div>
-                    <div className="relative w-full sm:w-auto">
+                    <div className="relative w-full lg:w-auto">
                       <select
                         id="user-status-filter"
                         value={userFilter}
                         onChange={(event) => setUserFilter(event.target.value)}
                         className="rounded-xl text-sm outline-none appearance-none"
-                        style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', minWidth: '200px', width: '100%', paddingLeft: '24px', paddingRight: '48px' }}
+                        style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', minWidth: '0', width: '100%', paddingLeft: '24px', paddingRight: '48px' }}
                         >
                           <option value="all">All Users</option>
+                          <option value="admin">Admin</option>
                           <option value="validated">Validated</option>
                           <option value="invited">Invited</option>
                           <option value="pending">Pending</option>
@@ -1418,20 +1529,21 @@ export default function AdminPage() {
                         style={{ right: '16px', color: 'var(--text-muted)' }}
                       />
                     </div>
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full">
                       <input
                         type="email"
                         placeholder="Invite user email"
                         value={inviteEmail}
                         onChange={(event) => setInviteEmail(event.target.value)}
                         className="rounded-xl text-sm outline-none"
-                        style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', minWidth: '260px', width: '100%', paddingLeft: '20px', paddingRight: '20px' }}
+                        style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', minHeight: '48px', minWidth: '0', width: '100%', paddingLeft: '20px', paddingRight: '20px' }}
                       />
                       <motion.button
                         onClick={handleInvite}
                         disabled={inviting || !inviteEmail.trim()}
-                        className="flex items-center gap-2 px-6 rounded-xl text-sm font-medium text-white disabled:opacity-50"
-                        style={{ background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', minHeight: '48px', minWidth: '140px', justifyContent: 'center' }}
+                        className="flex items-center gap-2 px-6 rounded-xl text-sm font-medium text-white disabled:opacity-50 w-full sm:w-auto justify-center"
+                        style={{ background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', minHeight: '48px', minWidth: '0' }}
                       >
                         {inviting ? 'Inviting...' : 'Invite User'}
                       </motion.button>
@@ -1444,9 +1556,10 @@ export default function AdminPage() {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 shrink-0" style={{ marginBottom: '16px' }}>
+                  <div className="grid grid-cols-2 md:grid-cols-6 gap-3 shrink-0" style={{ marginBottom: '16px' }}>
                     {[
                       { l: 'Total', v: userStats.total, color: 'var(--color-primary-400)' },
+                      { l: 'Admins', v: userStats.admins, color: '#8b5cf6' },
                       { l: 'Validated', v: userStats.validated, color: '#10b981' },
                       { l: 'Invited', v: userStats.invited, color: '#38bdf8' },
                       { l: 'Pending', v: userStats.pending, color: '#f59e0b' },
@@ -1459,14 +1572,18 @@ export default function AdminPage() {
                     ))}
                   </div>
 
-                  <div className="overflow-auto rounded-xl" style={{ border: '1px solid var(--border-color)', marginTop: '16px', minHeight: filteredUsers.length === 0 ? '210px' : 'auto', maxHeight: '58vh' }}>
-                    <table className="w-full text-sm">
+                  <div className="rounded-xl overflow-x-auto overflow-y-visible sm:max-h-[58vh] sm:overflow-y-auto" style={{ border: '1px solid var(--border-color)', marginTop: '16px', minHeight: filteredUsers.length === 0 ? '210px' : 'auto' }}>
+                    <table className="w-full min-w-[560px] text-sm table-fixed">
+                      <colgroup>
+                        <col />
+                        <col className="w-36" />
+                        <col className="hidden w-0 sm:table-column sm:w-40" />
+                      </colgroup>
                       <thead>
                         <tr className="sticky top-0 z-10" style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)', minHeight: '62px' }}>
                           <th className="text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px', paddingLeft: '28px', paddingRight: '16px' }}>User Info</th>
-                          <th className="px-4 text-left text-base font-semibold hidden md:table-cell" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Role</th>
-                          <th className="px-4 text-left text-base font-semibold" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Status</th>
-                          <th className="px-4 text-center text-base font-semibold w-40" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Actions</th>
+                          <th className="px-5 sm:px-4 text-left text-base font-semibold w-32 sm:w-auto" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Status</th>
+                          <th className="px-4 text-center text-base font-semibold w-40 hidden sm:table-cell" style={{ color: 'var(--text-secondary)', paddingTop: '12px', paddingBottom: '12px' }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1475,7 +1592,9 @@ export default function AdminPage() {
                           const isCurrentUser = managedUser.id === user?.id;
                           const disableValidationAction = busyUserIds.has(managedUser.id) || managedUser.role === 'admin' || isCurrentUser;
                           const disableBlockAction = busyUserIds.has(managedUser.id) || managedUser.role === 'admin' || isCurrentUser;
-                          const statusCfg = status === 'validated'
+                          const statusCfg = status === 'admin'
+                            ? { bg: 'rgba(124,58,237,0.12)', color: '#8b5cf6', border: '1px solid rgba(124,58,237,0.25)', label: 'Admin' }
+                            : status === 'validated'
                             ? { bg: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)', label: 'Validated' }
                             : status === 'invited'
                               ? { bg: 'rgba(56,189,248,0.12)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.25)', label: 'Invited' }
@@ -1483,86 +1602,62 @@ export default function AdminPage() {
                               ? { bg: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', label: 'Blocked' }
                               : { bg: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)', label: 'Pending' };
                           return (
-                          <tr key={managedUser.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border-color)', height: '76px' }}>
-                            <td className="py-4 align-middle" style={{ paddingLeft: '28px', paddingRight: '16px' }}>
-                              <div className="flex items-center gap-3 min-w-0" style={{ paddingLeft: '4px' }}>
-                                <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid var(--border-color)' }}>
-                                  {managedUser.profile_picture ? (
-                                    <img src={managedUser.profile_picture} alt="Profile" className="w-full h-full object-cover" />
-                                  ) : (
-                                    <User size={14} style={{ color: 'var(--text-muted)' }} />
-                                  )}
+                          <Fragment key={managedUser.id}>
+                            <tr className="transition-colors" style={{ borderBottom: '1px solid var(--border-color)', height: '76px' }}>
+                              <td className="py-4 align-middle" style={{ paddingLeft: '28px', paddingRight: '16px' }}>
+                                <div className="flex items-center gap-3 min-w-0" style={{ paddingLeft: '4px' }}>
+                                  <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid var(--border-color)' }}>
+                                    {managedUser.profile_picture ? (
+                                      <img src={managedUser.profile_picture} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                      <User size={14} style={{ color: 'var(--text-muted)' }} />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 w-full">
+                                    <div className="font-medium truncate" title={managedUser.username || 'No username'} style={{ color: 'var(--text-primary)' }}>
+                                      {managedUser.username || 'No username'}
+                                    </div>
+                                    <div className="text-xs truncate" title={managedUser.email} style={{ color: 'var(--text-muted)' }}>
+                                      {managedUser.email}
+                                    </div>
+                                    <div className="text-xs truncate" title={managedUser.phone_number || 'No phone'} style={{ color: 'var(--text-muted)' }}>
+                                      {managedUser.phone_number || 'No phone'}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="min-w-0">
-                                  <div className="font-medium truncate max-w-[360px]" style={{ color: 'var(--text-primary)' }}>
-                                    {managedUser.username || 'No username'}
-                                  </div>
-                                  <div className="text-xs truncate max-w-[360px]" style={{ color: 'var(--text-muted)' }}>
-                                    {managedUser.email}
-                                  </div>
-                                  <div className="text-xs truncate max-w-[360px]" style={{ color: 'var(--text-muted)' }}>
-                                    {managedUser.phone_number || 'No phone'}
-                                  </div>
+                              </td>
+                              <td className="px-5 sm:px-4 py-4 align-middle w-32 sm:w-auto">
+                                <span className="inline-flex items-center py-1 rounded-full text-xs font-medium" style={{ background: statusCfg.bg, color: statusCfg.color, border: statusCfg.border, paddingLeft: '14px', paddingRight: '14px' }}>
+                                  {statusCfg.label}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4 align-middle w-40 hidden sm:table-cell">
+                                <div className="grid grid-cols-3 justify-items-center items-center gap-2">
+                                  {renderUserActions(managedUser, status, isCurrentUser, disableValidationAction, disableBlockAction)}
                                 </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 hidden md:table-cell align-middle" style={{ color: 'var(--text-secondary)' }}>{managedUser.role}</td>
-                            <td className="px-4 py-4 align-middle">
-                              <span className="inline-flex items-center py-1 rounded-full text-xs font-medium" style={{ background: statusCfg.bg, color: statusCfg.color, border: statusCfg.border, paddingLeft: '14px', paddingRight: '14px' }}>
-                                {statusCfg.label}
-                              </span>
-                            </td>
-                            <td className="px-4 py-4 align-middle w-40">
-                              <div className="grid grid-cols-3 justify-items-center items-center gap-2">
-                                {status !== 'validated' && status !== 'invited' ? (
-                                  <button
-                                    onClick={() => (status === 'blocked' ? validateAgain(managedUser) : updateValidation(managedUser))}
-                                    disabled={disableValidationAction}
-                                    className="p-2.5 rounded-lg hover:bg-success/10 transition-colors disabled:opacity-50"
-                                    style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }}
-                                    title={isCurrentUser ? 'You cannot change your own validation status' : status === 'blocked' ? 'Validate again' : 'Validate user'}
-                                  >
-                                    <Check size={18} />
-                                  </button>
-                                ) : (
-                                  <span className="p-2.5 invisible"><Check size={18} /></span>
-                                )}
-                                {status !== 'blocked' ? (
-                                  <button
-                                    onClick={() => updateBlock(managedUser)}
-                                    disabled={disableBlockAction}
-                                    className="p-2.5 rounded-lg hover:bg-warning/10 transition-colors disabled:opacity-50"
-                                    style={{ color: theme === 'dark' ? '#ffffff' : 'var(--text-secondary)' }}
-                                    title={isCurrentUser ? 'You cannot block your own account' : 'Block user'}
-                                  >
-                                    <Ban size={18} />
-                                  </button>
-                                ) : (
-                                  <span className="p-2.5 invisible"><Ban size={18} /></span>
-                                )}
-                                <button
-                                  onClick={() => deleteUser(managedUser)}
-                                  disabled={busyUserIds.has(managedUser.id) || managedUser.role === 'admin' || managedUser.id === user?.id}
-                                  className="p-2.5 rounded-lg hover:bg-danger/10 transition-colors disabled:opacity-50"
-                                  style={{ color: '#ef4444' }}
-                                  title="Delete user"
-                                >
-                                  <Trash2 size={18} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
+                              </td>
+                            </tr>
+                            <tr className="sm:hidden" style={{ borderBottom: '1px solid var(--border-color)', height: '76px' }}>
+                              <td colSpan={2} className="px-4 py-0">
+                                <div className="grid h-[76px] grid-cols-3 justify-items-center items-center gap-3">
+                                  {renderUserActions(managedUser, status, isCurrentUser, disableValidationAction, disableBlockAction, true)}
+                                </div>
+                              </td>
+                            </tr>
+                          </Fragment>
                         )})}
                         {filteredUsers.length === 0 && (
                           <>
                             <tr>
-                              <td colSpan={4} className="px-4 py-3">&nbsp;</td>
+                              <td colSpan={3} className="px-4 py-3">&nbsp;</td>
                             </tr>
                             <tr>
-                              <td colSpan={4} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
-                                <p className="text-lg font-semibold">
-                                  {loadingManagedUsers ? 'Loading users...' : 'No users found'}
-                                </p>
+                              <td colSpan={3} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
+                                <div className="w-full text-center">
+                                  <p className="text-lg font-semibold">
+                                    {loadingManagedUsers ? 'Loading users...' : 'No users found'}
+                                  </p>
+                                </div>
                               </td>
                             </tr>
                           </>
@@ -1573,10 +1668,13 @@ export default function AdminPage() {
                 </div>
               </motion.div>
             ) : (
-              <motion.div key="agent" className="h-full w-full flex justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div className="h-full w-full max-w-5xl flex flex-col px-5 md:px-8 mt-12 md:mt-16" style={{ minHeight: 0 }}>
+              <motion.div key="agent" className="min-h-full w-full flex justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <div
+                  className="w-full mx-auto flex flex-col px-3 sm:px-5 md:px-8 lg:px-10 xl:px-12 mt-8 md:mt-16"
+                  style={{ minHeight: 'calc(100vh - 220px)', width: '85vw', maxWidth: '85vw', marginLeft: 'auto', marginRight: 'auto', overflowX: 'hidden' }}
+                >
                   <div className="flex-1 w-full" style={{ overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth', minHeight: 0, scrollbarGutter: 'stable', paddingTop: '32px', paddingBottom: '32px' }}>
-                    <div className="max-w-5xl md:-ml-24 lg:-ml-32 xl:-ml-40" style={{ marginLeft: '0', marginRight: 'auto' }}>
+                    <div className="mx-auto w-full">
                       {agentMsgs.map((msg) => (
                         <motion.div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`} style={{ marginBottom: '32px' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                           {msg.role === 'assistant' && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', boxShadow: '0 0 12px rgba(245,158,11,0.3)' }}><Bot size={15} className="text-white" /></div>}
@@ -1699,12 +1797,12 @@ export default function AdminPage() {
                       <div ref={endRef} />
                     </div>
                   </div>
-                  <div className="py-3 w-full" style={{ transform: 'translateY(-14px)' }}>
-                    <div className="max-w-5xl md:-ml-24 lg:-ml-32 xl:-ml-40" style={{ marginLeft: '0', marginRight: 'auto' }}>
-                      <div className="w-full" style={{ paddingLeft: '44px', paddingRight: '44px' }}>
+                  <div className="w-full mt-auto pt-3 pb-6">
+                    <div className="mx-auto w-full">
+                      <div className="w-full">
                         {agentPendingAction && (
                           <div
-                            className="mb-3 flex items-center justify-between gap-3 rounded-2xl"
+                            className="mb-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl"
                             style={{
                               background: 'rgba(245,158,11,0.08)',
                               border: '1px solid rgba(245,158,11,0.22)',
@@ -1752,9 +1850,9 @@ export default function AdminPage() {
                             </div>
                           </div>
                         )}
-                        <div className="flex items-end gap-3 rounded-2xl p-6 transition-all input-glow" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-                          <textarea id="admin-agent-input" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }} placeholder='Try: "refresh status", "embed validated", or "run evaluation"' rows={3} disabled={!agentWarningConfirmed} className="flex-1 bg-transparent outline-none text-sm resize-none max-h-56 disabled:opacity-50" style={{ color: 'var(--text-primary)', padding: '16px 24px' }} />
-                          <motion.button id="admin-send" onClick={sendAgent} disabled={!agentWarningConfirmed || !agentInput.trim() || typing} className="rounded-xl disabled:opacity-20 shrink-0" style={{ padding: '16px 22px', marginRight: '8px' }}>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 rounded-2xl p-4 sm:p-6 transition-all input-glow" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                          <textarea id="admin-agent-input" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }} placeholder='Try: "refresh status", "embed validated", or "run evaluation"' rows={3} disabled={!agentWarningConfirmed} className="flex-1 bg-transparent outline-none text-sm resize-none max-h-56 disabled:opacity-50" style={{ color: 'var(--text-primary)', padding: '16px 18px' }} />
+                          <motion.button id="admin-send" onClick={sendAgent} disabled={!agentWarningConfirmed || !agentInput.trim() || typing} className="rounded-xl disabled:opacity-20 shrink-0 w-full sm:w-auto" style={{ padding: '16px 22px', marginRight: '0px' }}>
                             <Send size={16} color={agentInput.trim() && !typing ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
                           </motion.button>
                         </div>

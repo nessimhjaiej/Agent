@@ -51,14 +51,82 @@
 }
 
 html {
+  height: 100%;
   scroll-behavior: smooth;
 }
 
 body {
+  min-height: 100%;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+body,
+#root {
+  min-height: 100%;
+}
+
+#root {
+  height: 100%;
+}
+
+img,
+video,
+canvas,
+svg,
+iframe {
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  min-width: 0;
+}
+
+.text-wrap-anywhere {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.safe-scroll-x {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-panel {
+  width: min(100%, 48rem);
+  max-height: min(90vh, 52rem);
   overflow: hidden;
+}
+
+.modal-panel__body {
+  overflow-y: auto;
+  max-height: calc(min(90vh, 52rem) - 5.5rem);
+}
+
+.preview-modal {
+  width: min(100%, 72rem);
+  height: min(86vh, 56rem);
+}
+
+@media (max-width: 767px) {
+  .modal-panel {
+    max-height: calc(100vh - 1.5rem);
+  }
+
+  .modal-panel__body {
+    max-height: calc(100vh - 7.5rem);
+  }
+
+  .preview-modal {
+    width: min(100%, calc(100vw - 1rem));
+    height: min(88vh, calc(100vh - 1rem));
+  }
 }
 
 button,

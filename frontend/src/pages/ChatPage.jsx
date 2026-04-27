@@ -532,7 +532,6 @@ export default function ChatPage() {
 
   const latestUserMessageId = [...messages].reverse().find((message) => message.role === 'user')?.id ?? null;
   const hasMessages = messages.length > 0;
-  const contentAlignmentClass = 'md:translate-x-8 lg:translate-x-12 xl:translate-x-16';
   const recordButtonTitle = isRecording ? 'Stop recording' : 'Record audio for transcription';
   const recordButtonColor = isRecording
     ? '#dc2626'
@@ -569,15 +568,18 @@ export default function ChatPage() {
 
   return (
     <AnimatedPage className="h-full w-full flex justify-center">
-      <div className="h-full w-full max-w-4xl flex flex-col px-5 md:px-8 mt-12 md:mt-16" style={{ minHeight: 0 }}>
+      <div
+        className="h-full w-full max-w-[23rem] sm:max-w-4xl mx-auto flex flex-col px-0 sm:px-2 md:px-4 mt-6 sm:mt-8 md:mt-12"
+        style={{ minHeight: 0 }}
+      >
       {/* Messages */}
       <div className="flex-1 w-full" style={{ overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth', minHeight: 0, scrollbarGutter: 'stable', paddingTop: '32px', paddingBottom: '32px' }}>
         {!hasMessages ? (
-          <div className={`h-full flex flex-col items-center justify-center text-center max-w-3xl mx-auto w-full ${contentAlignmentClass}`}>
+          <div className="h-full flex flex-col items-center justify-center text-center max-w-[22rem] sm:max-w-3xl mx-auto w-full px-1 sm:px-4">
             {/* Animated icon */}
-            <div className="relative mb-10">
+            <div className="relative mb-8 sm:mb-10">
               <motion.div
-                className="w-24 h-24 rounded-2xl flex items-center justify-center"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center"
                 style={{
                   background: 'rgba(139,92,246,0.08)',
                   boxShadow: '0 0 40px rgba(139,92,246,0.15)',
@@ -591,7 +593,7 @@ export default function ChatPage() {
                 }}
                 transition={{ duration: 3, repeat: Infinity }}
               >
-                <Sparkles className="w-12 h-12" style={{ color: 'var(--color-primary-400)' }} />
+                <Sparkles className="w-10 h-10 sm:w-12 sm:h-12" style={{ color: 'var(--color-primary-400)' }} />
               </motion.div>
               {/* Orbital dot */}
               <motion.div
@@ -610,15 +612,15 @@ export default function ChatPage() {
               />
             </div>
 
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold font-display mb-4" style={{ color: 'var(--text-primary)' }}>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-display mb-4 text-balance" style={{ color: 'var(--text-primary)' }}>
               Legal Intelligence at Your{' '}
               <span className="gradient-text-animated">Fingertips</span>
             </h2>
-            <p className="text-base md:text-lg max-w-lg mb-12 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-sm sm:text-base md:text-lg max-w-lg mb-8 sm:mb-10 md:mb-12 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
               Ask any question about legal regulations, compliance, or regulatory frameworks.
               Our AI will retrieve and analyze relevant sources.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl mb-8" style={{ marginTop: '32px' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-[22rem] sm:max-w-2xl mb-8" style={{ marginTop: '24px' }}>
               {[
                 'What is the ICC ?',
                 'How can AI be made inclusive for all countries?',
@@ -628,7 +630,7 @@ export default function ChatPage() {
                 <motion.button
                   key={i}
                   onClick={() => setInput(suggestion)}
-                  className="text-left text-xs rounded-xl transition-all"
+                  className="text-left text-xs sm:text-sm rounded-xl transition-all min-w-0"
                   style={{
                     border: '1px solid var(--border-color)',
                     color: 'var(--text-secondary)',
@@ -650,9 +652,9 @@ export default function ChatPage() {
             </div>
 
             {/* Input Area - Centered in Welcome */}
-            <div className="w-full max-w-2xl" style={{ marginTop: '32px' }}>
+            <div className="w-full max-w-[22rem] sm:max-w-2xl" style={{ marginTop: '24px' }}>
               <div
-                className="flex flex-col gap-4 rounded-2xl p-6 transition-all input-glow"
+                className="flex flex-col gap-4 rounded-2xl p-4 sm:p-5 md:p-6 transition-all input-glow"
                 style={{
                   background: 'var(--bg-secondary)',
                   border: '1px solid var(--border-color)',
@@ -669,13 +671,13 @@ export default function ChatPage() {
                   className="w-full bg-transparent outline-none text-[15px] resize-none max-h-56"
                   style={{ color: 'var(--text-primary)', padding: '16px 8px 8px' }}
                 />
-                <div className="flex w-full items-center justify-end gap-2 shrink-0">
+                <div className="flex w-full flex-wrap sm:flex-nowrap items-center justify-end gap-2 shrink-0">
                   {renderRecordButton()}
                   <motion.button
                     id="chat-send-btn"
                     onClick={handleSend}
                     disabled={!input.trim() || isTyping || isTranscribing}
-                    className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+                    className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0 ml-auto"
                     style={{
                       padding: '16px 22px',
                     }}
@@ -696,14 +698,14 @@ export default function ChatPage() {
             </div>
           </div>
         ) : (
-          <div className={`max-w-3xl mx-auto w-full ${contentAlignmentClass}`}>
+          <div className="max-w-[22.5rem] sm:max-w-3xl mx-auto w-full px-0 sm:px-2">
             {messages.map((msg) => {
               const isEditing = editingMessageId === msg.id;
 
               return (
               <motion.div
                 key={msg.id}
-                className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex gap-2 sm:gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 style={{ marginBottom: '40px' }}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -721,7 +723,7 @@ export default function ChatPage() {
                   </div>
                 )}
                 <div
-                  className={`max-w-[75%] rounded-2xl ${
+                  className={`max-w-[92%] sm:max-w-[85%] lg:max-w-[75%] rounded-2xl min-w-0 ${
                     msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'
                   }`}
                   style={
@@ -730,13 +732,13 @@ export default function ChatPage() {
                           background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
                           color: 'white',
                           boxShadow: '0 4px 15px rgba(139,92,246,0.2)',
-                          padding: '16px 24px',
+                          padding: '14px 16px',
                         }
                       : {
                           background: 'var(--bg-tertiary)',
                           color: 'var(--text-primary)',
                           border: '1px solid var(--border-color)',
-                          padding: '16px 24px',
+                          padding: '14px 16px',
                         }
                   }
                 >
@@ -783,7 +785,7 @@ export default function ChatPage() {
                   )}
                   {msg.sources && (
                     <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-color)' }}>
-                      <div className="flex items-center justify-between gap-3 mb-1.5">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-1.5">
                         <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Sources:</p>
                         {msg.role === 'assistant' && Array.isArray(msg.citations) && msg.citations.length > 0 && (
                           <button
@@ -804,7 +806,7 @@ export default function ChatPage() {
                             type="button"
                             onClick={() => openDocumentPreview(src)}
                             disabled={(!src.documentId && !src.storagePath) || previewLoading}
-                            className="text-xs px-2.5 py-0.5 rounded-full transition-opacity disabled:opacity-60"
+                            className="text-xs px-2.5 py-1 rounded-full transition-opacity disabled:opacity-60 text-wrap-anywhere"
                             style={{
                               background: 'rgba(139,92,246,0.08)',
                               color: 'var(--color-primary-400)',
@@ -835,7 +837,7 @@ export default function ChatPage() {
                               <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>
                                 {citation.document_name} · {citation.chunk_id}
                               </p>
-                              <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                              <p className="text-sm leading-relaxed text-wrap-anywhere" style={{ color: 'var(--text-primary)' }}>
                                 {citation.chunk_text}
                               </p>
                             </div>
@@ -880,7 +882,7 @@ export default function ChatPage() {
             })}
 
             {isTyping && (
-              <motion.div className="flex gap-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+              <motion.div className="flex gap-2 sm:gap-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <div
                   className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
                   style={{
@@ -895,7 +897,7 @@ export default function ChatPage() {
                   style={{
                     background: 'var(--bg-tertiary)',
                     border: '1px solid var(--border-color)',
-                    padding: '16px 24px',
+                    padding: '14px 16px',
                   }}
                 >
                   <TypingIndicator />
@@ -910,9 +912,9 @@ export default function ChatPage() {
       {/* Input Area - Footer for conversation */}
       {hasMessages && (
       <div className="py-3 w-full">
-        <div className={`max-w-3xl mx-auto w-full ${contentAlignmentClass}`}>
+        <div className="max-w-[22.5rem] sm:max-w-3xl mx-auto w-full px-0 sm:px-2">
           <div
-            className="flex flex-col gap-4 rounded-2xl p-6 transition-all input-glow"
+            className="flex flex-col gap-4 rounded-2xl p-4 sm:p-5 md:p-6 transition-all input-glow"
             style={{
               background: 'var(--bg-secondary)',
               border: '1px solid var(--border-color)',
@@ -929,13 +931,13 @@ export default function ChatPage() {
               className="w-full bg-transparent outline-none text-[15px] resize-none max-h-56"
               style={{ color: 'var(--text-primary)', padding: '16px 8px 8px' }}
             />
-            <div className="flex w-full items-center justify-end gap-2 shrink-0">
+            <div className="flex w-full flex-wrap sm:flex-nowrap items-center justify-end gap-2 shrink-0">
               {renderRecordButton()}
               <motion.button
                 id="chat-send-btn"
                 onClick={handleSend}
                 disabled={!input.trim() || isTyping || isTranscribing}
-                className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+                className="rounded-xl transition-colors disabled:opacity-20 disabled:cursor-not-allowed shrink-0 ml-auto"
                 style={{
                   padding: '16px 22px',
                 }}
@@ -960,20 +962,20 @@ export default function ChatPage() {
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       {previewOpen && (
         <div
-          className="absolute inset-0 z-40 flex items-center justify-center"
+          className="absolute inset-0 z-40 flex items-center justify-center p-2 sm:p-4"
           style={{ background: 'rgba(2, 6, 23, 0.65)' }}
           onClick={() => setPreviewOpen(false)}
         >
           <div
-            className="w-[92%] max-w-5xl h-[86%] rounded-xl overflow-hidden"
+            className="preview-modal rounded-xl overflow-hidden"
             style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--border-color)' }}>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3" style={{ borderBottom: '1px solid var(--border-color)' }}>
               <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
                 {previewName}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <a href={previewUrl} target="_blank" rel="noreferrer" className="text-xs px-3 py-1 rounded-lg" style={{ border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
                   Open new tab
                 </a>

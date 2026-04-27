@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { RxHamburgerMenu } from 'react-icons/rx';
 import {
   Sun,
   Moon,
   LogOut,
   LogIn,
+  X,
   Scale,
   KeyRound,
   UserCog,
@@ -56,9 +58,11 @@ export default function Navbar() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [securitySummary, setSecuritySummary] = useState({ active_alerts: 0 });
   const [recentAlerts, setRecentAlerts] = useState([]);
   const notificationsRef = useRef(null);
+  const mobileMenuRef = useRef(null);
   const isAdmin = user?.user_metadata?.role === 'admin';
   const homeRoute = isAdmin ? '/admin' : '/';
 
@@ -101,17 +105,24 @@ export default function Navbar() {
   }, [isAdmin]);
 
   useEffect(() => {
-    if (!showNotifications) return undefined;
+    if (!showNotifications && !showMobileMenu) return undefined;
 
     const handlePointerDown = (event) => {
-      if (!notificationsRef.current?.contains(event.target)) {
+      const clickedNotifications = notificationsRef.current?.contains(event.target);
+      const clickedMobileMenu = mobileMenuRef.current?.contains(event.target);
+
+      if (!clickedNotifications) {
         setShowNotifications(false);
+      }
+
+      if (!clickedMobileMenu) {
+        setShowMobileMenu(false);
       }
     };
 
     document.addEventListener('mousedown', handlePointerDown);
     return () => document.removeEventListener('mousedown', handlePointerDown);
-  }, [showNotifications]);
+  }, [showNotifications, showMobileMenu]);
 
   const handleLogoClick = () => {
     if (location.pathname === '/' && homeRoute === '/') {
@@ -133,6 +144,27 @@ export default function Navbar() {
   };
 
   const changePassword = async (nextPassword) => updatePassword(nextPassword);
+  const closeTransientMenus = () => {
+    setShowNotifications(false);
+    setShowMobileMenu(false);
+  };
+
+  const handleOpenProfile = () => {
+    closeTransientMenus();
+    setShowProfileModal(true);
+  };
+
+  const handleOpenPassword = () => {
+    closeTransientMenus();
+    setShowPasswordModal(true);
+  };
+
+  const handleMobileSignOut = async () => {
+    closeTransientMenus();
+    await signOut();
+    navigate('/', { replace: true });
+  };
+
   const saveProfile = async ({
     username,
     phoneNumber,
@@ -152,13 +184,16 @@ export default function Navbar() {
   return (
     <>
       <header
-        className="h-16 shrink-0 relative px-3 md:px-6"
+        className="shrink-0 relative px-0"
         style={{
           background: 'var(--bg-secondary)',
           borderBottom: '1px solid var(--border-color)',
         }}
       >
-        <div className="w-full h-full flex items-center relative">
+        <div
+          className="w-full min-h-16 flex items-center gap-3 sm:gap-4 relative py-2"
+          style={{ paddingInline: 'clamp(24px, 8vw, 320px)' }}
+        >
           <motion.div
             className="absolute bottom-0 left-0 right-0 h-px"
             style={{
@@ -170,7 +205,7 @@ export default function Navbar() {
             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
           />
 
-          <div className="flex items-center gap-4" style={{ marginLeft: '240px' }}>
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
             <motion.div
               className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 cursor-pointer"
               style={{
@@ -182,9 +217,9 @@ export default function Navbar() {
             >
               <Scale className="w-4.5 h-4.5 text-white" />
             </motion.div>
-            <div>
+            <div className="min-w-0">
               <h1
-                className="text-base font-semibold font-display tracking-tight"
+                className="text-sm sm:text-base font-semibold font-display tracking-tight truncate"
                 style={{ color: 'var(--text-primary)' }}
               >
                 {getPageTitle()}
@@ -192,11 +227,11 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2" style={{ marginLeft: 'auto', marginRight: '240px' }}>
+          <div className="flex items-center gap-1.5 sm:gap-2 ml-auto min-w-0">
             <motion.button
               id="theme-toggle"
               onClick={toggleTheme}
-              className="p-3.5 rounded-xl transition-colors hover:bg-primary-500/10"
+              className="hidden lg:inline-flex p-2.5 sm:p-3 rounded-xl transition-colors hover:bg-primary-500/10 shrink-0"
               style={{ color: 'var(--text-secondary)' }}
               title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               whileHover={{ scale: 1.05 }}
@@ -227,8 +262,51 @@ export default function Navbar() {
               </AnimatePresence>
             </motion.button>
 
+            <div className="relative lg:hidden" ref={mobileMenuRef}>
+              <motion.button
+                type="button"
+                onClick={() => {
+                  setShowMobileMenu((current) => !current);
+                  setShowNotifications(false);
+                }}
+                className="inline-flex items-center justify-center w-12 h-11 rounded-xl transition-colors hover:bg-primary-500/10 shrink-0"
+                style={{ color: 'var(--text-secondary)' }}
+                title="Open navigation menu"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  {showMobileMenu ? (
+                    <motion.span
+                      key="mobile-close"
+                      initial={{ opacity: 0, rotate: -90, scale: 0.7 }}
+                      animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                      exit={{ opacity: 0, rotate: 90, scale: 0.7 }}
+                      transition={{ duration: 0.18, ease: 'easeOut' }}
+                      className="inline-flex items-center justify-center"
+                      style={{ color: '#ef4444' }}
+                    >
+                      <X size={23} strokeWidth={2.4} />
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="mobile-burger"
+                      initial={{ opacity: 0, rotate: 90, scale: 0.7 }}
+                      animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                      exit={{ opacity: 0, rotate: -90, scale: 0.7 }}
+                      transition={{ duration: 0.18, ease: 'easeOut' }}
+                      className="inline-flex items-center justify-center"
+                    >
+                      <RxHamburgerMenu size={24} className="block shrink-0" />
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+
+            </div>
+
             {user ? (
-              <div className="flex items-center gap-3">
+              <div className="hidden lg:flex items-center gap-1.5 sm:gap-3 min-w-0">
                 {isAdmin && (
                   <div className="relative" ref={notificationsRef}>
                     <motion.button
@@ -236,13 +314,15 @@ export default function Navbar() {
                       className="relative p-2.5 rounded-xl transition-colors hover:bg-primary-500/10"
                       style={{ color: 'var(--text-secondary)' }}
                       title="Security alerts"
+                      initial={{ y: 0 }}
+                      animate={{ y: 4 }}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
                       <Bell size={18} />
                       {securitySummary.active_alerts > 0 && (
                         <span
-                          className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full text-[10px] font-semibold flex items-center justify-center"
+                          className="absolute -top-2.5 -right-1.5 min-w-4 h-4 px-1 rounded-full text-[9px] font-semibold flex items-center justify-center"
                           style={{
                             background: '#ef4444',
                             color: 'white',
@@ -261,18 +341,19 @@ export default function Navbar() {
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 8, scale: 0.98 }}
                           transition={{ duration: 0.18 }}
-                          className="absolute right-0 mt-3 w-[360px] rounded-2xl overflow-hidden z-30"
+                          className="absolute right-0 mt-3 rounded-2xl overflow-hidden z-30"
                           style={{
+                            width: 'min(360px, calc(100vw - 24px))',
                             background: 'var(--bg-secondary)',
                             border: '1px solid var(--border-color)',
                             boxShadow: '0 20px 60px rgba(2, 6, 23, 0.28)',
                           }}
                         >
                           <div
-                            className="px-4 py-3 flex items-center justify-between"
+                            className="px-4 py-3 flex items-start sm:items-center justify-between gap-3"
                             style={{ borderBottom: '1px solid var(--border-color)' }}
                           >
-                            <div>
+                            <div className="min-w-0">
                               <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                                 Security alerts
                               </p>
@@ -283,7 +364,7 @@ export default function Navbar() {
                             <button
                               type="button"
                               onClick={() => {
-                                setShowNotifications(false);
+                                closeTransientMenus();
                                 navigate('/security');
                               }}
                               className="text-xs font-medium"
@@ -301,7 +382,7 @@ export default function Navbar() {
                                   key={alert.id}
                                   type="button"
                                   onClick={() => {
-                                    setShowNotifications(false);
+                                    closeTransientMenus();
                                     navigate('/security');
                                   }}
                                   className="w-full text-left px-4 py-3 transition-colors"
@@ -360,11 +441,11 @@ export default function Navbar() {
                   </div>
                 )}
 
-                <div className="hidden sm:block text-right">
+                <div className="hidden lg:block text-right min-w-0 max-w-[220px]">
                   <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                     {user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split('@')[0]}
                   </p>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
                     {user.email}
                   </p>
                 </div>
@@ -396,8 +477,8 @@ export default function Navbar() {
                   />
                 </div>
                 <motion.button
-                  onClick={() => setShowProfileModal(true)}
-                  className="p-2 rounded-xl transition-colors hover:bg-primary-500/10"
+                  onClick={handleOpenProfile}
+                  className="p-2 rounded-xl transition-colors hover:bg-primary-500/10 shrink-0"
                   style={{ color: 'var(--text-secondary)' }}
                   title="Edit profile"
                   whileHover={{ scale: 1.05 }}
@@ -406,8 +487,8 @@ export default function Navbar() {
                   <UserCog size={17} />
                 </motion.button>
                 <motion.button
-                  onClick={() => setShowPasswordModal(true)}
-                  className="p-2 rounded-xl transition-colors hover:bg-primary-500/10"
+                  onClick={handleOpenPassword}
+                  className="p-2 rounded-xl transition-colors hover:bg-primary-500/10 shrink-0 hidden lg:inline-flex"
                   style={{ color: 'var(--text-secondary)' }}
                   title="Change password"
                   whileHover={{ scale: 1.05 }}
@@ -417,11 +498,8 @@ export default function Navbar() {
                 </motion.button>
                 <motion.button
                   id="sign-out-btn"
-                  onClick={async () => {
-                    await signOut();
-                    navigate('/', { replace: true });
-                  }}
-                  className="p-2 rounded-xl transition-colors hover:bg-danger/10 text-danger"
+                  onClick={handleMobileSignOut}
+                  className="p-2 rounded-xl transition-colors hover:bg-danger/10 text-danger shrink-0"
                   title="Sign out"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -433,17 +511,16 @@ export default function Navbar() {
               <motion.button
                 id="nav-sign-in"
                 onClick={() => navigate('/login')}
-                className="flex items-center gap-2 rounded-xl text-sm font-medium transition-all"
+                className="hidden lg:flex items-center gap-2 rounded-xl text-sm font-medium transition-all shrink-0"
                 style={{
                   background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
                   color: 'white',
                   boxShadow: '0 0 20px rgba(139,92,246,0.3)',
-                  paddingLeft: '24px',
-                  paddingRight: '24px',
+                  paddingLeft: '16px',
+                  paddingRight: '16px',
                   paddingTop: '10px',
                   paddingBottom: '10px',
                   minHeight: '44px',
-                  minWidth: '118px',
                 }}
                 whileHover={{
                   scale: 1.03,
@@ -458,6 +535,228 @@ export default function Navbar() {
           </div>
         </div>
       </header>
+
+      <AnimatePresence>
+        {showMobileMenu && (
+          <motion.div
+            ref={mobileMenuRef}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="fixed inset-0 z-40 lg:hidden flex flex-col overflow-hidden"
+            style={{
+              background: 'var(--bg-primary)',
+            }}
+          >
+            <div className="h-full px-4 sm:px-6 md:px-8 py-4 sm:py-5 relative">
+              <div className="absolute top-5 sm:top-6 md:top-7 right-5 sm:right-6 md:right-8 z-10">
+                <motion.button
+                  type="button"
+                  onClick={closeTransientMenus}
+                  className="inline-flex items-center justify-center rounded-2xl w-12 h-12 md:w-13 md:h-13"
+                  style={{
+                    border: '1px solid rgba(239,68,68,0.18)',
+                    color: '#ef4444',
+                    background: 'rgba(239,68,68,0.08)',
+                  }}
+                  aria-label="Close mobile menu"
+                  initial={{ opacity: 0, scale: 0.82, rotate: -18 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                  exit={{ opacity: 0, scale: 0.82, rotate: 18 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                >
+                  <X size={20} />
+                </motion.button>
+              </div>
+              <div className="h-[calc(100%-3.5rem)] w-full mx-auto relative">
+                {user ? (
+                  <div
+                    className="absolute left-1/2 top-[24%] md:top-[22%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center text-center gap-2 sm:gap-2.5"
+                    style={{ width: 'clamp(260px, 70vw, 420px)' }}
+                  >
+                    <div className="relative">
+                      {user.user_metadata?.profile_picture ? (
+                        <img
+                          src={user.user_metadata.profile_picture}
+                          alt="Profile"
+                          className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover"
+                          style={{ boxShadow: '0 0 18px rgba(139,92,246,0.22)' }}
+                        />
+                      ) : (
+                          <div
+                          className="w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center text-2xl md:text-3xl font-bold text-white"
+                          style={{
+                            background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
+                            boxShadow: '0 0 18px rgba(139,92,246,0.22)',
+                          }}
+                        >
+                          {(user.user_metadata?.username || user.user_metadata?.full_name || user.email || 'U')[0].toUpperCase()}
+                        </div>
+                      )}
+                      <div
+                        className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full border-2"
+                        style={{
+                          background: 'var(--color-success)',
+                          borderColor: 'var(--bg-primary)',
+                        }}
+                      />
+                    </div>
+                    <div className="w-full">
+                      <p className="text-base md:text-lg font-semibold text-wrap-anywhere" style={{ color: 'var(--text-primary)' }}>
+                        {user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split('@')[0]}
+                      </p>
+                      <p className="text-sm md:text-base mt-1 text-wrap-anywhere" style={{ color: 'var(--text-muted)' }}>
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="absolute left-1/2 top-[58%] md:top-[56%] -translate-x-1/2 -translate-y-1/2 w-full flex flex-col items-center gap-3 md:gap-4">
+                  <div
+                    className="flex flex-col items-center gap-2.5 md:gap-3"
+                    style={{ width: 'clamp(260px, 78vw, 440px)' }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeTransientMenus();
+                        toggleTheme();
+                      }}
+                      className="w-full flex items-center justify-center gap-3 rounded-2xl px-4 md:px-5 py-4 md:py-4.5 text-sm md:text-base text-center"
+                      style={{
+                        background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-color)',
+                        color: 'var(--text-primary)',
+                        minHeight: '60px',
+                      }}
+                    >
+                      {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                      {theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                    </button>
+
+                    {user ? (
+                      <>
+                        {isAdmin && (
+                          <button
+                          type="button"
+                          onClick={() => {
+                            closeTransientMenus();
+                            navigate('/security');
+                          }}
+                          className="w-full flex items-center justify-center gap-3 rounded-2xl px-4 md:px-5 py-4 md:py-4.5 text-sm md:text-base text-center"
+                          style={{
+                            background: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-primary)',
+                            minHeight: '60px',
+                          }}
+                          >
+                            <Bell size={18} />
+                            <span>Security alerts</span>
+                            <span
+                              className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                              style={{
+                                background: securitySummary.active_alerts > 0 ? 'rgba(239,68,68,0.12)' : 'rgba(148,163,184,0.12)',
+                                color: securitySummary.active_alerts > 0 ? '#ef4444' : 'var(--text-muted)',
+                              }}
+                            >
+                              {securitySummary.active_alerts || 0}
+                            </span>
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={handleOpenProfile}
+                          className="w-full flex items-center justify-center gap-3 rounded-2xl px-4 md:px-5 py-4 md:py-4.5 text-sm md:text-base text-center"
+                          style={{
+                            background: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-primary)',
+                            minHeight: '60px',
+                          }}
+                        >
+                          <UserCog size={18} />
+                          Edit profile
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleOpenPassword}
+                          className="w-full flex items-center justify-center gap-3 rounded-2xl px-4 md:px-5 py-4 md:py-4.5 text-sm md:text-base text-center"
+                          style={{
+                            background: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-primary)',
+                            minHeight: '60px',
+                          }}
+                        >
+                          <KeyRound size={18} />
+                          Change password
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleMobileSignOut}
+                          className="w-full flex items-center justify-center gap-3 rounded-2xl px-4 md:px-5 py-4 md:py-4.5 text-sm md:text-base text-center"
+                          style={{
+                            background: 'rgba(239,68,68,0.08)',
+                            border: '1px solid rgba(239,68,68,0.18)',
+                            color: '#ef4444',
+                            minHeight: '60px',
+                          }}
+                        >
+                          <LogOut size={18} />
+                          Sign out
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        id="nav-sign-in-mobile"
+                        type="button"
+                        onClick={() => {
+                          closeTransientMenus();
+                          navigate('/login');
+                        }}
+                        className="w-full flex items-center justify-center gap-3 rounded-2xl px-4 md:px-5 py-4 md:py-4.5 text-sm md:text-base text-center"
+                        style={{
+                          background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
+                          color: 'white',
+                          boxShadow: '0 0 20px rgba(139,92,246,0.2)',
+                          minHeight: '60px',
+                        }}
+                      >
+                        <LogIn size={18} />
+                        Sign In
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div
+                  className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pt-1"
+                  style={{ width: 'clamp(220px, 60vw, 320px)' }}
+                >
+                  <div
+                    className="w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center"
+                    style={{
+                      background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
+                      boxShadow: '0 0 22px rgba(139,92,246,0.2)',
+                    }}
+                  >
+                    <Scale className="w-7 h-7 md:w-8 md:h-8 text-white" />
+                  </div>
+                  <p className="text-sm md:text-base font-medium" style={{ color: 'var(--text-muted)' }}>
+                    Agentic RAG
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ChangePasswordModal
         isOpen={showPasswordModal}

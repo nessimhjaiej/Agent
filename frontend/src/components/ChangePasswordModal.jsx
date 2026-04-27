@@ -75,19 +75,19 @@ export default function ChangePasswordModal({ isOpen, onClose, onSubmit }) {
           />
 
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: 'spring', damping: 24, stiffness: 280 }}
           >
             <div
-              className="relative w-full max-w-xl rounded-2xl"
+              className="modal-panel relative rounded-2xl"
               style={{
                 background: 'var(--bg-secondary)',
                 border: '1px solid var(--border-color)',
                 boxShadow: '0 24px 60px rgba(0,0,0,0.4), 0 0 40px rgba(139,92,246,0.16)',
-                padding: '32px',
+                padding: '20px',
               }}
               onClick={(event) => event.stopPropagation()}
             >
@@ -101,7 +101,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSubmit }) {
                 <X size={18} />
               </button>
 
-              <div className="flex items-center gap-3 mb-8">
+              <div className="flex items-center gap-3 mb-6">
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', color: '#fff' }}
@@ -118,7 +118,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSubmit }) {
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4" style={{ marginTop: '12px' }}>
+              <form onSubmit={handleSubmit} className="modal-panel__body flex flex-col gap-4 pr-1" style={{ marginTop: '12px' }}>
                 <div
                   className="flex items-center gap-3 rounded-xl transition-all input-glow"
                   style={{
@@ -229,11 +229,11 @@ export default function ChangePasswordModal({ isOpen, onClose, onSubmit }) {
                   </p>
                 )}
 
-                <div className="flex items-center justify-end gap-4 mt-1">
+                <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 mt-1">
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="px-4 rounded-xl text-sm font-medium transition-colors"
+                    className="px-4 rounded-xl text-sm font-medium transition-colors w-full sm:w-auto"
                     style={{
                       color: 'var(--text-secondary)',
                       border: '1px solid var(--border-color)',
@@ -247,7 +247,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSubmit }) {
                     id="change-password-submit"
                     type="submit"
                     disabled={loading}
-                    className="rounded-xl text-sm font-semibold text-white disabled:opacity-60"
+                    className="rounded-xl text-sm font-semibold text-white disabled:opacity-60 w-full sm:w-auto"
                     style={{
                       background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
                       boxShadow: '0 0 20px rgba(139,92,246,0.3)',

@@ -174,10 +174,10 @@ export default function SecurityPage() {
   };
 
   return (
-    <AnimatedPage className="h-full min-h-0 overflow-hidden p-3 md:p-5 lg:p-6">
+    <AnimatedPage className="h-full min-h-0 overflow-hidden p-2 sm:p-3 md:p-5 lg:p-6">
       <div className="h-full overflow-y-auto pr-1">
       <div className="w-full max-w-[1560px] mx-auto space-y-4 md:space-y-5">
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
         {[
           { label: 'Active Alerts', value: summary.active_alerts, sub: 'Needs review', icon: ShieldAlert, color: '#ef4444', glow: 'rgba(239,68,68,0.15)' },
           { label: 'Critical Alerts', value: summary.critical_alerts, sub: 'Highest priority', icon: AlertTriangle, color: '#f59e0b', glow: 'rgba(245,158,11,0.15)' },
@@ -234,7 +234,7 @@ export default function SecurityPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
           {[
             { label: 'Total Attempts', value: loginAttemptsSummary.total_attempts, color: '#3b82f6', glow: 'rgba(59,130,246,0.15)', icon: Activity },
             { label: 'Failed Attempts', value: loginAttemptsSummary.failed_attempts, color: '#ef4444', glow: 'rgba(239,68,68,0.15)', icon: ShieldAlert },
@@ -354,7 +354,7 @@ export default function SecurityPage() {
               <select
                 value={severityFilter}
                 onChange={(event) => setSeverityFilter(event.target.value)}
-                className="px-3 py-1.5 rounded-lg text-xs outline-none min-w-[132px]"
+                className="px-3 py-1.5 rounded-lg text-xs outline-none w-full sm:w-auto sm:min-w-[132px]"
                 style={{ border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
               >
                 <option value="all">All severities</option>
@@ -365,7 +365,7 @@ export default function SecurityPage() {
               <select
                 value={eventTypeFilter}
                 onChange={(event) => setEventTypeFilter(event.target.value)}
-                className="px-3 py-1.5 rounded-lg text-xs outline-none min-w-[158px] max-w-full"
+                className="px-3 py-1.5 rounded-lg text-xs outline-none w-full sm:w-auto sm:min-w-[158px] max-w-full"
                 style={{ border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
               >
                 <option value="all">All event types</option>
@@ -429,7 +429,7 @@ export default function SecurityPage() {
                       <Icon size={18} style={{ color: cfg.text }} />
                     </motion.div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-2">
                         <div className="min-w-0">
                           <h3 className="text-sm font-semibold break-words" style={{ color: 'var(--text-primary)' }}>{alert.title}</h3>
                           <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
@@ -447,7 +447,7 @@ export default function SecurityPage() {
                           {alert.status}
                         </span>
                       </div>
-                      <p className="text-xs mt-3 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{alert.message}</p>
+                      <p className="text-xs mt-3 leading-relaxed text-wrap-anywhere" style={{ color: 'var(--text-secondary)' }}>{alert.message}</p>
                       <div className="flex items-center gap-4 mt-3 text-xs flex-wrap" style={{ color: 'var(--text-muted)' }}>
                         <span className="flex items-center gap-1"><Clock size={10} />{formatDateTime(alert.last_seen_at)}</span>
                         <span>{alert.count} occurrence{alert.count > 1 ? 's' : ''}</span>
@@ -507,8 +507,8 @@ export default function SecurityPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold font-display" style={{ color: 'var(--text-primary)' }}>Recent Alert Log</h2>
         </div>
-        <div className="rounded-xl overflow-auto" style={{ border: '1px solid var(--border-color)' }}>
-          <table className="w-full text-sm">
+        <div className="rounded-xl safe-scroll-x" style={{ border: '1px solid var(--border-color)' }}>
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
                 <th className="px-4 py-3 text-left font-semibold" style={{ color: 'var(--text-secondary)' }}>Last Seen</th>

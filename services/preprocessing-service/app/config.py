@@ -15,7 +15,7 @@ class Settings:
     app_name: str = "preprocessing-service"
     app_version: str = "0.1.0"
     chunk_strategy: str = "semantic"
-    chunk_size: int = 750
+    chunk_size: int = 800
     chunk_overlap: int = 120
     pipeline_version: str = "v1"
     rate_limit_requests: int = 60

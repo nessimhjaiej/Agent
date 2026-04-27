@@ -94,18 +94,18 @@ export default function ProfileModal({
           />
 
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
           >
             <div
-              className="relative w-full max-w-2xl rounded-2xl"
+              className="modal-panel relative rounded-2xl"
               style={{
                 background: 'var(--bg-secondary)',
                 border: '1px solid var(--border-color)',
                 boxShadow: '0 24px 60px rgba(0,0,0,0.4)',
-                padding: '30px',
+                padding: '20px',
               }}
               onClick={(event) => event.stopPropagation()}
             >
@@ -134,13 +134,13 @@ export default function ProfileModal({
 
               <form
                 onSubmit={handleSubmit}
-                className="flex flex-col gap-3"
+                className="modal-panel__body flex flex-col gap-3 pr-1"
                 style={{ marginTop: lockUntilComplete ? '14px' : '16px' }}
               >
                 {!lockUntilComplete && (
                   <>
                     <div className="rounded-xl" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', padding: '14px 16px' }}>
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                         <div
                           className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center shrink-0"
                           style={{
@@ -164,7 +164,7 @@ export default function ProfileModal({
                           <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
                             Upload a new photo or remove the current one.
                           </p>
-                          <div className="flex items-center gap-2 mt-3">
+                          <div className="flex flex-wrap items-center gap-2 mt-3">
                             <button
                               type="button"
                               onClick={() => fileInputRef.current?.click()}
@@ -267,12 +267,12 @@ export default function ProfileModal({
                   </p>
                 )}
 
-                <div className="flex items-center justify-end gap-3 mt-2">
+                <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 mt-2">
                   {!lockUntilComplete && (
                     <button
                       type="button"
                       onClick={handleClose}
-                      className="rounded-xl text-sm font-medium"
+                      className="rounded-xl text-sm font-medium w-full sm:w-auto"
                       style={{
                         color: 'var(--text-secondary)',
                         border: '1px solid var(--border-color)',
@@ -289,7 +289,7 @@ export default function ProfileModal({
                     id="profile-save-btn"
                     type="submit"
                     disabled={loading}
-                    className="rounded-xl text-sm font-semibold text-white disabled:opacity-60"
+                    className="rounded-xl text-sm font-semibold text-white disabled:opacity-60 w-full sm:w-auto"
                     style={{
                       background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
                       minHeight: '44px',

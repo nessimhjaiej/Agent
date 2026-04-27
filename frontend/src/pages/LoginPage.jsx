@@ -44,10 +44,10 @@ export default function LoginPage() {
   };
 
   return (
-    <AnimatedPage className="min-h-screen flex">
+    <AnimatedPage className="min-h-screen flex flex-col lg:flex-row">
       {/* Left — Form */}
       <div
-        className="flex-1 flex items-center justify-center p-8 relative noise-overlay"
+        className="flex-1 flex items-center justify-center p-4 sm:p-6 md:p-8 relative noise-overlay"
         style={{ background: 'var(--bg-primary)' }}
       >
         {/* Ambient orb */}
@@ -62,7 +62,7 @@ export default function LoginPage() {
 
         {emailSent ? (
           <motion.div
-            className="w-full max-w-md rounded-2xl p-10 text-center relative"
+            className="w-full max-w-md rounded-2xl p-6 sm:p-8 md:p-10 text-center relative"
             style={{
               background: 'var(--bg-secondary)',
               border: '1px solid var(--border-color)',
@@ -104,7 +104,7 @@ export default function LoginPage() {
             transition={{ duration: 0.6 }}
           >
             {/* Logo — Centered above text */}
-            <div className="flex flex-col items-center text-center mb-12">
+            <div className="flex flex-col items-center text-center mb-8 sm:mb-12">
               <motion.div
                 className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
                 style={{
@@ -115,7 +115,7 @@ export default function LoginPage() {
               >
                 <Scale className="w-8 h-8 text-white" />
               </motion.div>
-              <h1 className="text-3xl md:text-4xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-display text-balance" style={{ color: 'var(--text-primary)' }}>
                 {mode === 'signin' ? 'Welcome back' : 'Get started'}
               </h1>
               <p className="text-sm mt-4" style={{ color: 'var(--text-secondary)' }}>
@@ -127,7 +127,7 @@ export default function LoginPage() {
 
             {/* Card */}
             <div
-              className="rounded-2xl p-8"
+              className="rounded-2xl p-5 sm:p-6 md:p-8"
               style={{
                 background: 'transparent',
                 border: '1px solid var(--border-color)',
@@ -253,7 +253,7 @@ export default function LoginPage() {
 
       {/* Right — Decorative Panel */}
       <div
-        className="hidden lg:flex flex-1 items-center justify-center relative overflow-hidden"
+        className="hidden lg:flex flex-1 items-center justify-center relative overflow-hidden min-w-0"
         style={{
           background: 'linear-gradient(135deg, #0f0f14 0%, #1a0a2e 50%, #0a1628 100%)',
         }}

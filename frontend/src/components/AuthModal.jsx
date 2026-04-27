@@ -58,19 +58,19 @@ export default function AuthModal({ isOpen, onClose }) {
 
           {/* Modal */}
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
             initial={{ opacity: 0, scale: 0.9, filter: 'blur(8px)' }}
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             exit={{ opacity: 0, scale: 0.9, filter: 'blur(8px)' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           >
             <div
-              className="relative w-full max-w-lg rounded-2xl"
+              className="modal-panel relative rounded-2xl"
               style={{
                 background: 'var(--bg-secondary)',
                 border: '1px solid var(--border-color)',
                 boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5), 0 0 40px rgba(139,92,246,0.1)',
-                padding: '44px',
+                padding: '20px',
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -86,7 +86,7 @@ export default function AuthModal({ isOpen, onClose }) {
               </motion.button>
 
               {emailSent ? (
-                <motion.div className="text-center py-6" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <motion.div className="text-center py-4 sm:py-6 modal-panel__body pr-1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   <motion.div
                     className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                     style={{ background: 'rgba(16,185,129,0.1)', boxShadow: '0 0 25px rgba(16,185,129,0.2)' }}
@@ -106,7 +106,8 @@ export default function AuthModal({ isOpen, onClose }) {
               ) : (
                 <>
                   {/* Header */}
-                  <div className="text-center" style={{ marginBottom: '32px' }}>
+                  <div className="modal-panel__body pr-1">
+                  <div className="text-center" style={{ marginBottom: '24px' }}>
                     <h2 className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>
                       {mode === 'signin' ? 'Welcome back' : 'Create account'}
                     </h2>
@@ -160,6 +161,7 @@ export default function AuthModal({ isOpen, onClose }) {
                       {mode === 'signin' ? 'Sign Up' : 'Sign In'}
                     </button>
                   </p>
+                  </div>
                 </>
               )}
             </div>
