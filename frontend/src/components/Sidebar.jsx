@@ -6,8 +6,8 @@ import {
   FolderCog,
   ChevronLeft,
   ChevronRight,
-  Scale,
 } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 const navItems = [
   { path: '/', label: 'Chat', icon: MessageSquare },
@@ -34,12 +34,12 @@ export default function Sidebar({ collapsed, onToggle }) {
         <motion.div
           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
           style={{
-            background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
-            boxShadow: '0 0 20px rgba(139,92,246,0.3)',
+            background: 'transparent',
+            boxShadow: 'none',
           }}
-          whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(139,92,246,0.5)' }}
+          whileHover={{ scale: 1.05 }}
         >
-          <Scale className="w-4.5 h-4.5 text-white" />
+          <img src={logo} alt="Agentic RAG logo" className="w-5 h-5 object-contain" />
         </motion.div>
         <AnimatePresence>
           {!collapsed && (

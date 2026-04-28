@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, Scale, CheckCircle, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, CheckCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AnimatedPage from '../components/AnimatedPage';
 import { isPasswordStrong, PASSWORD_POLICY_MESSAGE } from '../utils/passwordPolicy';
+import logo from '../assets/logo.png';
 
 export default function LoginPage() {
   const [mode, setMode] = useState('signin');
@@ -106,14 +107,14 @@ export default function LoginPage() {
             {/* Logo — Centered above text */}
             <div className="flex flex-col items-center text-center mb-8 sm:mb-12">
               <motion.div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
+                className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5"
                 style={{
-                  background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
-                  boxShadow: '0 0 40px rgba(139,92,246,0.3), 0 20px 40px -10px rgba(0,0,0,0.3)',
+                  background: 'transparent',
+                  boxShadow: 'none',
                 }}
                 whileHover={{ scale: 1.05, rotate: 5 }}
               >
-                <Scale className="w-8 h-8 text-white" />
+                <img src={logo} alt="Agentic RAG logo" className="w-12 h-12 object-contain" />
               </motion.div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-display text-balance" style={{ color: 'var(--text-primary)' }}>
                 {mode === 'signin' ? 'Welcome back' : 'Get started'}
@@ -292,40 +293,32 @@ export default function LoginPage() {
         ))}
 
         {/* Content — CENTERED */}
-        <div className="relative z-10 text-center text-white max-w-sm px-8 flex flex-col items-center">
+        <div className="relative z-10 text-center text-white max-w-sm px-8 flex flex-col items-center gap-8">
           <motion.div
-            className="w-20 h-20 rounded-2xl flex items-center justify-center mb-8"
+            className="w-24 h-24 rounded-2xl flex items-center justify-center"
             style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(20px)',
-              boxShadow: '0 0 30px rgba(139,92,246,0.2)',
+              background: 'transparent',
+              border: 'none',
+              backdropFilter: 'none',
+              boxShadow: 'none',
             }}
-            animate={{
-              boxShadow: [
-                '0 0 30px rgba(139,92,246,0.2)',
-                '0 0 50px rgba(139,92,246,0.3)',
-                '0 0 30px rgba(139,92,246,0.2)',
-              ],
-            }}
-            transition={{ duration: 3, repeat: Infinity }}
           >
-            <Scale className="w-10 h-10" />
+            <img src={logo} alt="Agentic RAG logo" className="w-14 h-14 object-contain" />
           </motion.div>
-          <h2 className="text-3xl font-bold font-display mb-4">
+          <h2 className="text-3xl font-bold font-display">
             Legal Intelligence
           </h2>
-          <p className="text-white/50 text-sm leading-relaxed">
+          <p className="text-white/50 text-sm leading-relaxed max-w-[320px]">
             Query legal and regulatory content with AI-powered Retrieval Augmented Generation.
             Get precise, sourced answers instantly.
           </p>
 
           {/* Feature pills */}
-          <div className="flex flex-wrap justify-center gap-2 mt-8">
+          <div className="flex flex-wrap justify-center gap-3">
             {['AI-Powered', 'Real-time', 'Multi-source', 'Secure'].map((feat, i) => (
               <motion.span
                 key={feat}
-                className="text-xs px-3 py-1.5 rounded-full"
+                className="text-sm px-5 py-2.5 rounded-full min-h-[44px] min-w-[120px] inline-flex items-center justify-center"
                 style={{
                   background: 'rgba(255,255,255,0.05)',
                   border: '1px solid rgba(255,255,255,0.1)',

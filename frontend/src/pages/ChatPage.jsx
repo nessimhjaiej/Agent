@@ -2,9 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Send,
-  Bot,
   User,
-  Sparkles,
   Mic,
   Square,
   Pencil,
@@ -19,8 +17,13 @@ import AuthModal from '../components/AuthModal';
 import TypingIndicator from '../components/TypingIndicator';
 import AnimatedPage from '../components/AnimatedPage';
 import API, { getDocumentSignedUrl, getDocumentSignedUrlByStoragePath } from '../config/api';
+import logo from '../assets/logo.png';
 
 const VOICE_WAVEFORM_BAR_COUNT = 33;
+const HERO_ROTATING_WORDS = ['accurate', 'compliant', 'auditable', 'reliable'];
+const HERO_TYPE_SPEED_MS = 85;
+const HERO_DELETE_SPEED_MS = 55;
+const HERO_HOLD_MS = 1400;
 
 function mapSourcesFromCitations(citations) {
   if (!Array.isArray(citations)) return [];
@@ -88,6 +91,9 @@ export default function ChatPage() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState('');
   const [openingDocumentId, setOpeningDocumentId] = useState('');
+  const [heroWordIndex, setHeroWordIndex] = useState(0);
+  const [heroWordVisibleLength, setHeroWordVisibleLength] = useState(0);
+  const [heroWordDeleting, setHeroWordDeleting] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -102,8 +108,35 @@ export default function ChatPage() {
   const [waveformSamples, setWaveformSamples] = useState(
     () => Array.from({ length: VOICE_WAVEFORM_BAR_COUNT }, () => 0),
   );
+  const currentHeroWord = HERO_ROTATING_WORDS[heroWordIndex];
 
   const getSourceCacheKey = (source) => source?.storagePath || source?.documentId || '';
+
+  useEffect(() => {
+    const currentLength = currentHeroWord.length;
+    let timeoutId;
+
+    if (!heroWordDeleting && heroWordVisibleLength < currentLength) {
+      timeoutId = window.setTimeout(() => {
+        setHeroWordVisibleLength((value) => value + 1);
+      }, HERO_TYPE_SPEED_MS);
+    } else if (!heroWordDeleting && heroWordVisibleLength === currentLength) {
+      timeoutId = window.setTimeout(() => {
+        setHeroWordDeleting(true);
+      }, HERO_HOLD_MS);
+    } else if (heroWordDeleting && heroWordVisibleLength > 0) {
+      timeoutId = window.setTimeout(() => {
+        setHeroWordVisibleLength((value) => value - 1);
+      }, HERO_DELETE_SPEED_MS);
+    } else {
+      timeoutId = window.setTimeout(() => {
+        setHeroWordDeleting(false);
+        setHeroWordIndex((value) => (value + 1) % HERO_ROTATING_WORDS.length);
+      }, 120);
+    }
+
+    return () => window.clearTimeout(timeoutId);
+  }, [currentHeroWord, heroWordDeleting, heroWordVisibleLength]);
 
   const getCachedPreviewUrl = (source) => {
     const cacheKey = getSourceCacheKey(source);
@@ -574,17 +607,17 @@ export default function ChatPage() {
   );
 
   return (
-    <AnimatedPage className="h-full w-full flex justify-center">
+    <AnimatedPage className="h-full w-full flex justify-center overflow-y-auto overflow-x-hidden">
       <div
-        className="h-full w-full max-w-[23rem] sm:max-w-4xl mx-auto flex flex-col px-0 sm:px-2 md:px-4 mt-6 sm:mt-8 md:mt-12"
+        className="h-full w-full max-w-[23rem] sm:max-w-[min(90vw,1280px)] mx-auto flex flex-col px-0 sm:px-3 md:px-4 mt-6 sm:mt-8 md:mt-12"
         style={{ minHeight: 0 }}
       >
       {/* Messages */}
-      <div className="flex-1 w-full" style={{ overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth', minHeight: 0, scrollbarGutter: 'stable', paddingTop: '32px', paddingBottom: '32px' }}>
+      <div className="flex-1 w-full" style={{ overflowX: 'hidden', scrollBehavior: 'smooth', minHeight: 0, paddingTop: '32px', paddingBottom: '32px' }}>
         {!hasMessages ? (
-          <div className="h-full flex flex-col items-center justify-center text-center max-w-[22rem] sm:max-w-3xl mx-auto w-full px-1 sm:px-4">
+          <div className="h-full flex flex-col items-center justify-center gap-5 sm:gap-6 text-center max-w-[24rem] sm:max-w-5xl mx-auto w-full px-2 sm:px-5 lg:translate-x-6 xl:translate-x-20">
             {/* Animated icon */}
-            <div className="relative mb-8 sm:mb-10">
+            <div className="relative">
               <motion.div
                 className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center"
                 style={{
@@ -592,15 +625,16 @@ export default function ChatPage() {
                   boxShadow: '0 0 40px rgba(139,92,246,0.15)',
                 }}
                 animate={{
+                  rotate: 360,
                   boxShadow: [
                     '0 0 40px rgba(139,92,246,0.15)',
                     '0 0 60px rgba(139,92,246,0.25)',
                     '0 0 40px rgba(139,92,246,0.15)',
                   ],
                 }}
-                transition={{ duration: 3, repeat: Infinity }}
+                transition={{ rotate: { duration: 5, repeat: Infinity, ease: 'linear' }, boxShadow: { duration: 3, repeat: Infinity } }}
               >
-                <Sparkles className="w-10 h-10 sm:w-12 sm:h-12" style={{ color: 'var(--color-primary-400)' }} />
+                <img src={logo} alt="Agentic RAG logo" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
               </motion.div>
               {/* Orbital dot */}
               <motion.div
@@ -619,20 +653,36 @@ export default function ChatPage() {
               />
             </div>
 
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-display mb-4 text-balance" style={{ color: 'var(--text-primary)' }}>
-              Legal Intelligence at Your{' '}
-              <span className="gradient-text-animated">Fingertips</span>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-display mb-0 mt-4 sm:mt-6 text-balance" style={{ color: 'var(--text-primary)' }}>
+              Intelligent <span className="gradient-text-animated">Answers</span> for Complex Regulations
             </h2>
-            <p className="text-sm sm:text-base md:text-lg max-w-lg mb-8 sm:mb-10 md:mb-12 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              Ask any question about legal regulations, compliance, or regulatory frameworks.
-              Our AI will retrieve and analyze relevant sources.
+            <p className="text-sm sm:text-base md:text-lg max-w-xl mb-0 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              Powered by an AI agent that interprets ICC guidelines and regulatory documents to deliver answers that are{' '}
+              <span
+                className="font-semibold"
+                style={{ color: 'var(--color-primary-400)' }}
+              >
+                {currentHeroWord.slice(0, heroWordVisibleLength)}
+                <motion.span
+                  aria-hidden="true"
+                  className="inline-block align-middle ml-0.5"
+                  style={{
+                    width: '0.08em',
+                    height: '1em',
+                    background: 'currentColor',
+                    borderRadius: '999px',
+                  }}
+                  animate={{ opacity: [0.2, 1, 0.2] }}
+                  transition={{ duration: 0.9, repeat: Infinity, ease: 'easeInOut' }}
+                />
+              </span>
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-[22rem] sm:max-w-2xl mb-8" style={{ marginTop: '24px' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full max-w-[24rem] sm:max-w-3xl mb-8" style={{ marginTop: '24px' }}>
               {[
-                'What is the ICC ?',
-                'How can AI be made inclusive for all countries?',
-                'What global framework is needed to fight cybercrime effectively',
-                'How can digitalisation support sustainable development',
+                'How can AI be made more inclusive across countries and industries?',
+                'What does the ICC say about protecting critical infrastructure from cyber threats?',
+                'What are the main recommendations from the ICC white paper on connectivity?',
+                'How do ICC regulatory documents approach digitalisation and global development?',
               ].map((suggestion, i) => (
                 <motion.button
                   key={i}
@@ -659,7 +709,7 @@ export default function ChatPage() {
             </div>
 
             {/* Input Area - Centered in Welcome */}
-            <div className="w-full max-w-[22rem] sm:max-w-2xl" style={{ marginTop: '24px' }}>
+            <div className="w-full max-w-[24rem] sm:max-w-3xl" style={{ marginTop: '24px' }}>
               <div
                 className="flex flex-col gap-4 rounded-2xl p-4 sm:p-5 md:p-6 transition-all input-glow"
                 style={{
@@ -705,7 +755,7 @@ export default function ChatPage() {
             </div>
           </div>
         ) : (
-          <div className="max-w-[22.5rem] sm:max-w-3xl mx-auto w-full px-0 sm:px-2">
+          <div className="w-full max-w-[22.5rem] sm:max-w-[min(92vw,1360px)] mx-auto px-0 sm:px-2 lg:px-1">
             {messages.map((msg) => {
               const isEditing = editingMessageId === msg.id;
 
@@ -721,16 +771,12 @@ export default function ChatPage() {
                 {msg.role === 'assistant' && (
                   <div
                     className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-1"
-                    style={{
-                      background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
-                      boxShadow: '0 0 12px rgba(139,92,246,0.3)',
-                    }}
                   >
-                    <Bot size={16} className="text-white" />
+                    <img src={logo} alt="Agentic RAG logo" className="w-7 h-7 object-contain" />
                   </div>
                 )}
                 <div
-                  className={`max-w-[92%] sm:max-w-[85%] lg:max-w-[75%] rounded-2xl min-w-0 ${
+                  className={`max-w-[84%] sm:max-w-[72%] lg:max-w-[60%] rounded-2xl min-w-0 ${
                     msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'
                   }`}
                   style={
@@ -890,14 +936,8 @@ export default function ChatPage() {
 
             {isTyping && (
               <motion.div className="flex gap-2 sm:gap-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                  style={{
-                    background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
-                    boxShadow: '0 0 12px rgba(139,92,246,0.3)',
-                  }}
-                >
-                  <Bot size={16} className="text-white" />
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0">
+                  <img src={logo} alt="Agentic RAG logo" className="w-7 h-7 object-contain" />
                 </div>
                 <div
                   className="rounded-2xl rounded-bl-md"
@@ -919,7 +959,7 @@ export default function ChatPage() {
       {/* Input Area - Footer for conversation */}
       {hasMessages && (
       <div className="py-3 w-full">
-        <div className="max-w-[22.5rem] sm:max-w-3xl mx-auto w-full px-0 sm:px-2">
+        <div className="w-full max-w-[22.5rem] sm:max-w-[min(92vw,1360px)] mx-auto px-0 sm:px-2 lg:px-1">
           <div
             className="flex flex-col gap-4 rounded-2xl p-4 sm:p-5 md:p-6 transition-all input-glow"
             style={{

@@ -8,12 +8,12 @@ import {
   LogOut,
   LogIn,
   X,
-  Scale,
   KeyRound,
   UserCog,
   Bell,
   ShieldAlert,
 } from 'lucide-react';
+import logo from '../assets/logo.png';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { getSecurityAlertsSummary, listSecurityAlerts } from '../config/api';
@@ -207,15 +207,15 @@ export default function Navbar() {
 
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
             <motion.div
-              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 cursor-pointer"
+              className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 cursor-pointer"
               style={{
-                background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
-                boxShadow: '0 0 20px rgba(139,92,246,0.3)',
+                background: 'transparent',
+                boxShadow: 'none',
               }}
-              whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(139,92,246,0.5)' }}
+              whileHover={{ scale: 1.05 }}
               onClick={handleLogoClick}
             >
-              <Scale className="w-4.5 h-4.5 text-white" />
+              <img src={logo} alt="Agentic RAG logo" className="w-10 h-10 object-contain" />
             </motion.div>
             <div className="min-w-0">
               <h1
@@ -343,17 +343,17 @@ export default function Navbar() {
                           transition={{ duration: 0.18 }}
                           className="absolute right-0 mt-3 rounded-2xl overflow-hidden z-30"
                           style={{
-                            width: 'min(360px, calc(100vw - 24px))',
+                            width: 'min(560px, calc(100vw - 24px))',
                             background: 'var(--bg-secondary)',
                             border: '1px solid var(--border-color)',
                             boxShadow: '0 20px 60px rgba(2, 6, 23, 0.28)',
                           }}
                         >
                           <div
-                            className="px-4 py-3 flex items-start sm:items-center justify-between gap-3"
-                            style={{ borderBottom: '1px solid var(--border-color)' }}
+                            className="grid grid-cols-[8px_52px_minmax(0,1.05fr)_minmax(0,1.7fr)_148px] gap-x-4 px-6 py-4.5 items-center min-h-[68px]"
+                            style={{ borderBottom: 'none' }}
                           >
-                            <div className="min-w-0">
+                            <div className="min-w-0 col-start-2 col-span-3">
                               <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                                 Security alerts
                               </p>
@@ -367,65 +367,87 @@ export default function Navbar() {
                                 closeTransientMenus();
                                 navigate('/security');
                               }}
-                              className="text-xs font-medium"
+                              className="text-xs font-medium justify-self-center"
                               style={{ color: 'var(--color-primary-400)' }}
                             >
                               Open dashboard
                             </button>
                           </div>
 
-                          <div className="max-h-[340px] overflow-y-auto">
-                            {recentAlerts.length > 0 ? recentAlerts.map((alert) => {
-                              const severity = severityStyles[alert.severity] || severityStyles.info;
-                              return (
-                                <button
-                                  key={alert.id}
-                                  type="button"
-                                  onClick={() => {
-                                    closeTransientMenus();
-                                    navigate('/security');
-                                  }}
-                                  className="w-full text-left px-4 py-3 transition-colors"
-                                  style={{
-                                    borderBottom: '1px solid var(--border-color)',
-                                    background: 'transparent',
-                                  }}
+                          <div className="max-h-[520px] overflow-y-auto px-6 py-4">
+                            {recentAlerts.length > 0 ? (
+                              <div className="space-y-1">
+                                <div
+                                  className="grid grid-cols-[8px_52px_minmax(0,1.05fr)_minmax(0,1.7fr)_148px] gap-x-4 px-2 pb-3 text-[11px] uppercase tracking-[0.14em]"
+                                  style={{ color: 'var(--text-muted)' }}
                                 >
-                                  <div className="flex items-start gap-3">
-                                    <div
-                                      className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                                      style={{ background: severity.background }}
+                                  <div />
+                                  <div className="w-9 shrink-0" />
+                                  <div className="pl-2">Alert</div>
+                                  <div>Details</div>
+                                  <div className="flex items-center justify-center text-center">Status</div>
+                                </div>
+                                {recentAlerts.map((alert) => {
+                                  const severity = severityStyles[alert.severity] || severityStyles.info;
+                                  return (
+                                    <button
+                                      key={alert.id}
+                                      type="button"
+                                      onClick={() => {
+                                        closeTransientMenus();
+                                        navigate('/security');
+                                      }}
+                                      className="w-full text-left px-2 py-3 rounded-xl transition-colors hover:bg-primary-500/5"
+                                      style={{ background: 'transparent' }}
                                     >
-                                      <ShieldAlert size={16} style={{ color: severity.color }} />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                      <div className="flex items-center justify-between gap-2">
-                                        <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                                          {alert.title}
-                                        </p>
-                                        <span
-                                          className="text-[10px] uppercase px-2 py-0.5 rounded-full border"
-                                          style={{
-                                            color: severity.color,
-                                            background: severity.background,
-                                            borderColor: severity.border,
-                                          }}
+                                      <div className="grid grid-cols-[8px_52px_minmax(0,1.05fr)_minmax(0,1.7fr)_148px] gap-x-4 items-stretch">
+                                        <div />
+                                        <div
+                                          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                                          style={{ background: severity.background }}
                                         >
-                                          {alert.severity}
-                                        </span>
+                                          <ShieldAlert size={16} style={{ color: severity.color }} />
+                                        </div>
+                                        <div className="min-w-0 pl-2">
+                                          <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                                            {alert.title}
+                                          </p>
+                                          <p className="text-[11px] mt-1 truncate" style={{ color: 'var(--text-muted)' }}>
+                                            {alert.source_service}
+                                          </p>
+                                        </div>
+                                        <div className="min-w-0">
+                                          <p className="text-xs leading-5 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
+                                            {alert.message}
+                                          </p>
+                                        </div>
+                                        <div className="min-w-[148px] flex flex-col items-center justify-center text-center">
+                                          <span
+                                            className="inline-flex min-w-[92px] min-h-[34px] items-center justify-center text-[10px] uppercase px-4 py-1.5 rounded-full"
+                                            style={{
+                                              color: severity.color,
+                                              background: severity.background,
+                                            }}
+                                          >
+                                            {alert.severity}
+                                          </span>
+                                          <p className="text-[11px] mt-2 whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
+                                            {formatAlertTime(alert.last_seen_at)}
+                                          </p>
+                                          <p className="text-[11px] mt-1 whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
+                                            {alert.count} occurrence{alert.count > 1 ? 's' : ''}
+                                          </p>
+                                        </div>
                                       </div>
-                                      <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
-                                        {alert.message}
-                                      </p>
-                                      <p className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
-                                        {alert.source_service} · {formatAlertTime(alert.last_seen_at)} · {alert.count} occurrence{alert.count > 1 ? 's' : ''}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </button>
-                              );
-                            }) : (
-                              <div className="px-4 py-8 text-center">
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div
+                                className="px-6 py-10 text-center"
+                                style={{ background: 'transparent' }}
+                              >
                                 <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                                   No active alerts
                                 </p>
@@ -742,11 +764,11 @@ export default function Navbar() {
                   <div
                     className="w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center"
                     style={{
-                      background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
-                      boxShadow: '0 0 22px rgba(139,92,246,0.2)',
+                      background: 'transparent',
+                      boxShadow: 'none',
                     }}
                   >
-                    <Scale className="w-7 h-7 md:w-8 md:h-8 text-white" />
+                    <img src={logo} alt="Agentic RAG logo" className="w-7 h-7 md:w-8 md:h-8 object-contain" />
                   </div>
                   <p className="text-sm md:text-base font-medium" style={{ color: 'var(--text-muted)' }}>
                     Agentic RAG
