@@ -34,6 +34,7 @@ import {
   updateDocumentStatus,
   uploadDocument,
 } from '../config/api';
+import logo from '../assets/logo.png';
 
 const DOCS_TABLE = import.meta.env.VITE_SUPABASE_DOCS_TABLE || 'documents';
 const ADMIN_AGENT_WARNING =
@@ -1677,7 +1678,11 @@ export default function AdminPage() {
                     <div className="mx-auto w-full">
                       {agentMsgs.map((msg) => (
                         <motion.div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`} style={{ marginBottom: '32px' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                          {msg.role === 'assistant' && <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', boxShadow: '0 0 12px rgba(245,158,11,0.3)' }}><Bot size={15} className="text-white" /></div>}
+                          {msg.role === 'assistant' && (
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-1">
+                              <img src={logo} alt="Agentic RAG logo" className="w-6 h-6 object-contain" />
+                            </div>
+                          )}
                           <div
                             className={`max-w-[80%] rounded-2xl ${msg.role === 'user' ? 'rounded-br-md' : 'rounded-bl-md'}`}
                             style={msg.role === 'user'
