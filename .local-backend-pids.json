@@ -1,42 +1,42 @@
 [
     {
+        "name":  "auth-service",
+        "pid":  28824,
+        "port":  8001
+    },
+    {
         "name":  "preprocessing-service",
-        "pid":  15188,
+        "pid":  21708,
         "port":  8000
     },
     {
         "name":  "embedding-service",
-        "pid":  15024,
+        "pid":  33264,
         "port":  8002
     },
     {
         "name":  "retrieval-service",
-        "pid":  18004,
+        "pid":  35400,
         "port":  8003
     },
     {
+        "name":  "generation-service",
+        "pid":  30804,
+        "port":  8004
+    },
+    {
         "name":  "ingestion-service",
-        "pid":  16092,
+        "pid":  30748,
         "port":  8005
     },
     {
         "name":  "admin-service",
-        "pid":  14368,
+        "pid":  32548,
         "port":  8006
     },
     {
         "name":  "security-service",
-        "pid":  22628,
+        "pid":  28484,
         "port":  8007
-    },
-    {
-        "name":  "auth-service",
-        "pid":  31008,
-        "port":  8001
-    },
-    {
-        "name":  "generation-service",
-        "pid":  24488,
-        "port":  8004
     }
 ]

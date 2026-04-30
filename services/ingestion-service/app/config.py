@@ -30,6 +30,7 @@ class Settings:
     supabase_docs_table: str = "documents"
     signed_url_ttl_seconds: int = 3600
     http_timeout_seconds: float = 30.0
+    security_base_url: str = ""
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -43,6 +44,7 @@ class Settings:
             supabase_docs_table=os.getenv("INGESTION_SUPABASE_DOCS_TABLE", os.getenv("VITE_SUPABASE_DOCS_TABLE", defaults.supabase_docs_table)).strip(),
             signed_url_ttl_seconds=_parse_int("INGESTION_SIGNED_URL_TTL_SECONDS", defaults.signed_url_ttl_seconds),
             http_timeout_seconds=float(os.getenv("INGESTION_HTTP_TIMEOUT_SECONDS", str(defaults.http_timeout_seconds))),
+            security_base_url=os.getenv("SECURITY_BASE_URL", defaults.security_base_url).strip(),
         )
 
     def validate(self) -> None:
