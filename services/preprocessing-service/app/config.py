@@ -14,7 +14,7 @@ load_dotenv(_PROJECT_ROOT / ".env.local", override=True)
 class Settings:
     app_name: str = "preprocessing-service"
     app_version: str = "0.1.0"
-    chunk_strategy: str = "semantic"
+    chunk_strategy: str = "overlap"
     chunk_size: int = 800
     chunk_overlap: int = 120
     pipeline_version: str = "v1"

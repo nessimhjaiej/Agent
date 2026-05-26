@@ -12,6 +12,7 @@ import {
   UserCog,
   Bell,
   ShieldAlert,
+  LayoutDashboard,
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 import { useTheme } from '../context/ThemeContext';
@@ -64,6 +65,8 @@ export default function Navbar() {
   const notificationsRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const isAdmin = user?.user_metadata?.role === 'admin';
+  const isAdminPage = location.pathname === '/admin';
+  const isSecurityPage = location.pathname === '/security';
   const homeRoute = isAdmin ? '/admin' : '/';
 
   useEffect(() => {
@@ -134,13 +137,7 @@ export default function Navbar() {
   };
 
   const getPageTitle = () => {
-    switch (location.pathname) {
-      case '/': return 'RAG Chat';
-      case '/admin': return 'Admin Panel';
-      case '/security': return 'Security Dashboard';
-      case '/login': return 'Sign In';
-      default: return 'Agentic RAG';
-    }
+    return 'Synapse';
   };
 
   const changePassword = async (nextPassword) => updatePassword(nextPassword);
@@ -308,6 +305,23 @@ export default function Navbar() {
             {user ? (
               <div className="hidden lg:flex items-center gap-1.5 sm:gap-3 min-w-0">
                 {isAdmin && (
+                  <motion.button
+                    type="button"
+                    onClick={() => {
+                      closeTransientMenus();
+                      navigate(isSecurityPage ? '/admin' : '/security');
+                    }}
+                    className="relative p-2.5 rounded-xl transition-colors hover:bg-primary-500/10"
+                    style={{ color: 'var(--text-secondary)' }}
+                    title={isSecurityPage ? 'Open admin dashboard' : 'Open security dashboard'}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {isSecurityPage ? <LayoutDashboard size={18} /> : <ShieldAlert size={18} />}
+                  </motion.button>
+                )}
+
+                {isAdmin && (
                   <div className="relative" ref={notificationsRef}>
                     <motion.button
                       onClick={() => setShowNotifications((current) => !current)}
@@ -341,9 +355,10 @@ export default function Navbar() {
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 8, scale: 0.98 }}
                           transition={{ duration: 0.18 }}
-                          className="absolute right-0 mt-3 rounded-2xl overflow-hidden z-30"
+                          className="absolute right-0 mt-3 rounded-2xl overflow-hidden z-30 flex flex-col"
                           style={{
                             width: 'min(560px, calc(100vw - 24px))',
+                            maxHeight: 'min(70vh, 640px)',
                             background: 'var(--bg-secondary)',
                             border: '1px solid var(--border-color)',
                             boxShadow: '0 20px 60px rgba(2, 6, 23, 0.28)',
@@ -374,7 +389,13 @@ export default function Navbar() {
                             </button>
                           </div>
 
-                          <div className="max-h-[520px] overflow-y-auto px-6 py-4">
+                          <div
+                            className="notification-scroll-area flex-1 overflow-y-auto px-6 py-4 overscroll-contain"
+                            style={{
+                              WebkitOverflowScrolling: 'touch',
+                              touchAction: 'pan-y',
+                            }}
+                          >
                             {recentAlerts.length > 0 ? (
                               <div className="space-y-1">
                                 <div
@@ -665,6 +686,26 @@ export default function Navbar() {
                           type="button"
                           onClick={() => {
                             closeTransientMenus();
+                            navigate(isSecurityPage ? '/admin' : '/security');
+                          }}
+                          className="w-full flex items-center justify-center gap-3 rounded-2xl px-4 md:px-5 py-4 md:py-4.5 text-sm md:text-base text-center"
+                          style={{
+                            background: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-primary)',
+                            minHeight: '60px',
+                          }}
+                          >
+                            {isSecurityPage ? <LayoutDashboard size={18} /> : <ShieldAlert size={18} />}
+                            <span>{isSecurityPage ? 'Admin dashboard' : 'Security dashboard'}</span>
+                          </button>
+                        )}
+
+                        {isAdmin && (
+                          <button
+                          type="button"
+                          onClick={() => {
+                            closeTransientMenus();
                             navigate('/security');
                           }}
                           className="w-full flex items-center justify-center gap-3 rounded-2xl px-4 md:px-5 py-4 md:py-4.5 text-sm md:text-base text-center"
@@ -771,7 +812,7 @@ export default function Navbar() {
                     <img src={logo} alt="Agentic RAG logo" className="w-7 h-7 md:w-8 md:h-8 object-contain" />
                   </div>
                   <p className="text-sm md:text-base font-medium" style={{ color: 'var(--text-muted)' }}>
-                    Agentic RAG
+                    Synapse
                   </p>
                 </div>
               </div>

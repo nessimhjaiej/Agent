@@ -110,6 +110,24 @@ class EvaluationReportSummaryResponse(BaseModel):
     summary: dict[str, float] = Field(default_factory=dict)
 
 
+class EvaluationReportRecordResponse(BaseModel):
+    user_input: str = ""
+    response: str = ""
+    reference: str = ""
+    retrieved_contexts: list[str] = Field(default_factory=list)
+    metrics: dict[str, float | str | bool | None] = Field(default_factory=dict)
+
+
+class EvaluationReportDetailResponse(BaseModel):
+    report_id: str = Field(..., min_length=1)
+    filename: str = Field(..., min_length=1)
+    generated_at_utc: str
+    sample_count: int = Field(..., ge=0)
+    dataset_path: str
+    summary: dict[str, float] = Field(default_factory=dict)
+    records: list[EvaluationReportRecordResponse] = Field(default_factory=list)
+
+
 class EvaluationRunResponse(BaseModel):
     status: str = Field(default="ok", pattern="^(ok)$")
     report: EvaluationReportSummaryResponse
@@ -118,6 +136,11 @@ class EvaluationRunResponse(BaseModel):
 class EvaluationListResponse(BaseModel):
     status: str = Field(default="ok", pattern="^(ok)$")
     reports: list[EvaluationReportSummaryResponse] = Field(default_factory=list)
+
+
+class EvaluationDetailResponse(BaseModel):
+    status: str = Field(default="ok", pattern="^(ok)$")
+    report: EvaluationReportDetailResponse
 
 
 class EvaluationCompareRequest(BaseModel):

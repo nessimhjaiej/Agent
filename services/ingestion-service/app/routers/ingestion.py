@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import httpx
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, UploadFile
 
@@ -11,6 +13,7 @@ from app.schemas import (
     SignedUrlResponse,
     UpdateDocumentStatusRequest,
 )
+from app.security_events import emit_security_event
 from app.service import IngestionService
 
 
@@ -89,6 +92,34 @@ def _document_response(document) -> DocumentResponse:
     )
 
 
+def _admin_metadata(admin_user: dict) -> dict:
+    user_metadata = admin_user.get("user_metadata") if isinstance(admin_user.get("user_metadata"), dict) else {}
+    return {
+        "admin_user_id": str(admin_user.get("id") or ""),
+        "admin_email": str(admin_user.get("email") or user_metadata.get("email") or ""),
+        "admin_role": str(user_metadata.get("role") or ""),
+    }
+
+
+def _emit_info_event(
+    *,
+    settings: Settings,
+    event_type: str,
+    title: str,
+    message: str,
+    metadata: dict,
+) -> None:
+    emit_security_event(
+        settings,
+        event_type=event_type,
+        severity="info",
+        title=title,
+        message=message,
+        metadata={key: value for key, value in metadata.items() if value not in ("", None, [], {})},
+        fingerprint=f"{event_type.lower()}|{metadata.get('document_id', 'unknown')}|{datetime.now(timezone.utc).isoformat()}",
+    )
+
+
 @router.get("/documents", response_model=ListDocumentsResponse)
 def list_documents(
     user_id: str | None = Query(default=None, min_length=1),
@@ -117,6 +148,7 @@ async def upload_document(
     file: UploadFile = File(...),
     _admin_user: dict = Depends(_require_admin_user),
 ) -> DocumentResponse:
+    settings = Settings.from_env()
     try:
         content = await file.read()
         document = _service().upload_document(
@@ -137,6 +169,21 @@ async def upload_document(
     except IngestionServiceError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+    _emit_info_event(
+        settings=settings,
+        event_type="DOCUMENT_UPLOADED",
+        title="Admin uploaded document",
+        message="An administrator uploaded a document.",
+        metadata={
+            **_admin_metadata(_admin_user),
+            "target_user_id": user_id,
+            "document_id": document.id,
+            "original_name": document.original_name,
+            "storage_path": document.storage_path,
+            "size_bytes": document.size_bytes,
+        },
+    )
+
     return _document_response(document)
 
 
@@ -146,6 +193,7 @@ def update_document_status(
     payload: UpdateDocumentStatusRequest,
     _admin_user: dict = Depends(_require_admin_user),
 ) -> DocumentResponse:
+    settings = Settings.from_env()
     try:
         document = _service().update_document_status(
             UpdateDocumentStatusParams(
@@ -161,6 +209,22 @@ def update_document_status(
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     except IngestionServiceError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    if payload.target_status == "validated":
+        _emit_info_event(
+            settings=settings,
+            event_type="DOCUMENT_APPROVED",
+            title="Admin approved document",
+            message="An administrator approved a document.",
+            metadata={
+                **_admin_metadata(_admin_user),
+                "target_user_id": document.user_id,
+                "document_id": document.id,
+                "original_name": document.original_name,
+                "storage_path": document.storage_path,
+                "status": document.status,
+            },
+        )
 
     return _document_response(document)
 
@@ -225,6 +289,7 @@ def delete_document(
     document_id: str,
     _admin_user: dict = Depends(_require_admin_user),
 ) -> DeleteDocumentResponse:
+    settings = Settings.from_env()
     try:
         result = _service().delete_document(document_id)
     except ValueError as exc:
@@ -235,6 +300,18 @@ def delete_document(
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     except IngestionServiceError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    _emit_info_event(
+        settings=settings,
+        event_type="DOCUMENT_DELETED",
+        title="Admin deleted document",
+        message="An administrator deleted a document.",
+        metadata={
+            **_admin_metadata(_admin_user),
+            "document_id": result.document_id,
+            "storage_path": result.storage_path,
+        },
+    )
 
     return DeleteDocumentResponse(
         status=result.status,

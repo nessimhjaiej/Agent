@@ -106,6 +106,7 @@ export default function SecurityPage() {
     top_targeted_accounts: [],
   });
   const [loading, setLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [error, setError] = useState('');
   const [busyAlertIds, setBusyAlertIds] = useState(new Set());
 
@@ -124,6 +125,7 @@ export default function SecurityPage() {
     } catch (nextError) {
       setError(nextError.message || 'Failed to load security alerts');
     } finally {
+      setHasLoadedOnce(true);
       setLoading(false);
     }
   };
@@ -167,6 +169,8 @@ export default function SecurityPage() {
       }),
     [alerts, eventTypeFilter, includeResolved, severityFilter]
   );
+  const isInitialLoading = loading && !hasLoadedOnce;
+  const securityEventsMaxHeightClass = filteredAlerts.length <= 1 ? 'max-h-[460px] sm:max-h-[320px]' : 'max-h-[1400px] sm:max-h-[984px]';
 
   const markBusy = (alertId, value) => {
     setBusyAlertIds((prev) => {
@@ -191,394 +195,441 @@ export default function SecurityPage() {
   };
 
   return (
-    <AnimatedPage className="h-full min-h-0 overflow-hidden p-2 sm:p-3 md:p-5 lg:p-6">
-      <div className="h-full overflow-y-auto pr-1">
-      <div className="w-full max-w-[1560px] mx-auto space-y-4 md:space-y-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
-        {[
-          { label: 'Active Alerts', value: summary.active_alerts, sub: 'Not resolved yet', icon: ShieldAlert, color: '#ef4444', glow: 'rgba(239,68,68,0.15)' },
-          { label: 'Critical Alerts', value: summary.critical_alerts, sub: 'Highest priority', icon: AlertTriangle, color: '#f59e0b', glow: 'rgba(245,158,11,0.15)' },
-          { label: 'Warning Alerts', value: summary.warning_alerts, sub: 'Watch closely', icon: TrendingUp, color: 'var(--color-primary-400)', glow: 'rgba(139,92,246,0.15)' },
-          { label: 'Info Alerts', value: summary.info_alerts, sub: 'Confirmed changes and telemetry', icon: ShieldCheck, color: '#10b981', glow: 'rgba(16,185,129,0.15)' },
-        ].map((card, i) => (
-          <motion.div
-            key={card.label}
-            className="rounded-xl p-4 md:p-5 min-w-0"
-            style={{
-              background: 'var(--bg-secondary)',
-              border: '1px solid var(--border-color)',
-            }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-            whileHover={{
-              boxShadow: `0 0 25px ${card.glow}`,
-              borderColor: card.glow,
-            }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: card.glow }}
+    <AnimatedPage className="mt-6 h-full min-h-0 w-full overflow-y-auto overflow-x-hidden md:mt-8">
+      <div className="w-full min-h-full overflow-x-hidden px-4 pt-8 pb-3 sm:px-4 sm:pt-10 sm:pb-4 md:px-6 md:pt-12 md:pb-5 lg:px-8 lg:pt-14 lg:pb-6">
+        <div className="mx-auto w-full max-w-[1560px] space-y-6 md:space-y-8">
+          <div className="pt-6 md:pt-8">
+            <div className="grid grid-cols-1 gap-3 px-2 sm:grid-cols-2 xl:grid-cols-4 md:gap-4 md:px-2">
+            {[
+              { label: 'Active Alerts', value: summary.active_alerts, sub: 'Not resolved yet', icon: ShieldAlert, color: '#ef4444', glow: 'rgba(239,68,68,0.15)' },
+              { label: 'Critical Alerts', value: summary.critical_alerts, sub: 'Highest priority', icon: AlertTriangle, color: '#f59e0b', glow: 'rgba(245,158,11,0.15)' },
+              { label: 'Warning Alerts', value: summary.warning_alerts, sub: 'Watch closely', icon: TrendingUp, color: 'var(--color-primary-400)', glow: 'rgba(139,92,246,0.15)' },
+              { label: 'Info Alerts', value: summary.info_alerts, sub: 'Confirmed changes and telemetry', icon: ShieldCheck, color: '#10b981', glow: 'rgba(16,185,129,0.15)' },
+            ].map((card, i) => (
+              <motion.div
+                key={card.label}
+                className="min-w-0 rounded-xl px-7 py-6 md:px-8 md:py-7"
+                style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08 }}
+                whileHover={{
+                  boxShadow: `0 0 25px ${card.glow}`,
+                  borderColor: card.glow,
+                }}
               >
-                <card.icon size={20} style={{ color: card.color }} />
-              </div>
-            </div>
-            <p className="text-xl md:text-2xl font-bold font-display break-words" style={{ color: card.color }}>{card.value}</p>
-            <p className="text-[11px] md:text-xs mt-1 leading-relaxed" style={{ color: 'var(--text-muted)' }}>{card.label} · {card.sub}</p>
-          </motion.div>
-        ))}
-      </div>
-
-      <div>
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold font-display" style={{ color: 'var(--text-primary)' }}>
-              Login Attempts
-            </h2>
-          </div>
-          {!loginAttemptsSummary.enabled && (
-            <span
-              className="text-xs font-medium px-2.5 py-1 rounded-full"
-              style={{
-                background: 'rgba(245,158,11,0.1)',
-                color: '#f59e0b',
-                border: '1px solid rgba(245,158,11,0.2)',
-              }}
-            >
-              Supabase read disabled
-            </span>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
-          {[
-            { label: 'Total Attempts', value: loginAttemptsSummary.total_attempts, color: '#3b82f6', glow: 'rgba(59,130,246,0.15)', icon: Activity },
-            { label: 'Failed Attempts', value: loginAttemptsSummary.failed_attempts, color: '#ef4444', glow: 'rgba(239,68,68,0.15)', icon: ShieldAlert },
-            { label: 'Successful Attempts', value: loginAttemptsSummary.successful_attempts, color: '#10b981', glow: 'rgba(16,185,129,0.15)', icon: ShieldCheck },
-            { label: 'Unique Emails', value: loginAttemptsSummary.unique_emails, color: '#f59e0b', glow: 'rgba(245,158,11,0.15)', icon: TrendingUp },
-          ].map((card) => (
-            <div
-              key={card.label}
-              className="rounded-xl p-4 md:p-5 min-w-0"
-              style={{
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--border-color)',
-                boxShadow: `0 0 25px ${card.glow}`,
-              }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background: card.glow }}
-                >
-                  <card.icon size={20} style={{ color: card.color }} />
-                </div>
-              </div>
-              <p className="text-xl md:text-2xl font-bold font-display break-words" style={{ color: card.color }}>{card.value}</p>
-              <p className="text-[11px] md:text-xs mt-1 leading-relaxed" style={{ color: 'var(--text-muted)' }}>{card.label}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 md:gap-4 mt-4">
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
-          >
-            <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--border-color)' }}>
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Recent Failed Attempts
-              </h3>
-            </div>
-            <div className="max-h-[260px] md:max-h-[300px] overflow-auto">
-              {loginAttemptsSummary.recent_failed_attempts.length > 0 ? loginAttemptsSummary.recent_failed_attempts.map((attempt, index) => (
-                <div
-                  key={`${attempt.email}-${attempt.timestamp}-${index}`}
-                  className="px-4 py-3"
-                  style={{ borderBottom: '1px solid var(--border-color)' }}
-                >
-                  <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                    {attempt.email || 'unknown'}
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                    {formatDateTime(attempt.timestamp)}
-                  </p>
-                </div>
-              )) : (
-                <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-                  No failed attempts in the selected window.
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
-          >
-            <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--border-color)' }}>
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Top Targeted Accounts
-              </h3>
-            </div>
-            <div className="max-h-[260px] md:max-h-[300px] overflow-auto">
-              {loginAttemptsSummary.top_targeted_accounts.length > 0 ? loginAttemptsSummary.top_targeted_accounts.map((item) => (
-                <div
-                  key={item.email}
-                  className="px-4 py-3 flex items-center justify-between"
-                  style={{ borderBottom: '1px solid var(--border-color)' }}
-                >
-                  <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-                    {item.email}
-                  </p>
-                  <span
-                    className="text-xs font-medium px-2.5 py-1 rounded-full"
-                    style={{
-                      background: 'rgba(239,68,68,0.1)',
-                      color: '#ef4444',
-                      border: '1px solid rgba(239,68,68,0.2)',
-                    }}
-                  >
-                    {item.failed_attempts} failed
-                  </span>
-                </div>
-              )) : (
-                <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-                  No targeted accounts detected.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div
-        className="rounded-xl p-4 md:p-5 min-w-0"
-        style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
-      >
-          <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-3 mb-4">
-            <div className="min-w-0">
-              <h2 className="text-lg font-semibold font-display" style={{ color: 'var(--text-primary)' }}>
-                Security Events
-              </h2>
-              <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-                Real-time alerts emitted by the backend security checks.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 xl:justify-end">
-              <Filter size={15} style={{ color: 'var(--text-muted)' }} />
-              <select
-                value={severityFilter}
-                onChange={(event) => setSeverityFilter(event.target.value)}
-                className="px-3 py-1.5 rounded-lg text-xs outline-none w-full sm:w-auto sm:min-w-[132px]"
-                style={{ border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
-              >
-                <option value="all">All severities</option>
-                <option value="critical">Critical</option>
-                <option value="warning">Warning</option>
-                <option value="info">Info</option>
-              </select>
-              <select
-                value={eventTypeFilter}
-                onChange={(event) => setEventTypeFilter(event.target.value)}
-                className="px-3 py-1.5 rounded-lg text-xs outline-none w-full sm:w-auto sm:min-w-[158px] max-w-full"
-                style={{ border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
-              >
-                <option value="all">All event types</option>
-                {eventTypeOptions.map((eventType) => (
-                  <option key={eventType} value={eventType}>
-                    {formatLabel(eventType)}
-                  </option>
-                ))}
-              </select>
-              <label className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                <input
-                  type="checkbox"
-                  checked={includeResolved}
-                  onChange={(event) => setIncludeResolved(event.target.checked)}
-                />
-                Show resolved
-              </label>
-            </div>
-          </div>
-
-          {error && (
-            <div
-              className="rounded-xl px-4 py-3 text-sm mb-4"
-              style={{
-                background: 'rgba(239,68,68,0.08)',
-                border: '1px solid rgba(239,68,68,0.18)',
-                color: '#ef4444',
-              }}
-            >
-              {error}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 2xl:grid-cols-2 gap-3">
-            {filteredAlerts.map((alert, i) => {
-              const cfg = sevCfg[alert.severity] || sevCfg.info;
-              const statusCfg = statusStyles[alert.status] || statusStyles.active;
-              const Icon = cfg.icon;
-              const isBusy = busyAlertIds.has(alert.id);
-              const metadataEntries = extractAlertMetadataEntries(alert);
-              return (
-                <motion.div
-                  key={alert.id}
-                  className="rounded-xl p-4 min-w-0"
-                  style={{
-                    background: 'var(--bg-secondary)',
-                    border: `1px solid ${cfg.border}`,
-                  }}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  whileHover={{ boxShadow: `0 0 20px ${cfg.glow}` }}
-                >
-                  <div className="flex items-start gap-3">
-                    <motion.div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ background: cfg.bg }}
-                      animate={alert.severity === 'critical' && alert.status === 'active' ? { scale: [1, 1.05, 1] } : {}}
-                      transition={alert.severity === 'critical' && alert.status === 'active' ? { duration: 2, repeat: Infinity } : {}}
+                <div className="flex min-h-[152px] flex-col justify-center py-1">
+                  <div className="mb-5 mt-1 flex justify-center">
+                    <div
+                      className="flex h-10 w-10 items-center justify-center rounded-xl"
+                      style={{ background: card.glow }}
                     >
-                      <Icon size={18} style={{ color: cfg.text }} />
-                    </motion.div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <h3 className="text-sm font-semibold break-words" style={{ color: 'var(--text-primary)' }}>{alert.title}</h3>
-                          <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                            {alert.source_service} · {alert.event_type}
-                          </p>
-                        </div>
-                        <span
-                          className="text-xs font-medium px-2 py-0.5 rounded-full"
-                          style={{
-                            background: statusCfg.bg,
-                            color: statusCfg.color,
-                            border: `1px solid ${statusCfg.border}`,
-                          }}
-                        >
-                          {alert.status}
-                        </span>
-                      </div>
-                      <p className="text-xs mt-3 leading-relaxed text-wrap-anywhere" style={{ color: 'var(--text-secondary)' }}>{alert.message}</p>
-                      <div className="flex items-center gap-4 mt-3 text-xs flex-wrap" style={{ color: 'var(--text-muted)' }}>
-                        <span className="flex items-center gap-1"><Clock size={10} />{formatDateTime(alert.last_seen_at)}</span>
-                        <span>{alert.count} occurrence{alert.count > 1 ? 's' : ''}</span>
-                        <span>Created {formatDateTime(alert.created_at)}</span>
-                      </div>
-                      {metadataEntries.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {metadataEntries.map((entry) => (
-                            <span
-                              key={`${alert.id}-${entry.key}`}
-                              className="text-[11px] px-2.5 py-1 rounded-full"
-                              style={{
-                                background: 'rgba(148,163,184,0.08)',
-                                color: 'var(--text-secondary)',
-                                border: '1px solid rgba(148,163,184,0.15)',
-                              }}
-                            >
-                              {entry.label}: {entry.value}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      {alert.status === 'active' && (
-                        <button
-                          type="button"
-                          onClick={() => handleResolve(alert.id)}
-                          disabled={isBusy}
-                          className="mt-4 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium disabled:opacity-60"
-                          style={{
-                            background: 'rgba(16,185,129,0.1)',
-                            color: '#10b981',
-                            border: '1px solid rgba(16,185,129,0.2)',
-                          }}
-                        >
-                          <CheckCircle2 size={14} />
-                          {isBusy ? 'Resolving...' : 'Mark as resolved'}
-                        </button>
-                      )}
+                      <card.icon size={20} style={{ color: card.color }} />
                     </div>
                   </div>
-                </motion.div>
-              );
-            })}
+                  <p className="mb-1 text-center text-2xl font-bold font-display break-words md:text-3xl" style={{ color: card.color }}>{card.value}</p>
+                  <p className="mt-3 mb-1 text-center text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{card.label}</p>
+                </div>
+
+              </motion.div>
+            ))}
+            </div>
           </div>
 
-          {!loading && filteredAlerts.length === 0 && (
-            <div
-              className="rounded-xl px-4 py-10 mt-3 text-center"
-              style={{ border: '1px dashed var(--border-color)', color: 'var(--text-muted)' }}
-            >
-              No alerts match the current filters.
+          <div className="pt-4">
+            <div className="h-2 md:h-3" />
+            <div className="flex flex-col gap-4 px-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold font-display" style={{ color: 'var(--text-primary)' }}>
+                  Login Attempts
+                </h2>
+              </div>
+              {!loginAttemptsSummary.enabled && (
+                <span
+                  className="inline-flex min-h-[40px] items-center justify-center rounded-full px-4 py-2.5 text-sm font-medium"
+                  style={{
+                    background: 'rgba(245,158,11,0.1)',
+                    color: '#f59e0b',
+                  }}
+                >
+                  Supabase read disabled
+                </span>
+              )}
             </div>
-          )}
-      </div>
+            <div className="h-3 md:h-4" />
 
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold font-display" style={{ color: 'var(--text-primary)' }}>Recent Alert Log</h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 md:gap-4">
+              {[
+                { label: 'Total Attempts', value: loginAttemptsSummary.total_attempts, color: '#3b82f6', glow: 'rgba(59,130,246,0.15)', icon: Activity },
+                { label: 'Failed Attempts', value: loginAttemptsSummary.failed_attempts, color: '#ef4444', glow: 'rgba(239,68,68,0.15)', icon: ShieldAlert },
+                { label: 'Successful Attempts', value: loginAttemptsSummary.successful_attempts, color: '#10b981', glow: 'rgba(16,185,129,0.15)', icon: ShieldCheck },
+                { label: 'Unique Emails', value: loginAttemptsSummary.unique_emails, color: '#f59e0b', glow: 'rgba(245,158,11,0.15)', icon: TrendingUp },
+              ].map((card, i) => (
+                <motion.div
+                  key={card.label}
+                  className="min-w-0 rounded-xl p-5 md:p-6"
+                  style={{
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                  }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.08 }}
+                  whileHover={{
+                    boxShadow: `0 0 25px ${card.glow}`,
+                    borderColor: card.glow,
+                  }}
+                >
+                  <div className="flex min-h-[126px] flex-col items-center justify-center text-center">
+                  <div className="mb-4 flex justify-center">
+                    <div
+                      className="flex h-10 w-10 items-center justify-center rounded-xl"
+                      style={{ background: card.glow }}
+                    >
+                      <card.icon size={20} style={{ color: card.color }} />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold font-display break-words md:text-3xl" style={{ color: card.color }}>{card.value}</p>
+                    <p className="mt-2 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{card.label}</p>
+                  </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="mt-10 grid grid-cols-1 gap-5 xl:grid-cols-2 md:mt-12 md:gap-6">
+              <div
+                className="overflow-hidden rounded-xl"
+                style={{}}
+              >
+                <div className="px-6">
+                  <div className="h-6 md:h-8" />
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Recent Failed Attempts
+                  </h3>
+                  <div className="h-5 md:h-6" />
+                </div>
+                <div className="max-h-[352px] overflow-auto pt-4">
+                  {loginAttemptsSummary.recent_failed_attempts.length > 0 ? loginAttemptsSummary.recent_failed_attempts.map((attempt, index) => (
+                    <div
+                      key={`${attempt.email}-${attempt.timestamp}-${index}`}
+                      className="grid min-h-[88px] grid-cols-[minmax(0,1fr)_140px] items-center gap-3 px-6 py-0"
+                      style={{ borderBottom: '1px solid var(--border-color)' }}
+                    >
+                      <p className="min-w-0 truncate text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                        {attempt.email || 'unknown'}
+                      </p>
+                      <div className="justify-self-start">
+                        <p className="text-xs text-left" style={{ color: 'var(--text-muted)' }}>
+                          {formatDateTime(attempt.timestamp)}
+                        </p>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="px-6 py-10 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                      No failed attempts in the selected window.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div
+                className="overflow-hidden rounded-xl"
+                style={{}}
+              >
+                <div className="px-6">
+                  <div className="h-6 md:h-8" />
+                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Top Targeted Accounts
+                  </h3>
+                  <div className="h-5 md:h-6" />
+                </div>
+                <div className="max-h-[352px] overflow-auto pt-4">
+                  {loginAttemptsSummary.top_targeted_accounts.length > 0 ? loginAttemptsSummary.top_targeted_accounts.map((item) => (
+                    <div
+                      key={item.email}
+                      className="grid min-h-[88px] grid-cols-[minmax(0,1fr)_148px] items-center gap-3 px-6 py-0"
+                      style={{ borderBottom: '1px solid var(--border-color)' }}
+                    >
+                      <p className="min-w-0 truncate text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                        {item.email}
+                      </p>
+                      <div className="justify-self-start">
+                        <span
+                          className="inline-flex min-h-[40px] min-w-[112px] items-center justify-center rounded-full px-4 py-2.5 text-sm font-medium"
+                          style={{
+                            background: 'rgba(239,68,68,0.1)',
+                            color: '#ef4444',
+                            border: '1px solid rgba(239,68,68,0.2)',
+                          }}
+                        >
+                          {item.failed_attempts} failed
+                        </span>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="px-6 py-10 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                      No targeted accounts detected.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="min-w-0 rounded-xl px-6 py-5 sm:px-8 md:px-10 md:py-6"
+            style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
+          >
+            <div className="h-2 md:h-3" />
+            <div className="flex flex-col gap-5 px-1 xl:flex-row xl:items-start xl:justify-between">
+              <div className="min-w-0 xl:translate-x-4">
+                <h2 className="text-lg font-semibold font-display" style={{ color: 'var(--text-primary)' }}>
+                  Security Events
+                </h2>
+              </div>
+              <div className="flex flex-wrap items-center gap-2.5 xl:-translate-x-4 xl:justify-end">
+                <Filter size={15} style={{ color: 'var(--text-muted)' }} />
+                <select
+                  value={severityFilter}
+                  onChange={(event) => setSeverityFilter(event.target.value)}
+                  className="w-full rounded-lg px-4 py-2.5 text-sm outline-none sm:w-auto sm:min-w-[156px]"
+                  style={{ border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+                >
+                  <option value="all">All severities</option>
+                  <option value="critical">Critical</option>
+                  <option value="warning">Warning</option>
+                  <option value="info">Info</option>
+                </select>
+                <select
+                  value={eventTypeFilter}
+                  onChange={(event) => setEventTypeFilter(event.target.value)}
+                  className="max-w-full w-full rounded-lg px-4 py-2.5 text-sm outline-none sm:w-auto sm:min-w-[184px]"
+                  style={{ border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+                >
+                  <option value="all">All event types</option>
+                  {eventTypeOptions.map((eventType) => (
+                    <option key={eventType} value={eventType}>
+                      {formatLabel(eventType)}
+                    </option>
+                  ))}
+                </select>
+                <label className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  <input
+                    type="checkbox"
+                    checked={includeResolved}
+                    onChange={(event) => setIncludeResolved(event.target.checked)}
+                  />
+                  Show resolved
+                </label>
+              </div>
+            </div>
+            <div className="h-3 md:h-4" />
+
+            {error && (
+              <div
+                className="mb-4 rounded-xl px-4 py-3 text-sm"
+                style={{
+                  background: 'rgba(239,68,68,0.08)',
+                  border: '1px solid rgba(239,68,68,0.18)',
+                  color: '#ef4444',
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            <div className={`${securityEventsMaxHeightClass} overflow-y-auto`}>
+              <div className="grid grid-cols-1 gap-4 px-3 sm:px-4 md:px-6 2xl:grid-cols-2">
+                {filteredAlerts.map((alert, i) => {
+                  const cfg = sevCfg[alert.severity] || sevCfg.info;
+                  const statusCfg = statusStyles[alert.status] || statusStyles.active;
+                  const Icon = cfg.icon;
+                  const isBusy = busyAlertIds.has(alert.id);
+                  const metadataEntries = extractAlertMetadataEntries(alert);
+                  return (
+                    <motion.div
+                      key={alert.id}
+                      className="relative min-h-[460px] min-w-0 overflow-visible rounded-xl px-5 pb-6 pt-3 sm:h-[320px] sm:min-h-0 sm:overflow-hidden sm:px-8 sm:pb-5 sm:pt-2 md:px-10 md:pb-6 md:pt-2"
+                      style={{
+                        background: 'var(--bg-secondary)',
+                        border: `1px solid ${cfg.border}`,
+                      }}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      whileHover={{ boxShadow: `0 0 20px ${cfg.glow}` }}
+                    >
+                      <div className="flex h-full items-start px-4 pt-2 sm:px-4 sm:pt-1 md:px-5 md:pt-1">
+                        <div className="flex h-full w-full items-start">
+                          <motion.div
+                            className="absolute left-3 top-5 flex h-10 w-10 items-center justify-center rounded-xl sm:left-4 sm:top-6 md:left-6 md:top-6"
+                            style={{ background: cfg.bg }}
+                            animate={alert.severity === 'critical' && alert.status === 'active' ? { scale: [1, 1.05, 1] } : {}}
+                            transition={alert.severity === 'critical' && alert.status === 'active' ? { duration: 2, repeat: Infinity } : {}}
+                          >
+                            <Icon size={18} style={{ color: cfg.text }} />
+                          </motion.div>
+                          <div className="flex min-w-0 flex-1 self-center flex-col overflow-visible py-3 pl-[72px] pr-[144px] sm:overflow-hidden sm:py-2 sm:pl-[64px] sm:pr-[150px] md:pl-[72px]">
+                            <div className="flex flex-col items-center gap-3">
+                              <div className="min-w-0 text-center">
+                                <h3 className="text-sm font-semibold break-words" style={{ color: 'var(--text-primary)' }}>{alert.title}</h3>
+                                <p className="mt-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                                  {alert.source_service} Â· {alert.event_type}
+                                </p>
+                              </div>
+                              <span
+                                className="absolute right-3 top-5 inline-flex min-h-[40px] min-w-[112px] items-center justify-center rounded-full px-4 py-2.5 text-center text-sm font-medium sm:right-4 sm:top-6 md:right-6 md:top-6"
+                                style={{
+                                  background: statusCfg.bg,
+                                  color: statusCfg.color,
+                                  border: `1px solid ${statusCfg.border}`,
+                                }}
+                              >
+                                {alert.status}
+                              </span>
+                            </div>
+                            <div className="mt-4 pb-8 pr-1 sm:min-h-0 sm:flex-1 sm:overflow-y-auto">
+                              <p className="text-center text-xs leading-relaxed text-wrap-anywhere" style={{ color: 'var(--text-secondary)' }}>{alert.message}</p>
+                              <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+                                <span className="flex items-center gap-1"><Clock size={10} />{formatDateTime(alert.last_seen_at)}</span>
+                                <span>{alert.count} occurrence{alert.count > 1 ? 's' : ''}</span>
+                                <span>Created {formatDateTime(alert.created_at)}</span>
+                              </div>
+                              {metadataEntries.length > 0 && (
+                                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                                  {metadataEntries.map((entry) => (
+                                    <span
+                                      key={`${alert.id}-${entry.key}`}
+                                      className="rounded-full px-5 py-3 text-xs"
+                                      style={{
+                                        background: 'rgba(148,163,184,0.08)',
+                                        color: 'var(--text-secondary)',
+                                        border: '1px solid rgba(148,163,184,0.15)',
+                                      }}
+                                    >
+                                      {entry.label}: {entry.value}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            {alert.status === 'active' && (
+                              <>
+                                <div className="h-5 shrink-0" />
+                                <div className="flex justify-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleResolve(alert.id)}
+                                    disabled={isBusy}
+                                    className="inline-flex h-14 w-[200px] items-center justify-center self-center gap-2 rounded-xl px-8 text-sm font-medium disabled:opacity-60"
+                                    style={{
+                                      background: 'rgba(16,185,129,0.1)',
+                                      color: '#10b981',
+                                      border: '1px solid rgba(16,185,129,0.2)',
+                                    }}
+                                  >
+                                    <CheckCircle2 size={14} />
+                                    {isBusy ? 'Resolving...' : 'Mark as resolved'}
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {!loading && filteredAlerts.length === 0 && (
+              <div
+                className="mt-6 rounded-xl px-5 py-10 text-center"
+                style={{ border: '1px dashed var(--border-color)', color: 'var(--text-muted)' }}
+              >
+                No alerts match the current filters.
+              </div>
+            )}
+          </div>
+
+          <div className="pt-4">
+            <div className="h-2 md:h-3" />
+            <div className="flex items-center justify-between px-3">
+              <h2 className="text-lg font-semibold font-display" style={{ color: 'var(--text-primary)' }}>Recent Alert Log</h2>
+            </div>
+            <div className="h-3 md:h-4" />
+            <div
+              className="overflow-hidden rounded-xl"
+              style={{ border: '1px solid var(--border-color)', background: 'var(--bg-secondary)' }}
+            >
+              <div className="max-h-[560px] overflow-x-auto overflow-y-auto">
+                <table className="w-full min-w-[640px] text-sm">
+                  <thead>
+                    <tr className="h-[72px]" style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
+                      <th className="h-[72px] px-5 py-0 text-left align-middle font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                        <span className="relative left-4 inline-block">Last Seen</span>
+                      </th>
+                      <th className="h-[72px] px-5 py-0 text-left align-middle font-semibold" style={{ color: 'var(--text-secondary)' }}>Alert</th>
+                      <th className="hidden h-[72px] px-5 py-0 text-left align-middle font-semibold md:table-cell" style={{ color: 'var(--text-secondary)' }}>Service</th>
+                      <th className="hidden h-[72px] px-5 py-0 text-left align-middle font-semibold lg:table-cell" style={{ color: 'var(--text-secondary)' }}>Event Type</th>
+                      <th className="h-[72px] px-5 py-0 text-left align-middle font-semibold" style={{ color: 'var(--text-secondary)' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAlerts.map((alert) => {
+                      const st = statusStyles[alert.status] || statusStyles.active;
+                      return (
+                        <motion.tr
+                          key={`row-${alert.id}`}
+                          className="h-[84px]"
+                          style={{ borderBottom: '1px solid var(--border-color)' }}
+                          whileHover={{ background: 'rgba(139,92,246,0.03)' }}
+                        >
+                          <td className="h-[84px] px-5 py-0 align-middle text-xs font-mono" style={{ color: 'var(--text-muted)' }}>
+                            <span className="relative left-4 inline-block">{formatDateTime(alert.last_seen_at)}</span>
+                          </td>
+                          <td className="h-[84px] px-5 py-0 align-middle" style={{ color: 'var(--text-primary)' }}>{alert.title}</td>
+                          <td className="hidden h-[84px] px-5 py-0 align-middle md:table-cell" style={{ color: 'var(--text-secondary)' }}>{alert.source_service}</td>
+                          <td className="hidden h-[84px] px-5 py-0 align-middle lg:table-cell" style={{ color: 'var(--text-secondary)' }}>{alert.event_type}</td>
+                          <td className="h-[84px] px-5 py-0 align-middle">
+                            <span
+                              className="inline-flex min-h-[40px] min-w-[112px] items-center justify-center rounded-full px-4 py-2.5 text-sm font-medium"
+                              style={{ background: st.bg, color: st.color, border: `1px solid ${st.border}` }}
+                            >
+                              {alert.status}
+                            </span>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                    {!loading && filteredAlerts.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-5 py-12 text-center align-middle" style={{ color: 'var(--text-muted)' }}>
+                          No alerts recorded yet.
+                        </td>
+                      </tr>
+                    )}
+                    {isInitialLoading && (
+                      <tr>
+                        <td colSpan={5} className="px-5 py-12 text-center align-middle" style={{ color: 'var(--text-muted)' }}>
+                          Loading security alerts...
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="rounded-xl safe-scroll-x" style={{ border: '1px solid var(--border-color)' }}>
-          <table className="w-full min-w-[640px] text-sm">
-            <thead>
-              <tr style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
-                <th className="px-4 py-3 text-left font-semibold" style={{ color: 'var(--text-secondary)' }}>Last Seen</th>
-                <th className="px-4 py-3 text-left font-semibold" style={{ color: 'var(--text-secondary)' }}>Alert</th>
-                <th className="px-4 py-3 text-left font-semibold hidden md:table-cell" style={{ color: 'var(--text-secondary)' }}>Service</th>
-                <th className="px-4 py-3 text-left font-semibold hidden lg:table-cell" style={{ color: 'var(--text-secondary)' }}>Event Type</th>
-                <th className="px-4 py-3 text-left font-semibold" style={{ color: 'var(--text-secondary)' }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAlerts.map((alert) => {
-                const st = statusStyles[alert.status] || statusStyles.active;
-                return (
-                  <motion.tr
-                    key={`row-${alert.id}`}
-                    style={{ borderBottom: '1px solid var(--border-color)' }}
-                    whileHover={{ background: 'rgba(139,92,246,0.03)' }}
-                  >
-                    <td className="px-4 py-3 text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{formatDateTime(alert.last_seen_at)}</td>
-                    <td className="px-4 py-3" style={{ color: 'var(--text-primary)' }}>{alert.title}</td>
-                    <td className="px-4 py-3 hidden md:table-cell" style={{ color: 'var(--text-secondary)' }}>{alert.source_service}</td>
-                    <td className="px-4 py-3 hidden lg:table-cell" style={{ color: 'var(--text-secondary)' }}>{alert.event_type}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className="text-xs font-medium px-2.5 py-0.5 rounded-full"
-                        style={{ background: st.bg, color: st.color, border: `1px solid ${st.border}` }}
-                      >
-                        {alert.status}
-                      </span>
-                    </td>
-                  </motion.tr>
-                );
-              })}
-              {!loading && filteredAlerts.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
-                    No alerts recorded yet.
-                  </td>
-                </tr>
-              )}
-              {loading && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center" style={{ color: 'var(--text-muted)' }}>
-                    Loading security alerts...
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      </div>
       </div>
     </AnimatedPage>
   );
 }
+

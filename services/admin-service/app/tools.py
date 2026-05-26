@@ -59,8 +59,12 @@ class AdminToolbox:
     def with_access_token(self, access_token: str | None) -> "AdminToolbox":
         return AdminToolbox(self._settings, access_token=access_token)
 
-    def _client(self) -> httpx.Client:
-        return httpx.Client(timeout=60.0)
+    def _client(self, timeout_seconds: float | None = None) -> httpx.Client:
+        return httpx.Client(
+            timeout=timeout_seconds
+            if timeout_seconds is not None
+            else self._settings.admin_http_timeout_seconds
+        )
 
     def _raise_generation_endpoint_not_found(self, action: str, endpoint: str, exc: httpx.HTTPStatusError) -> None:
         raise ValueError(
@@ -68,6 +72,53 @@ class AdminToolbox:
             "This usually means the running generation-service is out of date and needs to be rebuilt/restarted "
             "with the evaluation routes enabled."
         ) from exc
+
+    def _generation_base_url_candidates(self) -> list[str]:
+        configured = self._settings.generation_base_url.rstrip("/")
+        candidates = [configured]
+        for candidate in ("http://localhost:8004", "http://host.docker.internal:8004"):
+            if candidate not in candidates:
+                candidates.append(candidate)
+        return candidates
+
+    def _generation_endpoint_exists(self, client: httpx.Client, base_url: str, endpoint: str) -> bool:
+        try:
+            response = client.get(f"{base_url}/openapi.json")
+            response.raise_for_status()
+            payload = response.json()
+        except (httpx.HTTPError, ValueError):
+            return False
+
+        paths = payload.get("paths", {}) if isinstance(payload, dict) else {}
+        return isinstance(paths, dict) and endpoint in paths
+
+    def _request_generation_json(
+        self,
+        method: str,
+        endpoint: str,
+        *,
+        action: str,
+        json_body: dict[str, Any] | None = None,
+        timeout_seconds: float | None = None,
+    ) -> dict[str, Any]:
+        last_missing_endpoint_error: httpx.HTTPStatusError | None = None
+
+        for base_url in self._generation_base_url_candidates():
+            with self._client(timeout_seconds=timeout_seconds) as client:
+                response = client.request(method, f"{base_url}{endpoint}", json=json_body)
+                try:
+                    response.raise_for_status()
+                    return response.json()
+                except httpx.HTTPStatusError as exc:
+                    if response.status_code != 404:
+                        raise
+                    if self._generation_endpoint_exists(client, base_url, endpoint):
+                        raise
+                    last_missing_endpoint_error = exc
+
+        if last_missing_endpoint_error is not None:
+            self._raise_generation_endpoint_not_found(action, endpoint, last_missing_endpoint_error)
+        raise RuntimeError(f"Failed to call generation-service endpoint: {endpoint}")
 
     def _env_files(self) -> list[Path]:
         root = self._settings.project_root
@@ -193,6 +244,7 @@ class AdminToolbox:
                 "reindex_document",
                 "reindex_validated_documents",
                 "run_evaluation",
+                "read_evaluation_report",
                 "compare_evaluation_reports",
             ],
         }
@@ -322,58 +374,49 @@ class AdminToolbox:
         return {"status": "ok", "documents": documents}
 
     def list_evaluation_reports(self) -> dict[str, Any]:
-        with self._client() as client:
-            response = client.get(f"{self._settings.generation_base_url.rstrip('/')}/generation/evaluations")
-            try:
-                response.raise_for_status()
-            except httpx.HTTPStatusError as exc:
-                if response.status_code == 404:
-                    self._raise_generation_endpoint_not_found(
-                        "list evaluation reports",
-                        "/generation/evaluations",
-                        exc,
-                    )
-                raise
-            return response.json()
+        return self._request_generation_json(
+            "GET",
+            "/generation/evaluations",
+            action="list evaluation reports",
+        )
+
+    def read_evaluation_report(self, report_id: str = "latest") -> dict[str, Any]:
+        normalized = str(report_id or "latest").strip()
+        if not normalized or normalized == "latest":
+            reports_payload = self.list_evaluation_reports()
+            reports = reports_payload.get("reports", []) if isinstance(reports_payload, dict) else []
+            latest = reports[0] if reports and isinstance(reports[0], dict) else None
+            if latest is None:
+                return {"status": "ok", "report": None}
+            normalized = str(latest.get("report_id") or "").strip()
+            if not normalized:
+                return {"status": "ok", "report": None}
+
+        return self._request_generation_json(
+            "GET",
+            f"/generation/evaluations/{normalized}",
+            action="read evaluation report",
+        )
 
     def run_evaluation(self, dataset_path: str = "evals/sample_eval_dataset.json") -> dict[str, Any]:
-        with self._client() as client:
-            response = client.post(
-                f"{self._settings.generation_base_url.rstrip('/')}/generation/evaluations/run",
-                json={"dataset_path": dataset_path},
-            )
-            try:
-                response.raise_for_status()
-            except httpx.HTTPStatusError as exc:
-                if response.status_code == 404:
-                    self._raise_generation_endpoint_not_found(
-                        "run the evaluation",
-                        "/generation/evaluations/run",
-                        exc,
-                    )
-                raise
-            return response.json()
+        return self._request_generation_json(
+            "POST",
+            "/generation/evaluations/run",
+            action="run the evaluation",
+            json_body={"dataset_path": dataset_path},
+            timeout_seconds=self._settings.admin_evaluation_timeout_seconds,
+        )
 
     def compare_evaluation_reports(self, baseline_report_id: str, candidate_report_id: str) -> dict[str, Any]:
-        with self._client() as client:
-            response = client.post(
-                f"{self._settings.generation_base_url.rstrip('/')}/generation/evaluations/compare",
-                json={
-                    "baseline_report_id": baseline_report_id,
-                    "candidate_report_id": candidate_report_id,
-                },
-            )
-            try:
-                response.raise_for_status()
-            except httpx.HTTPStatusError as exc:
-                if response.status_code == 404:
-                    self._raise_generation_endpoint_not_found(
-                        "compare evaluation reports",
-                        "/generation/evaluations/compare",
-                        exc,
-                    )
-                raise
-            return response.json()
+        return self._request_generation_json(
+            "POST",
+            "/generation/evaluations/compare",
+            action="compare evaluation reports",
+            json_body={
+                "baseline_report_id": baseline_report_id,
+                "candidate_report_id": candidate_report_id,
+            },
+        )
 
     def remove_document_chunks(self, document_id: str) -> dict[str, Any]:
         with self._client() as client:
@@ -527,6 +570,8 @@ class AdminToolbox:
 
         if tool_name == "run_evaluation":
             return self.run_evaluation(str(arguments.get("dataset_path") or "evals/sample_eval_dataset.json"))
+        if tool_name == "read_evaluation_report":
+            return self.read_evaluation_report(str(arguments.get("report_id") or "latest"))
         if tool_name == "compare_evaluation_reports":
             return self.compare_evaluation_reports(
                 str(arguments.get("baseline_report_id") or ""),
@@ -575,6 +620,11 @@ def build_tools(toolbox: AdminToolbox, include_mutations: bool = True) -> list:
         return toolbox.list_evaluation_reports()
 
     @tool
+    def read_evaluation_report(report_id: str = "latest") -> dict[str, Any]:
+        """Return one saved evaluation report, including summary metrics and row-level records. Use 'latest' for the newest report."""
+        return toolbox.read_evaluation_report(report_id)
+
+    @tool
     def run_evaluation(dataset_path: str = "evals/sample_eval_dataset.json") -> dict[str, Any]:
         """Run a Ragas evaluation using the provided dataset path and return the saved report summary."""
         return toolbox.run_evaluation(dataset_path)
@@ -613,6 +663,7 @@ def build_tools(toolbox: AdminToolbox, include_mutations: bool = True) -> list:
         get_ingestion_status,
         list_loaded_documents,
         list_evaluation_reports,
+        read_evaluation_report,
         run_evaluation,
         compare_evaluation_reports,
         reindex_document,

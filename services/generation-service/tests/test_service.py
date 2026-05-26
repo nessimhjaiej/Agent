@@ -199,6 +199,43 @@ def test_service_blocks_prompt_attack_query_with_scope_fallback() -> None:
     assert response.retrieval_count == 0
 
 
+def test_service_answers_identity_without_retrieval_or_generation() -> None:
+    orchestrator = _FakeOrchestrator()
+    retrieval_client = _FakeRetrievalClient()
+    service = GenerationService(  # type: ignore[arg-type]
+        orchestrator=orchestrator,
+        retrieval_client=retrieval_client,
+    )
+
+    response = service.ask(AskRequest(query="what's your name?", mode="hybrid"))
+
+    assert len(retrieval_client.calls) == 0
+    assert orchestrator.calls == 0
+    assert response.status == "ok"
+    assert "Synapse" in response.answer
+    assert response.retrieval_count == 0
+
+
+def test_service_answers_capabilities_without_retrieval_or_generation() -> None:
+    orchestrator = _FakeOrchestrator()
+    retrieval_client = _FakeRetrievalClient()
+    service = GenerationService(  # type: ignore[arg-type]
+        orchestrator=orchestrator,
+        retrieval_client=retrieval_client,
+    )
+
+    response = service.ask(
+        AskRequest(query="what other services can you do?", mode="hybrid")
+    )
+
+    assert len(retrieval_client.calls) == 0
+    assert orchestrator.calls == 0
+    assert response.status == "ok"
+    assert "Synapse" in response.answer
+    assert "answering questions from the available documents" in response.answer
+    assert response.retrieval_count == 0
+
+
 def test_service_emits_warning_for_blocked_prompt_attack_with_actor_metadata() -> None:
     settings = Settings(generation_block_prompt_attack_queries=True)
     service = GenerationService(settings=settings)  # type: ignore[call-arg]

@@ -96,6 +96,13 @@ class IntentClassifier:
         previous_route = str(session_context.get("last_route") or "").strip()
         previous_topic = str(session_context.get("last_topic") or "").strip()
 
+        if _is_identity_question(message):
+            return IntentClassification(
+                category="advisory",
+                intent="identity",
+                reasoning="The user is asking the admin agent to identify itself.",
+            )
+
         if _is_capability_question(message, session_context):
             return IntentClassification(
                 category="advisory",
@@ -134,6 +141,12 @@ class IntentClassifier:
 
     def _fallback(self, message: str, previous_route: str, previous_topic: str) -> IntentClassification:
         lowered = message.lower()
+        if _is_identity_question(message):
+            return IntentClassification(
+                category="advisory",
+                intent="identity",
+                reasoning="Identity request matched the deterministic identity detector.",
+            )
         if _is_capability_question(message, {"last_route": previous_route, "last_topic": previous_topic}):
             return IntentClassification(
                 category="advisory",
@@ -280,6 +293,8 @@ def _is_capability_question(message: str, session_context: dict | None = None) -
     direct_patterns = [
         r"\bwhat can you do\b",
         r"\bwhat do you do\b",
+        r"\bwhat (?:other )?services can you do\b",
+        r"\bwhat (?:other )?services do you offer\b",
         r"\bhow can you assist\b",
         r"\bhow can you help\b",
         r"\bhow do you assist\b",
@@ -333,6 +348,36 @@ def _is_capability_question(message: str, session_context: dict | None = None) -
         return True
 
     return False
+
+
+def _is_identity_question(message: str) -> bool:
+    lowered = re.sub(r"\s+", " ", str(message or "").strip().lower())
+    if not lowered:
+        return False
+    return any(
+        re.search(pattern, lowered)
+        for pattern in [
+            r"\bwho are you\b",
+            r"\bwhat(?:'s| is) your name\b",
+            r"\byour name\b",
+            r"\bdo you have a name\b",
+        ]
+    )
+
+
+def _build_identity_answer(message: str) -> str:
+    if _prefers_french(message):
+        return (
+            "Je m'appelle `Synapse`.\n\n"
+            "Je suis l'agent d'administration et je peux vous aider a inspecter l'etat du systeme, "
+            "verifier les configurations, consulter les documents et rapports, et preparer des changements "
+            "que vous confirmez avant execution."
+        )
+    return (
+        "My name is `Synapse`.\n\n"
+        "I am the admin agent. I can inspect system status, review configurations, check documents and "
+        "evaluation reports, and prepare admin changes that only run after your confirmation."
+    )
 
 
 def _is_chunking_methods_question(message: str) -> bool:
@@ -407,6 +452,20 @@ def _summarize_inspection_result(tool_result: dict[str, Any], message: str, sess
             return "There are no saved evaluation reports yet."
         report_ids = [str(item.get("report_id") or "") for item in reports[:3] if isinstance(item, dict)]
         return f"I found {len(reports)} evaluation reports. Recent report IDs: {', '.join(report_ids)}."
+
+    if "report" in tool_result:
+        report = tool_result.get("report")
+        if not isinstance(report, dict) or not report:
+            return "There are no saved evaluation reports yet."
+        report_id = str(report.get("report_id") or "latest")
+        sample_count = int(report.get("sample_count") or 0)
+        summary = report.get("summary", {}) if isinstance(report.get("summary"), dict) else {}
+        metrics = ", ".join(
+            f"{key}={value}"
+            for key, value in summary.items()
+            if isinstance(value, (int, float))
+        ) or "no summary metrics were recorded"
+        return f"The latest evaluation report is `{report_id}` with {sample_count} samples. Summary metrics: {metrics}."
 
     if "documents" in tool_result:
         documents = tool_result.get("documents", [])
@@ -1002,6 +1061,39 @@ def _plan_workflow(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] 
             f"I am ready to compare report '{baseline_report_id}' against '{candidate_report_id}'. Confirm to run it.",
         )
 
+    if "evaluation" in lowered and any(token in lowered for token in ["read", "show", "summarize", "explain"]):
+        dataset_path = _extract_dataset_path(message)
+        workflow_tasks = [
+            {
+                "task_id": "task_1",
+                "kind": "mutation",
+                "clause": "run evaluation",
+                "status": "pending",
+                "steps": [{"tool": "run_evaluation", "arguments": {"dataset_path": dataset_path}}],
+                "outcome": {},
+            },
+            {
+                "task_id": "task_2",
+                "kind": "read",
+                "clause": "read latest evaluation report",
+                "status": "pending",
+                "steps": [{"tool": "read_evaluation_report", "arguments": {"report_id": "latest"}}],
+                "outcome": {},
+            },
+        ]
+        return (
+            {
+                "intent": "mutation",
+                "tool": "run_evaluation",
+                "arguments": {"dataset_path": dataset_path},
+                "steps": [],
+                "task_index": 0,
+                "workflow_tasks": workflow_tasks,
+                "summary": f"Run evaluation with dataset '{dataset_path}' and then read the saved report.",
+            },
+            f"I am ready to run the evaluation with '{dataset_path}' and then read the saved report. Confirm to start it.",
+        )
+
     if "evaluation" in lowered:
         dataset_path = _extract_dataset_path(message)
         return (
@@ -1063,7 +1155,9 @@ def _plan_inspection_step(message: str, toolbox: AdminToolbox) -> dict[str, Any]
         return {"tool": "get_repo_config", "arguments": {"service_name": "retrieval"}}
     if any(token in lowered for token in ["chunk", "chunking", "chunk overlap", "chunk size"]):
         return {"tool": "get_repo_config", "arguments": {"service_name": "preprocessing"}}
-    if "evaluation" in lowered and any(token in lowered for token in ["report", "reports", "latest", "recent", "current"]):
+    if "evaluation" in lowered and any(token in lowered for token in ["last", "latest", "recent", "current"]):
+        return {"tool": "read_evaluation_report", "arguments": {"report_id": "latest"}}
+    if "evaluation" in lowered and any(token in lowered for token in ["report", "reports"]):
         return {"tool": "list_evaluation_reports", "arguments": {}}
     if any(token in lowered for token in ["ingestion", "document status", "status"]) and "document" not in lowered:
         return {"tool": "get_ingestion_status", "arguments": {}}
@@ -1329,6 +1423,8 @@ def _build_capability_answer(
             config_lines.append(f"- `{label}` settings: {keys}")
 
     answer_lines = [
+        "My name is `Synapse`.",
+        "",
         "I can help with these admin tasks:",
         "",
         "### Read-Only Inspections",
@@ -1374,6 +1470,9 @@ def _plan_request(
     settings: Settings,
     session_context: dict | None = None,
 ) -> tuple[str, dict[str, Any] | None, str | None]:
+    if _is_identity_question(message):
+        return "advisory", None, _build_identity_answer(message)
+
     if _is_capability_question(message, session_context):
         return "advisory", None, None
 

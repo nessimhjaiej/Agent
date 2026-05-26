@@ -98,6 +98,11 @@ select {
   -webkit-overflow-scrolling: touch;
 }
 
+.notification-scroll-area {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
 .modal-panel {
   width: min(100%, 48rem);
   max-height: min(90vh, 52rem);

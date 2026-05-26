@@ -573,6 +573,23 @@ class AuthService:
         except Exception:
             pass
 
+        emit_security_event(
+            self._settings,
+            event_type="USER_INVITED",
+            severity="info",
+            title="User account invited",
+            message="An administrator invited a user account.",
+            metadata={
+                "admin_user_id": admin_user.id,
+                "admin_email": admin_user.email,
+                "target_user_id": response.user.id,
+                "email": email,
+                "role": target_role,
+                "email_sent": email_sent,
+            },
+            fingerprint=f"user-invited|{response.user.id}|{datetime.now(timezone.utc).isoformat()}",
+        )
+
         return {
             "success": True,
             "message": message,
@@ -616,6 +633,21 @@ class AuthService:
             )
         except Exception:
             pass
+
+        emit_security_event(
+            self._settings,
+            event_type="USER_VALIDATION_STATUS_CHANGED",
+            severity="info",
+            title="User validation status changed",
+            message="An administrator changed a user validation status.",
+            metadata={
+                "admin_user_id": admin_user.id,
+                "admin_email": admin_user.email,
+                "target_user_id": user_id,
+                "validated": validated,
+            },
+            fingerprint=f"user-validation-status-changed|{user_id}|{datetime.now(timezone.utc).isoformat()}",
+        )
 
         return self._map_admin_user(updated.user)
 
@@ -703,9 +735,30 @@ class AuthService:
 
     def update_password(self, access_token: str, new_password: str) -> bool:
         try:
-            self._db.auth.update_user(
+            response = self._db.auth.update_user(
                 jwt=access_token,
                 attributes={"password": new_password},
+            )
+            user = getattr(response, "user", None)
+            emit_security_event(
+                self._settings,
+                event_type="USER_PASSWORD_CHANGED",
+                severity="info",
+                title="User password changed",
+                message="A user changed their password successfully.",
+                metadata={
+                    "user_id": str(getattr(user, "id", "") or ""),
+                    "email": str(getattr(user, "email", "") or ""),
+                },
+                fingerprint="|".join(
+                    part
+                    for part in [
+                        "user-password-changed",
+                        str(getattr(user, "id", "") or "unknown"),
+                        datetime.now(timezone.utc).isoformat(),
+                    ]
+                    if part
+                ),
             )
             return True
         except Exception as exc:

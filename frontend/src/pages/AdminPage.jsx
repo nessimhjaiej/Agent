@@ -1672,9 +1672,9 @@ export default function AdminPage() {
               <motion.div key="agent" className="min-h-full w-full flex justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <div
                   className="w-full mx-auto flex flex-col px-3 sm:px-5 md:px-8 lg:px-10 xl:px-12 mt-8 md:mt-16"
-                  style={{ minHeight: 'calc(100vh - 220px)', width: '85vw', maxWidth: '85vw', marginLeft: 'auto', marginRight: 'auto', overflowX: 'hidden' }}
+                  style={{ height: 'clamp(620px, calc(100vh - 180px), 900px)', width: '85vw', maxWidth: '85vw', marginLeft: 'auto', marginRight: 'auto', overflowX: 'hidden', overflowY: 'hidden' }}
                 >
-                  <div className="flex-1 w-full" style={{ overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth', minHeight: 0, scrollbarGutter: 'stable', paddingTop: '32px', paddingBottom: '32px' }}>
+                  <div className="flex-1 w-full" style={{ overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth', minHeight: 0, scrollbarGutter: 'stable', paddingTop: '32px', paddingBottom: '160px' }}>
                     <div className="mx-auto w-full">
                       {agentMsgs.map((msg) => (
                         <motion.div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`} style={{ marginBottom: '32px' }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -1802,7 +1802,12 @@ export default function AdminPage() {
                       <div ref={endRef} />
                     </div>
                   </div>
-                  <div className="w-full mt-auto pt-3 pb-6">
+                  <div
+                    className="w-full mt-auto pt-3 pb-8 sm:pb-6 z-20 shrink-0"
+                    style={{
+                      background: 'linear-gradient(180deg, rgba(255,255,255,0), var(--bg-primary) 18%, var(--bg-primary) 100%)',
+                    }}
+                  >
                     <div className="mx-auto w-full">
                       <div className="w-full">
                         {agentPendingAction && (
@@ -1856,8 +1861,8 @@ export default function AdminPage() {
                           </div>
                         )}
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 rounded-2xl p-4 sm:p-6 transition-all input-glow" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-                          <textarea id="admin-agent-input" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }} placeholder='Try: "refresh status", "embed validated", or "run evaluation"' rows={3} disabled={!agentWarningConfirmed} className="flex-1 bg-transparent outline-none text-sm resize-none max-h-56 disabled:opacity-50" style={{ color: 'var(--text-primary)', padding: '16px 18px' }} />
-                          <motion.button id="admin-send" onClick={sendAgent} disabled={!agentWarningConfirmed || !agentInput.trim() || typing} className="rounded-xl disabled:opacity-20 shrink-0 w-full sm:w-auto" style={{ padding: '16px 22px', marginRight: '0px' }}>
+                          <textarea id="admin-agent-input" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }} placeholder='Try: "refresh status", "embed validated", or "run evaluation"' rows={3} disabled={!agentWarningConfirmed} className="flex-1 bg-transparent outline-none text-sm resize-none max-h-72 disabled:opacity-50 sm:min-h-[132px] min-h-[96px]" style={{ color: 'var(--text-primary)', padding: '16px 18px' }} />
+                          <motion.button id="admin-send" onClick={sendAgent} disabled={!agentWarningConfirmed || !agentInput.trim() || typing} className="rounded-xl disabled:opacity-20 shrink-0 w-auto self-end sm:self-auto ml-auto" style={{ padding: '16px 22px', marginRight: '0px' }}>
                             <Send size={16} color={agentInput.trim() && !typing ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
                           </motion.button>
                         </div>

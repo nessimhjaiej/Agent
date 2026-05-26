@@ -46,6 +46,16 @@ class _MockClient:
     def put(self, url, **kwargs):
         return self._responses.pop(0)
 
+    def request(self, method, url, **kwargs):
+        normalized = method.upper()
+        if normalized == "GET":
+            return self.get(url, **kwargs)
+        if normalized == "POST":
+            return self.post(url, **kwargs)
+        if normalized == "PUT":
+            return self.put(url, **kwargs)
+        raise AssertionError(f"Unsupported method in test mock: {method}")
+
 
 def _settings() -> Settings:
     return Settings(
@@ -90,14 +100,21 @@ def test_get_capabilities_exposes_supported_services_and_subjects() -> None:
 
 def test_run_evaluation_calls_generation_api(monkeypatch) -> None:  # noqa: ANN001
     responses = [_MockResponse(200, {"status": "ok", "report": {"report_id": "r1"}})]
-    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self, timeout_seconds=None: _MockClient(responses))
     result = AdminToolbox(_settings()).run_evaluation("evals/sample_eval_dataset.json")
     assert result["report"]["report_id"] == "r1"
 
 
 def test_run_evaluation_404_raises_actionable_message(monkeypatch) -> None:  # noqa: ANN001
-    responses = [_MockResponse(404, {"detail": "Not Found"})]
-    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    responses = [
+        _MockResponse(404, {"detail": "Not Found"}),
+        _MockResponse(200, {"paths": {}}),
+        _MockResponse(404, {"detail": "Not Found"}),
+        _MockResponse(200, {"paths": {}}),
+        _MockResponse(404, {"detail": "Not Found"}),
+        _MockResponse(200, {"paths": {}}),
+    ]
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self, timeout_seconds=None: _MockClient(responses))
 
     try:
         AdminToolbox(_settings()).run_evaluation("evals/sample_eval_dataset.json")
@@ -108,6 +125,52 @@ def test_run_evaluation_404_raises_actionable_message(monkeypatch) -> None:  # n
 
     assert "generation-service returned 404" in message
     assert "/generation/evaluations/run" in message
+
+
+def test_run_evaluation_retries_against_local_generation_service(monkeypatch) -> None:  # noqa: ANN001
+    responses = [
+        _MockResponse(404, {"detail": "Not Found"}),
+        _MockResponse(200, {"paths": {}}),
+        _MockResponse(200, {"status": "ok", "report": {"report_id": "local-r1"}}),
+    ]
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self, timeout_seconds=None: _MockClient(responses))
+
+    settings = _settings()
+    settings.generation_base_url = "http://stale-generation"
+    result = AdminToolbox(settings).run_evaluation("evals/sample_eval_dataset.json")
+
+    assert result["report"]["report_id"] == "local-r1"
+
+
+def test_run_evaluation_uses_extended_timeout(monkeypatch) -> None:  # noqa: ANN001
+    responses = [_MockResponse(200, {"status": "ok", "report": {"report_id": "r1"}})]
+    captured: dict[str, float | None] = {}
+
+    def _client(self, timeout_seconds=None):
+        captured["timeout_seconds"] = timeout_seconds
+        return _MockClient(responses)
+
+    monkeypatch.setattr(AdminToolbox, "_client", _client)
+    settings = _settings()
+    settings.admin_evaluation_timeout_seconds = 321.0
+
+    result = AdminToolbox(settings).run_evaluation("evals/sample_eval_dataset.json")
+
+    assert result["report"]["report_id"] == "r1"
+    assert captured["timeout_seconds"] == 321.0
+
+
+def test_read_evaluation_report_uses_latest_when_requested(monkeypatch) -> None:  # noqa: ANN001
+    responses = [
+        _MockResponse(200, {"status": "ok", "reports": [{"report_id": "r2"}]}),
+        _MockResponse(200, {"status": "ok", "report": {"report_id": "r2", "summary": {"faithfulness": 0.93}}}),
+    ]
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self, timeout_seconds=None: _MockClient(responses))
+
+    result = AdminToolbox(_settings()).read_evaluation_report("latest")
+
+    assert result["report"]["report_id"] == "r2"
+    assert result["report"]["summary"]["faithfulness"] == 0.93
 
 
 def test_reindex_document_chains_remove_then_index(monkeypatch) -> None:  # noqa: ANN001
@@ -152,7 +215,7 @@ def test_get_repo_config_reads_preprocessing_service(monkeypatch) -> None:  # no
             },
         )
     ]
-    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self, timeout_seconds=None: _MockClient(responses))
     result = AdminToolbox(_settings()).get_repo_config("preprocessing")
     assert result["scope"] == "preprocessing"
     assert result["config"]["chunk_size"] == 800
@@ -172,7 +235,7 @@ def test_update_repo_config_calls_preprocessing_service(monkeypatch) -> None:  #
             },
         )
     ]
-    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self, timeout_seconds=None: _MockClient(responses))
     result = AdminToolbox(_settings()).update_repo_config("preprocessing", {"chunk_size": 900, "chunk_overlap": 100})
     assert result["updated"]["chunk_size"] == 900
     assert result["updated"]["chunk_overlap"] == 100
@@ -198,7 +261,7 @@ def test_get_chunking_methods_reads_current_preprocessing_settings(monkeypatch) 
             },
         )
     ]
-    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self, timeout_seconds=None: _MockClient(responses))
     result = AdminToolbox(_settings()).get_chunking_methods()
     assert result["current_strategy"] == "late"
     assert result["current_chunk_size"] == 800
@@ -223,7 +286,7 @@ def test_get_repo_config_reads_retrieval_service(monkeypatch) -> None:  # noqa: 
             },
         )
     ]
-    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self, timeout_seconds=None: _MockClient(responses))
     result = AdminToolbox(_settings()).get_repo_config("retrieval")
     assert result["scope"] == "retrieval"
     assert result["config"]["default_ranker_type"] == "cross_encoder"
@@ -247,7 +310,7 @@ def test_get_reranking_methods_reads_current_retrieval_settings(monkeypatch) -> 
             },
         )
     ]
-    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self, timeout_seconds=None: _MockClient(responses))
     result = AdminToolbox(_settings()).get_reranking_methods()
     assert result["current_default_ranker_type"] == "llm_batch"
     names = {item["name"] for item in result["methods"]}
@@ -267,7 +330,7 @@ def test_update_repo_config_calls_retrieval_service(monkeypatch) -> None:  # noq
             },
         )
     ]
-    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self, timeout_seconds=None: _MockClient(responses))
     result = AdminToolbox(_settings()).update_repo_config(
         "retrieval",
         {"ranker": "cross_encoder", "top_k_retrieve": 11, "top_k_return": 6},
