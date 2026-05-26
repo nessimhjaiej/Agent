@@ -170,7 +170,10 @@ export default function SecurityPage() {
     [alerts, eventTypeFilter, includeResolved, severityFilter]
   );
   const isInitialLoading = loading && !hasLoadedOnce;
-  const securityEventsMaxHeightClass = filteredAlerts.length <= 1 ? 'max-h-[460px] sm:max-h-[320px]' : 'max-h-[1400px] sm:max-h-[984px]';
+  const securityEventsMaxHeightClass =
+    filteredAlerts.length <= 1
+      ? 'max-h-[460px] sm:max-h-[320px]'
+      : 'max-h-[1400px] sm:max-h-[656px]';
 
   const markBusy = (alertId, value) => {
     setBusyAlertIds((prev) => {
@@ -393,7 +396,11 @@ export default function SecurityPage() {
                 </h2>
               </div>
               <div className="flex flex-wrap items-center gap-2.5 xl:-translate-x-4 xl:justify-end">
-                <Filter size={15} style={{ color: 'var(--text-muted)' }} />
+                <Filter
+                  size={15}
+                  className="hidden sm:block"
+                  style={{ color: 'var(--text-muted)' }}
+                />
                 <select
                   value={severityFilter}
                   onChange={(event) => setSeverityFilter(event.target.value)}
