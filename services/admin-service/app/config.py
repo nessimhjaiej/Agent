@@ -37,11 +37,15 @@ class Settings:
     project_root: Path = _PROJECT_ROOT
     openai_key: str = ""
     admin_model: str = "gpt-4o"
-    session_store_path: str = str(_PROJECT_ROOT / "services" / "admin-service" / "data" / "sessions.json")
+    session_store_path: str = str(
+        _PROJECT_ROOT / "services" / "admin-service" / "data" / "sessions.json"
+    )
     max_iterations: int = 8
     max_tool_calls: int = 8
     auth_base_url: str = "http://localhost:8001"
     auth_validation_timeout_seconds: float = 5.0
+    admin_http_timeout_seconds: float = 120.0
+    admin_evaluation_timeout_seconds: float = 900.0
     security_base_url: str = ""
     ingestion_base_url: str = "http://localhost:8005"
     preprocessing_base_url: str = "http://localhost:8000"
@@ -56,19 +60,37 @@ class Settings:
             app_version=os.getenv("ADMIN_APP_VERSION", "0.1.0"),
             project_root=_PROJECT_ROOT,
             openai_key=os.getenv("OPENAI_KEY", ""),
-            admin_model=os.getenv("ADMIN_MODEL", os.getenv("GENERATION_MODEL", "gpt-4o")),
+            admin_model=os.getenv(
+                "ADMIN_MODEL", os.getenv("GENERATION_MODEL", "gpt-4o")
+            ),
             session_store_path=os.getenv(
                 "ADMIN_SESSION_STORE_PATH",
-                str(_PROJECT_ROOT / "services" / "admin-service" / "data" / "sessions.json"),
+                str(
+                    _PROJECT_ROOT
+                    / "services"
+                    / "admin-service"
+                    / "data"
+                    / "sessions.json"
+                ),
             ),
             max_iterations=_parse_int("ADMIN_MAX_ITERATIONS", 8),
             max_tool_calls=_parse_int("ADMIN_MAX_TOOL_CALLS", 8),
             auth_base_url=os.getenv("AUTH_BASE_URL", "http://localhost:8001"),
-            auth_validation_timeout_seconds=_parse_float("ADMIN_AUTH_VALIDATION_TIMEOUT_SECONDS", 5.0),
+            auth_validation_timeout_seconds=_parse_float(
+                "ADMIN_AUTH_VALIDATION_TIMEOUT_SECONDS", 5.0
+            ),
+            admin_http_timeout_seconds=_parse_float("ADMIN_HTTP_TIMEOUT_SECONDS", 60.0),
+            admin_evaluation_timeout_seconds=_parse_float(
+                "ADMIN_EVALUATION_TIMEOUT_SECONDS", 900.0
+            ),
             security_base_url=os.getenv("SECURITY_BASE_URL", ""),
             ingestion_base_url=os.getenv("INGESTION_BASE_URL", "http://localhost:8005"),
-            preprocessing_base_url=os.getenv("PREPROCESSING_BASE_URL", "http://localhost:8000"),
+            preprocessing_base_url=os.getenv(
+                "PREPROCESSING_BASE_URL", "http://localhost:8000"
+            ),
             embedding_base_url=os.getenv("EMBEDDING_BASE_URL", "http://localhost:8002"),
-            generation_base_url=os.getenv("GENERATION_BASE_URL", "http://localhost:8004"),
+            generation_base_url=os.getenv(
+                "GENERATION_BASE_URL", "http://localhost:8004"
+            ),
             retrieval_base_url=os.getenv("RETRIEVAL_BASE_URL", "http://localhost:8003"),
         )

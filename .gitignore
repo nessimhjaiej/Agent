@@ -19,3 +19,6 @@ node_modules/
 dist/
 .cache/
 *.local
+
+# Local report artifacts
+docs/pfe-report/

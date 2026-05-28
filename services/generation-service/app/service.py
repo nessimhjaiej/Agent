@@ -45,6 +45,13 @@ class GenerationService:
                 query=payload.query,
                 session_id=payload.session_id,
             )
+        special_answer = self._special_query_answer(payload.query)
+        if special_answer is not None:
+            return self._simple_chat_response(
+                query=payload.query,
+                session_id=payload.session_id,
+                answer=special_answer,
+            )
         context = ChatContext(
             query=payload.query,
             retrieved_chunks=[
@@ -79,6 +86,20 @@ class GenerationService:
             )
             return AskResponse(
                 **fallback.model_dump(),
+                retrieval_count=0,
+                returned_count=0,
+                retrieval_mode=payload.mode,
+                fusion_type=payload.fusion.type if payload.fusion and payload.fusion.type else "",
+                rerank_type=payload.rerank.type if payload.rerank and payload.rerank.type else "none",
+            )
+        special_answer = self._special_query_answer(payload.query)
+        if special_answer is not None:
+            return AskResponse(
+                **self._simple_chat_response(
+                    query=payload.query,
+                    session_id=payload.session_id,
+                    answer=special_answer,
+                ).model_dump(),
                 retrieval_count=0,
                 returned_count=0,
                 retrieval_mode=payload.mode,
@@ -169,6 +190,68 @@ class GenerationService:
             citations=[],
             used_chunk_ids=[],
             model=self._settings.generation_model,
+        )
+
+    def _simple_chat_response(
+        self,
+        *,
+        query: str,
+        session_id: str | None,
+        answer: str,
+    ) -> ChatResponse:
+        return ChatResponse(
+            status="ok",
+            session_id=session_id,
+            query=query,
+            answer=answer,
+            citations=[],
+            used_chunk_ids=[],
+            model=self._settings.generation_model,
+        )
+
+    def _special_query_answer(self, query: str) -> str | None:
+        lowered = " ".join(query.strip().lower().split())
+        if not lowered:
+            return None
+        if self._is_identity_query(lowered):
+            return (
+                "My name is `Synapse`. I am the knowledge assistant, and I help answer questions from the "
+                "available documents and retrieved context."
+            )
+        if self._is_capability_query(lowered):
+            return (
+                "My name is `Synapse`.\n\n"
+                "I can help you by answering questions from the available documents, summarizing and explaining "
+                "retrieved information, rephrasing or translating supported content, and giving grounded answers "
+                "with citations when relevant. If the needed information is outside the available knowledge, I will say so clearly."
+            )
+        return None
+
+    def _is_identity_query(self, lowered_query: str) -> bool:
+        return any(
+            marker in lowered_query
+            for marker in (
+                "who are you",
+                "what's your name",
+                "what is your name",
+                "your name",
+                "do you have a name",
+            )
+        )
+
+    def _is_capability_query(self, lowered_query: str) -> bool:
+        return any(
+            marker in lowered_query
+            for marker in (
+                "what can you do",
+                "what do you do",
+                "how can you help",
+                "how can you assist",
+                "what services can you do",
+                "what other services can you do",
+                "what services do you offer",
+                "your capabilities",
+            )
         )
 
     def _should_block_query(self, query: str, actor: RequestActorInput | None = None) -> bool:

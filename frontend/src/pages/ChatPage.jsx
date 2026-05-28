@@ -636,21 +636,6 @@ export default function ChatPage() {
               >
                 <img src={logo} alt="Agentic RAG logo" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
               </motion.div>
-              {/* Orbital dot */}
-              <motion.div
-                className="absolute w-3 h-3 rounded-full"
-                animate={{ 
-                  rotate: 360,
-                }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'linear', repeatType: 'loop' }}
-                style={{
-                  background: 'linear-gradient(135deg, #a78bfa, #22d3ee)',
-                  boxShadow: '0 0 10px rgba(139,92,246,0.5)',
-                  top: 'calc(50% - 6px)',
-                  left: 'calc(50% + 60px)',
-                  transformOrigin: '-60px 6px',
-                }}
-              />
             </div>
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-display mb-0 mt-4 sm:mt-6 text-balance" style={{ color: 'var(--text-primary)' }}>

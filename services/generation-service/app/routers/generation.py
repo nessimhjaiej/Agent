@@ -9,10 +9,13 @@ from app.errors import GenerationProviderError, GenerationServiceError, Generati
 from app.schemas import (
     AskRequest,
     AskResponse,
+    EvaluationDetailResponse,
     ChatRequest,
     ChatResponse,
     EvaluationCompareRequest,
     EvaluationCompareResponse,
+    EvaluationReportDetailResponse,
+    EvaluationReportRecordResponse,
     EvaluationListResponse,
     EvaluationMetricDelta,
     EvaluationReportSummaryResponse,
@@ -30,6 +33,23 @@ def _reports_dir() -> Path:
     return Path(Settings.from_env().evaluation_reports_dir)
 
 
+def _resolve_dataset_path(dataset_path: str, settings: Settings) -> Path:
+    candidate = Path(dataset_path)
+    if candidate.is_absolute():
+        return candidate
+
+    project_candidate = settings.project_root / candidate
+    if project_candidate.exists():
+        return project_candidate
+
+    service_root = Path(__file__).resolve().parents[2]
+    service_candidate = service_root / candidate
+    if service_candidate.exists():
+        return service_candidate
+
+    return project_candidate
+
+
 def _report_summary_response(report) -> EvaluationReportSummaryResponse:  # noqa: ANN001
     return EvaluationReportSummaryResponse(
         report_id=report.report_id,
@@ -38,6 +58,50 @@ def _report_summary_response(report) -> EvaluationReportSummaryResponse:  # noqa
         sample_count=report.sample_count,
         dataset_path=report.dataset_path,
         summary=report.summary,
+    )
+
+
+def _report_detail_response(report_id: str, filename: str, payload: dict) -> EvaluationReportDetailResponse:
+    records_payload = payload.get("records", [])
+    records: list[EvaluationReportRecordResponse] = []
+    if isinstance(records_payload, list):
+        for item in records_payload:
+            if not isinstance(item, dict):
+                continue
+            metrics = {
+                key: value
+                for key, value in item.items()
+                if key not in {"user_input", "response", "reference", "retrieved_contexts"}
+            }
+            records.append(
+                EvaluationReportRecordResponse(
+                    user_input=str(item.get("user_input") or ""),
+                    response=str(item.get("response") or ""),
+                    reference=str(item.get("reference") or ""),
+                    retrieved_contexts=[
+                        str(context)
+                        for context in (item.get("retrieved_contexts") or [])
+                        if isinstance(context, str)
+                    ],
+                    metrics=metrics,
+                )
+            )
+
+    return EvaluationDetailResponse(
+        status="ok",
+        report=EvaluationReportDetailResponse(
+            report_id=report_id,
+            filename=filename,
+            generated_at_utc=str(payload.get("generated_at_utc") or ""),
+            sample_count=int(payload.get("sample_count") or 0),
+            dataset_path=str(payload.get("dataset_path") or ""),
+            summary={
+                key: float(value)
+                for key, value in (payload.get("summary") or {}).items()
+                if isinstance(value, (int, float))
+            },
+            records=records,
+        ),
     )
 
 
@@ -100,9 +164,7 @@ async def transcribe(
 @router.post("/evaluations/run", response_model=EvaluationRunResponse)
 def run_evaluation(payload: EvaluationRunRequest) -> EvaluationRunResponse:
     settings = Settings.from_env()
-    dataset_path = Path(payload.dataset_path)
-    if not dataset_path.is_absolute():
-        dataset_path = settings.project_root / dataset_path
+    dataset_path = _resolve_dataset_path(payload.dataset_path, settings)
 
     try:
         runner = RagasEvaluationRunner(reports_dir=Path(settings.evaluation_reports_dir))
@@ -126,6 +188,21 @@ def run_evaluation(payload: EvaluationRunRequest) -> EvaluationRunResponse:
 def get_evaluations() -> EvaluationListResponse:
     reports = [_report_summary_response(item) for item in list_reports(_reports_dir())]
     return EvaluationListResponse(status="ok", reports=reports)
+
+
+@router.get("/evaluations/{report_id}", response_model=EvaluationDetailResponse)
+def get_evaluation(report_id: str) -> EvaluationDetailResponse:
+    try:
+        reports_dir = _reports_dir()
+        payload = load_report(reports_dir, report_id)
+        filename = report_id if report_id.endswith(".json") else f"{report_id}.json"
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    normalized_report_id = filename.removesuffix(".json")
+    return _report_detail_response(normalized_report_id, filename, payload)
 
 
 @router.post("/evaluations/compare", response_model=EvaluationCompareResponse)

@@ -91,6 +91,8 @@ services:
       context: .
       dockerfile: services/generation-service/Dockerfile
     container_name: generation-service
+    volumes:
+      - ./docs/evaluation_reports:/app/docs/evaluation_reports
     environment:
       OPENAI_KEY: ${OPENAI_KEY}
       RETRIEVAL_BASE_URL: http://retrieval-service:8003

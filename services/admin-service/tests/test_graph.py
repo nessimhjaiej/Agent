@@ -63,7 +63,7 @@ def test_run_graph_routes_to_mutation_confirmation(monkeypatch) -> None:  # noqa
     classifier = IntentClassification(category="mutate", intent="mutate", reasoning="test")
     monkeypatch.setattr(IntentClassifier, "classify", lambda self, message: classifier)
     responses = [_MockResponse(200, {"documents": [{"id": "doc-1", "original_name": "doc-1.pdf"}]})]
-    monkeypatch.setattr(AdminToolbox, "_client", lambda self: _MockClient(responses))
+    monkeypatch.setattr(AdminToolbox, "_client", lambda self, timeout_seconds=None: _MockClient(responses))
 
     response = run_graph(AdminChatRequest(message="delete document doc-1", access_token="token"), _settings())
 
@@ -329,3 +329,25 @@ def test_run_graph_builds_compound_plan_for_reranking_advantages_and_semantic_ty
     assert response.pending_action.steps[1].tool == "update_repo_config"
     assert response.pending_action.steps[1].arguments["service_name"] == "preprocessing"
     assert response.pending_action.steps[1].arguments["changes"]["chunk_strategy"] == "semantic"
+
+
+def test_plan_workflow_can_run_evaluation_and_read_latest_report() -> None:
+    pending_action, answer = graph_module._plan_workflow(
+        "run evaluation and read it",
+        AdminToolbox(_settings()),
+    )
+
+    assert pending_action is not None
+    assert pending_action["tool"] == "run_evaluation"
+    assert len(pending_action["workflow_tasks"]) == 2
+    assert pending_action["workflow_tasks"][1]["steps"][0]["tool"] == "read_evaluation_report"
+    assert "read the saved report" in answer
+
+
+def test_plan_inspection_step_reads_latest_evaluation_report() -> None:
+    step = graph_module._plan_inspection_step(
+        "show me the latest evaluation report",
+        AdminToolbox(_settings()),
+    )
+
+    assert step == {"tool": "read_evaluation_report", "arguments": {"report_id": "latest"}}

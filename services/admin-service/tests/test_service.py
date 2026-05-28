@@ -790,6 +790,78 @@ def test_service_persists_run_evaluation_arguments(tmp_path: Path) -> None:
     assert response.pending_action.arguments["dataset_path"] == "evals/sample_eval_dataset.json"
 
 
+def test_service_confirms_evaluation_then_reads_latest_report(monkeypatch, tmp_path: Path) -> None:  # noqa: ANN001
+    service = AdminService(_settings(tmp_path))
+    session_id = service._sessions.ensure_session_id(None)
+    service._sessions.save(
+        session_id,
+        {
+            "last_message": "run evaluation and read it",
+            "pending_action": {
+                "intent": "mutation",
+                "tool": "run_evaluation",
+                "arguments": {"dataset_path": "evals/sample_eval_dataset.json"},
+                "steps": [],
+                "task_index": 0,
+                "workflow_tasks": [
+                    {
+                        "task_id": "task_1",
+                        "kind": "mutation",
+                        "clause": "run evaluation",
+                        "status": "pending",
+                        "steps": [{"tool": "run_evaluation", "arguments": {"dataset_path": "evals/sample_eval_dataset.json"}}],
+                        "outcome": {},
+                    },
+                    {
+                        "task_id": "task_2",
+                        "kind": "read",
+                        "clause": "read latest evaluation report",
+                        "status": "pending",
+                        "steps": [{"tool": "read_evaluation_report", "arguments": {"report_id": "latest"}}],
+                        "outcome": {},
+                    },
+                ],
+            },
+            "workflow_tasks": [
+                {
+                    "task_id": "task_1",
+                    "kind": "mutation",
+                    "clause": "run evaluation",
+                    "status": "pending",
+                    "steps": [{"tool": "run_evaluation", "arguments": {"dataset_path": "evals/sample_eval_dataset.json"}}],
+                    "outcome": {},
+                },
+                {
+                    "task_id": "task_2",
+                    "kind": "read",
+                    "clause": "read latest evaluation report",
+                    "status": "pending",
+                    "steps": [{"tool": "read_evaluation_report", "arguments": {"report_id": "latest"}}],
+                    "outcome": {},
+                },
+            ],
+            "active_task_index": 0,
+        },
+    )
+
+    def _exec(pending_action: dict) -> dict:
+        tool = pending_action.get("tool")
+        if tool == "run_evaluation":
+            return {"status": "ok", "report": {"report_id": "r1"}}
+        if tool == "read_evaluation_report":
+            return {"status": "ok", "report": {"report_id": "r1", "sample_count": 2, "summary": {"faithfulness": 0.91}}}
+        return {"status": "ok"}
+
+    monkeypatch.setattr(service._toolbox, "execute_pending_action", _exec)
+
+    response = service.chat(AdminChatRequest(message="confirm", session_id=session_id, confirm=True))
+
+    assert response.status == "ok"
+    assert any(step["tool"] == "run_evaluation" for step in response.result["executed_steps"])
+    assert any(step["tool"] == "read_evaluation_report" for step in response.result["executed_steps"])
+    assert "evaluation report read" in response.answer or "report" in response.answer
+
+
 def test_service_plans_chunking_config_change(tmp_path: Path) -> None:
     service = AdminService(_settings(tmp_path))
     response = service.chat(AdminChatRequest(message="change chunk size to 900"))
@@ -889,6 +961,28 @@ def test_service_capability_follow_up_ignores_prior_mutation_context(tmp_path: P
     stored = service._sessions.load(session_id)
     assert stored["pending_action"] is None
     assert stored["last_topic"] == "capabilities"
+
+
+def test_service_answers_admin_identity_with_synapse_name(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+
+    response = service.chat(AdminChatRequest(message="what's your name"))
+
+    assert response.status == "ok"
+    assert response.mode == "advisory"
+    assert "Synapse" in response.answer
+    assert "admin agent" in response.answer.lower()
+
+
+def test_service_capabilities_introduce_synapse_and_services(tmp_path: Path) -> None:
+    service = AdminService(_settings(tmp_path))
+
+    response = service.chat(AdminChatRequest(message="what other services you can do ?"))
+
+    assert response.status == "ok"
+    assert response.mode == "advisory"
+    assert "Synapse" in response.answer
+    assert "Read-Only Inspections" in response.answer
 
 
 def test_service_plans_follow_up_reranker_disable_from_cached_methods(tmp_path: Path) -> None:
