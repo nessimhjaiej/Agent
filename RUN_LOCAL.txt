@@ -4,10 +4,10 @@ Run Locally (Windows PowerShell)
 Option A) Start backend services with Docker Compose
 ----------------------------------------------------
 cd C:\Users\NESSIM\Desktop\agentic
-docker compose up -d weaviate auth-service preprocessing-service embedding-service retrieval-service generation-service ingestion-service admin-service
+docker compose up -d weaviate auth-service preprocessing-service embedding-service retrieval-service generation-service ingestion-service admin-service security-service
 
 Optional: rebuild images before starting
-docker compose build auth-service preprocessing-service embedding-service retrieval-service generation-service ingestion-service admin-service
+docker compose build auth-service preprocessing-service embedding-service retrieval-service generation-service ingestion-service admin-service security-service
 
 Recommended when updating admin-service
 docker compose up -d --build --force-recreate admin-service
@@ -55,6 +55,10 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload
 cd C:\Users\NESSIM\Desktop\agentic\services\admin-service
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8006 --reload
 
+9. Start security-service
+cd C:\Users\NESSIM\Desktop\agentic\services\security-service
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8007 --reload
+
 Check backend service health
 ----------------------------
 curl.exe http://localhost:8000/health
@@ -64,6 +68,7 @@ curl.exe http://localhost:8003/health
 curl.exe http://localhost:8004/health
 curl.exe http://localhost:8005/health
 curl.exe http://localhost:8006/health
+curl.exe http://localhost:8007/health
 curl.exe http://localhost:8080/v1/.well-known/ready
 
 Start frontend (new terminal)

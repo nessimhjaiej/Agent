@@ -41,5 +41,562 @@
     },
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc3NTQzNjk1LCJpYXQiOjE3Nzc1NDAwOTUsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL3N0b3JhZ2UvdjEvb2JqZWN0L3B1YmxpYy9wcm9maWxlcy8yMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkvMTc3NjI1MTUxODEwNC5qcGVnIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJoamFpZWpuZXNzaW0ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3NzU0MDA5NX1dLCJzZXNzaW9uX2lkIjoiMDQyOTlmMzctNjY0OC00MTI0LTk0ZGItZTY1Nzk4MjQ0ZTAxIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.Yi6z4CVangklCZBc5ISM0KZB9VjO970K3cQpwp9etqRSWPvQO98pUgSJjYUdt7pNeOsgu5Ad3aj4aKATe7u6TA",
     "cache_invalidated_at": 1777542302.816494
+  },
+  "b3a8fe09-9a44-4fae-a4be-fd8536e612ea": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what are the tasks that you can help me with ?"
+      },
+      {
+        "role": "assistant",
+        "content": "## Summary\n\n### Information Gathered\n- **Reranking Strategies**: Available options are `cross_encoder`, `llm_batch`, and `none`. The current strategy in use is `none`.\n- **Chunking Strategies**: Available options are `late`, `overlap`, and `semantic`. The current strategy in use is `overlap`.\n\n### Operational Advice\n- Consider reviewing the current strategies to ensure they align with your objectives."
+      },
+      {
+        "role": "user",
+        "content": "can you answer me in more detail"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nCertainly! Here's a detailed list of tasks I can assist you with:\n\n1. **Document Management**:\n   - Check the status of document ingestion, including counts by status and embedded totals.\n   - List documents currently known to the system, along with their status and embedded flags.\n   - Reindex documents to update their embeddings from the latest source files.\n\n2. **Evaluation and Comparison**:\n   - Run evaluations using a specified dataset to assess system performance.\n   - List saved evaluation reports for review or comparison.\n   - Compare two evaluation reports to see the differences in metrics.\n\n3. **Configuration and Settings**:\n   - Retrieve configuration values for different service domains like preprocessing, retrieval, embedding, or generation.\n   - Get information on available retrieval reranking methods and the current default reranker.\n\n4. **Reindexing**:\n   - Rebuild embeddings for all validated documents currently tracked by the system.\n\nThese tasks help in managing documents, evaluating system performance, and configuring system settings to optimize operations. If you have a specific task in mind, feel free to ask!"
+      }
+    ],
+    "last_message": "can you answer me in more detail",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_response": "## Advice\n\nCertainly! Here's a detailed list of tasks I can assist you with:\n\n1. **Document Management**:\n   - Check the status of document ingestion, including counts by status and embedded totals.\n   - List documents currently known to the system, along with their status and embedded flags.\n   - Reindex documents to update their embeddings from the latest source files.\n\n2. **Evaluation and Comparison**:\n   - Run evaluations using a specified dataset to assess system performance.\n   - List saved evaluation reports for review or comparison.\n   - Compare two evaluation reports to see the differences in metrics.\n\n3. **Configuration and Settings**:\n   - Retrieve configuration values for different service domains like preprocessing, retrieval, embedding, or generation.\n   - Get information on available retrieval reranking methods and the current default reranker.\n\n4. **Reindexing**:\n   - Rebuild embeddings for all validated documents currently tracked by the system.\n\nThese tasks help in managing documents, evaluating system performance, and configuring system settings to optimize operations. If you have a specific task in mind, feel free to ask!",
+    "last_route": "advisory",
+    "last_topic": "Provide a detailed explanation or recommendation.",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5NjQ4NTUwLCJpYXQiOjE3Nzk2NDQ5NTAsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL3N0b3JhZ2UvdjEvb2JqZWN0L3B1YmxpYy9wcm9maWxlcy8yMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkvMTc3NjI1MTUxODEwNC5qcGVnIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJoamFpZWpuZXNzaW0ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3OTY0NDk1MH1dLCJzZXNzaW9uX2lkIjoiYjE4ZWExMTAtMGNhMS00MDc4LThjY2QtMWRhMDI0NzU4YWIxIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.u7q0LkuV-Qjyvm0jw02FG6IdPxI_F9LV7xYFZfir2qhtifrKSdpfKMZl4x0gvWnv2XELP7Tgt9TqcaOjxt1dEA",
+    "tool_cache": {}
+  },
+  "49d52343-b4c2-4c83-a2b7-1ae4d75a4280": {
+    "history": [
+      {
+        "role": "user",
+        "content": "i want a detailed list of the tasks you can help me with"
+      },
+      {
+        "role": "assistant",
+        "content": "## Summary\n\n### Information Gathered\n- **Reranking Strategies**: Available options are `cross_encoder`, `llm_batch`, and `none`. The current strategy in use is `none`.\n- **Chunking Strategies**: Available options are `late`, `overlap`, and `semantic`. The current strategy in use is `overlap`.\n\n### Operational Advice\n- Review the current strategies to ensure they align with your processing needs. Adjust if necessary for optimal performance."
+      }
+    ],
+    "last_message": "i want a detailed list of the tasks you can help me with",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_response": "## Summary\n\n### Information Gathered\n- **Reranking Strategies**: Available options are `cross_encoder`, `llm_batch`, and `none`. The current strategy in use is `none`.\n- **Chunking Strategies**: Available options are `late`, `overlap`, and `semantic`. The current strategy in use is `overlap`.\n\n### Operational Advice\n- Review the current strategies to ensure they align with your processing needs. Adjust if necessary for optimal performance.",
+    "last_route": "mutate",
+    "last_topic": "Request for information about available tasks",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5NjQ4NTUwLCJpYXQiOjE3Nzk2NDQ5NTAsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL3N0b3JhZ2UvdjEvb2JqZWN0L3B1YmxpYy9wcm9maWxlcy8yMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkvMTc3NjI1MTUxODEwNC5qcGVnIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJoamFpZWpuZXNzaW0ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3OTY0NDk1MH1dLCJzZXNzaW9uX2lkIjoiYjE4ZWExMTAtMGNhMS00MDc4LThjY2QtMWRhMDI0NzU4YWIxIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.u7q0LkuV-Qjyvm0jw02FG6IdPxI_F9LV7xYFZfir2qhtifrKSdpfKMZl4x0gvWnv2XELP7Tgt9TqcaOjxt1dEA",
+    "tool_cache": {}
+  },
+  "3e08a6b8-159a-48a8-bfa0-cc0de15f6e6b": {
+    "history": [
+      {
+        "role": "user",
+        "content": "donne moi les configurations de ce syst\u00e8me d'une mani\u00e8re courte"
+      },
+      {
+        "role": "assistant",
+        "content": "## Summary\n\n### Information Gathered\n- **Chunking Strategy:** Overlap with a chunk size of 800 and overlap of 120.\n- **Retrieval Window:** Retrieve 4 items, return 3.\n- **Embedding Settings:** Model, dimensions, and batch size are not set.\n- **Generation Settings:** Current settings have been checked. \n\nFor optimal performance, ensure all necessary configurations are set."
+      },
+      {
+        "role": "user",
+        "content": "est ce que tu peux m'expliquer le terme \"chunking\""
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nLe \"chunking\" est une technique utilis\u00e9e pour diviser un document ou un texte en plus petits morceaux, appel\u00e9s \"chunks\". Cela permet de traiter, analyser ou indexer le texte de mani\u00e8re plus efficace. Voici quelques points cl\u00e9s sur le chunking :\n\n1. **Taille des Chunks :** Chaque chunk a une taille d\u00e9finie, par exemple, 800 caract\u00e8res ou mots. Cela permet de g\u00e9rer de grandes quantit\u00e9s de texte sans surcharge.\n\n2. **Chevauchement (Overlap) :** Parfois, les chunks peuvent se chevaucher, c'est-\u00e0-dire qu'une partie du texte est partag\u00e9e entre deux chunks. Cela aide \u00e0 maintenir le contexte entre les morceaux.\n\n3. **Utilisation :** Le chunking est souvent utilis\u00e9 dans le traitement automatique du langage naturel (NLP) pour faciliter l'analyse et l'extraction d'informations.\n\nEn r\u00e9sum\u00e9, le chunking rend le traitement des textes longs plus g\u00e9rable et efficace, surtout dans les syst\u00e8mes qui n\u00e9cessitent une analyse d\u00e9taill\u00e9e ou une recherche d'informations pr\u00e9cises."
+      },
+      {
+        "role": "user",
+        "content": "donne moi une suggestion pour acc\u00e9lerer la g\u00e9n\u00e9ration de r\u00e9ponse pour l'utilisateur"
+      },
+      {
+        "role": "assistant",
+        "content": "### Summary\n\n#### Information Gathered\n- The current settings for response generation were checked. All parameters (`generation_model`, `temperature`, `max_context_chunks`, `require_citations`) are currently unset.\n\n#### Suggestion\n- To potentially accelerate response generation, consider setting specific values for these parameters based on your needs."
+      }
+    ],
+    "last_message": "donne moi une suggestion pour acc\u00e9lerer la g\u00e9n\u00e9ration de r\u00e9ponse pour l'utilisateur",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_response": "### Summary\n\n#### Information Gathered\n- The current settings for response generation were checked. All parameters (`generation_model`, `temperature`, `max_context_chunks`, `require_citations`) are currently unset.\n\n#### Suggestion\n- To potentially accelerate response generation, consider setting specific values for these parameters based on your needs.",
+    "last_route": "mutate",
+    "last_topic": "Provide suggestions to accelerate response generation for users.",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5NjQ4NTUwLCJpYXQiOjE3Nzk2NDQ5NTAsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL3N0b3JhZ2UvdjEvb2JqZWN0L3B1YmxpYy9wcm9maWxlcy8yMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkvMTc3NjI1MTUxODEwNC5qcGVnIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJoamFpZWpuZXNzaW0ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3OTY0NDk1MH1dLCJzZXNzaW9uX2lkIjoiYjE4ZWExMTAtMGNhMS00MDc4LThjY2QtMWRhMDI0NzU4YWIxIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.u7q0LkuV-Qjyvm0jw02FG6IdPxI_F9LV7xYFZfir2qhtifrKSdpfKMZl4x0gvWnv2XELP7Tgt9TqcaOjxt1dEA",
+    "tool_cache": {
+      "{\"args\": {}, \"name\": \"list_loaded_documents\"}": {
+        "tool": "list_loaded_documents",
+        "args": {},
+        "result": {
+          "status": "ok",
+          "documents": [
+            {
+              "id": "bfd1224f-4618-4451-b91d-5c4bd937204d",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1773315721945-2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 454010,
+              "created_at": "2026-03-12T11:42:02.804906+00:00",
+              "embedded_at": "2026-04-15T13:50:00.082187+00:00"
+            },
+            {
+              "id": "65320889-47ca-4c6d-ba39-b894ffe2f412",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "02-Roadmap-ICC-Tunisie-2025-V1.pdf",
+              "storage_path": "rejected/bdcae110-faf5-47f7-b50e-e51616c048d7/1772722572012-02-Roadmap-ICC-Tunisie-2025-V1.pdf",
+              "status": "rejected",
+              "embedded": false,
+              "size_bytes": 118845,
+              "created_at": "2026-03-05T14:56:20.473057+00:00",
+              "embedded_at": null
+            },
+            {
+              "id": "2120f479-c3c4-4b60-a3a7-972084efb67b",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "icc-policy-primer-on-cybersecurity.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710314231-icc-policy-primer-on-cybersecurity.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 1642083,
+              "created_at": "2026-03-05T11:32:03.618998+00:00",
+              "embedded_at": "2026-04-15T13:50:23.184738+00:00"
+            },
+            {
+              "id": "a8a4adf2-a891-4f28-940a-cb54d9e62e79",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710278835-ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 5508412,
+              "created_at": "2026-03-05T11:31:53.209062+00:00",
+              "embedded_at": "2026-04-15T13:51:15.717885+00:00"
+            },
+            {
+              "id": "6fb4458a-ab45-44e7-8641-516113b7ad02",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "ICC_PolicyPrimer_NonPersonalData_October2023.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710275624-ICC_PolicyPrimer_NonPersonalData_October2023.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 321856,
+              "created_at": "2026-03-05T11:31:18.20431+00:00",
+              "embedded_at": "2026-04-15T13:51:42.324522+00:00"
+            },
+            {
+              "id": "b49a2bcd-0b91-4477-a5df-cd9d5e5f9772",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2025-ICC-Policy-Paper-AI-governance-and-standards.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710272526-2025-ICC-Policy-Paper-AI-governance-and-standards.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 325627,
+              "created_at": "2026-03-05T11:31:15.013245+00:00",
+              "embedded_at": "2026-04-15T13:52:30.816135+00:00"
+            },
+            {
+              "id": "6a99a16c-c21e-4a8c-b4ee-e1de7e66195a",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2025-ICC-Data-flows-in-supply-chains.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710269950-2025-ICC-Data-flows-in-supply-chains.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 570497,
+              "created_at": "2026-03-05T11:31:11.99133+00:00",
+              "embedded_at": "2026-04-15T13:53:24.086952+00:00"
+            },
+            {
+              "id": "76ce78b7-3266-456d-85be-12c694749059",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2025-ICC-Achieving-inclusive-AI.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710268337-2025-ICC-Achieving-inclusive-AI.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 215471,
+              "created_at": "2026-03-05T11:31:09.469426+00:00",
+              "embedded_at": "2026-04-15T13:54:02.432848+00:00"
+            },
+            {
+              "id": "ca004e28-58bc-47f7-9698-a26095ca41fe",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710266879-2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 131280,
+              "created_at": "2026-03-05T11:31:07.952588+00:00",
+              "embedded_at": "2026-04-15T13:54:45.044624+00:00"
+            },
+            {
+              "id": "c1682cef-b0bb-418f-878b-89909ca25cce",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710259149-2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 727543,
+              "created_at": "2026-03-05T11:31:05.939863+00:00",
+              "embedded_at": "2026-04-15T13:55:38.742612+00:00"
+            },
+            {
+              "id": "852eea3a-6d74-4dba-94c0-c67ff38ddf34",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2022-icc-white-paper-delivering-connectivity.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772709695730-2022-icc-white-paper-delivering-connectivity.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 1792221,
+              "created_at": "2026-03-05T11:21:45.561039+00:00",
+              "embedded_at": "2026-04-15T13:57:50.151109+00:00"
+            }
+          ]
+        },
+        "created_at": 1779645163.2048497,
+        "ttl_seconds": 90,
+        "tags": [
+          "documents",
+          "ingestion"
+        ]
+      },
+      "{\"args\": {}, \"name\": \"get_ingestion_status\"}": {
+        "tool": "get_ingestion_status",
+        "args": {},
+        "result": {
+          "status": "ok",
+          "total_documents": 11,
+          "embedded_documents": 10,
+          "validated_not_embedded": 0,
+          "status_counts": {
+            "validated": 10,
+            "rejected": 1
+          }
+        },
+        "created_at": 1779645129.922506,
+        "ttl_seconds": 90,
+        "tags": [
+          "documents",
+          "ingestion"
+        ]
+      }
+    }
+  },
+  "537fb82d-7f79-40dc-a956-a6dd2beb4ba6": {
+    "history": [
+      {
+        "role": "user",
+        "content": "hi"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nBonjour ! Comment puis-je vous aider aujourd'hui ?"
+      },
+      {
+        "role": "user",
+        "content": "what can you help me with in this"
+      },
+      {
+        "role": "assistant",
+        "content": "## Summary\n\n### Information Gathered\n\n- **Reranking Strategies**: The available options are `cross_encoder`, `llm_batch`, and `none`. The current strategy in use is `none`.\n  \n- **Chunking Strategies**: The available options are `late`, `overlap`, and `semantic`. The current strategy in use is `overlap`.\n\n### Operational Advice\n\nConsider selecting a reranking strategy if you need to improve the ranking of retrieved items."
+      },
+      {
+        "role": "user",
+        "content": "what does reranking even mean"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nReranking is a process used to reorder or refine a list of retrieved items (like search results) to improve their relevance or quality. After an initial retrieval of items based on a query, reranking methods apply additional criteria or models to sort these items in a way that better meets the user's needs or expectations. This can lead to more accurate or useful results being presented at the top of the list."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": "overlap",
+            "chunk_size": 800,
+            "chunk_overlap": 120,
+            "pipeline_version": "v1"
+          },
+          "sources": {
+            "chunk_strategy": "services/preprocessing-service/app/config.py",
+            "chunk_size": "services/preprocessing-service/app/config.py",
+            "chunk_overlap": "services/preprocessing-service/app/config.py",
+            "pipeline_version": "services/preprocessing-service/app/config.py"
+          }
+        },
+        "created_at": 1779646276.065811,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      }
+    },
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_message": "what does reranking even mean",
+    "last_response": "## Advice\n\nReranking is a process used to reorder or refine a list of retrieved items (like search results) to improve their relevance or quality. After an initial retrieval of items based on a query, reranking methods apply additional criteria or models to sort these items in a way that better meets the user's needs or expectations. This can lead to more accurate or useful results being presented at the top of the list.",
+    "last_route": "advisory",
+    "last_topic": "explain the concept of reranking",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5NjQ4NTUwLCJpYXQiOjE3Nzk2NDQ5NTAsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL3N0b3JhZ2UvdjEvb2JqZWN0L3B1YmxpYy9wcm9maWxlcy8yMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkvMTc3NjI1MTUxODEwNC5qcGVnIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJoamFpZWpuZXNzaW0ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3OTY0NDk1MH1dLCJzZXNzaW9uX2lkIjoiYjE4ZWExMTAtMGNhMS00MDc4LThjY2QtMWRhMDI0NzU4YWIxIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.u7q0LkuV-Qjyvm0jw02FG6IdPxI_F9LV7xYFZfir2qhtifrKSdpfKMZl4x0gvWnv2XELP7Tgt9TqcaOjxt1dEA",
+    "cache_invalidated_at": null
+  },
+  "e0e92dcb-2ae0-4d49-a9ce-dc352276190c": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what are the avialbale chunking startegies i can choose from ?"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nThe current chunking strategy in use is \"overlap,\" where each chunk has a size of 800 with an overlap of 120. \n\nWhile the specific available strategies aren't listed, common chunking strategies typically include:\n\n1. **Fixed Size:** Chunks are created with a fixed number of words or characters.\n2. **Overlap:** Chunks overlap with each other by a certain number of words or characters, as currently configured.\n3. **Semantic:** Chunks are created based on semantic boundaries, like sentences or paragraphs.\n4. **Dynamic:** Chunks are adjusted based on content, such as splitting at natural breaks in the text.\n\nIf you need to explore or change the strategy, you might need to consult the system's configuration options or documentation."
+      },
+      {
+        "role": "user",
+        "content": "what's the best one for performance ?"
+      },
+      {
+        "role": "assistant",
+        "content": "## Guidance\n\nThe best chunking strategy for performance depends on your specific use case and goals. Here are some considerations:\n\n1. **Fixed Size:** Offers simplicity and speed, but may cut off important context if chunks are too small.\n\n2. **Overlap:** Balances context retention and processing efficiency, useful for tasks requiring context continuity, like language models.\n\n3. **Semantic:** Provides natural breaks and maintains context, ideal for tasks needing high accuracy, like summarization, but may be slower.\n\n4. **Dynamic:** Adapts to content, potentially offering the best balance of context and performance, but can be complex to implement.\n\nFor general performance, an overlap strategy often works well, as it maintains context while allowing efficient processing. However, the best choice depends on the specific requirements of your task, such as the need for context, processing speed, and accuracy."
+      },
+      {
+        "role": "user",
+        "content": "ok i want to change it to overlap"
+      },
+      {
+        "role": "assistant",
+        "content": "## Next Action\n\n### Confirmation Required\n- update the preprocessing settings with {'chunk_strategy': 'overlap'}\n\nReply with **`confirm`** to continue."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"service_name\": \"preprocessing\"}, \"name\": \"get_repo_config\"}": {
+        "tool": "get_repo_config",
+        "args": {
+          "service_name": "preprocessing"
+        },
+        "result": {
+          "status": "ok",
+          "scope": "preprocessing",
+          "config": {
+            "chunk_strategy": "overlap",
+            "chunk_size": 800,
+            "chunk_overlap": 120,
+            "pipeline_version": "v1"
+          },
+          "sources": {
+            "chunk_strategy": "services/preprocessing-service/app/config.py",
+            "chunk_size": "services/preprocessing-service/app/config.py",
+            "chunk_overlap": "services/preprocessing-service/app/config.py",
+            "pipeline_version": "services/preprocessing-service/app/config.py"
+          }
+        },
+        "created_at": 1779655631.4464462,
+        "ttl_seconds": 600,
+        "tags": [
+          "config"
+        ]
+      },
+      "{\"args\": {}, \"name\": \"list_loaded_documents\"}": {
+        "tool": "list_loaded_documents",
+        "args": {},
+        "result": {
+          "status": "ok",
+          "documents": [
+            {
+              "id": "bfd1224f-4618-4451-b91d-5c4bd937204d",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1773315721945-2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 454010,
+              "created_at": "2026-03-12T11:42:02.804906+00:00",
+              "embedded_at": "2026-04-15T13:50:00.082187+00:00"
+            },
+            {
+              "id": "65320889-47ca-4c6d-ba39-b894ffe2f412",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "02-Roadmap-ICC-Tunisie-2025-V1.pdf",
+              "storage_path": "rejected/bdcae110-faf5-47f7-b50e-e51616c048d7/1772722572012-02-Roadmap-ICC-Tunisie-2025-V1.pdf",
+              "status": "rejected",
+              "embedded": false,
+              "size_bytes": 118845,
+              "created_at": "2026-03-05T14:56:20.473057+00:00",
+              "embedded_at": null
+            },
+            {
+              "id": "2120f479-c3c4-4b60-a3a7-972084efb67b",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "icc-policy-primer-on-cybersecurity.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710314231-icc-policy-primer-on-cybersecurity.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 1642083,
+              "created_at": "2026-03-05T11:32:03.618998+00:00",
+              "embedded_at": "2026-04-15T13:50:23.184738+00:00"
+            },
+            {
+              "id": "a8a4adf2-a891-4f28-940a-cb54d9e62e79",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710278835-ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 5508412,
+              "created_at": "2026-03-05T11:31:53.209062+00:00",
+              "embedded_at": "2026-04-15T13:51:15.717885+00:00"
+            },
+            {
+              "id": "6fb4458a-ab45-44e7-8641-516113b7ad02",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "ICC_PolicyPrimer_NonPersonalData_October2023.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710275624-ICC_PolicyPrimer_NonPersonalData_October2023.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 321856,
+              "created_at": "2026-03-05T11:31:18.20431+00:00",
+              "embedded_at": "2026-04-15T13:51:42.324522+00:00"
+            },
+            {
+              "id": "b49a2bcd-0b91-4477-a5df-cd9d5e5f9772",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2025-ICC-Policy-Paper-AI-governance-and-standards.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710272526-2025-ICC-Policy-Paper-AI-governance-and-standards.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 325627,
+              "created_at": "2026-03-05T11:31:15.013245+00:00",
+              "embedded_at": "2026-04-15T13:52:30.816135+00:00"
+            },
+            {
+              "id": "6a99a16c-c21e-4a8c-b4ee-e1de7e66195a",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2025-ICC-Data-flows-in-supply-chains.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710269950-2025-ICC-Data-flows-in-supply-chains.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 570497,
+              "created_at": "2026-03-05T11:31:11.99133+00:00",
+              "embedded_at": "2026-04-15T13:53:24.086952+00:00"
+            },
+            {
+              "id": "76ce78b7-3266-456d-85be-12c694749059",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2025-ICC-Achieving-inclusive-AI.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710268337-2025-ICC-Achieving-inclusive-AI.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 215471,
+              "created_at": "2026-03-05T11:31:09.469426+00:00",
+              "embedded_at": "2026-04-15T13:54:02.432848+00:00"
+            },
+            {
+              "id": "ca004e28-58bc-47f7-9698-a26095ca41fe",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710266879-2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 131280,
+              "created_at": "2026-03-05T11:31:07.952588+00:00",
+              "embedded_at": "2026-04-15T13:54:45.044624+00:00"
+            },
+            {
+              "id": "c1682cef-b0bb-418f-878b-89909ca25cce",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710259149-2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 727543,
+              "created_at": "2026-03-05T11:31:05.939863+00:00",
+              "embedded_at": "2026-04-15T13:55:38.742612+00:00"
+            },
+            {
+              "id": "852eea3a-6d74-4dba-94c0-c67ff38ddf34",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2022-icc-white-paper-delivering-connectivity.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772709695730-2022-icc-white-paper-delivering-connectivity.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 1792221,
+              "created_at": "2026-03-05T11:21:45.561039+00:00",
+              "embedded_at": "2026-04-15T13:57:50.151109+00:00"
+            }
+          ]
+        },
+        "created_at": 1779655545.8665009,
+        "ttl_seconds": 90,
+        "tags": [
+          "documents",
+          "ingestion"
+        ]
+      },
+      "{\"args\": {}, \"name\": \"get_ingestion_status\"}": {
+        "tool": "get_ingestion_status",
+        "args": {},
+        "result": {
+          "status": "ok",
+          "total_documents": 11,
+          "embedded_documents": 10,
+          "validated_not_embedded": 0,
+          "status_counts": {
+            "validated": 10,
+            "rejected": 1
+          }
+        },
+        "created_at": 1779655522.8465624,
+        "ttl_seconds": 90,
+        "tags": [
+          "documents",
+          "ingestion"
+        ]
+      }
+    },
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_message": "reject",
+    "last_response": "## Summary\n\n### Rejected Action\n- The request to change the preprocessing settings to use the 'overlap' chunk strategy was rejected. \n\nIf you need this change, please verify the request details or consult with a technical team member.",
+    "last_route": "mutate",
+    "last_topic": "update_repo_config",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIyMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5NjU5MDU4LCJpYXQiOjE3Nzk2NTU0NTgsImVtYWlsIjoiaGphaWVqbmVzc2ltQGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7ImFjY291bnRfYmxvY2tlZCI6ZmFsc2UsImFjY291bnRfdmFsaWRhdGVkIjp0cnVlLCJpbnZpdGVkX2F0IjoiMjAyNi0wNC0wNlQxMjoxOToyNi41NzE1ODMrMDA6MDAiLCJpbnZpdGVkX2J5IjoiYmRjYWUxMTAtZmFmNS00N2Y3LWI1MGUtZTUxNjE2YzA0OGQ3IiwiaW52aXRlZF9ieV9hZG1pbiI6dHJ1ZSwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwcm9maWxlX3BpY3R1cmUiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL3N0b3JhZ2UvdjEvb2JqZWN0L3B1YmxpYy9wcm9maWxlcy8yMTUzZDhmNi00OWFmLTRlYmQtOTY2Yi0wZTA4YjVlNzQ5OTkvMTc3NjI1MTUxODEwNC5qcGVnIiwicm9sZSI6ImFkbWluIiwidXNlcm5hbWUiOiJoamFpZWpuZXNzaW0ifSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3OTY1NTQ1OH1dLCJzZXNzaW9uX2lkIjoiODgxNTQwNzYtY2IzMC00YzY4LWEzZDktOTZhNGU3NDkzZjYzIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.IoG3c7kvaqjR7ZbN9TJU4a6JgG3TdX1yb2Wqb4135aZr9684SsY8AwiHjY7J6ckZTjpiokJii0CRjKCipROXtw",
+    "cache_invalidated_at": null
   }
 }
