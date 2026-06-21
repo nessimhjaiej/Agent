@@ -429,11 +429,20 @@ def test_send_invite_email_uses_recovery_link_in_smtp_message(
     assert email_sent is True
     assert recovery_link == ""
     assert len(sent_messages) == 1
-    message_text = sent_messages[0].get_content()
-    assert "Welcome to ICC Agent." in message_text
-    assert "To complete your sign up, please set your password" in message_text
-    assert "https://example.com/set-password" in message_text
-    assert "Temporary password" not in message_text
+    message = sent_messages[0]
+    parts = {part.get_content_type(): part for part in message.walk()}
+    plain_text = parts["text/plain"].get_payload(decode=True).decode("utf-8")
+    html_text = parts["text/html"].get_payload(decode=True).decode("utf-8")
+    assert "Welcome to Synapse." in plain_text
+    assert "To complete your sign up, please set your password" in plain_text
+    assert "https://example.com/set-password" in plain_text
+    assert "Temporary password" not in plain_text
+    # HTML alternative is brand-styled and links the recovery URL.
+    assert "https://example.com/set-password" in html_text
+    assert "Synapse" in html_text
+    # Logo is embedded inline via CID.
+    assert "cid:applogo" in html_text
+    assert "image/png" in parts
 
 
 @patch.object(database_module, "create_client", return_value=MagicMock())

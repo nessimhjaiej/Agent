@@ -4831,5 +4831,1735 @@
     },
     "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzgyMDUwNjQ0LCJpYXQiOjE3ODIwNDcwNDQsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzgxMzUxNjk4NzIzLmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiSm1lbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzgyMDQ3MDQ0fV0sInNlc3Npb25faWQiOiJlZTYyMTVlNy02MzZmLTQ4ODgtOWMzNi00YmMzNDViMzRiNmMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.Mcc1bgpqvDjzlltanjXxE_yCdfBb1wltIzJoZnR8qCBlUNmfvf62sqr2RwPZJD1W8TYe1E0ViTcg_g6G8wfI-A",
     "tool_cache": {}
+  },
+  "3f41bd2a-949f-4ddd-aa02-df8f92e0b748": {
+    "history": [
+      {
+        "role": "user",
+        "content": "How well can you help us to this?"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nI can assist you with a variety of tasks related to document management, evaluation, and configuration. Here are some of the things I can help with:\n\n1. **Document Management**: I can help you find, reindex, or delete documents, as well as check their ingestion status.\n\n2. **Evaluation**: I can run evaluations on datasets, provide reports, and compare different evaluation reports to help you understand performance changes.\n\n3. **Configuration**: I can provide information on current configurations for services like preprocessing, retrieval, embedding, and generation.\n\n4. **Reranking and Chunking**: I can inform you about available methods for retrieval reranking and preprocessing chunking strategies.\n\nIf you have a specific task in mind, feel free to let me know, and I'll do my best to assist you!"
+      },
+      {
+        "role": "user",
+        "content": "how can you assist me"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nMy name is `Synapse`.\n\nI can help with these admin tasks:\n\n### Read-Only Inspections\n- Inspect current settings for `embedding, generation, preprocessing, retrieval`\n- Show available chunking and reranking methods\n- Check ingestion status, loaded documents, and saved evaluation reports\n\n### Supported Configuration Changes\n- Update supported settings for `embedding, generation, preprocessing, retrieval` after confirmation\n\n### Document And Evaluation Workflows\n- delete a document and clean its vectors\n- reindex one document (by name or id)\n- reindex all validated documents\n- delete many documents at once (by name/category, status, or all)\n- reindex many documents at once (by name/category, status, or all)\n- confirm pending documents (validate, then preprocess + embed) \u2014 one, several, or all\n- refuse pending documents (mark as rejected) \u2014 one, several, or all\n- run an evaluation\n- compare evaluation reports\n\n### Live Defaults\n- Available chunking strategies: late, overlap, semantic\n- Available reranking strategies: cross_encoder, llm_batch, none\n\n### Live Status\n- Documents in ingestion: 10; embedded: 10\n- Loaded documents visible right now: 10\n- Saved evaluation reports: 2\n- Current chunking strategy: `late`\n- Current reranking strategy: `llm_batch`\n\n### Configuration Areas\n- `preprocessing` settings: chunk_overlap, chunk_size, chunk_strategy, pipeline_version\n- `retrieval` settings: default_ranker_type, top_k_retrieve, top_k_return\n- `embedding` settings: embedding_batch_size, embedding_dimensions, embedding_model\n- `generation` settings: generation_model, max_context_chunks, require_citations, temperature\n\nI can describe or inspect any of these without starting a change. Mutations only happen after an explicit confirmation."
+      }
+    ],
+    "last_message": "how can you assist me",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_response": "## Advice\n\nMy name is `Synapse`.\n\nI can help with these admin tasks:\n\n### Read-Only Inspections\n- Inspect current settings for `embedding, generation, preprocessing, retrieval`\n- Show available chunking and reranking methods\n- Check ingestion status, loaded documents, and saved evaluation reports\n\n### Supported Configuration Changes\n- Update supported settings for `embedding, generation, preprocessing, retrieval` after confirmation\n\n### Document And Evaluation Workflows\n- delete a document and clean its vectors\n- reindex one document (by name or id)\n- reindex all validated documents\n- delete many documents at once (by name/category, status, or all)\n- reindex many documents at once (by name/category, status, or all)\n- confirm pending documents (validate, then preprocess + embed) \u2014 one, several, or all\n- refuse pending documents (mark as rejected) \u2014 one, several, or all\n- run an evaluation\n- compare evaluation reports\n\n### Live Defaults\n- Available chunking strategies: late, overlap, semantic\n- Available reranking strategies: cross_encoder, llm_batch, none\n\n### Live Status\n- Documents in ingestion: 10; embedded: 10\n- Loaded documents visible right now: 10\n- Saved evaluation reports: 2\n- Current chunking strategy: `late`\n- Current reranking strategy: `llm_batch`\n\n### Configuration Areas\n- `preprocessing` settings: chunk_overlap, chunk_size, chunk_strategy, pipeline_version\n- `retrieval` settings: default_ranker_type, top_k_retrieve, top_k_return\n- `embedding` settings: embedding_batch_size, embedding_dimensions, embedding_model\n- `generation` settings: generation_model, max_context_chunks, require_citations, temperature\n\nI can describe or inspect any of these without starting a change. Mutations only happen after an explicit confirmation.",
+    "last_route": "advisory",
+    "last_topic": "capabilities",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {
+        "capabilities": {
+          "services": {
+            "preprocessing": {
+              "config_keys": [
+                "chunk_overlap",
+                "chunk_size",
+                "chunk_strategy",
+                "pipeline_version"
+              ],
+              "aliases": [
+                "chunk",
+                "chunking",
+                "chunks",
+                "preprocessing"
+              ],
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "retrieval": {
+              "config_keys": [
+                "alpha",
+                "fusion",
+                "ranker",
+                "rerank_top_n",
+                "rrf_k",
+                "top_k_retrieve",
+                "top_k_return"
+              ],
+              "aliases": [
+                "ranker",
+                "reranker",
+                "reranking",
+                "retrieval"
+              ],
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "embedding": {
+              "config_keys": [
+                "embedding_batch_size",
+                "embedding_dimensions",
+                "embedding_model"
+              ],
+              "aliases": [
+                "embedding",
+                "embeddings"
+              ],
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "generation": {
+              "config_keys": [
+                "generation_model",
+                "max_context_chunks",
+                "require_citations",
+                "temperature"
+              ],
+              "aliases": [
+                "answering",
+                "generation"
+              ],
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            }
+          },
+          "subjects": {
+            "chunking": {
+              "service_name": "preprocessing",
+              "read_tool": "get_chunking_methods",
+              "explain_tool": "get_chunking_methods",
+              "enum_values": [
+                "late",
+                "overlap",
+                "semantic"
+              ]
+            },
+            "reranking": {
+              "service_name": "retrieval",
+              "read_tool": "get_reranking_methods",
+              "explain_tool": "get_reranking_methods",
+              "enum_values": [
+                "cross_encoder",
+                "llm_batch",
+                "none"
+              ]
+            },
+            "retrieval_config": {
+              "service_name": "retrieval",
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "preprocessing_config": {
+              "service_name": "preprocessing",
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "embedding_config": {
+              "service_name": "embedding",
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "generation_config": {
+              "service_name": "generation",
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            }
+          },
+          "workflow_tools": [
+            "delete_document_completely",
+            "reindex_document",
+            "reindex_validated_documents",
+            "bulk_delete_by_filter",
+            "bulk_reindex_by_filter",
+            "confirm_pending_documents",
+            "refuse_pending_documents",
+            "run_evaluation",
+            "read_evaluation_report",
+            "compare_evaluation_reports"
+          ]
+        },
+        "live_state": {
+          "chunking": {
+            "status": "ok",
+            "scope": "preprocessing",
+            "current_strategy": "late",
+            "current_chunk_size": 800,
+            "current_chunk_overlap": 120,
+            "methods": [
+              {
+                "name": "late",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "overlap",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "semantic",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "sentence",
+                "exists": true,
+                "implemented": false
+              }
+            ]
+          },
+          "reranking": {
+            "status": "ok",
+            "scope": "retrieval",
+            "current_default_ranker_type": "llm_batch",
+            "methods": [
+              {
+                "name": "cross_encoder",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "llm_batch",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "none",
+                "exists": true,
+                "implemented": true
+              }
+            ]
+          },
+          "preprocessing_config": {
+            "status": "ok",
+            "scope": "preprocessing",
+            "config": {
+              "chunk_strategy": "late",
+              "chunk_size": 800,
+              "chunk_overlap": 120,
+              "pipeline_version": "v1"
+            },
+            "sources": {
+              "chunk_strategy": "services/preprocessing-service/app/config.py",
+              "chunk_size": "services/preprocessing-service/app/config.py",
+              "chunk_overlap": "services/preprocessing-service/app/config.py",
+              "pipeline_version": "services/preprocessing-service/app/config.py"
+            }
+          },
+          "retrieval_config": {
+            "status": "ok",
+            "scope": "retrieval",
+            "config": {
+              "default_ranker_type": "llm_batch",
+              "top_k_retrieve": 4,
+              "top_k_return": 3
+            },
+            "sources": {
+              "default_ranker_type": "services/retrieval-service/app/config.py",
+              "top_k_retrieve": "services/retrieval-service/app/config.py",
+              "top_k_return": "services/retrieval-service/app/config.py"
+            }
+          },
+          "embedding_config": {
+            "status": "ok",
+            "scope": "embedding",
+            "config": {
+              "embedding_model": null,
+              "embedding_dimensions": null,
+              "embedding_batch_size": null
+            },
+            "sources": {
+              "embedding_model": "unset",
+              "embedding_dimensions": "unset",
+              "embedding_batch_size": "unset"
+            }
+          },
+          "generation_config": {
+            "status": "ok",
+            "scope": "generation",
+            "config": {
+              "generation_model": null,
+              "temperature": null,
+              "max_context_chunks": null,
+              "require_citations": null
+            },
+            "sources": {
+              "generation_model": "unset",
+              "temperature": "unset",
+              "max_context_chunks": "unset",
+              "require_citations": "unset"
+            }
+          },
+          "ingestion_status": {
+            "status": "ok",
+            "total_documents": 10,
+            "embedded_documents": 10,
+            "validated_not_embedded": 0,
+            "status_counts": {
+              "validated": 10
+            }
+          },
+          "documents": {
+            "status": "ok",
+            "documents": [
+              {
+                "id": "70548f17-3734-4cfc-b100-f892c46cda15",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "icc-policy-primer-on-cybersecurity.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1781974215945-icc-policy-primer-on-cybersecurity.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 1642083,
+                "created_at": "2026-06-20T16:50:45.995029+00:00",
+                "embedded_at": "2026-06-20T19:37:11.161619+00:00"
+              },
+              {
+                "id": "bfd1224f-4618-4451-b91d-5c4bd937204d",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1773315721945-2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 454010,
+                "created_at": "2026-03-12T11:42:02.804906+00:00",
+                "embedded_at": "2026-06-20T15:15:14.876727+00:00"
+              },
+              {
+                "id": "a8a4adf2-a891-4f28-940a-cb54d9e62e79",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710278835-ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 5508412,
+                "created_at": "2026-03-05T11:31:53.209062+00:00",
+                "embedded_at": "2026-06-20T15:16:41.727062+00:00"
+              },
+              {
+                "id": "6fb4458a-ab45-44e7-8641-516113b7ad02",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "ICC_PolicyPrimer_NonPersonalData_October2023.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710275624-ICC_PolicyPrimer_NonPersonalData_October2023.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 321856,
+                "created_at": "2026-03-05T11:31:18.20431+00:00",
+                "embedded_at": "2026-04-15T13:51:42.324522+00:00"
+              },
+              {
+                "id": "b49a2bcd-0b91-4477-a5df-cd9d5e5f9772",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2025-ICC-Policy-Paper-AI-governance-and-standards.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710272526-2025-ICC-Policy-Paper-AI-governance-and-standards.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 325627,
+                "created_at": "2026-03-05T11:31:15.013245+00:00",
+                "embedded_at": "2026-04-15T13:52:30.816135+00:00"
+              },
+              {
+                "id": "6a99a16c-c21e-4a8c-b4ee-e1de7e66195a",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2025-ICC-Data-flows-in-supply-chains.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710269950-2025-ICC-Data-flows-in-supply-chains.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 570497,
+                "created_at": "2026-03-05T11:31:11.99133+00:00",
+                "embedded_at": "2026-04-15T13:53:24.086952+00:00"
+              },
+              {
+                "id": "76ce78b7-3266-456d-85be-12c694749059",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2025-ICC-Achieving-inclusive-AI.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710268337-2025-ICC-Achieving-inclusive-AI.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 215471,
+                "created_at": "2026-03-05T11:31:09.469426+00:00",
+                "embedded_at": "2026-04-15T13:54:02.432848+00:00"
+              },
+              {
+                "id": "ca004e28-58bc-47f7-9698-a26095ca41fe",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710266879-2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 131280,
+                "created_at": "2026-03-05T11:31:07.952588+00:00",
+                "embedded_at": "2026-04-15T13:54:45.044624+00:00"
+              },
+              {
+                "id": "c1682cef-b0bb-418f-878b-89909ca25cce",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710259149-2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 727543,
+                "created_at": "2026-03-05T11:31:05.939863+00:00",
+                "embedded_at": "2026-04-15T13:55:38.742612+00:00"
+              },
+              {
+                "id": "852eea3a-6d74-4dba-94c0-c67ff38ddf34",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2022-icc-white-paper-delivering-connectivity.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772709695730-2022-icc-white-paper-delivering-connectivity.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 1792221,
+                "created_at": "2026-03-05T11:21:45.561039+00:00",
+                "embedded_at": "2026-04-15T13:57:50.151109+00:00"
+              }
+            ]
+          },
+          "reports": {
+            "status": "ok",
+            "reports": [
+              {
+                "report_id": "ragas_report_20260513_095944",
+                "filename": "ragas_report_20260513_095944.json",
+                "generated_at_utc": "2026-05-13T09:59:44.377907+00:00",
+                "sample_count": 3,
+                "dataset_path": "/app/services/generation-service/evals/sample_eval_dataset.json",
+                "summary": {
+                  "context_recall": 0.666667,
+                  "faithfulness": 1.0,
+                  "factual_correctness(mode=f1)": 0.513333
+                }
+              },
+              {
+                "report_id": "ragas report sample",
+                "filename": "ragas report sample.json",
+                "generated_at_utc": "2026-03-07T15:38:00+00:00",
+                "sample_count": 2,
+                "dataset_path": "evals/sample_eval_dataset.json",
+                "summary": {
+                  "context_recall": 0.91,
+                  "faithfulness": 0.88,
+                  "factual_correctness(mode=f1)": 0.86
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzgyMDQ5NzcxLCJpYXQiOjE3ODIwNDYxNzEsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzgxMzUxNjk4NzIzLmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiSm1lbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzgyMDQ2MTcxfV0sInNlc3Npb25faWQiOiIyOTJjOGQ5MC0xYTVkLTRiZWEtOGMwMy04MjZhYzAyZGM4ZWYiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.x2twtHElN2rXUSKEs_WN9nc5hA1LGdRqVg5RjbStX-H6oO2J6fKDk3VtngUYXRB13Z3XcLrrlgLpPEudBUsPJg",
+    "tool_cache": {}
+  },
+  "d6dea740-f3b8-485c-9856-b6095995ee2b": {
+    "history": [
+      {
+        "role": "user",
+        "content": "what are cybersecurity documents"
+      },
+      {
+        "role": "assistant",
+        "content": "## Inspection\n\nHere are the cybersecurity documents currently available in the system:\n\n1. **ICC Policy Primer on Cybersecurity**\n   - Size: 1.64 MB\n   - Created on: June 20, 2026\n   - Embedded: Yes\n\n2. **2021 Cybersecurity Issue Brief 1: Call for Government Action**\n   - Size: 454 KB\n   - Created on: March 12, 2026\n   - Embedded: Yes\n\n3. **ICC 2024: Protecting the Cybersecurity of Critical Infrastructures and Their Supply Chains**\n   - Size: 5.51 MB\n   - Created on: March 5, 2026\n   - Embedded: Yes\n\n4. **2023 ICC Annex: ICC Cybersecurity Issue Brief 2**\n   - Size: 131 KB\n   - Created on: March 5, 2026\n   - Embedded: Yes\n\nThese documents cover various aspects of cybersecurity, including policy primers, issue briefs, and protection strategies for critical infrastructures."
+      },
+      {
+        "role": "user",
+        "content": "show me details about these documents"
+      },
+      {
+        "role": "assistant",
+        "content": "## Inspection\n\nIt seems that I couldn't retrieve detailed information about the cybersecurity documents you mentioned. They might not be currently accessible in the system for further details beyond their basic listing. If you need specific information or actions related to these documents, please let me know how I can assist further!"
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {\"query\": \"2023 ICC Annex: ICC Cybersecurity Issue Brief 2\"}, \"name\": \"find_document\"}": {
+        "tool": "find_document",
+        "args": {
+          "query": "2023 ICC Annex: ICC Cybersecurity Issue Brief 2"
+        },
+        "result": {
+          "status": "not_found",
+          "query": "2023 ICC Annex: ICC Cybersecurity Issue Brief 2"
+        },
+        "created_at": 1782051265.6772904,
+        "ttl_seconds": 60,
+        "tags": [
+          "find_document"
+        ]
+      },
+      "{\"args\": {\"query\": \"ICC 2024: Protecting the Cybersecurity of Critical Infrastructures and Their Supply Chains\"}, \"name\": \"find_document\"}": {
+        "tool": "find_document",
+        "args": {
+          "query": "ICC 2024: Protecting the Cybersecurity of Critical Infrastructures and Their Supply Chains"
+        },
+        "result": {
+          "status": "not_found",
+          "query": "ICC 2024: Protecting the Cybersecurity of Critical Infrastructures and Their Supply Chains"
+        },
+        "created_at": 1782051265.6772788,
+        "ttl_seconds": 60,
+        "tags": [
+          "find_document"
+        ]
+      },
+      "{\"args\": {\"query\": \"2021 Cybersecurity Issue Brief 1: Call for Government Action\"}, \"name\": \"find_document\"}": {
+        "tool": "find_document",
+        "args": {
+          "query": "2021 Cybersecurity Issue Brief 1: Call for Government Action"
+        },
+        "result": {
+          "status": "not_found",
+          "query": "2021 Cybersecurity Issue Brief 1: Call for Government Action"
+        },
+        "created_at": 1782051265.6772625,
+        "ttl_seconds": 60,
+        "tags": [
+          "find_document"
+        ]
+      },
+      "{\"args\": {\"query\": \"ICC Policy Primer on Cybersecurity\"}, \"name\": \"find_document\"}": {
+        "tool": "find_document",
+        "args": {
+          "query": "ICC Policy Primer on Cybersecurity"
+        },
+        "result": {
+          "status": "not_found",
+          "query": "ICC Policy Primer on Cybersecurity"
+        },
+        "created_at": 1782051265.6772437,
+        "ttl_seconds": 60,
+        "tags": [
+          "find_document"
+        ]
+      },
+      "{\"args\": {\"name_contains\": \"cybersecurity\"}, \"name\": \"find_documents_by_filter\"}": {
+        "tool": "find_documents_by_filter",
+        "args": {
+          "name_contains": "cybersecurity"
+        },
+        "result": {
+          "status": "ok",
+          "count": 4,
+          "documents": [
+            {
+              "id": "70548f17-3734-4cfc-b100-f892c46cda15",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "icc-policy-primer-on-cybersecurity.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1781974215945-icc-policy-primer-on-cybersecurity.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 1642083,
+              "created_at": "2026-06-20T16:50:45.995029+00:00",
+              "embedded_at": "2026-06-20T19:37:11.161619+00:00"
+            },
+            {
+              "id": "bfd1224f-4618-4451-b91d-5c4bd937204d",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1773315721945-2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 454010,
+              "created_at": "2026-03-12T11:42:02.804906+00:00",
+              "embedded_at": "2026-06-20T15:15:14.876727+00:00"
+            },
+            {
+              "id": "a8a4adf2-a891-4f28-940a-cb54d9e62e79",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710278835-ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 5508412,
+              "created_at": "2026-03-05T11:31:53.209062+00:00",
+              "embedded_at": "2026-06-20T15:16:41.727062+00:00"
+            },
+            {
+              "id": "ca004e28-58bc-47f7-9698-a26095ca41fe",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710266879-2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 131280,
+              "created_at": "2026-03-05T11:31:07.952588+00:00",
+              "embedded_at": "2026-04-15T13:54:45.044624+00:00"
+            }
+          ]
+        },
+        "created_at": 1782051242.4662921,
+        "ttl_seconds": 60,
+        "tags": [
+          "find_documents_by_filter"
+        ]
+      }
+    },
+    "last_message": "show me details about these documents",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_response": "## Inspection\n\nIt seems that I couldn't retrieve detailed information about the cybersecurity documents you mentioned. They might not be currently accessible in the system for further details beyond their basic listing. If you need specific information or actions related to these documents, please let me know how I can assist further!",
+    "last_route": "inspect",
+    "last_topic": "The user is asking for detailed information about specific documents, which aligns with the inspect category as it involves looking up information.",
+    "last_result": {
+      "route": "inspect",
+      "tool_result": {
+        "status": "not_found",
+        "query": "2023 ICC Annex: ICC Cybersecurity Issue Brief 2"
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzgyMDU0NTYwLCJpYXQiOjE3ODIwNTA5NjAsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzgxMzUxNjk4NzIzLmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiSm1lbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzgyMDUwOTYwfV0sInNlc3Npb25faWQiOiI3YjUxYzhjNi01MzYzLTQwYWYtYjI0MS1iYTk3YTU5NzdlMjMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.uDK9NiYNRiLXGzOYCSNJiGT2emP2bH90pd-2lpxqDldtcD8GiKTWg5E6syKhhgg3vgqMh5zRB7L76XittrPVqg"
+  },
+  "9d577526-1ba1-4c55-84cd-2ebc96d32a51": {
+    "history": [
+      {
+        "role": "user",
+        "content": "reject it"
+      },
+      {
+        "role": "assistant",
+        "content": "## Update Summary\n\nThat change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluations."
+      },
+      {
+        "role": "user",
+        "content": "reject 02-Roadmap-ICC-Tunisie-2025-V1"
+      },
+      {
+        "role": "assistant",
+        "content": "## Update Summary\n\nThat change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluations."
+      },
+      {
+        "role": "user",
+        "content": "confirm it then"
+      },
+      {
+        "role": "assistant",
+        "content": "## Update Summary\n\nThat change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluations."
+      }
+    ],
+    "tool_cache": {
+      "{\"args\": {}, \"name\": \"list_pending_documents\"}": {
+        "tool": "list_pending_documents",
+        "args": {},
+        "result": {
+          "status": "ok",
+          "count": 1,
+          "documents": [
+            {
+              "id": "b9350541-6de8-42af-9fc4-82cdadfd47d9",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "02-Roadmap-ICC-Tunisie-2025-V1.pdf",
+              "storage_path": "pending/bdcae110-faf5-47f7-b50e-e51616c048d7/1782052753089-02-Roadmap-ICC-Tunisie-2025-V1.pdf",
+              "status": "pending",
+              "embedded": false,
+              "size_bytes": 118845,
+              "created_at": "2026-06-21T14:39:13.873866+00:00",
+              "embedded_at": null
+            }
+          ]
+        },
+        "created_at": 1782052780.0944185,
+        "ttl_seconds": 60,
+        "tags": [
+          "list_pending_documents"
+        ]
+      },
+      "{\"args\": {\"name_contains\": \"2021\"}, \"name\": \"find_documents_by_filter\"}": {
+        "tool": "find_documents_by_filter",
+        "args": {
+          "name_contains": "2021"
+        },
+        "result": {
+          "status": "ok",
+          "count": 1,
+          "documents": [
+            {
+              "id": "bfd1224f-4618-4451-b91d-5c4bd937204d",
+              "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+              "original_name": "2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+              "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1773315721945-2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+              "status": "validated",
+              "embedded": true,
+              "size_bytes": 454010,
+              "created_at": "2026-03-12T11:42:02.804906+00:00",
+              "embedded_at": "2026-06-21T14:23:24.498201+00:00"
+            }
+          ]
+        },
+        "created_at": 1782052563.7195668,
+        "ttl_seconds": 60,
+        "tags": [
+          "find_documents_by_filter"
+        ]
+      }
+    },
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_message": "confirm it then",
+    "last_response": "## Update Summary\n\nThat change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluations.",
+    "last_route": "mutate",
+    "last_topic": "confirm_file",
+    "last_result": {
+      "route": "mutate",
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzgyMDU0NTYwLCJpYXQiOjE3ODIwNTA5NjAsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzgxMzUxNjk4NzIzLmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiSm1lbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzgyMDUwOTYwfV0sInNlc3Npb25faWQiOiI3YjUxYzhjNi01MzYzLTQwYWYtYjI0MS1iYTk3YTU5NzdlMjMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.uDK9NiYNRiLXGzOYCSNJiGT2emP2bH90pd-2lpxqDldtcD8GiKTWg5E6syKhhgg3vgqMh5zRB7L76XittrPVqg",
+    "cache_invalidated_at": 1782052591.5081563
+  },
+  "7e461ec2-7f13-49f3-a238-c0e4c76c555e": {
+    "history": [
+      {
+        "role": "user",
+        "content": "refuse Roadmap-ICC-Tunisie"
+      },
+      {
+        "role": "assistant",
+        "content": "## Update Summary\n\nThat change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluations."
+      },
+      {
+        "role": "user",
+        "content": "refuse 02-Roadmap-ICC-Tunisie-2025-V1"
+      },
+      {
+        "role": "assistant",
+        "content": "## Update Summary\n\nThat change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluations."
+      },
+      {
+        "role": "user",
+        "content": "refuse 02-Roadmap-ICC-Tunisie-2025-V1.pdf"
+      },
+      {
+        "role": "assistant",
+        "content": "## Next Action\n\n### Confirmation Required\n- refuse the document '02-Roadmap-ICC-Tunisie-2025-V1.pdf' (status change only)\n\nReply with **`confirm`** to continue."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "## Summary\n\n### Updates Applied\n- The document \"02-Roadmap-ICC-Tunisie-2025-V1.pdf\" was successfully refused. It is now stored in the rejected documents folder."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_message": "confirm",
+    "last_response": "## Summary\n\n### Updates Applied\n- The document \"02-Roadmap-ICC-Tunisie-2025-V1.pdf\" was successfully refused. It is now stored in the rejected documents folder.",
+    "last_route": "mutate",
+    "last_topic": "refuse_pending_documents",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzgyMDU0NTYwLCJpYXQiOjE3ODIwNTA5NjAsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzgxMzUxNjk4NzIzLmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiSm1lbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzgyMDUwOTYwfV0sInNlc3Npb25faWQiOiI3YjUxYzhjNi01MzYzLTQwYWYtYjI0MS1iYTk3YTU5NzdlMjMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.uDK9NiYNRiLXGzOYCSNJiGT2emP2bH90pd-2lpxqDldtcD8GiKTWg5E6syKhhgg3vgqMh5zRB7L76XittrPVqg",
+    "cache_invalidated_at": 1782053419.1846328
+  },
+  "9d6d0ff6-a49b-461e-a8b2-aecad361ddcc": {
+    "history": [
+      {
+        "role": "user",
+        "content": "delete them"
+      },
+      {
+        "role": "assistant",
+        "content": "## Update Summary\n\nThat change is not exposed through admin-service yet. The current service can execute document deletion, reindexing, and evaluations."
+      },
+      {
+        "role": "user",
+        "content": "what are cybersecurity docs"
+      },
+      {
+        "role": "assistant",
+        "content": "## Inspection\n\nHere are the cybersecurity documents currently available in the system:\n\n1. **ICC Policy Primer on Cybersecurity**\n   - Size: 1.64 MB\n   - Created on: June 20, 2026\n   - Embedded: Yes\n\n2. **2021 Cybersecurity Issue Brief 1: Call for Government Action**\n   - Size: 454 KB\n   - Created on: March 12, 2026\n   - Embedded: Yes\n\n3. **ICC 2024: Protecting the Cybersecurity of Critical Infrastructures and Their Supply Chains**\n   - Size: 5.51 MB\n   - Created on: March 5, 2026\n   - Embedded: Yes\n\n4. **2023 ICC Annex: ICC Cybersecurity Issue Brief 2**\n   - Size: 131 KB\n   - Created on: March 5, 2026\n   - Embedded: Yes\n\nThese documents are validated and have been embedded for use in the system."
+      },
+      {
+        "role": "user",
+        "content": "delete them"
+      },
+      {
+        "role": "assistant",
+        "content": "## Next Action\n\n### Confirmation Required\n- delete 3 documents: 'icc-policy-primer-on-cybersecurity.pdf', '2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf', 'ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf' and clean vectors\n\nReply with **`confirm`** to continue."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "## Summary\n\n### Completed Actions\n- Successfully deleted 3 documents:\n  1. **icc-policy-primer-on-cybersecurity.pdf**: 31 items removed.\n  2. **2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf**: 45 items removed.\n  3. **ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf**: 111 items removed.\n\nAll deletions were completed without any failures."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_message": "confirm",
+    "last_response": "## Summary\n\n### Completed Actions\n- Successfully deleted 3 documents:\n  1. **icc-policy-primer-on-cybersecurity.pdf**: 31 items removed.\n  2. **2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf**: 45 items removed.\n  3. **ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf**: 111 items removed.\n\nAll deletions were completed without any failures.",
+    "last_route": "mutate",
+    "last_topic": "bulk_delete_by_filter",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzgyMDU0NTYwLCJpYXQiOjE3ODIwNTA5NjAsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzgxMzUxNjk4NzIzLmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiSm1lbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzgyMDUwOTYwfV0sInNlc3Npb25faWQiOiI3YjUxYzhjNi01MzYzLTQwYWYtYjI0MS1iYTk3YTU5NzdlMjMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.uDK9NiYNRiLXGzOYCSNJiGT2emP2bH90pd-2lpxqDldtcD8GiKTWg5E6syKhhgg3vgqMh5zRB7L76XittrPVqg",
+    "cache_invalidated_at": 1782053518.575043
+  },
+  "0635f3dc-c6b2-4744-a044-59697ae43d41": {
+    "history": [
+      {
+        "role": "user",
+        "content": "confirm all pending files"
+      },
+      {
+        "role": "assistant",
+        "content": "## Next Action\n\n### Confirmation Required\n- confirm 2 documents: 'icc-policy-primer-on-cybersecurity.pdf', '2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf' (validate, then preprocess + embed)\n\nReply with **`confirm`** to continue."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "## Summary\n\n### Updates Applied\n- All pending files were successfully confirmed.\n- Two documents were processed:\n  1. **icc-policy-primer-on-cybersecurity.pdf**: Validated and indexed with 70 chunks.\n  2. **2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf**: Validated and indexed with 119 chunks.\n\nBoth documents are now stored and embedded. No actions were rejected."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_message": "confirm",
+    "last_response": "## Summary\n\n### Updates Applied\n- All pending files were successfully confirmed.\n- Two documents were processed:\n  1. **icc-policy-primer-on-cybersecurity.pdf**: Validated and indexed with 70 chunks.\n  2. **2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf**: Validated and indexed with 119 chunks.\n\nBoth documents are now stored and embedded. No actions were rejected.",
+    "last_route": "mutate",
+    "last_topic": "confirm_pending_documents",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzgyMDU3MzE3LCJpYXQiOjE3ODIwNTM3MTcsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzgxMzUxNjk4NzIzLmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiSm1lbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzgyMDUwOTYwfV0sInNlc3Npb25faWQiOiI3YjUxYzhjNi01MzYzLTQwYWYtYjI0MS1iYTk3YTU5NzdlMjMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.lWGcJ2BgWhL6cFehGcLinuo6VE_PdTqW2MsdxlSmNkb_O8L-T-0mjc1WERJMMTliex3foDxJmNy1AdLZzH_n2w",
+    "cache_invalidated_at": 1782054676.2916584
+  },
+  "a6ae075c-b970-4236-ac39-fea80e6992ec": {
+    "history": [
+      {
+        "role": "user",
+        "content": "how can you assist me"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nMy name is `Synapse`.\n\nI can help with these admin tasks:\n\n### Read-Only Inspections\n- Inspect current settings for `embedding, generation, preprocessing, retrieval`\n- Show available chunking and reranking methods\n- Check ingestion status, loaded documents, and saved evaluation reports\n\n### Supported Configuration Changes\n- Update supported settings for `embedding, generation, preprocessing, retrieval` after confirmation\n\n### Document And Evaluation Workflows\n- delete a document and clean its vectors\n- reindex one document (by name or id)\n- reindex all validated documents\n- delete many documents at once (by name/category, status, or all)\n- reindex many documents at once (by name/category, status, or all)\n- confirm pending documents (validate, then preprocess + embed) \u2014 one, several, or all\n- refuse pending documents (mark as rejected) \u2014 one, several, or all\n- run an evaluation\n- compare evaluation reports\n\n### Live Defaults\n- Available chunking strategies: late, overlap, semantic\n- Available reranking strategies: cross_encoder, llm_batch, none\n\n### Live Status\n- Documents in ingestion: 10; embedded: 9\n- Loaded documents visible right now: 10\n- Saved evaluation reports: 3\n- Current chunking strategy: `semantic`\n- Current reranking strategy: `llm_batch`\n\n### Configuration Areas\n- `preprocessing` settings: chunk_overlap, chunk_size, chunk_strategy, pipeline_version\n- `retrieval` settings: default_ranker_type, top_k_retrieve, top_k_return\n- `embedding` settings: embedding_batch_size, embedding_dimensions, embedding_model\n- `generation` settings: generation_model, max_context_chunks, require_citations, temperature\n\nI can describe or inspect any of these without starting a change. Mutations only happen after an explicit confirmation."
+      }
+    ],
+    "last_message": "how can you assist me",
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_response": "## Advice\n\nMy name is `Synapse`.\n\nI can help with these admin tasks:\n\n### Read-Only Inspections\n- Inspect current settings for `embedding, generation, preprocessing, retrieval`\n- Show available chunking and reranking methods\n- Check ingestion status, loaded documents, and saved evaluation reports\n\n### Supported Configuration Changes\n- Update supported settings for `embedding, generation, preprocessing, retrieval` after confirmation\n\n### Document And Evaluation Workflows\n- delete a document and clean its vectors\n- reindex one document (by name or id)\n- reindex all validated documents\n- delete many documents at once (by name/category, status, or all)\n- reindex many documents at once (by name/category, status, or all)\n- confirm pending documents (validate, then preprocess + embed) \u2014 one, several, or all\n- refuse pending documents (mark as rejected) \u2014 one, several, or all\n- run an evaluation\n- compare evaluation reports\n\n### Live Defaults\n- Available chunking strategies: late, overlap, semantic\n- Available reranking strategies: cross_encoder, llm_batch, none\n\n### Live Status\n- Documents in ingestion: 10; embedded: 9\n- Loaded documents visible right now: 10\n- Saved evaluation reports: 3\n- Current chunking strategy: `semantic`\n- Current reranking strategy: `llm_batch`\n\n### Configuration Areas\n- `preprocessing` settings: chunk_overlap, chunk_size, chunk_strategy, pipeline_version\n- `retrieval` settings: default_ranker_type, top_k_retrieve, top_k_return\n- `embedding` settings: embedding_batch_size, embedding_dimensions, embedding_model\n- `generation` settings: generation_model, max_context_chunks, require_citations, temperature\n\nI can describe or inspect any of these without starting a change. Mutations only happen after an explicit confirmation.",
+    "last_route": "advisory",
+    "last_topic": "capabilities",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {
+        "capabilities": {
+          "services": {
+            "preprocessing": {
+              "config_keys": [
+                "chunk_overlap",
+                "chunk_size",
+                "chunk_strategy",
+                "pipeline_version"
+              ],
+              "aliases": [
+                "chunk",
+                "chunking",
+                "chunks",
+                "preprocessing"
+              ],
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "retrieval": {
+              "config_keys": [
+                "alpha",
+                "fusion",
+                "ranker",
+                "rerank_top_n",
+                "rrf_k",
+                "top_k_retrieve",
+                "top_k_return"
+              ],
+              "aliases": [
+                "ranker",
+                "reranker",
+                "reranking",
+                "retrieval"
+              ],
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "embedding": {
+              "config_keys": [
+                "embedding_batch_size",
+                "embedding_dimensions",
+                "embedding_model"
+              ],
+              "aliases": [
+                "embedding",
+                "embeddings"
+              ],
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "generation": {
+              "config_keys": [
+                "generation_model",
+                "max_context_chunks",
+                "require_citations",
+                "temperature"
+              ],
+              "aliases": [
+                "answering",
+                "generation"
+              ],
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            }
+          },
+          "subjects": {
+            "chunking": {
+              "service_name": "preprocessing",
+              "read_tool": "get_chunking_methods",
+              "explain_tool": "get_chunking_methods",
+              "enum_values": [
+                "late",
+                "overlap",
+                "semantic"
+              ]
+            },
+            "reranking": {
+              "service_name": "retrieval",
+              "read_tool": "get_reranking_methods",
+              "explain_tool": "get_reranking_methods",
+              "enum_values": [
+                "cross_encoder",
+                "llm_batch",
+                "none"
+              ]
+            },
+            "retrieval_config": {
+              "service_name": "retrieval",
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "preprocessing_config": {
+              "service_name": "preprocessing",
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "embedding_config": {
+              "service_name": "embedding",
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "generation_config": {
+              "service_name": "generation",
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            }
+          },
+          "workflow_tools": [
+            "delete_document_completely",
+            "reindex_document",
+            "reindex_validated_documents",
+            "bulk_delete_by_filter",
+            "bulk_reindex_by_filter",
+            "confirm_pending_documents",
+            "refuse_pending_documents",
+            "run_evaluation",
+            "read_evaluation_report",
+            "compare_evaluation_reports"
+          ]
+        },
+        "live_state": {
+          "chunking": {
+            "status": "ok",
+            "scope": "preprocessing",
+            "current_strategy": "semantic",
+            "current_chunk_size": 800,
+            "current_chunk_overlap": 120,
+            "methods": [
+              {
+                "name": "late",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "overlap",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "semantic",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "sentence",
+                "exists": true,
+                "implemented": false
+              }
+            ]
+          },
+          "reranking": {
+            "status": "ok",
+            "scope": "retrieval",
+            "current_default_ranker_type": "llm_batch",
+            "methods": [
+              {
+                "name": "cross_encoder",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "llm_batch",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "none",
+                "exists": true,
+                "implemented": true
+              }
+            ]
+          },
+          "preprocessing_config": {
+            "status": "ok",
+            "scope": "preprocessing",
+            "config": {
+              "chunk_strategy": "semantic",
+              "chunk_size": 800,
+              "chunk_overlap": 120,
+              "pipeline_version": "v1"
+            },
+            "sources": {
+              "chunk_strategy": "services/preprocessing-service/app/config.py",
+              "chunk_size": "services/preprocessing-service/app/config.py",
+              "chunk_overlap": "services/preprocessing-service/app/config.py",
+              "pipeline_version": "services/preprocessing-service/app/config.py"
+            }
+          },
+          "retrieval_config": {
+            "status": "ok",
+            "scope": "retrieval",
+            "config": {
+              "default_ranker_type": "llm_batch",
+              "top_k_retrieve": 4,
+              "top_k_return": 3
+            },
+            "sources": {
+              "default_ranker_type": "services/retrieval-service/app/config.py",
+              "top_k_retrieve": "services/retrieval-service/app/config.py",
+              "top_k_return": "services/retrieval-service/app/config.py"
+            }
+          },
+          "embedding_config": {
+            "status": "ok",
+            "scope": "embedding",
+            "config": {
+              "embedding_model": null,
+              "embedding_dimensions": null,
+              "embedding_batch_size": null
+            },
+            "sources": {
+              "embedding_model": "unset",
+              "embedding_dimensions": "unset",
+              "embedding_batch_size": "unset"
+            }
+          },
+          "generation_config": {
+            "status": "ok",
+            "scope": "generation",
+            "config": {
+              "generation_model": null,
+              "temperature": null,
+              "max_context_chunks": null,
+              "require_citations": null
+            },
+            "sources": {
+              "generation_model": "unset",
+              "temperature": "unset",
+              "max_context_chunks": "unset",
+              "require_citations": "unset"
+            }
+          },
+          "ingestion_status": {
+            "status": "ok",
+            "total_documents": 10,
+            "embedded_documents": 9,
+            "validated_not_embedded": 0,
+            "status_counts": {
+              "validated": 9,
+              "rejected": 1
+            }
+          },
+          "documents": {
+            "status": "ok",
+            "documents": [
+              {
+                "id": "ff9a1bf5-40dd-46c0-9265-21806ad8c3e6",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "icc-policy-primer-on-cybersecurity.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1782054491167-icc-policy-primer-on-cybersecurity.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 1642083,
+                "created_at": "2026-06-21T15:08:45.247317+00:00",
+                "embedded_at": "2026-06-21T15:11:08.459815+00:00"
+              },
+              {
+                "id": "8f024aec-46b6-4fff-9e7a-16a3b30e573c",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1782054160551-2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 454010,
+                "created_at": "2026-06-21T15:02:50.394564+00:00",
+                "embedded_at": "2026-06-21T15:11:14.372926+00:00"
+              },
+              {
+                "id": "b9350541-6de8-42af-9fc4-82cdadfd47d9",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "02-Roadmap-ICC-Tunisie-2025-V1.pdf",
+                "storage_path": "rejected/bdcae110-faf5-47f7-b50e-e51616c048d7/1782052753089-02-Roadmap-ICC-Tunisie-2025-V1.pdf",
+                "status": "rejected",
+                "embedded": false,
+                "size_bytes": 118845,
+                "created_at": "2026-06-21T14:39:13.873866+00:00",
+                "embedded_at": null
+              },
+              {
+                "id": "6fb4458a-ab45-44e7-8641-516113b7ad02",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "ICC_PolicyPrimer_NonPersonalData_October2023.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710275624-ICC_PolicyPrimer_NonPersonalData_October2023.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 321856,
+                "created_at": "2026-03-05T11:31:18.20431+00:00",
+                "embedded_at": "2026-04-15T13:51:42.324522+00:00"
+              },
+              {
+                "id": "b49a2bcd-0b91-4477-a5df-cd9d5e5f9772",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2025-ICC-Policy-Paper-AI-governance-and-standards.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710272526-2025-ICC-Policy-Paper-AI-governance-and-standards.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 325627,
+                "created_at": "2026-03-05T11:31:15.013245+00:00",
+                "embedded_at": "2026-04-15T13:52:30.816135+00:00"
+              },
+              {
+                "id": "6a99a16c-c21e-4a8c-b4ee-e1de7e66195a",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2025-ICC-Data-flows-in-supply-chains.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710269950-2025-ICC-Data-flows-in-supply-chains.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 570497,
+                "created_at": "2026-03-05T11:31:11.99133+00:00",
+                "embedded_at": "2026-04-15T13:53:24.086952+00:00"
+              },
+              {
+                "id": "76ce78b7-3266-456d-85be-12c694749059",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2025-ICC-Achieving-inclusive-AI.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710268337-2025-ICC-Achieving-inclusive-AI.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 215471,
+                "created_at": "2026-03-05T11:31:09.469426+00:00",
+                "embedded_at": "2026-04-15T13:54:02.432848+00:00"
+              },
+              {
+                "id": "ca004e28-58bc-47f7-9698-a26095ca41fe",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710266879-2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 131280,
+                "created_at": "2026-03-05T11:31:07.952588+00:00",
+                "embedded_at": "2026-06-21T14:24:23.988483+00:00"
+              },
+              {
+                "id": "c1682cef-b0bb-418f-878b-89909ca25cce",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710259149-2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 727543,
+                "created_at": "2026-03-05T11:31:05.939863+00:00",
+                "embedded_at": "2026-04-15T13:55:38.742612+00:00"
+              },
+              {
+                "id": "852eea3a-6d74-4dba-94c0-c67ff38ddf34",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2022-icc-white-paper-delivering-connectivity.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772709695730-2022-icc-white-paper-delivering-connectivity.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 1792221,
+                "created_at": "2026-03-05T11:21:45.561039+00:00",
+                "embedded_at": "2026-04-15T13:57:50.151109+00:00"
+              }
+            ]
+          },
+          "reports": {
+            "status": "ok",
+            "reports": [
+              {
+                "report_id": "ragas_report_20260621_142632",
+                "filename": "ragas_report_20260621_142632.json",
+                "generated_at_utc": "2026-06-21T14:26:32.096774+00:00",
+                "sample_count": 3,
+                "dataset_path": "/app/services/generation-service/evals/sample_eval_dataset.json",
+                "summary": {
+                  "context_recall": 0.833333,
+                  "faithfulness": 0.923077,
+                  "factual_correctness(mode=f1)": 0.403333
+                }
+              },
+              {
+                "report_id": "ragas_report_20260513_095944",
+                "filename": "ragas_report_20260513_095944.json",
+                "generated_at_utc": "2026-05-13T09:59:44.377907+00:00",
+                "sample_count": 3,
+                "dataset_path": "/app/services/generation-service/evals/sample_eval_dataset.json",
+                "summary": {
+                  "context_recall": 0.666667,
+                  "faithfulness": 1.0,
+                  "factual_correctness(mode=f1)": 0.513333
+                }
+              },
+              {
+                "report_id": "ragas report sample",
+                "filename": "ragas report sample.json",
+                "generated_at_utc": "2026-03-07T15:38:00+00:00",
+                "sample_count": 2,
+                "dataset_path": "evals/sample_eval_dataset.json",
+                "summary": {
+                  "context_recall": 0.91,
+                  "faithfulness": 0.88,
+                  "factual_correctness(mode=f1)": 0.86
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzgyMDU3MzE3LCJpYXQiOjE3ODIwNTM3MTcsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzgxMzUxNjk4NzIzLmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiSm1lbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzgyMDUwOTYwfV0sInNlc3Npb25faWQiOiI3YjUxYzhjNi01MzYzLTQwYWYtYjI0MS1iYTk3YTU5NzdlMjMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.lWGcJ2BgWhL6cFehGcLinuo6VE_PdTqW2MsdxlSmNkb_O8L-T-0mjc1WERJMMTliex3foDxJmNy1AdLZzH_n2w",
+    "tool_cache": {}
+  },
+  "3c249209-7f1e-4cb9-8adf-2f2dfbe9fe90": {
+    "history": [
+      {
+        "role": "user",
+        "content": "confirm the pending protecting cybersecurity pdf file"
+      },
+      {
+        "role": "assistant",
+        "content": "## Next Action\n\n### Confirmation Required\n- confirm the document 'ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf' (validate, then preprocess + embed)\n\nReply with **`confirm`** to continue."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "## Summary\n\n### Updates Applied\n- The pending document \"ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf\" was successfully confirmed.\n- The document is validated, indexed, and stored, with a size of 5,508,412 bytes.\n- It has been preprocessed, embedded, and stored in Weaviate with 250 indexed chunks."
+      },
+      {
+        "role": "user",
+        "content": "how can you assist me"
+      },
+      {
+        "role": "assistant",
+        "content": "## Advice\n\nMy name is `Synapse`.\n\nI can help with these admin tasks:\n\n### Read-Only Inspections\n- Inspect current settings for `embedding, generation, preprocessing, retrieval`\n- Show available chunking and reranking methods\n- Check ingestion status, loaded documents, and saved evaluation reports\n\n### Supported Configuration Changes\n- Update supported settings for `embedding, generation, preprocessing, retrieval` after confirmation\n\n### Document And Evaluation Workflows\n- delete a document and clean its vectors\n- reindex one document (by name or id)\n- reindex all validated documents\n- delete many documents at once (by name/category, status, or all)\n- reindex many documents at once (by name/category, status, or all)\n- confirm pending documents (validate, then preprocess + embed) \u2014 one, several, or all\n- refuse pending documents (mark as rejected) \u2014 one, several, or all\n- run an evaluation\n- compare evaluation reports\n\n### Live Defaults\n- Available chunking strategies: late, overlap, semantic\n- Available reranking strategies: cross_encoder, llm_batch, none\n\n### Live Status\n- Documents in ingestion: 11; embedded: 10\n- Loaded documents visible right now: 11\n- Saved evaluation reports: 3\n- Current chunking strategy: `semantic`\n- Current reranking strategy: `llm_batch`\n\n### Configuration Areas\n- `preprocessing` settings: chunk_overlap, chunk_size, chunk_strategy, pipeline_version\n- `retrieval` settings: default_ranker_type, top_k_retrieve, top_k_return\n- `embedding` settings: embedding_batch_size, embedding_dimensions, embedding_model\n- `generation` settings: generation_model, max_context_chunks, require_citations, temperature\n\nI can describe or inspect any of these without starting a change. Mutations only happen after an explicit confirmation."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_message": "how can you assist me",
+    "last_response": "## Advice\n\nMy name is `Synapse`.\n\nI can help with these admin tasks:\n\n### Read-Only Inspections\n- Inspect current settings for `embedding, generation, preprocessing, retrieval`\n- Show available chunking and reranking methods\n- Check ingestion status, loaded documents, and saved evaluation reports\n\n### Supported Configuration Changes\n- Update supported settings for `embedding, generation, preprocessing, retrieval` after confirmation\n\n### Document And Evaluation Workflows\n- delete a document and clean its vectors\n- reindex one document (by name or id)\n- reindex all validated documents\n- delete many documents at once (by name/category, status, or all)\n- reindex many documents at once (by name/category, status, or all)\n- confirm pending documents (validate, then preprocess + embed) \u2014 one, several, or all\n- refuse pending documents (mark as rejected) \u2014 one, several, or all\n- run an evaluation\n- compare evaluation reports\n\n### Live Defaults\n- Available chunking strategies: late, overlap, semantic\n- Available reranking strategies: cross_encoder, llm_batch, none\n\n### Live Status\n- Documents in ingestion: 11; embedded: 10\n- Loaded documents visible right now: 11\n- Saved evaluation reports: 3\n- Current chunking strategy: `semantic`\n- Current reranking strategy: `llm_batch`\n\n### Configuration Areas\n- `preprocessing` settings: chunk_overlap, chunk_size, chunk_strategy, pipeline_version\n- `retrieval` settings: default_ranker_type, top_k_retrieve, top_k_return\n- `embedding` settings: embedding_batch_size, embedding_dimensions, embedding_model\n- `generation` settings: generation_model, max_context_chunks, require_citations, temperature\n\nI can describe or inspect any of these without starting a change. Mutations only happen after an explicit confirmation.",
+    "last_route": "advisory",
+    "last_topic": "capabilities",
+    "last_result": {
+      "route": "advisory",
+      "tool_result": {
+        "capabilities": {
+          "services": {
+            "preprocessing": {
+              "config_keys": [
+                "chunk_overlap",
+                "chunk_size",
+                "chunk_strategy",
+                "pipeline_version"
+              ],
+              "aliases": [
+                "chunk",
+                "chunking",
+                "chunks",
+                "preprocessing"
+              ],
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "retrieval": {
+              "config_keys": [
+                "alpha",
+                "fusion",
+                "ranker",
+                "rerank_top_n",
+                "rrf_k",
+                "top_k_retrieve",
+                "top_k_return"
+              ],
+              "aliases": [
+                "ranker",
+                "reranker",
+                "reranking",
+                "retrieval"
+              ],
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "embedding": {
+              "config_keys": [
+                "embedding_batch_size",
+                "embedding_dimensions",
+                "embedding_model"
+              ],
+              "aliases": [
+                "embedding",
+                "embeddings"
+              ],
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "generation": {
+              "config_keys": [
+                "generation_model",
+                "max_context_chunks",
+                "require_citations",
+                "temperature"
+              ],
+              "aliases": [
+                "answering",
+                "generation"
+              ],
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            }
+          },
+          "subjects": {
+            "chunking": {
+              "service_name": "preprocessing",
+              "read_tool": "get_chunking_methods",
+              "explain_tool": "get_chunking_methods",
+              "enum_values": [
+                "late",
+                "overlap",
+                "semantic"
+              ]
+            },
+            "reranking": {
+              "service_name": "retrieval",
+              "read_tool": "get_reranking_methods",
+              "explain_tool": "get_reranking_methods",
+              "enum_values": [
+                "cross_encoder",
+                "llm_batch",
+                "none"
+              ]
+            },
+            "retrieval_config": {
+              "service_name": "retrieval",
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "preprocessing_config": {
+              "service_name": "preprocessing",
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "embedding_config": {
+              "service_name": "embedding",
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            },
+            "generation_config": {
+              "service_name": "generation",
+              "read_tool": "get_repo_config",
+              "update_tool": "update_repo_config"
+            }
+          },
+          "workflow_tools": [
+            "delete_document_completely",
+            "reindex_document",
+            "reindex_validated_documents",
+            "bulk_delete_by_filter",
+            "bulk_reindex_by_filter",
+            "confirm_pending_documents",
+            "refuse_pending_documents",
+            "run_evaluation",
+            "read_evaluation_report",
+            "compare_evaluation_reports"
+          ]
+        },
+        "live_state": {
+          "chunking": {
+            "status": "ok",
+            "scope": "preprocessing",
+            "current_strategy": "semantic",
+            "current_chunk_size": 800,
+            "current_chunk_overlap": 120,
+            "methods": [
+              {
+                "name": "late",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "overlap",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "semantic",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "sentence",
+                "exists": true,
+                "implemented": false
+              }
+            ]
+          },
+          "reranking": {
+            "status": "ok",
+            "scope": "retrieval",
+            "current_default_ranker_type": "llm_batch",
+            "methods": [
+              {
+                "name": "cross_encoder",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "llm_batch",
+                "exists": true,
+                "implemented": true
+              },
+              {
+                "name": "none",
+                "exists": true,
+                "implemented": true
+              }
+            ]
+          },
+          "preprocessing_config": {
+            "status": "ok",
+            "scope": "preprocessing",
+            "config": {
+              "chunk_strategy": "semantic",
+              "chunk_size": 800,
+              "chunk_overlap": 120,
+              "pipeline_version": "v1"
+            },
+            "sources": {
+              "chunk_strategy": "services/preprocessing-service/app/config.py",
+              "chunk_size": "services/preprocessing-service/app/config.py",
+              "chunk_overlap": "services/preprocessing-service/app/config.py",
+              "pipeline_version": "services/preprocessing-service/app/config.py"
+            }
+          },
+          "retrieval_config": {
+            "status": "ok",
+            "scope": "retrieval",
+            "config": {
+              "default_ranker_type": "llm_batch",
+              "top_k_retrieve": 4,
+              "top_k_return": 3
+            },
+            "sources": {
+              "default_ranker_type": "services/retrieval-service/app/config.py",
+              "top_k_retrieve": "services/retrieval-service/app/config.py",
+              "top_k_return": "services/retrieval-service/app/config.py"
+            }
+          },
+          "embedding_config": {
+            "status": "ok",
+            "scope": "embedding",
+            "config": {
+              "embedding_model": null,
+              "embedding_dimensions": null,
+              "embedding_batch_size": null
+            },
+            "sources": {
+              "embedding_model": "unset",
+              "embedding_dimensions": "unset",
+              "embedding_batch_size": "unset"
+            }
+          },
+          "generation_config": {
+            "status": "ok",
+            "scope": "generation",
+            "config": {
+              "generation_model": null,
+              "temperature": null,
+              "max_context_chunks": null,
+              "require_citations": null
+            },
+            "sources": {
+              "generation_model": "unset",
+              "temperature": "unset",
+              "max_context_chunks": "unset",
+              "require_citations": "unset"
+            }
+          },
+          "ingestion_status": {
+            "status": "ok",
+            "total_documents": 11,
+            "embedded_documents": 10,
+            "validated_not_embedded": 0,
+            "status_counts": {
+              "validated": 10,
+              "rejected": 1
+            }
+          },
+          "documents": {
+            "status": "ok",
+            "documents": [
+              {
+                "id": "090b9186-f167-4c6b-b35e-83850c1f8e11",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1782060482598-ICC-2024_Protecting-the-cybersecurity-of-critical-infrastructures-and-their-supply-chains.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 5508412,
+                "created_at": "2026-06-21T16:48:06.344861+00:00",
+                "embedded_at": "2026-06-21T18:23:13.613968+00:00"
+              },
+              {
+                "id": "ff9a1bf5-40dd-46c0-9265-21806ad8c3e6",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "icc-policy-primer-on-cybersecurity.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1782054491167-icc-policy-primer-on-cybersecurity.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 1642083,
+                "created_at": "2026-06-21T15:08:45.247317+00:00",
+                "embedded_at": "2026-06-21T15:11:08.459815+00:00"
+              },
+              {
+                "id": "8f024aec-46b6-4fff-9e7a-16a3b30e573c",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1782054160551-2021_Cybersecurity_IssueBrief1_Call-for-Govt-Action.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 454010,
+                "created_at": "2026-06-21T15:02:50.394564+00:00",
+                "embedded_at": "2026-06-21T15:11:14.372926+00:00"
+              },
+              {
+                "id": "b9350541-6de8-42af-9fc4-82cdadfd47d9",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "02-Roadmap-ICC-Tunisie-2025-V1.pdf",
+                "storage_path": "rejected/bdcae110-faf5-47f7-b50e-e51616c048d7/1782052753089-02-Roadmap-ICC-Tunisie-2025-V1.pdf",
+                "status": "rejected",
+                "embedded": false,
+                "size_bytes": 118845,
+                "created_at": "2026-06-21T14:39:13.873866+00:00",
+                "embedded_at": null
+              },
+              {
+                "id": "6fb4458a-ab45-44e7-8641-516113b7ad02",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "ICC_PolicyPrimer_NonPersonalData_October2023.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710275624-ICC_PolicyPrimer_NonPersonalData_October2023.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 321856,
+                "created_at": "2026-03-05T11:31:18.20431+00:00",
+                "embedded_at": "2026-04-15T13:51:42.324522+00:00"
+              },
+              {
+                "id": "b49a2bcd-0b91-4477-a5df-cd9d5e5f9772",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2025-ICC-Policy-Paper-AI-governance-and-standards.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710272526-2025-ICC-Policy-Paper-AI-governance-and-standards.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 325627,
+                "created_at": "2026-03-05T11:31:15.013245+00:00",
+                "embedded_at": "2026-04-15T13:52:30.816135+00:00"
+              },
+              {
+                "id": "6a99a16c-c21e-4a8c-b4ee-e1de7e66195a",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2025-ICC-Data-flows-in-supply-chains.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710269950-2025-ICC-Data-flows-in-supply-chains.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 570497,
+                "created_at": "2026-03-05T11:31:11.99133+00:00",
+                "embedded_at": "2026-04-15T13:53:24.086952+00:00"
+              },
+              {
+                "id": "76ce78b7-3266-456d-85be-12c694749059",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2025-ICC-Achieving-inclusive-AI.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710268337-2025-ICC-Achieving-inclusive-AI.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 215471,
+                "created_at": "2026-03-05T11:31:09.469426+00:00",
+                "embedded_at": "2026-04-15T13:54:02.432848+00:00"
+              },
+              {
+                "id": "ca004e28-58bc-47f7-9698-a26095ca41fe",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710266879-2023-icc-annex-icc-cybersecurity-issue-brief-2.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 131280,
+                "created_at": "2026-03-05T11:31:07.952588+00:00",
+                "embedded_at": "2026-06-21T14:24:23.988483+00:00"
+              },
+              {
+                "id": "c1682cef-b0bb-418f-878b-89909ca25cce",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772710259149-2023_ICC-Paper-on-Digitalisation-for-People-Planet-and-Prosperity.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 727543,
+                "created_at": "2026-03-05T11:31:05.939863+00:00",
+                "embedded_at": "2026-04-15T13:55:38.742612+00:00"
+              },
+              {
+                "id": "852eea3a-6d74-4dba-94c0-c67ff38ddf34",
+                "user_id": "bdcae110-faf5-47f7-b50e-e51616c048d7",
+                "original_name": "2022-icc-white-paper-delivering-connectivity.pdf",
+                "storage_path": "validated/bdcae110-faf5-47f7-b50e-e51616c048d7/1772709695730-2022-icc-white-paper-delivering-connectivity.pdf",
+                "status": "validated",
+                "embedded": true,
+                "size_bytes": 1792221,
+                "created_at": "2026-03-05T11:21:45.561039+00:00",
+                "embedded_at": "2026-04-15T13:57:50.151109+00:00"
+              }
+            ]
+          },
+          "reports": {
+            "status": "ok",
+            "reports": [
+              {
+                "report_id": "ragas_report_20260621_142632",
+                "filename": "ragas_report_20260621_142632.json",
+                "generated_at_utc": "2026-06-21T14:26:32.096774+00:00",
+                "sample_count": 3,
+                "dataset_path": "/app/services/generation-service/evals/sample_eval_dataset.json",
+                "summary": {
+                  "context_recall": 0.833333,
+                  "faithfulness": 0.923077,
+                  "factual_correctness(mode=f1)": 0.403333
+                }
+              },
+              {
+                "report_id": "ragas_report_20260513_095944",
+                "filename": "ragas_report_20260513_095944.json",
+                "generated_at_utc": "2026-05-13T09:59:44.377907+00:00",
+                "sample_count": 3,
+                "dataset_path": "/app/services/generation-service/evals/sample_eval_dataset.json",
+                "summary": {
+                  "context_recall": 0.666667,
+                  "faithfulness": 1.0,
+                  "factual_correctness(mode=f1)": 0.513333
+                }
+              },
+              {
+                "report_id": "ragas report sample",
+                "filename": "ragas report sample.json",
+                "generated_at_utc": "2026-03-07T15:38:00+00:00",
+                "sample_count": 2,
+                "dataset_path": "evals/sample_eval_dataset.json",
+                "summary": {
+                  "context_recall": 0.91,
+                  "faithfulness": 0.88,
+                  "factual_correctness(mode=f1)": 0.86
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzgyMDY5NjgyLCJpYXQiOjE3ODIwNjYwODIsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzgxMzUxNjk4NzIzLmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiSm1lbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzgyMDYwNDY1fV0sInNlc3Npb25faWQiOiJmMDhlODM1NC0wMDNiLTQyMDUtYTRhMi05YzFjNjYxMGZhNGQiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.-zELafSTnwZJ23LfDuH0WYiyfaLy3ZGnwiR7UxI-slhKAYqhqPMh9_27ZVdEZE7gNF3MJuqh55dMYeMfJ_BS6w",
+    "cache_invalidated_at": 1782066200.2506726
+  },
+  "73807323-f7e0-42cb-8344-c3f7148c9063": {
+    "history": [
+      {
+        "role": "user",
+        "content": "remove the rejected doc"
+      },
+      {
+        "role": "assistant",
+        "content": "## Next Action\n\n### Confirmation Required\n- delete the document '02-Roadmap-ICC-Tunisie-2025-V1.pdf' and clean vectors\n\nReply with **`confirm`** to continue."
+      },
+      {
+        "role": "user",
+        "content": "confirm"
+      },
+      {
+        "role": "assistant",
+        "content": "## Summary\n\n### Updates Applied\n- The rejected document \"02-Roadmap-ICC-Tunisie-2025-V1.pdf\" was successfully removed."
+      }
+    ],
+    "tool_cache": {},
+    "pending_action": null,
+    "pending_executed_steps": [],
+    "workflow_tasks": [],
+    "active_task_index": 0,
+    "last_message": "confirm",
+    "last_response": "## Summary\n\n### Updates Applied\n- The rejected document \"02-Roadmap-ICC-Tunisie-2025-V1.pdf\" was successfully removed.",
+    "last_route": "mutate",
+    "last_topic": "bulk_delete_by_filter",
+    "last_result": {
+      "route": null,
+      "tool_result": {}
+    },
+    "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjQ4MTY0MDI1LTIwZTktNGI3ZS1iZjgwLWFmNzk0MTFhMWFjMyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2prcmdodWFzeWludnJna2h1enZmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJiZGNhZTExMC1mYWY1LTQ3ZjctYjUwZS1lNTE2MTZjMDQ4ZDciLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzgyMDczMTIyLCJpYXQiOjE3ODIwNjk1MjIsImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoiam1lbXNhaWYwN0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaW52aXRlX29uYm9hcmRpbmdfY29tcGxldGVkIjp0cnVlLCJwaG9uZV9udW1iZXIiOiIiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInByb2ZpbGVfcGljdHVyZSI6Imh0dHBzOi8vamtyZ2h1YXN5aW52cmdraHV6dmYuc3VwYWJhc2UuY28vc3RvcmFnZS92MS9vYmplY3QvcHVibGljL3Byb2ZpbGVzL2JkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNy8xNzgxMzUxNjk4NzIzLmpwZyIsInJvbGUiOiJhZG1pbiIsInN1YiI6ImJkY2FlMTEwLWZhZjUtNDdmNy1iNTBlLWU1MTYxNmMwNDhkNyIsInVzZXJuYW1lIjoiSm1lbSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzgyMDY5NTIyfV0sInNlc3Npb25faWQiOiIwYTU5OWNiYy1iMDI4LTQyMDMtYTVlMC0yZWE3ZWFlYjFkZTciLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.2R_Rej5d3_isIxRb3aFVxqpRyaR9mVZS4E2OeNDyzxicidS4PnTwyh03WwhnUHIlmkuRoDGkTo9o53PidbKFfw",
+    "cache_invalidated_at": 1782069561.8676045
   }
 }

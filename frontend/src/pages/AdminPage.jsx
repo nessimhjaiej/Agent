@@ -1560,7 +1560,7 @@ export default function AdminPage() {
                     <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full">
                       <input
                         type="email"
-                        placeholder="Invite user email"
+                        placeholder="Invite admin email"
                         value={inviteEmail}
                         onChange={(event) => setInviteEmail(event.target.value)}
                         className="rounded-xl text-sm outline-none"
@@ -1572,7 +1572,7 @@ export default function AdminPage() {
                         className="flex items-center gap-2 px-6 rounded-xl text-sm font-medium text-white disabled:opacity-50 w-full sm:w-auto justify-center"
                         style={{ background: 'linear-gradient(135deg, #7c3aed, #06b6d4)', minHeight: '48px', minWidth: '0' }}
                       >
-                        {inviting ? 'Inviting...' : 'Invite User'}
+                        {inviting ? 'Inviting...' : 'Invite Admin'}
                       </motion.button>
                     </div>
                   </div>

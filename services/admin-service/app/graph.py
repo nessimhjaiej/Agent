@@ -1157,11 +1157,14 @@ def _plan_mutation(message: str, toolbox: AdminToolbox, session_context: dict | 
     )
 
 
-def _plan_pending_review(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] | None, str] | None:
+def _plan_pending_review(
+    message: str, toolbox: AdminToolbox, session_context: dict | None = None
+) -> tuple[dict[str, Any] | None, str] | None:
     """Plan a confirm/refuse action over pending documents.
 
     Confirm -> validate then preprocess + embed. Refuse -> status change only.
-    Targets a named document when one is given, otherwise all pending documents.
+    Targets a named document (full or partial name, extension optional), the
+    documents most recently discussed ("confirm them"), or all pending documents.
     Returns None when the message is not a pending-review request.
     """
     lowered = message.lower()
@@ -1169,62 +1172,86 @@ def _plan_pending_review(message: str, toolbox: AdminToolbox) -> tuple[dict[str,
     is_refuse = bool(re.search(r"\b(refuse|reject|decline|deny|rejeter|refuser|décliner)\b", lowered))
     if not (is_confirm or is_refuse):
         return None
-    # A review verb must be paired with a target reference: an explicit document
-    # keyword, a filename (e.g. "...pdf"), or a bulk reference ("all"/"these").
-    # A bare "confirm" with nothing else is left alone (it may be a gate reply).
+    tool_name = "confirm_pending_documents" if is_confirm else "refuse_pending_documents"
+
     has_doc_keyword = any(
         token in lowered
         for token in ["pending", "document", "documents", "doc", "docs", "file", "files", "en attente", "مستند", "ملف"]
     )
     has_filename = bool(re.search(r"[\w.\-]+\.(pdf|docx?|txt|md|csv|pptx?|xlsx?|json|html?)\b", lowered))
-    # Require an actual document reference (keyword or filename); a lone bulk word
-    # such as "all" must not hijack unrelated requests like "validate all users".
-    if not (has_doc_keyword or has_filename):
-        return None
-    tool_name = "confirm_pending_documents" if is_confirm else "refuse_pending_documents"
-
-    # Extract an explicit target name/filename if the user referenced one, then
-    # scope resolution to pending documents (a confirmed duplicate name must not
-    # match an already-validated copy). Pass a query so the toolbox resolves the
-    # exact pending target(s); no target means every pending document.
-    # Prefer a literal filename so verb words inside it (e.g. a file actually
-    # named "...-refuse-...") are never stripped.
-    filename_match = re.search(
-        r"[\w.\-]+\.(?:pdf|docx?|txt|md|csv|pptx?|xlsx?|json|html?)\b", message, re.IGNORECASE
-    )
-    if filename_match:
-        guess = filename_match.group(0).strip()
-    else:
-        guess = re.sub(
-            r"\b(confirm|approve|validate|accept|refuse|reject|decline|deny|"
-            r"valider|approuver|confirmer|accepter|rejeter|refuser|décliner|"
-            r"the|a|an|this|that|please|all|these|those|them|"
-            r"pending|document|documents|doc|docs|file|files|"
-            r"named|called|titled|name)\b",
-            " ",
-            lowered,
-        )
-        guess = re.sub(r"\s+", " ", guess).strip(" :,'\"").strip()
+    refers_context = bool(re.search(r"\b(them|those|these|the ones|all of them|ceux|celles)\b", lowered))
+    wants_all = bool(re.search(r"\b(all|every|everything|tous|toutes|tout)\b", lowered))
 
     arguments: dict[str, Any] = {}
-    if guess and len(guess) >= 3:
-        try:
-            matches = toolbox.find_documents_by_filter(name_contains=guess, status="pending")
-        except Exception:
-            matches = []
-        arguments = {"query": guess}
-        if len(matches) == 1:
-            target_label = f"'{str(matches[0].get('original_name') or guess)}'"
-        elif len(matches) > 1:
-            target_label = f"{len(matches)} pending documents matching '{guess}'"
+    matches: list[dict[str, Any]] = []
+    target_label = "all pending documents"
+
+    # 1) "confirm/refuse them" -> the pending documents most recently discussed.
+    if refers_context and not has_filename:
+        ctx_docs = _documents_by_ids(toolbox, _document_ids_from_context(session_context))
+        pending_ctx = [
+            d for d in ctx_docs if isinstance(d, dict) and str(d.get("status") or "") == "pending"
+        ]
+        if pending_ctx:
+            matches = pending_ctx
+            arguments["document_ids"] = [str(d.get("id") or "") for d in pending_ctx if d.get("id")]
+            target_label = (
+                f"'{str(pending_ctx[0].get('original_name') or '')}'"
+                if len(pending_ctx) == 1
+                else f"{len(pending_ctx)} pending documents we discussed"
+            )
+
+    # 2) An explicit name/filename (full or partial, extension optional). Prefer a
+    # literal filename so verb words inside it are never stripped; otherwise strip
+    # the command words and match on what remains.
+    if not matches:
+        filename_match = re.search(
+            r"[\w.\-]+\.(?:pdf|docx?|txt|md|csv|pptx?|xlsx?|json|html?)\b", message, re.IGNORECASE
+        )
+        if filename_match:
+            guess = filename_match.group(0).strip()
         else:
-            target_label = f"pending documents matching '{guess}'"
-    else:
+            guess = re.sub(
+                r"\b(confirm|approve|validate|accept|refuse|reject|decline|deny|"
+                r"valider|approuver|confirmer|accepter|rejeter|refuser|décliner|"
+                r"the|a|an|this|that|please|all|every|these|those|them|ones|"
+                r"pending|document|documents|doc|docs|file|files|"
+                r"named|called|titled|name)\b",
+                " ",
+                lowered,
+            )
+            guess = re.sub(r"\s+", " ", guess).strip(" :,'\"").strip()
+        if guess and len(guess) >= 3:
+            try:
+                matches = toolbox.find_documents_by_filter(name_contains=guess, status="pending")
+            except Exception:
+                matches = []
+            arguments["query"] = guess
+            if len(matches) == 1:
+                target_label = f"'{str(matches[0].get('original_name') or guess)}'"
+            elif len(matches) > 1:
+                target_label = f"{len(matches)} pending documents matching '{guess}'"
+            else:
+                target_label = f"pending documents matching '{guess}'"
+
+    # 3) "confirm (all) pending documents" -> every pending document.
+    if not matches and not arguments and (has_doc_keyword or wants_all):
         try:
             matches = toolbox.find_documents_by_filter(status="pending")
         except Exception:
             matches = []
         target_label = "all pending documents"
+
+    # Only act when there is a genuine document target, so unrelated requests
+    # (e.g. "validate all users") are never treated as a pending-document review.
+    has_real_target = (
+        bool(matches)
+        or bool(arguments.get("document_ids"))
+        or has_doc_keyword
+        or has_filename
+    )
+    if not has_real_target:
+        return None
 
     names = _doc_names(matches)
     if names:
@@ -1892,7 +1919,7 @@ def _plan_request(
     # Confirm/refuse of pending documents is a mutation, not an inspection.
     # Detect it deterministically before the LLM planners so an ambiguous verb
     # like "confirm <file>.pdf" is never misrouted to a read.
-    pending_review = _plan_pending_review(message, toolbox)
+    pending_review = _plan_pending_review(message, toolbox, session_context)
     if pending_review is not None:
         pending_action, pending_answer = pending_review
         if pending_action is not None:

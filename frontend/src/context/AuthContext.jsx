@@ -289,11 +289,10 @@ export function AuthProvider({ children }) {
       }
     });
 
-    // Only reached when the refresh above could not save the session: tear it
-    // down and send the user back to the login page.
-    setUnauthorizedHandler(() => {
-      forceSignOut({ redirectHome: true, reason: 'expired' });
-    });
+    // Deliberately NO unauthorized handler: a request that 401s (e.g. a momentary
+    // refresh failure) must never sign the user out. Users are only ever logged
+    // out by a manual sign-out or by being blocked — never automatically.
+    setUnauthorizedHandler(null);
 
     const syncKnownUser = async (currentUser) => {
       if (!currentUser) {

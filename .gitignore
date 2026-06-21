@@ -22,5 +22,3 @@ dist/
 
 # Local Codex / report artifacts
 .codex/
-docs/pfe-report/main-humanized.tex
-docs/pfe-report/humanizer-review.md

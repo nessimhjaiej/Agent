@@ -35,7 +35,7 @@ class Settings:
     smtp_username: str = ""
     smtp_password: str = ""
     smtp_from_email: str = ""
-    smtp_from_name: str = "ICC Agent Admin"
+    smtp_from_name: str = "Synapse Admin"
     smtp_use_tls: bool = True
 
     @classmethod

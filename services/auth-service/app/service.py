@@ -6,7 +6,10 @@ import secrets
 import smtplib
 import string
 from datetime import datetime, timezone
-from email.message import EmailMessage
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from pathlib import Path
 from typing import Any
 
 from app.config import Settings
@@ -23,6 +26,104 @@ from app.exceptions import (
 )
 from app.models import AuthSession, AuthUser
 from app.security_events import emit_security_event
+
+# Brand assets / colors used to render the HTML invite email.
+INVITE_BRAND_NAME = "Synapse"
+INVITE_LOGO_CID = "applogo"
+_INVITE_LOGO_PATH = Path(__file__).resolve().parent / "assets" / "logo.png"
+
+
+def _load_invite_logo_bytes() -> bytes | None:
+    try:
+        return _INVITE_LOGO_PATH.read_bytes()
+    except Exception:
+        return None
+
+
+def _render_invite_email_html(
+    *, recipient_email: str, recovery_link: str, login_url: str, include_logo: bool
+) -> str:
+    """A responsive, brand-styled HTML invite email (table-based for mail clients)."""
+    logo_block = (
+        f'<img src="cid:{INVITE_LOGO_CID}" width="56" height="56" alt="{INVITE_BRAND_NAME}" '
+        'style="display:block;border:0;border-radius:14px;background:rgba(255,255,255,0.12);" />'
+        if include_logo
+        else ""
+    )
+    login_row = (
+        f'<p style="margin:24px 0 0;font-size:13px;line-height:20px;color:#6b7280;">'
+        f'Or visit the <a href="{login_url}" style="color:#7c3aed;text-decoration:none;font-weight:600;">login page</a> directly.</p>'
+        if login_url
+        else ""
+    )
+    return f"""\
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="light only" />
+<title>Welcome to {INVITE_BRAND_NAME}</title>
+</head>
+<body style="margin:0;padding:0;background:#eef0f5;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">You've been invited to {INVITE_BRAND_NAME} as an administrator. Set your password to get started.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef0f5;padding:32px 12px;">
+<tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 16px 48px rgba(15,23,42,0.12);font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <tr>
+    <td style="background:#7c3aed;background:linear-gradient(135deg,#7c3aed 0%,#06b6d4 100%);padding:36px 40px;">
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+        <td style="padding-right:14px;vertical-align:middle;">{logo_block}</td>
+        <td style="vertical-align:middle;">
+          <div style="font-size:20px;font-weight:700;color:#ffffff;letter-spacing:0.2px;">{INVITE_BRAND_NAME}</div>
+        </td>
+      </tr></table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:40px 40px 8px;">
+      <h1 style="margin:0 0 6px;font-size:24px;line-height:32px;color:#0f172a;font-weight:700;">You're invited</h1>
+      <p style="margin:0 0 20px;font-size:15px;line-height:24px;color:#475569;">
+        Hello <strong style="color:#0f172a;">{recipient_email}</strong>, an administrator has invited you to join
+        <strong>{INVITE_BRAND_NAME}</strong> with <strong>admin access</strong>. To activate your account, set your password using the secure button below.
+      </p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 28px;"><tr>
+        <td style="border-radius:12px;background:#7c3aed;background:linear-gradient(135deg,#7c3aed 0%,#06b6d4 100%);box-shadow:0 10px 24px rgba(124,58,237,0.35);">
+          <a href="{recovery_link}" style="display:inline-block;padding:15px 34px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px;">Set your password &rarr;</a>
+        </td>
+      </tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #eef0f5;border-radius:14px;">
+        <tr><td style="padding:18px 22px;">
+          <p style="margin:0 0 10px;font-size:13px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:0.6px;">Next steps</p>
+          <p style="margin:0;font-size:14px;line-height:24px;color:#475569;">
+            1. Set your password<br/>
+            2. Choose your username<br/>
+            3. Phone number &amp; profile picture are optional
+          </p>
+        </td></tr>
+      </table>
+      {login_row}
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:20px 40px 34px;">
+      <hr style="border:none;border-top:1px solid #eef0f5;margin:0 0 18px;" />
+      <p style="margin:0 0 6px;font-size:12px;line-height:18px;color:#94a3b8;">
+        If the button doesn't work, copy and paste this link into your browser:
+      </p>
+      <p style="margin:0;font-size:12px;line-height:18px;word-break:break-all;"><a href="{recovery_link}" style="color:#7c3aed;text-decoration:none;">{recovery_link}</a></p>
+    </td>
+  </tr>
+  <tr>
+    <td style="background:#0f172a;padding:22px 40px;">
+      <p style="margin:0;font-size:12px;line-height:18px;color:#94a3b8;">&copy; {INVITE_BRAND_NAME} &middot; This invitation was sent to {recipient_email}. If you weren't expecting it, you can ignore this email.</p>
+    </td>
+  </tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>"""
 
 
 class AuthService:
@@ -432,16 +533,13 @@ class AuthService:
             except Exception:
                 return False, ""
 
-        msg = EmailMessage()
-        msg["Subject"] = "Welcome to ICC Agent"
-        msg["From"] = f"{self._settings.smtp_from_name} <{self._settings.smtp_from_email}>"
-        msg["To"] = recipient_email
+        # Plain-text fallback for clients that can't render HTML.
         lines = [
-            "Welcome to ICC Agent.",
+            f"Welcome to {INVITE_BRAND_NAME}.",
             "",
             f"Hello {recipient_email},",
             "",
-            "You have been invited to join the platform.",
+            "You have been invited to join the platform as an administrator.",
             "To complete your sign up, please set your password using the secure link below:",
             "",
             recovery_link,
@@ -453,7 +551,31 @@ class AuthService:
         ]
         if login_url:
             lines.extend(["", f"Login page: {login_url}"])
-        msg.set_content("\n".join(lines))
+
+        logo_bytes = _load_invite_logo_bytes()
+        html_body = _render_invite_email_html(
+            recipient_email=recipient_email,
+            recovery_link=recovery_link,
+            login_url=login_url,
+            include_logo=logo_bytes is not None,
+        )
+
+        # multipart/related[ multipart/alternative[text, html], inline logo ]
+        msg = MIMEMultipart("related")
+        msg["Subject"] = f"Welcome to {INVITE_BRAND_NAME}"
+        msg["From"] = f"{self._settings.smtp_from_name} <{self._settings.smtp_from_email}>"
+        msg["To"] = recipient_email
+
+        alternative = MIMEMultipart("alternative")
+        alternative.attach(MIMEText("\n".join(lines), "plain", "utf-8"))
+        alternative.attach(MIMEText(html_body, "html", "utf-8"))
+        msg.attach(alternative)
+
+        if logo_bytes is not None:
+            logo_part = MIMEImage(logo_bytes, _subtype="png")
+            logo_part.add_header("Content-ID", f"<{INVITE_LOGO_CID}>")
+            logo_part.add_header("Content-Disposition", "inline", filename="logo.png")
+            msg.attach(logo_part)
 
         try:
             with smtplib.SMTP(self._settings.smtp_host, self._settings.smtp_port, timeout=20) as smtp:
@@ -540,7 +662,18 @@ class AuthService:
                     generated_password = ""
                     email = existing_user.email or email
             else:
-                response = self._db.auth.admin.create_user(payload)
+                # GoTrue rejects app_metadata supplied at creation time
+                # ("Database error creating new user"), so create the user first
+                # and apply app_metadata in a follow-up update.
+                create_payload = {
+                    key: value for key, value in payload.items() if key != "app_metadata"
+                }
+                response = self._db.auth.admin.create_user(create_payload)
+                if response.user:
+                    response = self._db.auth.admin.update_user_by_id(
+                        response.user.id,
+                        {"app_metadata": payload["app_metadata"]},
+                    )
         except Exception as exc:
             if isinstance(exc, UserAlreadyExistsException):
                 raise
