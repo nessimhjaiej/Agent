@@ -1,0 +1,14 @@
+flowchart LR
+    Q[Demande admin]
+    L[Analyse semantique]
+    SEC[Security Service]
+    T[Detection multi-taches]
+    TOOL[Appels outils / services]
+    SUM[Aggregation et synthese]
+    UI[Reponse admin dans le chat]
+
+    Q --> L --> T
+    L --> SEC
+    SEC --> TOOL
+    T --> TOOL
+    TOOL --> SUM --> UI

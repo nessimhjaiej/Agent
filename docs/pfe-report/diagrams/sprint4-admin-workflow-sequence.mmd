@@ -1,0 +1,28 @@
+sequenceDiagram
+    actor Admin
+    participant Frontend as Frontend Admin
+    participant AdminService as admin-service
+    participant LangGraph as Orchestration LangGraph
+    participant ToolA as Service / Outil 1
+    participant ToolB as Service / Outil 2
+    participant ToolC as Service / Outil 3
+
+    Admin->>Frontend: Soumettre une demande complexe
+    Frontend->>AdminService: Envoyer la demande
+    AdminService->>LangGraph: Demarrer le workflow
+    LangGraph->>LangGraph: Detecter un scenario multi-etapes
+
+    LangGraph->>ToolA: Executer etape 1
+    ToolA-->>LangGraph: Resultat etape 1
+    LangGraph->>ToolB: Executer etape 2
+    ToolB-->>LangGraph: Resultat etape 2
+
+    opt Etape supplementaire requise
+        LangGraph->>ToolC: Executer etape 3
+        ToolC-->>LangGraph: Resultat etape 3
+    end
+
+    LangGraph->>LangGraph: Agreger les resultats
+    LangGraph-->>AdminService: Synthese du workflow
+    AdminService-->>Frontend: Retourner l'etat final
+    Frontend-->>Admin: Afficher la reponse multi-etapes

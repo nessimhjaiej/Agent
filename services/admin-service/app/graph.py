@@ -400,6 +400,124 @@ def _is_reranking_methods_question(message: str) -> bool:
     return asks_about_reranking and asks_for_options
 
 
+_DOCUMENT_MUTATION_VERBS = [
+    "delete", "remove", "drop", "purge", "erase",
+    "reindex", "re-index", "reindexe", "rebuild", "re-embed", "reembed",
+    "run ", "evaluate", "compare",
+    "supprime", "supprimer", "réindex", "reindexer", "changer", "modifier", "lancer",
+    "احذف", "حذف", "أعد",
+]
+
+
+def _is_document_inspection_question(message: str) -> bool:
+    """True when the user only wants to see/list documents (optionally by status).
+
+    Safety guard: questions like "which documents were rejected or failed?" are
+    read-only and must never be routed to a mutation such as
+    reindex_validated_documents. If any explicit mutation verb is present we do
+    not treat it as a pure inspection and let normal planning proceed.
+    """
+    lowered = message.lower()
+    if any(verb in lowered for verb in _DOCUMENT_MUTATION_VERBS):
+        return False
+    # Imperative review verbs (confirm/refuse/approve/reject ...) are actions, not
+    # reads. Word boundaries keep status reads ("rejected"/"refused") as inspection.
+    if re.search(
+        r"\b(confirm|approve|accept|refuse|reject|decline|deny|"
+        r"valider|approuver|confirmer|accepter|rejeter|refuser)\b",
+        lowered,
+    ):
+        return False
+    asks_documents = bool(
+        re.search(r"(document|documents|\bdoc\b|\bdocs\b|file|files|fichier|fichiers|مستند|ملف)", lowered)
+    )
+    if not asks_documents:
+        return False
+    asks_listing_or_status = bool(
+        re.search(
+            r"(show|list|which|what|find|display|any|are there|status|state|"
+            r"reject|refus|declin|denied|fail|invalid|problematic|\bbad\b|broken|"
+            r"not embedded|did not|didn'?t|pass|montre|liste|quels?|quelles?|rejet|échou|"
+            r"اعرض|قائمة|حالة)",
+            lowered,
+        )
+    )
+    return asks_listing_or_status
+
+
+def _doc_names(docs: list[dict[str, Any]]) -> list[str]:
+    """Friendly document names from a list of document dicts (for confirmations)."""
+    names: list[str] = []
+    for doc in docs or []:
+        if isinstance(doc, dict):
+            name = str(doc.get("original_name") or doc.get("id") or "").strip()
+            if name:
+                names.append(name)
+    return names
+
+
+def _normalize_workflow_step_arguments(
+    tool_name: str,
+    arguments: dict[str, Any],
+    toolbox: AdminToolbox,
+) -> dict[str, Any]:
+    """Resolve planner/LLM-emitted arguments into the canonical keys the executor
+    and confirmation prompt expect, so the user sees the real target before
+    confirming (e.g. a resolved document id instead of an empty string)."""
+    args = dict(arguments) if isinstance(arguments, dict) else {}
+
+    if tool_name in {"reindex_document", "delete_document_completely"}:
+        doc_id = str(args.get("document_id") or "").strip()
+        if doc_id:
+            result = {"document_id": doc_id}
+            named = _documents_by_ids(toolbox, [doc_id])
+            names = _doc_names(named)
+            if names:
+                result["target_names"] = names[:8]
+            return result
+        query = AdminToolbox._document_query_from_arguments(args)
+        if not query:
+            return {"document_id": ""}
+        try:
+            matches = toolbox.find_documents_by_filter(name_contains=query)
+        except Exception:
+            matches = []
+        if len(matches) == 1:
+            return {
+                "document_id": str(matches[0].get("id") or ""),
+                "target_names": _doc_names(matches)[:8],
+            }
+        if not matches:
+            try:
+                single = toolbox.find_document(query)
+            except Exception:
+                single = None
+            if single is not None:
+                return {
+                    "document_id": str(single.get("id") or ""),
+                    "target_names": _doc_names([single])[:8],
+                }
+        # Zero or multiple matches: keep the query so the executor can run a bulk
+        # reindex / ask for delete disambiguation, and the prompt can show it.
+        result = {"document_query": query, "match_count": len(matches)}
+        names = _doc_names(matches)
+        if names:
+            result["target_names"] = names[:8]
+        return result
+
+    if tool_name == "compare_evaluation_reports":
+        baseline, candidate = toolbox._resolve_compare_ids(args)
+        return {"baseline_report_id": baseline, "candidate_report_id": candidate}
+
+    if tool_name == "run_evaluation":
+        dataset = str(args.get("dataset_path") or args.get("dataset") or "").strip()
+        if not dataset.endswith(".json"):
+            dataset = "evals/sample_eval_dataset.json"
+        return {"dataset_path": dataset}
+
+    return args
+
+
 def _split_request_clauses(message: str) -> list[str]:
     clauses = [
         clause.strip(" ,;")
@@ -746,9 +864,10 @@ def _semantic_task_to_step(
     if task_type == "workflow_action":
         tool_name = str(task.tool_name or "").strip()
         if tool_name in capabilities.get("workflow_tools", []):
+            raw_arguments = task.arguments if isinstance(task.arguments, dict) else {}
             return {
                 "tool": tool_name,
-                "arguments": task.arguments if isinstance(task.arguments, dict) else {},
+                "arguments": _normalize_workflow_step_arguments(tool_name, raw_arguments, toolbox),
             }
         return None
 
@@ -1020,7 +1139,7 @@ def _plan_mutation(message: str, toolbox: AdminToolbox, session_context: dict | 
             {
                 "intent": "mutation",
                 "tool": "delete_document_completely",
-                "arguments": {"document_id": str(target.get("id") or "")},
+                "arguments": {"document_id": str(target.get("id") or ""), "target_names": [summary]},
                 "steps": [],
                 "summary": f"Delete document '{summary}' and remove its indexed vectors.",
             },
@@ -1038,10 +1157,274 @@ def _plan_mutation(message: str, toolbox: AdminToolbox, session_context: dict | 
     )
 
 
+def _plan_pending_review(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] | None, str] | None:
+    """Plan a confirm/refuse action over pending documents.
+
+    Confirm -> validate then preprocess + embed. Refuse -> status change only.
+    Targets a named document when one is given, otherwise all pending documents.
+    Returns None when the message is not a pending-review request.
+    """
+    lowered = message.lower()
+    is_confirm = bool(re.search(r"\b(confirm|approve|validate|accept|valider|approuver|confirmer|accepter)\b", lowered))
+    is_refuse = bool(re.search(r"\b(refuse|reject|decline|deny|rejeter|refuser|décliner)\b", lowered))
+    if not (is_confirm or is_refuse):
+        return None
+    # A review verb must be paired with a target reference: an explicit document
+    # keyword, a filename (e.g. "...pdf"), or a bulk reference ("all"/"these").
+    # A bare "confirm" with nothing else is left alone (it may be a gate reply).
+    has_doc_keyword = any(
+        token in lowered
+        for token in ["pending", "document", "documents", "doc", "docs", "file", "files", "en attente", "مستند", "ملف"]
+    )
+    has_filename = bool(re.search(r"[\w.\-]+\.(pdf|docx?|txt|md|csv|pptx?|xlsx?|json|html?)\b", lowered))
+    # Require an actual document reference (keyword or filename); a lone bulk word
+    # such as "all" must not hijack unrelated requests like "validate all users".
+    if not (has_doc_keyword or has_filename):
+        return None
+    tool_name = "confirm_pending_documents" if is_confirm else "refuse_pending_documents"
+
+    # Extract an explicit target name/filename if the user referenced one, then
+    # scope resolution to pending documents (a confirmed duplicate name must not
+    # match an already-validated copy). Pass a query so the toolbox resolves the
+    # exact pending target(s); no target means every pending document.
+    # Prefer a literal filename so verb words inside it (e.g. a file actually
+    # named "...-refuse-...") are never stripped.
+    filename_match = re.search(
+        r"[\w.\-]+\.(?:pdf|docx?|txt|md|csv|pptx?|xlsx?|json|html?)\b", message, re.IGNORECASE
+    )
+    if filename_match:
+        guess = filename_match.group(0).strip()
+    else:
+        guess = re.sub(
+            r"\b(confirm|approve|validate|accept|refuse|reject|decline|deny|"
+            r"valider|approuver|confirmer|accepter|rejeter|refuser|décliner|"
+            r"the|a|an|this|that|please|all|these|those|them|"
+            r"pending|document|documents|doc|docs|file|files|"
+            r"named|called|titled|name)\b",
+            " ",
+            lowered,
+        )
+        guess = re.sub(r"\s+", " ", guess).strip(" :,'\"").strip()
+
+    arguments: dict[str, Any] = {}
+    if guess and len(guess) >= 3:
+        try:
+            matches = toolbox.find_documents_by_filter(name_contains=guess, status="pending")
+        except Exception:
+            matches = []
+        arguments = {"query": guess}
+        if len(matches) == 1:
+            target_label = f"'{str(matches[0].get('original_name') or guess)}'"
+        elif len(matches) > 1:
+            target_label = f"{len(matches)} pending documents matching '{guess}'"
+        else:
+            target_label = f"pending documents matching '{guess}'"
+    else:
+        try:
+            matches = toolbox.find_documents_by_filter(status="pending")
+        except Exception:
+            matches = []
+        target_label = "all pending documents"
+
+    names = _doc_names(matches)
+    if names:
+        arguments["target_names"] = names[:8]
+    arguments["match_count"] = len(matches)
+
+    verb = "confirm" if is_confirm else "refuse"
+    extra = " (validate, then preprocess + embed)" if is_confirm else " (status change only)"
+    return (
+        {
+            "intent": "mutation",
+            "tool": tool_name,
+            "arguments": arguments,
+            "steps": [],
+            "summary": f"{verb.capitalize()} {target_label}{extra}.",
+        },
+        f"I am ready to {verb} {target_label}{extra}. Confirm to proceed.",
+    )
+
+
+_BULK_STOPWORDS = {
+    "reindex", "reindexe", "rebuild", "reembed",
+    "delete", "remove", "drop", "purge", "erase", "supprime", "supprimer", "supprimez",
+    "all", "every", "everything", "each", "both", "tous", "toutes", "tout",
+    "the", "a", "an", "this", "that", "these", "those", "them", "they", "it", "les", "le", "la",
+    "document", "documents", "doc", "docs", "file", "files", "fichier", "fichiers",
+    "from", "of", "in", "with", "and", "or", "please", "status", "are", "is", "to", "me", "my",
+    "dated", "year", "named", "called", "titled", "name",
+    "rejected", "refused", "declined", "denied", "failed", "invalid", "problematic",
+    "validated", "approved", "accepted", "valid",
+    "pending", "waiting", "queued", "embedded", "unembedded",
+}
+
+
+def _extract_doc_keywords(lowered: str) -> list[str]:
+    tokens = re.findall(r"[a-z0-9]+", lowered)
+    return [t for t in tokens if t not in _BULK_STOPWORDS and len(t) >= 2]
+
+
+def _best_name_filter(
+    keywords: list[str], toolbox: AdminToolbox, status: str | None, embedded: bool | None
+) -> tuple[str | None, int]:
+    """Pick the name filter that resolves to the most documents (combined phrase
+    first, then individual tokens)."""
+    if not keywords:
+        return None, 0
+    candidates = [" ".join(keywords)] + [k for k in keywords if k != " ".join(keywords)]
+    best: str | None = None
+    best_count = 0
+    for candidate in candidates:
+        try:
+            matches = toolbox.find_documents_by_filter(
+                name_contains=candidate, status=status, embedded=embedded
+            )
+        except Exception:
+            matches = []
+        if len(matches) > best_count:
+            best, best_count = candidate, len(matches)
+    return best, best_count
+
+
+def _documents_by_ids(toolbox: AdminToolbox, ids: list[str]) -> list[dict[str, Any]]:
+    try:
+        all_docs = {
+            str(d.get("id")): d
+            for d in toolbox._fetch_documents()
+            if isinstance(d, dict) and d.get("id")
+        }
+    except Exception:
+        return [{"id": i} for i in ids]
+    return [all_docs.get(str(i), {"id": i}) for i in ids]
+
+
+def _document_ids_from_context(session_context: dict | None) -> list[str]:
+    ctx = session_context or {}
+    last = ctx.get("last_result")
+    if not isinstance(last, dict):
+        return []
+    tool_result = last.get("tool_result")
+    docs = tool_result.get("documents") if isinstance(tool_result, dict) else None
+    if not isinstance(docs, list):
+        return []
+    return [str(d.get("id") or "") for d in docs if isinstance(d, dict) and d.get("id")]
+
+
+def _plan_bulk_document_mutation(
+    message: str, toolbox: AdminToolbox, session_context: dict | None = None
+) -> tuple[dict[str, Any] | None, str] | None:
+    """Plan a reindex/delete over many documents selected by status, name/category,
+    embedded flag, an explicit "all", or a contextual "them". Returns None when the
+    message is not a bulk document mutation."""
+    lowered = message.lower()
+    is_reindex = bool(re.search(r"\b(reindex|re-?index|reindexe|rebuild|re-?embed|reembed|réindex\w*|reindexer)\b", lowered))
+    is_delete = bool(re.search(r"\b(delete|remove|drop|purge|erase|supprim\w*)\b", lowered))
+    if not (is_reindex or is_delete):
+        return None
+    verb_tool = "bulk_reindex_by_filter" if is_reindex else "bulk_delete_by_filter"
+    verb = "reindex" if is_reindex else "delete"
+
+    status = None
+    if re.search(r"\b(reject\w*|refus\w*|declin\w*|denied|deny|failed|invalid|problematic)\b", lowered):
+        status = "rejected"
+    elif re.search(r"\b(validated|approved|accepted)\b", lowered):
+        status = "validated"
+    elif re.search(r"\b(pending|waiting|queued)\b", lowered):
+        status = "pending"
+
+    embedded = None
+    if re.search(r"(not embedded|unembedded|non[- ]embedded|without embedding)", lowered):
+        embedded = False
+    elif re.search(r"\bembedded\b", lowered):
+        embedded = True
+
+    wants_all = bool(re.search(r"\b(all|every|everything|each|tous|toutes|tout)\b", lowered))
+    refers_them = bool(re.search(r"\b(them|those|these|they)\b", lowered))
+
+    keywords = _extract_doc_keywords(lowered)
+    name_filter, _ = _best_name_filter(keywords, toolbox, status, embedded)
+
+    arguments: dict[str, Any] = {}
+
+    matches: list[dict[str, Any]] = []
+    # Contextual "reindex/delete them" -> act on the documents most recently shown.
+    if refers_them and not name_filter and not status and embedded is None and not wants_all:
+        ctx_ids = _document_ids_from_context(session_context)
+        if not ctx_ids:
+            return None
+        arguments["document_ids"] = ctx_ids
+        match_count = len(ctx_ids)
+        matches = _documents_by_ids(toolbox, ctx_ids)
+    else:
+        if name_filter:
+            arguments["name_contains"] = name_filter
+        if status:
+            arguments["status"] = status
+        if embedded is not None:
+            arguments["embedded"] = embedded
+        if not arguments and not wants_all:
+            return None  # No bulk selector; let single-document planners handle it.
+        # A bare "reindex all" (no other selector) maps to the dedicated
+        # validated-reindex, since only validated documents are embeddable.
+        if is_reindex and wants_all and not arguments:
+            return (
+                {
+                    "intent": "mutation",
+                    "tool": "reindex_validated_documents",
+                    "arguments": {},
+                    "steps": [],
+                    "summary": "Reindex every validated document.",
+                },
+                "I am ready to reindex all validated documents. Confirm to proceed.",
+            )
+        try:
+            matches = toolbox.find_documents_by_filter(
+                name_contains=arguments.get("name_contains"),
+                status=arguments.get("status"),
+                embedded=arguments.get("embedded"),
+            )
+        except Exception:
+            matches = []
+        match_count = len(matches)
+
+    arguments["match_count"] = match_count
+    names = _doc_names(matches)
+    if names:
+        arguments["target_names"] = names[:8]
+
+    label_bits: list[str] = []
+    if arguments.get("name_contains"):
+        label_bits.append(f"matching '{arguments['name_contains']}'")
+    if arguments.get("status"):
+        label_bits.append(f"with status '{arguments['status']}'")
+    if arguments.get("embedded") is True:
+        label_bits.append("that are embedded")
+    elif arguments.get("embedded") is False:
+        label_bits.append("that are not embedded")
+    if arguments.get("document_ids"):
+        label_bits.append(f"({len(arguments['document_ids'])} selected)")
+    scope = " ".join(label_bits) if label_bits else "all"
+    target = f"{match_count} document(s) {scope}" if match_count else f"documents {scope}"
+
+    return (
+        {
+            "intent": "mutation",
+            "tool": verb_tool,
+            "arguments": arguments,
+            "steps": [],
+            "summary": f"{verb.capitalize()} {target}.",
+        },
+        f"I am ready to {verb} {target}. Confirm to proceed.",
+    )
+
+
 def _plan_workflow(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] | None, str]:
     lowered = message.lower()
     if _is_capability_question(message):
         return None, "I can summarize the available admin capabilities without starting a workflow."
+    pending_plan = _plan_pending_review(message, toolbox)
+    if pending_plan is not None:
+        return pending_plan
     if "compare" in lowered and "evaluation" in lowered:
         pair = toolbox.resolve_report_pair(message)
         if pair is None:
@@ -1129,7 +1512,7 @@ def _plan_workflow(message: str, toolbox: AdminToolbox) -> tuple[dict[str, Any] 
             {
                 "intent": "mutation",
                 "tool": "reindex_document",
-                "arguments": {"document_id": str(target.get("id") or "")},
+                "arguments": {"document_id": str(target.get("id") or ""), "target_names": [summary]},
                 "steps": [],
                 "summary": f"Reindex document '{summary}'.",
             },
@@ -1161,7 +1544,16 @@ def _plan_inspection_step(message: str, toolbox: AdminToolbox) -> dict[str, Any]
         return {"tool": "list_evaluation_reports", "arguments": {}}
     if any(token in lowered for token in ["ingestion", "document status", "status"]) and "document" not in lowered:
         return {"tool": "get_ingestion_status", "arguments": {}}
+    _STATUS_SYNONYMS: dict[str, list[str]] = {
+        "rejected": ["rejected", "refused", "declined", "denied"],
+        "validated": ["validated", "approved", "accepted", "valid"],
+        "pending": ["pending", "waiting", "queued", "in progress", "processing"],
+        "error": ["error", "failed", "broken", "errored"],
+    }
     if "document" in lowered:
+        for canonical_status, synonyms in _STATUS_SYNONYMS.items():
+            if any(syn in lowered for syn in synonyms):
+                return {"tool": "find_documents_by_filter", "arguments": {"status": canonical_status}}
         return {"tool": "list_loaded_documents", "arguments": {}}
     return None
 
@@ -1475,6 +1867,31 @@ def _plan_request(
 
     if _is_capability_question(message, session_context):
         return "advisory", None, None
+
+    # Safety guard: a read-only document listing/status question (e.g. "which
+    # documents were rejected or failed?") must be inspected, never routed to a
+    # destructive mutation like reindex_validated_documents.
+    if _is_document_inspection_question(message):
+        return "inspect", None, None
+
+    # Confirm/refuse of pending documents is a mutation, not an inspection.
+    # Detect it deterministically before the LLM planners so an ambiguous verb
+    # like "confirm <file>.pdf" is never misrouted to a read.
+    pending_review = _plan_pending_review(message, toolbox)
+    if pending_review is not None:
+        pending_action, pending_answer = pending_review
+        if pending_action is not None:
+            return "mutate", pending_action, pending_answer
+
+    # Bulk reindex/delete over many documents (by status, name/category, embedded
+    # flag, "all", or a contextual "them"). Handled deterministically before the
+    # single-document planners so e.g. "reindex cybersecurity files" hits all of
+    # them, not just one.
+    bulk_review = _plan_bulk_document_mutation(message, toolbox, session_context)
+    if bulk_review is not None:
+        bulk_action, bulk_answer = bulk_review
+        if bulk_action is not None:
+            return "mutate", bulk_action, bulk_answer
 
     clauses = _split_into_clauses(message)
     planned_steps: list[dict[str, Any]] = []

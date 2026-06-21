@@ -339,3 +339,256 @@ def test_update_repo_config_calls_retrieval_service(monkeypatch) -> None:  # noq
     assert result["updated"]["top_k_retrieve"] == 11
     assert result["updated"]["top_k_return"] == 6
     assert result["applied_via"] == "retrieval-service"
+
+
+# ───────────────────────────────────────────────────────────────
+# find_document tests
+# ───────────────────────────────────────────────────────────────
+
+
+def test_find_document_exact_match(monkeypatch) -> None:  # noqa: ANN001
+    toolbox = AdminToolbox(_settings(), access_token="token")
+    monkeypatch.setattr(
+        toolbox,
+        "_fetch_documents",
+        lambda: [
+            {"id": "d1", "original_name": "invoice_2024.pdf", "storage_path": "/docs/invoice_2024.pdf", "embedded": True},
+            {"id": "d2", "original_name": "policy_old.pdf", "storage_path": "/docs/policy_old.pdf", "embedded": False},
+        ],
+    )
+    result = toolbox.find_document("invoice_2024.pdf")
+    assert result is not None
+    assert result["id"] == "d1"
+
+
+def test_find_document_partial_match(monkeypatch) -> None:  # noqa: ANN001
+    toolbox = AdminToolbox(_settings(), access_token="token")
+    monkeypatch.setattr(
+        toolbox,
+        "_fetch_documents",
+        lambda: [
+            {"id": "d1", "original_name": "invoice_2024.pdf", "storage_path": "/docs/invoice_2024.pdf", "embedded": True},
+            {"id": "d2", "original_name": "contract_renewal.pdf", "storage_path": "/docs/contract_renewal.pdf", "embedded": False},
+        ],
+    )
+    result = toolbox.find_document("invoice")
+    assert result is not None
+    assert result["id"] == "d1"
+
+
+def test_find_document_no_match(monkeypatch) -> None:  # noqa: ANN001
+    toolbox = AdminToolbox(_settings(), access_token="token")
+    monkeypatch.setattr(
+        toolbox,
+        "_fetch_documents",
+        lambda: [
+            {"id": "d1", "original_name": "invoice_2024.pdf", "storage_path": "/docs/invoice_2024.pdf"},
+        ],
+    )
+    result = toolbox.find_document("nonexistent_file")
+    assert result is None
+
+
+# ───────────────────────────────────────────────────────────────
+# find_documents_by_filter tests
+# ───────────────────────────────────────────────────────────────
+
+
+def test_find_documents_by_filter_name_contains(monkeypatch) -> None:  # noqa: ANN001
+    toolbox = AdminToolbox(_settings(), access_token="token")
+    monkeypatch.setattr(
+        toolbox,
+        "_fetch_documents",
+        lambda: [
+            {"id": "d1", "original_name": "old_policy_2021.pdf", "storage_path": "/docs/old_policy_2021.pdf", "status": "validated", "embedded": True},
+            {"id": "d2", "original_name": "old_contract.pdf", "storage_path": "/docs/old_contract.pdf", "status": "pending", "embedded": False},
+            {"id": "d3", "original_name": "new_report.pdf", "storage_path": "/docs/new_report.pdf", "status": "validated", "embedded": True},
+        ],
+    )
+    results = toolbox.find_documents_by_filter(name_contains="old_")
+    assert len(results) == 2
+    ids = {doc["id"] for doc in results}
+    assert ids == {"d1", "d2"}
+
+
+def test_find_documents_by_filter_status(monkeypatch) -> None:  # noqa: ANN001
+    toolbox = AdminToolbox(_settings(), access_token="token")
+    monkeypatch.setattr(
+        toolbox,
+        "_fetch_documents",
+        lambda: [
+            {"id": "d1", "original_name": "a.pdf", "status": "validated", "embedded": True},
+            {"id": "d2", "original_name": "b.pdf", "status": "pending", "embedded": False},
+            {"id": "d3", "original_name": "c.pdf", "status": "validated", "embedded": False},
+        ],
+    )
+    results = toolbox.find_documents_by_filter(status="validated")
+    assert len(results) == 2
+    ids = {doc["id"] for doc in results}
+    assert ids == {"d1", "d3"}
+
+
+def test_find_documents_by_filter_combined(monkeypatch) -> None:  # noqa: ANN001
+    toolbox = AdminToolbox(_settings(), access_token="token")
+    monkeypatch.setattr(
+        toolbox,
+        "_fetch_documents",
+        lambda: [
+            {"id": "d1", "original_name": "old_policy.pdf", "status": "validated", "embedded": True},
+            {"id": "d2", "original_name": "old_contract.pdf", "status": "pending", "embedded": False},
+            {"id": "d3", "original_name": "new_report.pdf", "status": "validated", "embedded": True},
+        ],
+    )
+    results = toolbox.find_documents_by_filter(name_contains="old_", status="validated")
+    assert len(results) == 1
+    assert results[0]["id"] == "d1"
+
+
+# ───────────────────────────────────────────────────────────────
+# smart_delete tests
+# ───────────────────────────────────────────────────────────────
+
+
+def test_smart_delete_single_match(monkeypatch) -> None:  # noqa: ANN001
+    toolbox = AdminToolbox(_settings(), access_token="token")
+    monkeypatch.setattr(
+        toolbox,
+        "_fetch_documents",
+        lambda: [
+            {"id": "d1", "original_name": "old_policy_2021.pdf", "storage_path": "/docs/old_policy_2021.pdf", "status": "validated"},
+            {"id": "d2", "original_name": "new_report.pdf", "storage_path": "/docs/new_report.pdf", "status": "validated"},
+        ],
+    )
+    monkeypatch.setattr(toolbox, "delete_document_completely", lambda doc_id: {"status": "ok", "document_id": doc_id})
+    result = toolbox.smart_delete("old_policy_2021")
+    assert result["status"] == "ok"
+    assert result["resolved_document"]["id"] == "d1"
+    assert result["delete_result"]["document_id"] == "d1"
+
+
+def test_smart_delete_no_match(monkeypatch) -> None:  # noqa: ANN001
+    toolbox = AdminToolbox(_settings(), access_token="token")
+    monkeypatch.setattr(toolbox, "_fetch_documents", lambda: [])
+    result = toolbox.smart_delete("nonexistent_doc")
+    assert result["status"] == "not_found"
+    assert "nonexistent_doc" in result["error"]
+
+
+def test_smart_delete_multiple_matches(monkeypatch) -> None:  # noqa: ANN001
+    toolbox = AdminToolbox(_settings(), access_token="token")
+    monkeypatch.setattr(
+        toolbox,
+        "_fetch_documents",
+        lambda: [
+            {"id": "d1", "original_name": "old_policy_2021.pdf", "status": "validated"},
+            {"id": "d2", "original_name": "old_policy_2022.pdf", "status": "pending"},
+        ],
+    )
+    result = toolbox.smart_delete("old_policy")
+    assert result["status"] == "multiple_matches"
+    assert len(result["candidates"]) == 2
+    assert result["candidates"][0]["id"] == "d1"
+    assert result["candidates"][1]["id"] == "d2"
+
+
+# ───────────────────────────────────────────────────────────────
+# smart_reindex tests
+# ───────────────────────────────────────────────────────────────
+
+
+def test_smart_reindex_single_match(monkeypatch) -> None:  # noqa: ANN001
+    toolbox = AdminToolbox(_settings(), access_token="token")
+    monkeypatch.setattr(
+        toolbox,
+        "_fetch_documents",
+        lambda: [
+            {"id": "d1", "original_name": "invoice_report.pdf", "storage_path": "/docs/invoice_report.pdf", "status": "validated"},
+        ],
+    )
+    monkeypatch.setattr(toolbox, "reindex_document", lambda doc_id: {"status": "ok", "document_id": doc_id})
+    result = toolbox.smart_reindex("invoice_report")
+    assert result["status"] == "ok"
+    assert result["resolved_document"]["id"] == "d1"
+    assert result["reindex_result"]["document_id"] == "d1"
+
+
+# ───────────────────────────────────────────────────────────────
+# Empty ID validation tests
+# ───────────────────────────────────────────────────────────────
+
+
+def test_delete_document_empty_id_returns_error() -> None:
+    result = AdminToolbox(_settings()).delete_document_completely("")
+    assert result["status"] == "error"
+    assert "document_id is required" in result["error"]
+
+
+def test_delete_document_blank_id_returns_error() -> None:
+    result = AdminToolbox(_settings()).delete_document_completely("   ")
+    assert result["status"] == "error"
+    assert "document_id is required" in result["error"]
+
+
+def test_reindex_document_empty_id_returns_error() -> None:
+    result = AdminToolbox(_settings()).reindex_document("")
+    assert result["status"] == "error"
+    assert "document_id is required" in result["error"]
+
+
+# ───────────────────────────────────────────────────────────────
+# Bulk operation tests
+# ───────────────────────────────────────────────────────────────
+
+
+def test_bulk_delete_by_filter_deletes_matching_docs(monkeypatch) -> None:  # noqa: ANN001
+    toolbox = AdminToolbox(_settings(), access_token="token")
+    monkeypatch.setattr(
+        toolbox,
+        "_fetch_documents",
+        lambda: [
+            {"id": "d1", "original_name": "old_policy.pdf", "status": "deprecated"},
+            {"id": "d2", "original_name": "old_contract.pdf", "status": "deprecated"},
+            {"id": "d3", "original_name": "new_report.pdf", "status": "validated"},
+        ],
+    )
+    deleted_ids = []
+    monkeypatch.setattr(
+        toolbox,
+        "delete_document_completely",
+        lambda doc_id: (deleted_ids.append(doc_id), {"status": "ok", "document_id": doc_id})[1],
+    )
+    result = toolbox.bulk_delete_by_filter(status="deprecated")
+    assert result["status"] == "ok"
+    assert result["deleted_count"] == 2
+    assert set(deleted_ids) == {"d1", "d2"}
+
+
+def test_bulk_delete_by_filter_no_matches(monkeypatch) -> None:  # noqa: ANN001
+    toolbox = AdminToolbox(_settings(), access_token="token")
+    monkeypatch.setattr(toolbox, "_fetch_documents", lambda: [])
+    result = toolbox.bulk_delete_by_filter(status="deprecated")
+    assert result["status"] == "not_found"
+    assert result["deleted_count"] == 0
+
+
+def test_bulk_reindex_by_filter_reindexes_matching_docs(monkeypatch) -> None:  # noqa: ANN001
+    toolbox = AdminToolbox(_settings(), access_token="token")
+    monkeypatch.setattr(
+        toolbox,
+        "_fetch_documents",
+        lambda: [
+            {"id": "d1", "original_name": "report_q1.pdf", "status": "validated", "embedded": False},
+            {"id": "d2", "original_name": "report_q2.pdf", "status": "validated", "embedded": False},
+            {"id": "d3", "original_name": "report_q3.pdf", "status": "pending", "embedded": False},
+        ],
+    )
+    reindexed_ids = []
+    monkeypatch.setattr(
+        toolbox,
+        "reindex_document",
+        lambda doc_id: (reindexed_ids.append(doc_id), {"status": "ok", "document_id": doc_id})[1],
+    )
+    result = toolbox.bulk_reindex_by_filter(status="validated")
+    assert result["status"] == "ok"
+    assert result["reindexed_count"] == 2
+    assert set(reindexed_ids) == {"d1", "d2"}

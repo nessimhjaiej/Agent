@@ -1,0 +1,2407 @@
+
+
+===== PAGE 1 =====
+Université de Carthage
+Institut des Hautes Études Commerciales de Carthage
+Rapport de projet de fin d’études
+Déposé en vue de l’obtention du diplôme de :
+Licence en informatique de gestion, spécialité Business Intelligence
+Synapse : Plateforme pour l’exploration intelligente et sécurisée
+de documents
+Élaboré par :
+Nessim Hjaiej
+Saifeddine Jmem
+Encadrant académique :
+Mme Rim Faiz
+Encadrant professionnel :
+Mme Mouna Chaieb
+Organisme d’accueil :
+Année universitaire : 2025–2026
+
+===== PAGE 2 =====
+Remerciements
+Nous tenons à exprimer notre sincère gratitude à notre encadrante académique,Mme
+Rim Faiz, pour sa disponibilité, sa bienveillance et la qualité de son accompagnement, qui
+ont grandement contribué à l’aboutissement et à la réussite de ce travail. Nous adressons
+également nos remerciements les plus sincères à notre encadrante professionnelle,Mme
+Mouna Chaieb, pour son soutien, sa confiance et ses précieux conseils tout au long
+de ce projet. Nous remercions chaleureusement l’ensemble des enseignants deIHEC
+Carthagepour la qualité de la formation dispensée, ainsi que pour les connaissances
+et compétences acquises au cours de notre parcours académique. Enfin, nous exprimons
+notre reconnaissance à toutes les personnes qui, de près ou de loin, ont contribué à la
+réalisation de ce projet, auxquelles nous adressons notre plus profond respect.
+1
+
+===== PAGE 3 =====
+Dédicace
+Ce projet ne représente pas seulement l’aboutissement d’un travail académique, mais
+aussi le reflet d’un parcours marqué par la persévérance, le soutien et les liens précieux
+qui m’entourent. Il est le fruit d’un engagement sincère et d’un chemin parcouru avec
+détermination, guidé par la confiance et les encouragements de mes proches.
+À mes parents,Jamel Hjaiej et Fadwa Hergli, pour leur amour inconditionnel,
+leur soutien indéfectible et les sacrifices qu’ils ont consentis tout au long de mon parcours.
+Rien de tout cela n’aurait été possible sans eux.
+À ma sœur,Nourelhouda Hjaiej, pour sa bienveillance et son soutien précieux.
+À mon cousin et ami,Aymen Hjaiej, pour sa présence, ses conseils techniques et son
+soutien tout au long de ce projet.
+Àmonami,MohamedAmineHassouna,poursesconseilsavisés,sonaidetechnique
+et son soutien moral constant.
+À mon ami,Ahmed Trabelsi, pour ses conseils avisés, son aide technique et son
+soutien moral constant.
+À mon binôme,Saifeddine Jmem, pour son esprit d’équipe, son engagement et son
+dévouement tout au long de ce projet. Sa rigueur et son implication ont été essentielles
+pour mener ce travail à bien.
+Ànotrecollègue,SabrineJeni,poursaprésence,sesencouragementsetsabienveillance
+tout au long de cette expérience.
+À mes amis, pour leur présence, leurs encouragements et les moments partagés qui ont
+rendu ce parcours encore plus enrichissant.
+Au clubHEC Finance Academy, pour l’environnement stimulant, l’esprit d’équipe
+et les opportunités d’apprentissage qu’il m’a offerts.
+Nessim Hjaiej
+2
+
+===== PAGE 4 =====
+Dédicace
+Ce travail représente bien plus qu’un simple projet de fin d’études. Il est le résultat
+d’un long parcours, fait d’efforts, de doutes et de persévérance, mais surtout du soutien
+des personnes qui m’ont accompagné tout au long de cette aventure.
+À mes très chers parents,Abdeljabbar Jmem et Nour Fakhfekh, merci pour
+votre amour, votre patience et tous les sacrifices que vous avez faits pour moi. Vous avez
+toujours été présents, dans les moments faciles comme dans les plus difficiles. Si j’en suis
+là aujourd’hui, c’est grâce à vous.
+À mes grands-mères,Fatma Selmi et Dalel Bougharriou, pour leur amour, leurs
+prières et leur présence qui m’ont toujours donné de la force.
+À mon frèreYoussef Jmemet ma sœurFatma Jmem, pour leur soutien et leur
+présence qui comptent énormément pour moi.
+À mon amiAymen Hjaiej, pour sa présence constante et son soutien tout au long
+de ce projet. Il a toujours été là pour nous encourager et nous conseiller, surtout dans les
+moments de doute.
+À mon binômeNessim Hjaiej, pour son sérieux, son engagement et son implication
+tout au long de ce projet. Travailler ensemble a été une expérience à la fois enrichissante et
+formatrice, marquée par l’entraide, le respect et une réelle complémentarité. Sa motivation
+et sa persévérance ont largement contribué à la réussite de ce travail.
+ÀnotrecollègueSabrineJeni,poursaprésence,sesencouragementsetsabienveillance
+tout au long de cette expérience.
+À mes amis, pour leur présence, leurs encouragements et tous les moments partagés
+qui ont rendu ce parcours plus agréable.
+AuclubHECFinanceAcademyainsiqu’àIHECCodeLab,pourlesopportunités,
+l’expérience et les connaissances acquises tout au long de ce parcours.
+Enfin, à moi-même, pour ne pas avoir abandonné malgré les difficultés, et pour être
+allé jusqu’au bout de ce chemin.
+Saifeddine Jmem
+3
+
+===== PAGE 5 =====
+Table des matières
+Liste des acronymes 12
+Introduction générale 13
+1 Cadre général du projet 15
+1.1 Présentation des organismes d’accueil . . . . . . . . . . . . . . . . . . . . . 15
+1.1.1 Chambre de Commerce Internationale : ICC Tunisia . . . . . . . . 15
+1.1.2 Tomm Consulting . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+1.2 Contexte général et problématique . . . . . . . . . . . . . . . . . . . . . . 18
+1.2.1 Données et fiabilité . . . . . . . . . . . . . . . . . . . . . . . . . . . 18
+1.2.2 Recherche d’information . . . . . . . . . . . . . . . . . . . . . . . . 18
+1.2.3 Enjeux de confiance . . . . . . . . . . . . . . . . . . . . . . . . . . . 18
+1.3 Constat de l’existant . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19
+1.3.1 Moteurs de recherche classiques . . . . . . . . . . . . . . . . . . . . 19
+1.3.2 Assistants conversationnels . . . . . . . . . . . . . . . . . . . . . . . 19
+1.4 Aperçu de la plateforme Synapse . . . . . . . . . . . . . . . . . . . . . . . 20
+1.4.1 Concept et vision de Synapse . . . . . . . . . . . . . . . . . . . . . 20
+1.4.2 Profils des utilisateurs et modèle d’interaction . . . . . . . . . . . . 20
+1.5 Objectifs du projet et valeurs fondamentales . . . . . . . . . . . . . . . . . 20
+2 Méthodologie et analyse des besoins 23
+2.1 Recueil des besoins . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 23
+2.1.1 Acteurs du système . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+2.1.2 Besoins fonctionnels . . . . . . . . . . . . . . . . . . . . . . . . . . 25
+2.1.3 Besoins non fonctionnels . . . . . . . . . . . . . . . . . . . . . . . . 26
+2.2 Gestion du projet avec SCRUM . . . . . . . . . . . . . . . . . . . . . . . . 26
+2.2.1 Présentation de SCRUM dans le projet . . . . . . . . . . . . . . . . 26
+2.2.2 Rôles et organisation de l’équipe . . . . . . . . . . . . . . . . . . . . 27
+2.2.3 Backlog du produit . . . . . . . . . . . . . . . . . . . . . . . . . . . 28
+2.2.4 Suivi de l’avancement . . . . . . . . . . . . . . . . . . . . . . . . . . 29
+2.3 Environnement de travail . . . . . . . . . . . . . . . . . . . . . . . . . . . . 30
+2.3.1 Environnement de développement matériel . . . . . . . . . . . . . . 30
+2.3.2 Environnement logiciel . . . . . . . . . . . . . . . . . . . . . . . . . 31
+4
+
+===== PAGE 6 =====
+2.3.3 Langages utilisés . . . . . . . . . . . . . . . . . . . . . . . . . . . . 32
+2.3.4 Outils de déploiement et automatisation . . . . . . . . . . . . . . . 32
+2.3.5 Choix de la base de données . . . . . . . . . . . . . . . . . . . . . . 33
+2.4 Conclusion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 33
+3 Étude et Réalisation Sprint 1 : Étude préalable et mise en place du
+prototype 35
+3.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 35
+3.2 Backlog du Sprint 1 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 35
+3.3 Cadre théorique : notions techniques essentielles . . . . . . . . . . . . . . . 36
+3.3.1 Traitement automatique du langage naturel – NLP . . . . . . . . . 36
+3.3.2 Grands modèles de langage – LLM . . . . . . . . . . . . . . . . . . 36
+3.3.3 Intelligence artificielle générative . . . . . . . . . . . . . . . . . . . 36
+3.3.4 Principe du Retrieval-Augmented Generation – RAG . . . . . . . . 37
+3.3.4.1 Embeddings et représentation vectorielle du texte . . . . . 37
+3.3.4.2 Vector Store (bases de données vectorielle) . . . . . . . . . 38
+3.4 Conception et architecture . . . . . . . . . . . . . . . . . . . . . . . . . . . 39
+3.4.1 Diagramme use case . . . . . . . . . . . . . . . . . . . . . . . . . . 39
+3.4.2 Architecture générale sprint 1 . . . . . . . . . . . . . . . . . . . . . 39
+3.4.3 Diagramme de séquence du processus de question-réponse . . . . . 40
+3.4.4 Diagramme de séquence de l’authentification . . . . . . . . . . . . . 41
+3.4.5 Diagramme de séquence du processus de validation . . . . . . . . . 42
+3.5 Réalisation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 43
+3.5.1 Justification des Choix techniques . . . . . . . . . . . . . . . . . . . 43
+3.5.2 Fonctionnalités essentielles développées . . . . . . . . . . . . . . . . 43
+3.6 Rétrospective du Sprint 1 . . . . . . . . . . . . . . . . . . . . . . . . . . . 44
+4 Étude et Réalisation Sprint 2 : Mise en place d’un système RAG
+robuste et amélioration de l’architecture 46
+4.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 46
+4.2 Backlog du Sprint 2 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 46
+4.3 Étude approfondie des systèmes RAG . . . . . . . . . . . . . . . . . . . . . 48
+4.3.1 Prétraitement des documents . . . . . . . . . . . . . . . . . . . . . 48
+4.3.1.1 Nettoyage des documents . . . . . . . . . . . . . . . . . . 48
+4.3.1.2 Normalisation du texte . . . . . . . . . . . . . . . . . . . . 48
+4.3.1.3 Gestion des métadonnées . . . . . . . . . . . . . . . . . . 48
+4.3.1.4 Préparation des documents pour l’indexation . . . . . . . 48
+4.3.2 Étude des stratégies de chunking . . . . . . . . . . . . . . . . . . . 48
+4.3.3 Étude des stratégies de recherche . . . . . . . . . . . . . . . . . . . 49
+4.3.3.1 Recherche par mots-clés . . . . . . . . . . . . . . . . . . . 49
+4.3.3.2 Recherche sémantique . . . . . . . . . . . . . . . . . . . . 50
+5
+
+===== PAGE 7 =====
+4.3.3.3 Recherche hybride . . . . . . . . . . . . . . . . . . . . . . 50
+4.3.3.4 Comparaison des approches . . . . . . . . . . . . . . . . . 50
+4.3.4 Techniques avancées de récupération . . . . . . . . . . . . . . . . . 51
+4.3.4.1 Reranking des passages . . . . . . . . . . . . . . . . . . . 51
+4.3.4.2 Query Rewriting . . . . . . . . . . . . . . . . . . . . . . . 51
+4.3.5 Évaluation du système RAG . . . . . . . . . . . . . . . . . . . . . . 51
+4.3.5.1 Introduction au framework RAGAS . . . . . . . . . . . . . 52
+4.3.5.2 Critères d’évaluation . . . . . . . . . . . . . . . . . . . . . 52
+4.4 Choix technologiques du nouveau système . . . . . . . . . . . . . . . . . . 52
+4.4.1 Comparaison des modèles LLM étudiés et approche retenue . . . . 53
+4.4.2 Comparaison des modèles d’embeddings et approche retenue . . . . 53
+4.4.3 Comparaison des bases de données vectorielles et approche retenue 55
+4.5 Conception de la nouvelle architecture . . . . . . . . . . . . . . . . . . . . 55
+4.5.1 Objectifs de la nouvelle architecture . . . . . . . . . . . . . . . . . . 56
+4.5.2 Architecture générale Sprint 2 . . . . . . . . . . . . . . . . . . . . . 56
+4.5.3 Diagramme Use case . . . . . . . . . . . . . . . . . . . . . . . . . . 56
+4.6 Mise en place des microservices . . . . . . . . . . . . . . . . . . . . . . . . 57
+4.6.1 Service d’ingestion . . . . . . . . . . . . . . . . . . . . . . . . . . . 57
+4.6.2 Service de preprocessing . . . . . . . . . . . . . . . . . . . . . . . . 58
+4.6.3 Service d’embeddings . . . . . . . . . . . . . . . . . . . . . . . . . . 58
+4.6.4 Service de retrieval . . . . . . . . . . . . . . . . . . . . . . . . . . . 59
+4.6.5 Service de génération . . . . . . . . . . . . . . . . . . . . . . . . . . 60
+4.6.6 Service d’authentification . . . . . . . . . . . . . . . . . . . . . . . . 61
+4.7 Fonctionnalités développées . . . . . . . . . . . . . . . . . . . . . . . . . . 62
+4.8 Rétrospective du Sprint 2 . . . . . . . . . . . . . . . . . . . . . . . . . . . 65
+5 Intégrationd’unagentIAadministratifetaméliorationdel’expérience
+utilisateur 67
+5.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 67
+5.2 Backlog du Sprint 3 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 67
+5.3 Étude théorique des agents IA . . . . . . . . . . . . . . . . . . . . . . . . . 68
+5.3.1 Définition d’un agent IA . . . . . . . . . . . . . . . . . . . . . . . . 68
+5.3.2 Différence entre un chatbot classique et un agent IA . . . . . . . . . 68
+5.3.3 Concept de raisonnement et d’utilisation des outils . . . . . . . . . 69
+5.4 Architecture et conception du Sprint 3 . . . . . . . . . . . . . . . . . . . . 69
+5.4.1 Architecture générale Sprint 3 . . . . . . . . . . . . . . . . . . . . . 69
+5.4.2 Architecture de l’agent IA administratif . . . . . . . . . . . . . . . 70
+5.4.3 Diagramme Use case . . . . . . . . . . . . . . . . . . . . . . . . . . 71
+5.4.4 Diagrammes de séquence principaux . . . . . . . . . . . . . . . . . 72
+5.4.4.1 Diagrammedeséquenceduprototyped’agentd’administration 72
+5.4.4.2 Diagramme de séquence du processus de sign in . . . . . . 73
+6
+
+===== PAGE 8 =====
+5.4.4.3 Diagramme de séquence du processus de sign up . . . . . 75
+5.5 Fonctionnalités développés . . . . . . . . . . . . . . . . . . . . . . . . . . . 76
+5.5.1 Entrée vocale dans le chatbot . . . . . . . . . . . . . . . . . . . . . 76
+5.5.2 Réinitialisation du mot de passe . . . . . . . . . . . . . . . . . . . . 77
+5.5.3 Modification du profil utilisateur . . . . . . . . . . . . . . . . . . . 77
+5.5.4 Première version de l’agent IA administratif . . . . . . . . . . . . . 78
+5.6 Corrections et optimisations . . . . . . . . . . . . . . . . . . . . . . . . . . 79
+5.6.1 Améliorations de l’expérience conversationnelle . . . . . . . . . . . 79
+5.6.2 Amélioration de la stabilité du système . . . . . . . . . . . . . . . . 79
+5.6.3 Dockerisation des microservices . . . . . . . . . . . . . . . . . . . . 79
+5.7 Rétrospective du Sprint 3 . . . . . . . . . . . . . . . . . . . . . . . . . . . 80
+6 ÉtudeetRéalisationSprint4:AgentIAavancé,sécuritéetamélioration
+de la plateforme 82
+6.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 82
+6.2 Backlog du Sprint 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 82
+6.3 Évolution vers une architecture agentique avancée . . . . . . . . . . . . . . 83
+6.3.1 Introduction au framework LangGraph . . . . . . . . . . . . . . . . 83
+6.3.2 Intérêt des graphes agentiques . . . . . . . . . . . . . . . . . . . . . 83
+6.3.3 Human-in-the-loop et gestion des confirmations . . . . . . . . . . . 84
+6.4 Architecture et conception du Sprint 4 . . . . . . . . . . . . . . . . . . . . 84
+6.4.1 Architecture générale Sprint 4 . . . . . . . . . . . . . . . . . . . . . 84
+6.4.2 Diagramme Use Case . . . . . . . . . . . . . . . . . . . . . . . . . . 85
+6.4.3 schéma simplifié du workflow LangGraph . . . . . . . . . . . . . . . 86
+6.4.4 Architecture Agent IA administratif détaillé . . . . . . . . . . . . . 87
+6.4.5 Diagrammes de séquence principaux . . . . . . . . . . . . . . . . . 87
+6.4.5.1 Diagramme de séquence global de l’agent d’administration 87
+6.4.5.2 Diagramme de séquence du chemin de conseil . . . . . . . 89
+6.4.5.3 Diagramme de séquence du chemin d’inspection . . . . . . 89
+6.4.5.4 Diagramme de séquence du chemin de mutation . . . . . . 89
+6.5 Fonctionnalités développées . . . . . . . . . . . . . . . . . . . . . . . . . . 90
+6.5.1 Catalogue d’outils administratifs . . . . . . . . . . . . . . . . . . . 90
+6.5.2 Gestion des confirmations et actions sensibles . . . . . . . . . . . . 91
+6.5.3 Streaming des événements et suivi des exécutions . . . . . . . . . . 92
+6.6 Security Dashboard et observabilité . . . . . . . . . . . . . . . . . . . . . . 93
+6.6.1 Objectif principal . . . . . . . . . . . . . . . . . . . . . . . . . . . . 93
+6.6.2 Concepts de sécurité utilisés . . . . . . . . . . . . . . . . . . . . . . 93
+6.6.3 Gestion des alertes sécurité . . . . . . . . . . . . . . . . . . . . . . . 93
+6.6.4 Alertes informatives . . . . . . . . . . . . . . . . . . . . . . . . . . 94
+6.6.5 Alertes de vigilance . . . . . . . . . . . . . . . . . . . . . . . . . . . 95
+6.6.6 Alertes critiques . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 95
+7
+
+===== PAGE 9 =====
+6.7 Améliorations UI/UX . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 95
+6.7.1 Responsivité de l’interface . . . . . . . . . . . . . . . . . . . . . . . 95
+6.7.2 Mode Sombre . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 96
+6.8 Rétrospective du Sprint 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . 97
+7 Conclusion 98
+8
+
+===== PAGE 10 =====
+Table des figures
+1.1 Logo de l’organisation ICC Tunisia . . . . . . . . . . . . . . . . . . . . . . 16
+1.2 Logo de l’organisation Tomm Consulting . . . . . . . . . . . . . . . . . . . 17
+1.3 Exemple de moteur de recherche classique . . . . . . . . . . . . . . . . . . 19
+2.1 Cycle de travail avec la méthode SCRUM . . . . . . . . . . . . . . . . . . . 27
+2.2 Gestion des sprints et du backlog avec Jira . . . . . . . . . . . . . . . . . . 29
+3.1 Principe général de l’intelligence artificielle générative . . . . . . . . . . . . 37
+3.2 Architecture RAG typique . . . . . . . . . . . . . . . . . . . . . . . . . . . 37
+3.3 Embeddings textuels . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 38
+3.4 Principe de recherche dans une base de données vectorielle . . . . . . . . . 38
+3.5 Diagramme de cas d’utilisation du prototype . . . . . . . . . . . . . . . . . 39
+3.6 Architecture générale du prototype RAG . . . . . . . . . . . . . . . . . . . 40
+3.7 Diagramme de séquence du processus de question-réponse . . . . . . . . . . 41
+3.8 Diagramme de séquence du processus de l’authentification . . . . . . . . . 41
+3.9 Diagramme de séquence du processus de validation . . . . . . . . . . . . . 42
+4.1 Interface de la plateforme OpenAI . . . . . . . . . . . . . . . . . . . . . . . 54
+4.2 Déploiement de Weaviate avec Docker . . . . . . . . . . . . . . . . . . . . . 55
+4.3 Architecture globale du Sprint 2 . . . . . . . . . . . . . . . . . . . . . . . . 56
+4.4 Diagramme de cas d’utilisation du Sprint 2 . . . . . . . . . . . . . . . . . . 57
+4.5 Interface d’authentification du système . . . . . . . . . . . . . . . . . . . . 62
+4.6 Réponse finale générée par le système . . . . . . . . . . . . . . . . . . . . . 62
+4.7 Passages pertinents récupérés par le système RAG . . . . . . . . . . . . . . 63
+4.8 Interface de gestion documentaire . . . . . . . . . . . . . . . . . . . . . . . 63
+4.9 Interface de gestion des utilisateurs . . . . . . . . . . . . . . . . . . . . . . 64
+4.10 Stockage des documents dans Supabase . . . . . . . . . . . . . . . . . . . . 64
+5.1 Boucle de raisonnement et d’utilisation des outils par un agent IA . . . . . 69
+5.2 Architecture globale du Sprint 3 . . . . . . . . . . . . . . . . . . . . . . . . 70
+5.3 Architecture du prototype d’agent admin du Sprint 3. . . . . . . . . . . . . 71
+5.4 Diagramme de cas d’utilisation du sprint 3. . . . . . . . . . . . . . . . . . . 72
+5.5 Diagramme de séquence du processus de prototype agent admin . . . . . . 73
+5.6 Diagramme de séquence du processus de sign in . . . . . . . . . . . . . . . 74
+5.7 Diagramme de séquence du processus de sign up . . . . . . . . . . . . . . . 75
+9
+
+===== PAGE 11 =====
+5.8 Fonctionnalité d’entrée vocale dans le chatbot . . . . . . . . . . . . . . . . 76
+5.9 Interface de réinitialisation du mot de passe . . . . . . . . . . . . . . . . . 77
+5.10 Interface de modification du profil utilisateur . . . . . . . . . . . . . . . . . 77
+5.11 Principe de fonctionnement de Docker Compose dans une architecture
+microservices . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 80
+6.1 Exemple simplifié d’un graphe LangGraph . . . . . . . . . . . . . . . . . . 83
+6.2 Architecture globale du Sprint 4 . . . . . . . . . . . . . . . . . . . . . . . . 85
+6.3 Diagramme de cas d’utilisation du sprint 4. . . . . . . . . . . . . . . . . . . 85
+6.4 Workflow simplifié du graphe LangGraph utilisé par l’agent administratif . 86
+6.5 Architecturegénéraleetdétaillédel’agentIAadministratifbaséesurLangGraph 87
+6.6 Diagramme de séquence global de l’agent d’administration . . . . . . . . . 88
+6.7 Diagramme de séquence du processus de chemin de conseil . . . . . . . . . 89
+6.8 Diagramme de séquence du processus de chemin d’inspection . . . . . . . . 89
+6.9 Diagramme de séquence du processus de chemin de mutation . . . . . . . . 90
+6.10 Interface de confirmation avant l’exécution d’actions administratives sensibles 91
+6.11 Exemple de confirmation d’une modification sensible proposée par l’agent
+IA administratif . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 92
+6.12 Streaming des événements et suivi des étapes d’exécution de l’agent IA
+administratif . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 92
+6.13 Panneau des notifications et alertes sécurité . . . . . . . . . . . . . . . . . 94
+6.14 Adaptation de l’interface du chatbot aux écrans mobiles . . . . . . . . . . 96
+6.15 Interface de la plateforme en mode sombre . . . . . . . . . . . . . . . . . . 96
+10
+
+===== PAGE 12 =====
+Liste des tableaux
+2.1 Product Backlog général du projet . . . . . . . . . . . . . . . . . . . . . . 28
+2.2 Environnement matériel de développement . . . . . . . . . . . . . . . . . . 30
+2.3 Environnement logiciel utilisé . . . . . . . . . . . . . . . . . . . . . . . . . 31
+2.4 Langages de programmation utilisés . . . . . . . . . . . . . . . . . . . . . . 32
+2.5 Outils de déploiement et d’automatisation . . . . . . . . . . . . . . . . . . 32
+2.6 Choix de la base de données . . . . . . . . . . . . . . . . . . . . . . . . . . 33
+3.1 Backlog du Sprint 1 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 35
+4.1 Backlog du Sprint 2 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 46
+4.2 Comparaison des stratégies de chunking . . . . . . . . . . . . . . . . . . . 49
+4.3 Comparaison entre la recherche sémantique et la recherche hybride . . . . . 51
+4.4 Critères d’évaluation utilisés avec le framework RAGAS . . . . . . . . . . . 52
+4.5 Comparaison des modèles LLM étudiés . . . . . . . . . . . . . . . . . . . . 53
+4.6 Comparaison des modèles d’embeddings OpenAI . . . . . . . . . . . . . . . 54
+4.7 Comparaison des bases de données vectorielles étudiées . . . . . . . . . . . 55
+5.1 Backlog du Sprint 3 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 67
+6.1 Backlog du Sprint 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 82
+11
+
+===== PAGE 13 =====
+Liste des acronymes
+12
+
+===== PAGE 14 =====
+Introduction générale
+Le monde numérique actuel est marqué par une explosion sans précédent des données.
+Chaquejour,lesorganisationsgénèrentetstockentd’importantesquantitésd’informations
+provenant de documents, de bases de données, de sources web et de systèmes internes.
+Bien que ces données représentent une ressource précieuse, elles introduisent également
+un défi majeur : comment accéder efficacement, filtrer et exploiter la bonne information
+au bon moment.
+Les outils de recherche et les systèmes d’information traditionnels ne suffisent plus
+à répondre aux attentes croissantes des utilisateurs. Ils fournissent souvent des réponses
+incomplètes,génériquesoupeucontextualisées,obligeantlesutilisateursàconsacrerdavantage
+de temps à vérifier et affiner les résultats. Par ailleurs, l’essor de l’intelligence artificielle
+et des grands modèles de langage a ouvert de nouvelles opportunités pour concevoir des
+systèmes plus intelligents, capables de comprendre le langage naturel et de fournir des
+réponses plus pertinentes.
+Cependant,cestechnologiessoulèventégalementdenouvellespréoccupations,notamment
+enmatièredefiabilité,degouvernancedesdonnéesetderisquedegénérationd’informations
+incorrectes ou non vérifiées. Pour les organisations, en particulier celles manipulant des
+données sensibles ou stratégiques, garantir la confiance et le contrôle de l’information
+devient un enjeu crucial.
+Dans ce contexte, ce projet se concentre sur la conception et le développement de la
+plateformeSynapse,unsystèmeintelligentvisantàaméliorerl’accèsausavoirorganisationnel
+toutenmaintenantdesstandardsélevésdefiabilité,desécuritéetdepertinence.Développé
+en collaboration avec ICC Tunisia et Tomm Consulting, ce projet explore comment les
+techniques modernes d’intelligence artificielle peuvent être exploitées afin de construire
+un système de recherche d’information plus contrôlé et mieux contextualisé.
+13
+
+===== PAGE 15 =====
+CHAPITRE 1
+Cadre général du projet Synapse
+
+===== PAGE 16 =====
+1 Cadre général du projet
+Introduction
+À une époque où l’information est devenue un actif central pour les organisations,
+la gestion et l’exploitation efficace des connaissances représentent aujourd’hui un enjeu
+stratégique majeur. Les entreprises et institutions sont de plus en plus confrontées à des
+problématiquesliéesàlasurchargededonnées,àlafragmentationdessourcesd’information
+et aux difficultés d’accès à un contenu précis et pertinent. Ces défis sont encore accentués
+par le manque de fiabilité et de compréhension contextuelle dans de nombreux outils
+existants.
+Ce chapitre commence par une présentation des organismes d’accueil impliqués dans le
+projet, à savoir ICC Tunisia et Tomm Consulting, qui fournissent le contexte professionnel
+et opérationnel du travail. Il présente ensuite le contexte général de la problématique, en
+mettant l’accent sur les défis liés à la complexité des données, à la recherche d’information
+et à la confiance dans les systèmes basés sur l’intelligence artificielle.
+Ilproposeensuiteunaperçudesapprochesexistantestellesquelesmoteursderecherche
+classiquesetlesassistantsvirtuels,enmettantenévidenceleurspointsfortsmaiségalement
+leurs limites lorsqu’ils sont appliqués aux besoins organisationnels. Enfin, il introduit la
+plateforme Synapse à un niveau conceptuel, ainsi que les principaux objectifs et principes
+directeurs qui définissent le projet.
+L’objectif de ce chapitre est de cadrer clairement la problématique et d’établir la
+motivation du travail proposé, avant d’aborder les aspects techniques et méthodologiques
+dans les chapitres suivants.
+1.1 Présentation des organismes d’accueil
+1.1.1 Chambre de Commerce Internationale : ICC Tunisia
+La Chambre de Commerce Internationale (ICC)est une organisation mondiale
+qui représente les entreprises auprès des gouvernements et des institutions internationales,
+etœuvreàlapromotionducommerceinternational,del’investissementetdudéveloppement
+15
+
+===== PAGE 17 =====
+économique. Présente dans plus de 100 pays, elle joue un rôle clé dans la facilitation des
+échanges commerciaux et dans l’élaboration de standards internationaux.
+ICCTunisiaestlareprésentationnationaledelaChambredeCommerceInternationale
+en Tunisie. Sa mission est de soutenir le développement du secteur privé tunisien, de
+favoriser son intégration dans l’économie mondiale et de contribuer à l’amélioration du
+climat des affaires. À travers ses différentes activités, ICC Tunisia agit comme un pont
+entre les entreprises, les institutions publiques et les acteurs internationaux.
+Dans ce cadre, ICC Tunisia s’appuie sur plusieurs commissions spécialisées, chacune
+dédiéeàundomainestratégique.Parmicelles-ci,laCommissionÉconomieNumérique
+occupe une place centrale en raison de l’importance croissante des technologies digitales
+dans la transformation des entreprises.
+La Commission Économie Numérique a pour objectif de promouvoir l’adoption des
+technologies numériques et de soutenir l’innovation au sein des entreprises tunisiennes.
+Elle s’intéresse notamment aux enjeux liés à la transformation digitale, à l’intelligence
+artificielle, à la gestion des données et à la cybersécurité.
+Elle joue également un rôle de sensibilisation et d’accompagnement à travers des
+initiatives, des recommandations et des espaces d’échange entre experts, entreprises et
+décideurs. Son action vise à renforcer la compétitivité des organisations tunisiennes et à
+encourager l’émergence de solutions innovantes adaptées aux défis actuels.
+C’est dans ce cadre que s’inscrit notre projet, qui contribue à cette dynamique en
+proposantunesolutionbaséesurl’intelligenceartificielleafind’améliorerl’accèsàl’information
+et de soutenir la transformation digitale des organisations.
+Figure 1.1– Logo de l’organisation ICC Tunisia
+16
+
+===== PAGE 18 =====
+1.1.2 Tomm Consulting
+TommConsultingestuneorganisationtunisiennedeconseilopérantdansledomaine
+des services professionnels et de l’accompagnement des entreprises. Elle a pour objectif
+d’aider les sociétés et institutions à améliorer leur performance, à optimiser leurs processus
+et à soutenir leur développement stratégique à travers des solutions de conseil adaptées.
+Au sein de l’écosystème économique tunisien, Tomm Consulting se positionne comme
+une structure orientée services, contribuant à renforcer l’efficacité organisationnelle et la
+prise de décision grâce à son expertise, ses services de conseil et son accompagnement
+opérationnel. L’entreprise évolue dans un environnement dynamique où le conseil joue un
+rôle essentiel pour aider les organisations à s’adapter aux défis du marché, à améliorer
+leur compétitivité et à mettre en place des stratégies efficaces.
+TommConsultingsedistingueparuneapprochecentréesurleclient,oùlessolutions
+sont conçues en fonction des besoins spécifiques de chaque organisation. Ses activités
+s’inscrivent généralement dans le domaine du conseil en gestion, de l’accompagnement
+organisationnel et de l’assistance stratégique.
+En contribuant au développement des entreprises locales, Tomm Consulting participe
+aurenforcementdusecteurduconseilenTunisieetaccompagnelacroissancedesorganisations
+à travers un encadrement professionnel et des interventions basées sur l’expertise.
+Figure 1.2– Logo de l’organisation Tomm Consulting
+17
+
+===== PAGE 19 =====
+1.2 Contexte général et problématique
+1.2.1 Données et fiabilité
+La transformation numérique des organisations entraîne une augmentation massive
+des données, dont la majorité est non structurée et issue de sources hétérogènes. Dans
+ce contexte, l’enjeu principal ne se limite plus à l’accès à l’information, mais s’étend
+également à sa fiabilité, sa cohérence et sa mise à jour.
+Dans les environnements professionnels, les informations manipulées peuvent être
+incomplètes, obsolètes ou non vérifiées. Cette situation impacte directement la qualité
+de la prise de décision et met en évidence la nécessité de garantir une information fiable
+et correctement maîtrisée.
+1.2.2 Recherche d’information
+Lessystèmesderecherched’informationexistantsreposentgénéralementsurdesapproches
+basées sur la correspondance de mots-clés et des méthodes lexicales. Bien qu’efficaces pour
+retrouver des documents, ils présentent plusieurs limites dans des contextes professionnels
+exigeants.
+Cessystèmesgénèrentsouventungrandvolumederésultatspeustructurés,nécessitant
+un effort important d’analyse de la part de l’utilisateur. Ils ne prennent pas toujours en
+compte le contexte de la requête ni la réelle pertinence des sources, ce qui peut affecter
+la qualité globale de l’information obtenue.
+1.2.3 Enjeux de confiance
+Dans un environnement où les décisions reposent de plus en plus sur l’information
+numérique,lanotiondeconfiancedanslesdonnéesdevientcentrale.L’absencedemécanismes
+explicites de validation du contenu et de contrôle de sa fiabilité peut entraîner la diffusion
+d’informations erronées ou incohérentes.
+Cela constitue un enjeu majeur pour les organisations : garantir que l’information
+utilisée soit non seulement accessible, mais également fiable, cohérente et adaptée à son
+contexte d’utilisation.
+18
+
+===== PAGE 20 =====
+1.3 Constat de l’existant
+1.3.1 Moteurs de recherche classiques
+Les moteurs de recherche classiques permettent d’accéder à l’information à partir de
+mots-clés, en fournissant une liste de résultats classés selon leur pertinence. Cependant,
+leur fonctionnement, principalement basé sur des correspondances lexicales, limite leur
+capacité à comprendre le contexte ainsi que l’intention réelle des requêtes des utilisateurs.
+Par conséquent, ils renvoient souvent un grand nombre de résultats qui ne sont pas
+nécessairementbiensynthétisés,cequiobligel’utilisateuràfourniruneffortsupplémentaire
+pour filtrer et interpréter l’information. De plus, la fiabilité des sources proposées n’est pas
+toujours garantie, ce qui peut impacter la qualité et la confiance accordée aux informations
+récupérées.
+Figure 1.3– Exemple de moteur de recherche classique
+1.3.2 Assistants conversationnels
+Les chatbots et systèmes intelligents basés sur l’intelligence artificielle offrent des
+capacités avancées d’interaction avec les utilisateurs ainsi que de génération de réponses
+en langage naturel. Cependant, lorsqu’ils sont entraînés sur des données générales ou non
+contrôlées, ces systèmes peuvent parfois produire des réponses incorrectes ou incohérentes,
+un phénomène connu sous le nom d’hallucination.
+Par ailleurs, lorsque ces solutions impliquent l’intégration de documents propres à
+l’utilisateur, des problématiques liées à la confidentialité et à la sécurité des données
+peuvent apparaître, notamment lorsque des informations sensibles sont traitées via des
+services externes. Ces limites mettent en évidence la nécessité de concevoir des systèmes
+plus fiables, mieux contrôlés et pleinement respectueux des données sensibles.
+19
+
+===== PAGE 21 =====
+1.4 Aperçu de la plateforme Synapse
+1.4.1 Concept et vision de Synapse
+La plateformeSynapseest conçue comme un environnement intelligent visant à
+améliorer l’accès et l’exploitation de l’information au sein des organisations. Elle permet
+aux utilisateurs d’interagir avec un système capable de fournir des réponses pertinentes
+et contextualisées, tout en s’appuyant sur des sources fiables et validées.
+1.4.2 Profils des utilisateurs et modèle d’interaction
+La plateforme Synapse s’adresse à deux principaux types d’utilisateurs.
+— Le premier estl’utilisateur standard, qui interagit avec le système afin d’obtenir
+des réponses à ses questions. Il bénéficie d’une interface simple lui permettant
+d’accéder rapidement à des informations fiables et contextualisées.
+— Le second estl’administrateur, qui dispose d’un accès dédié lui permettant
+de superviser et de contrôler le fonctionnement du système. Il peut ainsi gérer
+les données exploitées, assurer leur qualité et adapter la plateforme aux besoins
+spécifiques de l’organisation, dans un cadre sécurisé.
+Ces fonctionnalités permettent à Synapse de proposer un environnement complet
+combinant accessibilité, contrôle et fiabilité, tout en garantissant un haut niveau de
+sécurité et de performance.
+1.5 Objectifs du projet et valeurs fondamentales
+Le projet Synapse repose sur un ensemble de valeurs fondamentales qui guident sa
+conception et son développement :
+—Confidentialité:garantiruneprotectionrenforcéedesdonnéesetdesinformations
+stratégiques, en limitant les risques d’exposition et d’accès non autorisé.
+—Engagement et rigueur :adopter une démarche structurée, précise et orientée
+vers les résultats, afin d’assurer la qualité globale du système.
+—Souveraineté numérique :maintenir le contrôle sur les données et les processus
+de traitement, en garantissant l’utilisation d’informations issues d’environnements
+fiables et maîtrisés.
+Conclusion
+Dans ce chapitre, nous avons présenté le contexte général du projet, introduit les
+organismes d’accueil et mis en évidence les principaux défis liés à l’accès à l’information,
+20
+
+===== PAGE 22 =====
+à sa fiabilité et à la confiance dans les systèmes modernes. Nous avons également étudié
+les solutions existantes ainsi que leurs limites, avant de présenter l’idée générale de la
+plateforme Synapse et ses principaux objectifs.
+Sur cette base, l’étape suivante consiste à mieux comprendre les besoins du système
+et la manière d’y répondre de façon efficace. Le chapitre suivant sera donc consacré à
+l’analyse des besoins ainsi qu’à la méthodologie adoptée pour guider le développement du
+projet.
+21
+
+===== PAGE 23 =====
+CHAPITRE 2
+Méthodologie et analyse des besoins
+
+===== PAGE 24 =====
+2 Méthodologie et analyse des besoins
+Introduction
+Après avoir présenté le contexte général du projet Synapse, nous nous rapprochons
+désormais de la manière dont le système est concrètement conçu et développé. Avant
+d’entamer la phase de conception et d’implémentation, il est essentiel de bien comprendre
+ce que le système doit accomplir et comment le travail sera organisé.
+Dans ce chapitre, nous nous intéressons tout d’abord auxbesoins du projet. Il s’agit
+d’identifier les attentes des utilisateurs vis-à-vis du système, les fonctionnalités qu’il doit
+offrir ainsi que les contraintes qu’il doit respecter. Cette étape permet de s’assurer que la
+solution finale est alignée avec les besoins réels et d’éviter toute complexité inutile.
+Nousprésentonsensuitelaméthodologieadoptéepourlagestionetledéveloppement
+du projet, basée sur l’approche agile SCRUM. Ce mode de travail permet de structurer
+le développement en itérations, rendant le processus plus flexible et plus facile à suivre
+tout au long du projet.
+Enfin, nous introduisons l’environnement techniqueutilisé pour la réalisation du
+système, incluant les outils et technologies qui soutiennent son développement.
+Ce chapitre joue donc le rôle de passerelle entre le contexte général et la conception
+effective de la plateforme Synapse.
+2.1 Recueil des besoins
+Avant de construire un système, il est essentiel de comprendre clairement ce qui est
+réellement attendu. Plutôt que de se lancer directement dans le développement, cette
+phase vise à identifier et à clarifier les attentes des utilisateurs ainsi que les objectifs que
+le système doit atteindre.
+DanslecadreduprojetSynapse,lerecueildesbesoinsjoueunrôleclédansladéfinition
+de la plateforme. Il permet de déterminer comment les utilisateurs interagiront avec le
+système, quel type d’informations ils souhaitent obtenir, ainsi que le niveau de fiabilité et
+23
+
+===== PAGE 25 =====
+de performance requis. Cette étape permet également d’identifier les contraintes, qu’elles
+soient techniques, organisationnelles ou liées à la sécurité des données.
+En prenant le temps de collecter et de structurer ces besoins, nous nous assurons que le
+projet repose sur des bases solides. Cela permet non seulement de réduire les malentendus
+durant le développement, mais aussi d’augmenter les chances de fournir une solution
+réellement utile et adaptée aux cas d’usage réels.
+2.1.1 Acteurs du système
+L’identificationdesacteursdusystèmeconstitueuneétapeimportantepourcomprendre
+concrètement l’utilisation de la plateforme. Elle permet de définir qui interagit avec le
+système, quels sont leurs rôles et comment ils contribuent à son fonctionnement global.
+DanslecadreduprojetSynapse,deuxprincipauxtypesd’utilisateursontétéidentifiés:
+—Utilisateur standard :Il s’agit de l’utilisateur principal de la plateforme. Son
+objectif est d’accéder facilement et efficacement à l’information via une interface
+de chatbot intelligent. Il peut poser des questions en langage naturel, recevoir
+des réponses claires et contextualisées, et explorer les sources associées fournies
+par le système, telles que des documents internes ou des données validées. Un
+aspect important de Synapse est que ces documents sont examinés et validés par
+des spécialistes du domaine, ce qui permet de garantir des réponses plus fiables et
+précises,toutenréduisantsignificativementlerisqued’hallucinations.L’interaction
+est conçue pour être simple, intuitive et centrée sur la confiance dans l’information.
+—Administrateur :Cet utilisateur joue un rôle plus avancé, centré sur la gestion
+et la maintenance du système. Il est responsable de la supervision de la base de
+connaissances, notamment la validation et l’organisation des documents avant leur
+utilisationparlaplateforme.Pouraméliorerl’efficacitédecestâches,l’administrateur
+est assisté par un agent IA qui l’aide à gérer le contenu, organiser l’information
+et automatiser certaines opérations répétitives. En outre, il gère les utilisateurs,
+surveille les performances du système et veille au respect des règles de sécurité
+et de gouvernance des données. Grâce à une interface dédiée, il peut ajuster les
+paramètresdusystèmeetmaintenirlaqualitéglobaleetlafiabilitédelaplateforme.
+Ces deux acteurs ont des rôles différents mais complémentaires. Tandis que l’utilisateur
+standard se concentre sur l’accès et l’exploitation de l’information, l’administrateur —
+assisté par des outils intelligents — garantit que cette information reste fiable, validée et
+sécurisée. Cette collaboration est essentielle pour permettre à Synapse d’offrir à la fois une
+grande facilité d’utilisation et un haut niveau de confiance dans les informations fournies.
+24
+
+===== PAGE 26 =====
+2.1.2 Besoins fonctionnels
+Les besoins fonctionnels décrivent les différentes fonctionnalités que doit offrir la
+plateforme Synapse afin de répondre aux attentes des utilisateurs et des administrateurs.
+— BF1 : Le système doit permettre à l’utilisateur de s’inscrire à la plateforme à l’aide
+d’un email et d’un mot de passe.
+— BF2 : Le système doit permettre à l’utilisateur de se connecter et de se déconnecter
+de manière sécurisée.
+— BF3 : Le système doit permettre à l’utilisateur de poser des questions en langage
+naturel via un chatbot intelligent.
+— BF4 : Le système doit permettre à l’utilisateur d’utiliser l’entrée vocale pour
+interagir avec le chatbot.
+— BF5 : Le système doit fournir des réponses pertinentes et contextualisées basées
+sur les documents indexés.
+— BF6 : Le système doit permettre à l’utilisateur de consulter les sources utilisées
+dans les réponses.
+— BF7 : Le système doit permettre à l’utilisateur de visualiser les documents sources
+sous format PDF.
+— BF8 : Le système doit permettre à l’utilisateur de consulter les extraits précis des
+documents utilisés pour générer les réponses.
+— BF9 : Le système doit permettre à l’utilisateur de modifier son dernier message et
+de relancer la génération d’une réponse.
+— BF10 : Le système doit permettre à l’utilisateur de gérer son profil et de modifier
+son mot de passe.
+— BF11 : Le système doit permettre à l’administrateur de se connecter à un espace
+dédié.
+— BF12 : Le système doit permettre à l’administrateur de gérer les documents de la
+base de connaissances (ajout, suppression, mise à jour).
+— BF13 : Le système doit permettre à l’administrateur de valider ou rejeter les
+documents avant leur utilisation.
+— BF14 : Le système doit permettre à l’administrateur de lancer et contrôler le
+processus d’indexation des documents.
+— BF15 : Le système doit permettre à l’administrateur de gérer les utilisateurs (ajout,
+suppression, blocage, validation).
+— BF16 : Le système doit permettre à l’administrateur de consulter un tableau de
+bord de sécurité.
+— BF17 : Le système doit permettre à l’administrateur de consulter et gérer les alertes
+de sécurité.
+— BF18 : Le système doit permettre à l’administrateur d’interagir avec un agent
+intelligent pour piloter le système.
+— BF19:Lesystèmedoitpermettreàl’administrateurdemodifiercertainsparamètres
+25
+
+===== PAGE 27 =====
+du système via une interface simplifiée.
+— BF20 : Le système doit permettre à l’administrateur de consulter les performances
+du système et les résultats d’évaluation.
+— BF21 : Le système doit demander une confirmation avant toute action sensible
+effectuée par l’administrateur.
+2.1.3 Besoins non fonctionnels
+Lesbesoinsnonfonctionnelsdéfinissentlesexigencesdequalitéauxquelleslaplateforme
+doit répondre afin de garantir sa fiabilité, sa performance et sa sécurité.
+— BNF1 :Ergonomie :L’interface doit être intuitive, claire et facile à utiliser,
+permettant une interaction fluide avec le système.
+— BNF2 :Portabilité :L’application doit être accessible sur différents supports
+(ordinateurs, tablettes et smartphones) grâce à un design responsive.
+— BNF3 :Performance :Le système doit assurer des temps de réponse rapides et
+une navigation fluide, même lors du traitement de requêtes complexes.
+— BNF4 :Maintenabilité :L’application doit être conçue de manière modulaire
+avec un code structuré afin de faciliter les évolutions et la maintenance.
+— BNF5 :Sécurité :Le système doit garantir un accès sécurisé via des mécanismes
+d’authentification robustes, protéger les données sensibles et contrôler les accès
+selon les rôles des utilisateurs.
+— BNF6 :Fiabilité :Le système doit fournir des réponses cohérentes et fondées sur
+des sources vérifiables.
+— BNF7 :Confidentialité :Les données traitées doivent être protégées contre tout
+accès non autorisé et ne doivent pas être exposées à des services externes non
+maîtrisés.
+2.2 Gestion du projet avec SCRUM
+2.2.1 Présentation de SCRUM dans le projet
+Dans le cadre du développement de la plateforme Synapse, nous avons adopté la
+méthodologie agileSCRUM, afin de structurer le travail tout en conservant une grande
+flexibilité face aux évolutions des besoins.
+SCRUM repose sur une approche itérative et incrémentale, dans laquelle le projet est
+découpé en cycles courts appeléssprints. Chaque sprint permet de développer et de livrer
+une partie fonctionnelle du système, tout en intégrant progressivement des améliorations.
+L’utilisation de cette méthodologie dans notre projet nous a permis de :
+— structurer efficacement les différentes phases de développement;
+— prioriser les fonctionnalités en fonction de leur importance;
+26
+
+===== PAGE 28 =====
+— adapter rapidement le système aux nouveaux besoins;
+— assurer un suivi régulier de l’avancement du projet.
+Ainsi, SCRUM nous a offert un cadre de travail organisé et évolutif, particulièrement
+adapté à un projet innovant comme Synapse, nécessitant des ajustements continus et une
+amélioration progressive des fonctionnalités.
+2.2.2 Rôles et organisation de l’équipe
+La gestion de notre projet Synapse s’appuie sur les principes de la méthodeSCRUM.
+La figure suivante illustre le cycle de travail adopté ainsi que les différents rôles impliqués
+dans cette méthodologie.
+Figure 2.1– Cycle de travail avec la méthode SCRUM
+Dans le cadre de notre projet, l’organisation de l’équipe est définie comme suit :
+—Product Owner :MadameMouna ChaiebElle est responsable de la définition
+des besoins, de la vision du produit ainsi que de la priorisation des fonctionnalités
+du backlog.
+—Scrum Master :MadameRim FaizElle veille au respect des principes de la
+méthodologie SCRUM, facilite la communication au sein de l’équipe et assure le
+bon déroulement des sprints.
+—Équipe de développement : Nessim HjaiejetSaifeddine JmemIls sont
+responsables de la conception, du développement et de l’intégration des différentes
+fonctionnalités de la plateforme Synapse.
+Cette organisation a permis d’assurer une collaboration efficace et une progression
+structurée du projet, tout en facilitant l’adaptation aux besoins évolutifs.
+27
+
+===== PAGE 29 =====
+2.2.3 Backlog du produit
+ID Objectif produit Vision fonctionnelle Priorité
+PB-01 Architecture évolutive Concevoir une architecture modulaire permettant
+l’évolution future du système et l’ajout de nouvelles
+fonctionnalités.
+Haute
+PB-02 Authentification et
+gestion des accès
+Permettre aux utilisateurs et administrateurs d’accéder
+à la plateforme de manière sécurisée avec une gestion
+des rôles et des permissions.
+Haute
+PB-03 Chatbot intelligent
+basé sur les
+documents
+Offrir un assistant conversationnel capable de répondre
+aux questions des utilisateurs à partir des documents
+intégrés dans la plateforme.
+Haute
+PB-04 Gestion centralisée
+des documents
+Donner aux administrateurs la possibilité d’ajouter,
+valider,consulteretsupprimerlesdocumentsutiliséspar
+le système.
+Haute
+PB-05 Gestion des
+utilisateurs
+Permettre l’administration des comptes utilisateurs, des
+validations et des rôles au sein de la plateforme.
+Haute
+PB-06 Fonctionnalités de
+personnalisation
+Offrir des fonctionnalités qui améliorent l’expérience
+utilisateur telles que le mode sombre, la modification
+du profil et la gestion du mot de passe .
+Moyenne
+PB-07 Agent IA
+administratif
+Fournir un assistant intelligent capable d’aider les
+administrateurs à superviser et piloter le système via
+le langage naturel.
+Haute
+PB-08 Gestion sécurisée des
+actions sensibles
+Intégrerdesmécanismesdeconfirmationetdevalidation
+avant l’exécution des opérations critiques.
+Haute
+PB-09 Dashboard de sécuritéCentraliser les alertes et événements sécurité dans une
+interface de supervision destinée aux administrateurs.
+Haute
+PB-10 Évaluation et
+amélioration continue
+Mesurer les performances du système et améliorer
+progressivement la qualité des réponses générées.
+Faible
+Table 2.1: Product Backlog général du projet
+28
+
+===== PAGE 30 =====
+2.2.4 Suivi de l’avancement
+Figure 2.2– Gestion des sprints et du backlog avec Jira
+Cette capture illustre l’utilisation de Jira pour l’organisation des sprints, la gestion
+du backlog et le suivi des tâches du projet selon une approche SCRUM. Chaque sprint
+regroupe un ensemble de fonctionnalités et d’améliorations réalisées durant les différentes
+phases de développement du système.
+29
+
+===== PAGE 31 =====
+2.3 Environnement de travail
+Dans cette section, nous présentons l’ensemble des outils, technologies et ressources
+utilisés pour le développement de la plateforme Synapse. Ces choix ont été effectués afin
+de garantir une solution performante, évolutive et adaptée aux exigences du projet.
+2.3.1 Environnement de développement matériel
+Le développement de la plateforme Synapse a été réalisé sur deux machines disposant
+des configurations suivantes :
+Caractéristique PC Nessim PC Saifeddine
+Processeur Intel Core i7-12650H Intel Core i5-12450H
+Carte graphique NVIDIA GeForce RTX 2050NVIDIA GeForce RTX 3050
+Mémoire RAM 32 Go 32 Go
+Système d’exploitation Windows 11 64 bits Windows 11 Pro 64 bits
+Table 2.2– Environnement matériel de développement
+Ces ressources ont permis de garantir une bonne gestion des services backend, du
+frontend ainsi que des outils liés à l’intelligence artificielle.
+30
+
+===== PAGE 32 =====
+2.3.2 Environnement logiciel
+Les outils suivants ont été utilisés tout au long du développement de la plateforme
+Synapse :
+Logo Description
+Visual Studio Code :Éditeur de code source léger et
+performant, développé par Microsoft. Il offre de nombreuses
+fonctionnalités grâce à son écosystème d’extensions, facilitant
+le développement et la gestion du projet.
+GitHub :Plateforme collaborative de gestion et
+d’hébergement de code source, basée sur le système de
+contrôle de version Git. Elle permet le suivi des modifications
+et le travail en équipe.
+Jira :Outil de gestion de projet permettant d’organiser les
+tâches, de suivre l’avancement et de gérer les sprints dans le
+cadre de la méthodologie SCRUM.
+Draw.io :Outil de conception de diagrammes (UML,
+architecture, schémas) facilitant la modélisation et la
+représentation visuelle du système.
+Codex :Assistant de développement utilisé pour l’aide à
+l’écriture du code, la correction des erreurs et l’amélioration
+des fonctionnalités techniques du projet.
+Prism :Outil utilisé pour la rédaction du rapport avec le
+langage LATEX, notamment pour l’organisation du contenu et
+la mise en forme du document.
+ChatGPT :Assistant IA utilisé pour le brainstorming
+des idées, la reformulation du contenu et la recherche
+d’informations utiles au projet.
+Table 2.3– Environnement logiciel utilisé
+31
+
+===== PAGE 33 =====
+2.3.3 Langages utilisés
+Logo Description
+Python :utilisé pour le développement des microservices
+backend ainsi que pour le traitement des données et
+l’intégration des composants d’intelligence artificielle.
+TypeScript :utilisé pour le développement du frontend avec
+React, permettant d’assurer un code structuré, maintenable
+et typé.
+HTML :utilisé pour la structuration des pages web et la
+définition des éléments de l’interface utilisateur.
+CSS :utilisé pour la mise en forme et le design de l’interface
+utilisateur, garantissant une expérience visuelle agréable.
+SQL :utilisé pour la gestion, l’interrogation et la
+manipulation des données au sein de la base de données.
+Table 2.4– Langages de programmation utilisés
+2.3.4 Outils de déploiement et automatisation
+Logo Description
+Docker :plateforme de conteneurisation permettant
+d’encapsuler les différentes composantes du système dans
+des environnements isolés. Elle facilite le déploiement, la
+portabilité et la gestion des microservices du projet.
+PowerShell :outil de ligne de commande utilisé pour
+automatiser l’exécution des scripts, gérer les services et
+faciliter le lancement et le contrôle de l’environnement de
+développement.
+Table 2.5– Outils de déploiement et d’automatisation
+32
+
+===== PAGE 34 =====
+2.3.5 Choix de la base de données
+Logo Description
+Supabase :solution Backend-as-a-Service basée sur
+PostgreSQL, offrant une gestion intégrée de l’authentification,
+un stockage sécurisé des données et des fichiers, ainsi que
+des mécanismes avancés de sécurité (RLS), tout en facilitant
+l’intégration avec les applications modernes.
+Table 2.6– Choix de la base de données
+2.4 Conclusion
+CechapitreapermisderéaliseruneanalyseapprofondiedesbesoinsduprojetSynapse,
+enidentifiantlesdifférentsacteursdusystèmeainsiqueleursinteractionsaveclaplateforme.
+Nous avons défini de manière structurée les besoins fonctionnels, traduisant les services
+attendus par les utilisateurs et les administrateurs, ainsi que les besoins non fonctionnels,
+garantissant la qualité, la sécurité et la performance du système.
+Par ailleurs, l’organisation du projet selon la méthodologie SCRUM a été présentée,
+mettant en évidence les rôles de l’équipe, la structuration du travail et les mécanismes de
+suivi de l’avancement.
+33
+
+===== PAGE 35 =====
+CHAPITRE 3
+Étude et Réalisation Sprint 1 : Étude préalable et mise en place
+du prototype
+
+===== PAGE 36 =====
+3 Sprint 1 : Prototype
+3.1 Introduction
+Le premier sprint a été consacré à l’étude préliminaire du projet et à la réalisation
+d’un premier prototype. Cette phase avait pour objectif de comprendre le besoin global,
+d’identifier les principales fonctionnalités attendues et de définir une première base de
+travail. Elle a également permis de transformer les premières idées en une version initiale
+du prototype, afin de valider l’orientation technique et fonctionnelle du projet avant de
+poursuivre les développements dans les sprints suivants.
+3.2 Backlog du Sprint 1
+Table 3.1: Backlog du Sprint 1
+ID Fonctionnalité Description Priorité
+1 Authentification Permettre aux utilisateurs de se connecter
+à l’application.
+Élevée
+2 Gestion des utilisateursDifférencier les types d’utilisateurs selon
+leurs droits d’accès.
+Élevée
+3 Chat intelligent Permettre à l’utilisateur de poser des
+questions et recevoir des réponses.
+Élevée
+4 Recherche dans les
+documents
+Retrouver les informations utiles à partir
+des documents intégrés dans l’application.
+Élevée
+5 Génération des
+réponses
+Produire une réponse claire à partir des
+informations trouvées.
+Élevée
+6 Affichage des sources Afficher les passages utilisés pour
+construire la réponse.
+Moyenne
+35
+
+===== PAGE 37 =====
+ID Fonctionnalité Description Priorité
+7 Informations sur les
+résultats
+Afficher des informations
+complémentaires sur les passages trouvés.
+Faible
+8 Réglage du nombre de
+résultats
+Permettre de choisir le nombre de
+passages à utiliser pour répondre.
+Faible
+9 Interface utilisateur Mettre en place une interface simple et
+moderne pour utiliser l’application.
+Élevée
+11 Support multilingue Permettre l’utilisation de l’application en
+français, en anglais et en arabe.
+Moyenne
+14 Espace administrateur un espace réservé aux administrateurs
+pour charger les documents.
+Moyenne
+15 Espace Validateur un espace réservé aux validateurs pour
+valider les documents.
+Moyenne
+16 Préparation d’un
+assistant Admin avancé
+Prévoir une première structure pour une
+future fonctionnalité d’assistant avancé.
+Faible
+3.3 Cadre théorique : notions techniques essentielles
+3.3.1 Traitement automatique du langage naturel – NLP
+Le NLP (Natural Language Processing) désigne l’ensemble des techniques permettant
+à une machine de comprendre, analyser et traiter le langage humain sous forme de texte
+ou de parole.
+3.3.2 Grands modèles de langage – LLM
+Un LLM (Large Language Model) est un modèle d’intelligence artificielle entraîné sur
+de grands volumes de textes afin de comprendre, générer et reformuler du langage naturel.
+3.3.3 Intelligence artificielle générative
+L’intelligence artificielle générative désigne les systèmes capables de créer de nouveaux
+contenus, comme du texte, des images ou du code, à partir des données sur lesquelles ils
+ont été entraînés.
+36
+
+===== PAGE 38 =====
+Figure 3.1– Principe général de l’intelligence artificielle générative
+3.3.4 Principe du Retrieval-Augmented Generation – RAG
+Le RAG (Retrieval-Augmented Generation) est une approche qui combine la recherche
+d’informations dans une base de documents avec la génération de réponses par un modèle
+de langage, afin de produire des réponses plus précises et contextualisées.
+Figure 3.2– Architecture RAG typique
+3.3.4.1 Embeddings et représentation vectorielle du texte
+Lesembeddingssont des représentations numériques du texte sous forme de vecteurs.
+37
+
+===== PAGE 39 =====
+Figure 3.3– Embeddings textuels
+3.3.4.2 Vector Store (bases de données vectorielle)
+UnVectorStoreestunebasededonnéesspécialiséequipermetdestockerlesreprésentations
+vectorielles des textes et de retrouver rapidement les passages les plus similaires à une
+questiondonnée.Larecherches’effectueencomparantlarequêtedel’utilisateur,préalablement
+transformée en vecteur, avec les documents indexés dans la base de données vectorielle
+afin d’identifier les informations les plus pertinents.
+Figure 3.4– Principe de recherche dans une base de données vectorielle
+38
+
+===== PAGE 40 =====
+3.4 Conception et architecture
+3.4.1 Diagramme use case
+Cediagrammeillustrelesfonctionnalitésprincipalesdusystèmeainsiquelesinteractions
+des acteurs avec les modules de validation, d’authentification et de chatbot RAG.
+Figure 3.5– Diagramme de cas d’utilisation du prototype
+3.4.2 Architecture générale sprint 1
+La figure 3.6 présente l’architecture générale du prototype. Elle montre les principaux
+composantsdel’application,notammentl’interfaceutilisateur,l’APIbackend,l’authentification,
+lagestiondesdocuments,labasevectorielle,lemodèled’embeddingsetleLLMresponsable
+de la génération de la réponse finale.
+39
+
+===== PAGE 41 =====
+Figure 3.6– Architecture générale du prototype RAG
+3.4.3 Diagramme de séquence du processus de question-réponse
+La figure 3.7 présente le déroulement général du processus de question-réponse dans
+le chatbot RAG. Elle montre comment la question de l’utilisateur est transmise depuis
+l’interface web vers l’API, puis traitée par le moteur RAG. Celui-ci détecte la langue,
+recherche les passages pertinents dans la base documentaire vectorielle et utilise le modèle
+d’IA génératif pour produire une réponse contextualisée avec les sources utilisées.
+40
+
+===== PAGE 42 =====
+Figure 3.7– Diagramme de séquence du processus de question-réponse
+3.4.4 Diagramme de séquence de l’authentification
+Lafigure3.8montreleprocessusd’authentificationoùl’utilisateursaisitsesidentifiants
+dans l’interface React. La demande est envoyée au service d’authentification, qui vérifie
+l’identité et le rôle via le contrôle d’accès. En cas de succès, l’espace autorisé est ouvert,
+sinon un message d’erreur est affiché.
+Figure 3.8– Diagramme de séquence du processus de l’authentification
+41
+
+===== PAGE 43 =====
+3.4.5 Diagramme de séquence du processus de validation
+La figure 3.9 présente le déroulement du processus de validation des documents. Elle
+montre les interactions entre l’administrateur, le validateur, l’interface de validation,
+Supabase Auth, Supabase Storage, la base de données Supabase et le journal d’audit.
+Figure 3.9– Diagramme de séquence du processus de validation
+42
+
+===== PAGE 44 =====
+3.5 Réalisation
+3.5.1 Justification des Choix techniques
+Dans ce prototype, les choix techniques ont été faits de manière pragmatique, en
+privilégiant des outils simples, gratuits et rapides à mettre en place, l’objectif principal
+étantdefairefonctionnerleproduitleplustôtpossibleplutôtqued’optimisersesperformances
+dès la première version.
+—Frontend – React, Vite et Tailwind CSS :ce choix permet de développer
+rapidement une interface web moderne, légère et responsive.
+—Backend – FastAPI :FastAPI a été choisi pour créer simplement une API REST
+en Python autour des fonctionnalités RAG existantes.
+—Base de données – Supabase :Supabase est utilisé pour gérer l’authentification
+des utilisateurs de manière simple et rapide.
+—Vector Store – ChromaDB :ChromaDB permet de stocker les représentations
+vectorielles des documents et de réaliser une recherche sémantique facilement.
+—LLM–Ollamaaveclemodèleqwen2.5:7b:Ollamapermetd’exécuterlocalement
+un modèle de langage pour générer les réponses du chatbot.
+—Embeddings – Ollama avec le modèleqwen2.5:7b:le même environnement
+est utilisé pour générer les embeddings nécessaires à l’indexation et à la recherche
+dans les documents.
+3.5.2 Fonctionnalités essentielles développées
+—Authentification et gestion des rôles :l’application permet aux utilisateurs
+de se connecter avec un accès adapté selon leur rôle :admin,userouvalidator
+Avec Supabase .
+—Redirectionversl’interfaceappropriée:aprèslaconnexion,chaqueutilisateur
+estdirigéversl’espacecorrespondantàsonprofil:interfaceadministrateur,interface
+validateur ou interface utilisateur.
+—Upload des documents :l’administrateur peut ajouter de nouveaux documents
+afin d’alimenter la base documentaire de l’application.
+—Consultationdesdocuments:l’administrateuretlevalidateurpeuventconsulter
+la liste des documents disponibles dans le système.
+—VisualisationdesfichiersPDF:l’administrateuretlevalidateurpeuventouvrir
+et visualiser les documents PDF directement depuis l’interface.
+—Validation des documents :le validateur peut examiner les documents ajoutés,
+puis les approuver ou les rejeter selon leur conformité.
+—Ajout de remarques :le validateur peut ajouter des commentaires afin de
+justifier sa décision ou signaler les corrections nécessaires.
+—Miseàdispositiondesdocumentsvalidés:lesdocumentsapprouvésdeviennent
+43
+
+===== PAGE 45 =====
+exploitables par le module RAG pour la recherche documentaire et la génération
+des réponses.
+—Chatbot intelligent :l’utilisateur peut poser une question à travers l’interface
+du chatbot, en français, en anglais ou en arabe.
+—Support trilingue :le système détecte automatiquement la langue de la question
+et répond dans la même langue.
+—Traduction pour la recherche documentaire :lorsque la question est posée
+en anglais ou en arabe, elle peut être traduite vers le français afin d’améliorer la
+recherche dans les documents sources.
+—Recherche des passages pertinents :le système recherche les passages les plus
+utiles dans les documents validés afin de construire un contexte fiable pour la
+réponse.
+—Paramètres de recherche réglables :l’utilisateur peut ajuster le nombre de
+passages récupérés grâce au paramètretop_k, avec une valeur comprise entre 1 et
+10.
+—Réponses IA contextualisées :le chatbot génère une réponse détaillée en
+s’appuyant sur les passages récupérés depuis les documents.
+—Affichage des sources et citations :l’application affiche les passages utilisés
+pour générer la réponse, avec leurs métadonnées, scores de similarité et citations
+associées.
+—Interface moderne et accessible :l’ensemble des fonctionnalités est présenté
+dans une interface claire, moderne et compatible avec un thème clair ou sombre.
+3.6 Rétrospective du Sprint 1
+Le Sprint 1 nous a permis de mettre en place un premier prototype fonctionnel, qui
+a énormément aidé à démontrer notre vision du projet et à améliorer la communication
+avec le Product Owner. Ce prototype a constitué une première base concrète permettant
+de valider l’orientation générale de la solution.
+Cependant, ce produit ayant été conçu rapidement à l’aide d’outils open source et
+gratuits, il présente certaines limites, notamment en matière de performance et de qualité
+des réponses. Le système peut encore produire des hallucinations, ce qui montre que le
+processus de recherche et de génération doit être amélioré.
+Ainsi, le Sprint 1 a mis en évidence la nécessité de réaliser une étude plus approfondie
+sur les systèmes RAG lors du Sprint 2, afin de choisir des outils et des techniques mieux
+adaptés aux besoins du projet. Il a également imposé une révision de l’architecture de
+la solution, dans le but de rendre le développement en binôme plus clair, plus fluide et
+mieux structuré pour les prochains sprints.
+44
+
+===== PAGE 46 =====
+CHAPITRE 4
+Étude et Réalisation Sprint 2 : Mise en place d’un système
+RAG approfondi et amélioration de l’architecture
+
+===== PAGE 47 =====
+4 Sprint 2 : Système RAG robuste
+4.1 Introduction
+LeSprint2aétéconsacréàl’améliorationglobaledusystèmeainsiqu’àlaréorganisation
+de l’architecture du projet afin de rendre la solution plus robuste, plus flexible et plus
+adaptée aux besoins futurs. Après la réalisation du premier prototype, plusieurs limites
+ont été identifiées, ce qui a nécessité une réflexion plus approfondie sur la manière de
+concevoir et structurer le système.
+Ce sprint a ainsi permis d’étudier différentes approches susceptibles d’améliorer la
+qualité des réponses, l’organisation des composants et la maintenabilité du projet. Il a
+également conduit à une refonte de l’architecture afin de mieux séparer les responsabilités,
+faciliter le développement en équipe et préparer l’intégration de nouvelles fonctionnalités
+plus avancées.
+Enfin,cettephaseaconstituéuneétapeimportantedanslatransitionentreunprototype
+fonctionnel et une solution plus structurée, capable d’évoluer progressivement vers une
+architecture plus professionnelle et extensible.
+4.2 Backlog du Sprint 2
+Le Sprint 2 avait pour objectif principal d’améliorer le prototype initial en mettant en
+place une architecture plus robuste, modulaire et évolutive. Le backlog de ce sprint s’est
+concentré sur la réorganisation du système, l’amélioration du pipeline RAG, l’intégration
+des services principaux ainsi que la préparation du projet pour les futures évolutions.
+Table 4.1: Backlog du Sprint 2
+ID Fonctionnalité Description Priorité
+1 Réorganisation du projetMettre en place une nouvelle structure
+de projet plus claire et mieux organisée.
+Élevée
+2 Nouvelle architecture du
+système
+Mettre en place une architecture plus
+robuste et modulaire.
+Élevée
+46
+
+===== PAGE 48 =====
+ID Fonctionnalité Description Priorité
+3 Prétraitement des
+documents
+Améliorer la préparation et le nettoyage
+des documents avant leur exploitation.
+Élevée
+4 Étude des stratégies de
+chunking
+Étudier différentes méthodes de
+découpage des documents.
+Élevée
+5 Génération des
+embeddings
+Transformer les documents en
+représentations vectorielles exploitables.
+Élevée
+6 Mise en place de la base
+vectorielle
+Intégrer une nouvelle base vectorielle
+pour améliorer la recherche
+documentaire.
+Élevée
+7 Amélioration du système
+de recherche
+Mettre en place plusieurs stratégies de
+recherche documentaire.
+Élevée
+8 Amélioration du pipeline
+RAG
+Connecter les différentes étapes du
+système dans un pipeline modulaire.
+Élevée
+9 Génération des réponses Améliorer la qualité des réponses
+générées par le chatbot.
+Élevée
+10 Évaluation du système
+RAG
+Mettre en place une première logique
+d’évaluation des performances du
+système.
+Moyenne
+11 Architecture
+microservices
+Séparer le système en plusieurs services
+indépendants.
+Élevée
+12 Containerisation Mettre en place les fichiers nécessaires
+pour exécuter les services localement.
+Moyenne
+13 Authentification et
+sécurité
+Améliorer la gestion des accès et la
+sécurité du système.
+Élevée
+14 Développement des
+interfaces
+Améliorer les interfaces utilisateur et
+administrateur.
+Moyenne
+15 Documentation des
+services
+Documenter les différents services et
+composants du système.
+Faible
+16 Tests et validation Ajouter des tests afin de vérifier le bon
+fonctionnement du système.
+Moyenne
+47
+
+===== PAGE 49 =====
+4.3 Étude approfondie des systèmes RAG
+4.3.1 Prétraitement des documents
+4.3.1.1 Nettoyage des documents
+Le nettoyage des documents consiste à supprimer les éléments inutiles ou bruités,
+comme les caractères spéciaux, les espaces excessifs ou les contenus non pertinents, afin
+d’améliorer la qualité des données exploitées.
+4.3.1.2 Normalisation du texte
+Lanormalisationdutextepermetd’uniformiserlecontenudesdocumentsenappliquant
+certaines transformations, comme la gestion des majuscules, des accents ou des formats
+d’écriture.
+4.3.1.3 Gestion des métadonnées
+La gestion des métadonnées consiste à associer des informations complémentaires aux
+documents, comme le titre, la source, la langue ou la date, afin de faciliter l’organisation
+et la recherche.
+4.3.1.4 Préparation des documents pour l’indexation
+Cette étape vise à transformer les documents dans un format adapté à l’indexation
+vectorielle et à leur exploitation par le système RAG.
+4.3.2 Étude des stratégies de chunking
+Dans les systèmes RAG, lechunkingest une étape essentielle qui consiste à découper
+les documents en fragments plus petits afin de faciliter leur indexation, leur recherche et
+la récupération des informations les plus pertinentes pour la génération des réponses.
+48
+
+===== PAGE 50 =====
+Stratégie Description
+Chunking fixe Lechunking fixeconsiste à découper les documents en
+fragments de taille constante, définie selon un nombre
+de caractères ou de tokens. Cette approche est simple
+à mettre en place et permet d’obtenir des segments
+homogènes faciles à indexer dans la base vectorielle.
+Cependant,ellepeutparfoiscouperlecontexteaumilieu
+d’une idée ou d’un paragraphe.
+Chunkingavecoverlap Lechunking avec overlapconsiste à créer des
+fragments de texte qui se chevauchent partiellement.
+Cette approche permet de conserver une continuité du
+contexte entre les chunks et de réduire le risque de perte
+d’information lors du découpage des documents.
+Chunking sémantique Lechunking sémantiqueconsiste à découper les
+documents en fonction du sens et de la structure du
+contenu plutôt qu’avec une taille fixe. Cette approche
+permet de conserver des idées complètes et des contextes
+cohérents à l’intérieur des chunks.
+Late chunking Lelate chunkingest une approche dans laquelle le
+découpage des documents est effectué après certaines
+étapes de traitement du texte. Cette méthode permet
+de préserver davantage le contexte global du document
+avant la création des chunks.
+Table 4.2– Comparaison des stratégies de chunking
+Le choix de la stratégie de chunking joue un rôle essentiel dans les performances d’un
+système RAG, car il influence directement la qualité de la recherche documentaire ainsi
+que la pertinence des réponses générées.
+4.3.3 Étude des stratégies de recherche
+4.3.3.1 Recherche par mots-clés
+La recherche par mots-clés consiste à retrouver les documents contenant les termes
+présents dans la requête de l’utilisateur. Cette approche repose principalement sur la
+fréquence et l’importance des mots dans les documents.
+—TF-IDF (Term Frequency – Inverse Document Frequency) :cette méthode
+mesure l’importance d’un mot dans un document en fonction de sa fréquence locale
+et de sa rareté dans l’ensemble des documents.
+—BM25:BM25estuneaméliorationdesapprochesclassiquesderecherchetextuelle.
+Ilprendencomptelafréquencedesmots,lalongueurdesdocumentsetlapertinence
+globale afin d’obtenir des résultats plus précis.
+49
+
+===== PAGE 51 =====
+4.3.3.2 Recherche sémantique
+La recherche sémantique consiste à retrouver les documents les plus pertinents en se
+basant sur le sens de la requête et du contenu, grâce aux représentations vectorielles du
+texte.
+4.3.3.3 Recherche hybride
+La recherche hybride combine la recherche sémantique et la recherche par mots-clés
+afin d’améliorer la précision et la pertinence des résultats récupérés. Pour fusionner les
+résultats provenant des différentes stratégies de recherche, plusieurs méthodes peuvent
+être utilisées :
+—Score Normalization :cette méthode consiste à normaliser les scores provenant
+des différentes stratégies de recherche afin de les rendre comparables avant leur
+fusion.
+—WeightedCombination:cetteapprochecombinelesscoresdesdifférentesméthodes
+de recherche en appliquant un poids spécifique à chacune selon son importance.
+—Reciprocal Rank Fusion (RRF) :cette méthode fusionne les résultats en se
+basant sur le classement des documents dans chaque stratégie de recherche plutôt
+que sur leurs scores bruts.
+4.3.3.4 Comparaison des approches
+Comme discuté précédemment dans ce rapport, la recherche basée uniquement sur les
+mots-clés reste limitée pour notre cas d’utilisation, notamment en raison de son incapacité
+à comprendre le contexte et le sens des requêtes utilisateur. Ainsi, la comparaison la
+plus pertinente dans notre étude concerne principalement la recherche sémantique et la
+recherche hybride, qui sont mieux adaptées aux systèmes RAG conversationnels.
+50
+
+===== PAGE 52 =====
+Méthode Caractéristiques Rapidité Cas d’utilisation
+Recherche
+sémantique
+Recherche basée sur
+le sens et le contexte
+des phrases grâce aux
+représentations vectorielles.
+Très efficace pour
+comprendre les synonymes
+et les formulations variées.
+Moyenne Chatbots intelligents,
+questions en
+langage naturel,
+systèmes RAG
+conversationnels.
+Recherche hybride Combine la recherche
+sémantique et la recherche
+par mots-clés afin d’obtenir
+des résultats plus précis et
+plus robustes.
+Moyenne à
+élevée
+Applications
+nécessitant à la
+fois compréhension du
+contexte et recherche
+exacte de termes
+techniques.
+Table 4.3– Comparaison entre la recherche sémantique et la recherche hybride
+4.3.4 Techniques avancées de récupération
+4.3.4.1 Reranking des passages
+Le reranking consiste à réordonner les passages récupérés après la phase de recherche
+afin de sélectionner les documents les plus pertinents pour la génération de la réponse.
+Cette étape permet d’améliorer la qualité du contexte fourni au modèle de génération et
+de réduire la présence de passages peu utiles ou moins pertinents.
+—LLM Reranking :cette approche utilise un modèle de langage pour analyser la
+relation entre la question et les passages récupérés afin d’identifier les contenus les
+plus pertinents.
+—Cross-Encoder Reranking :cette méthode évalue conjointement la requête
+et chaque passage à l’aide d’un modèle spécialisé afin de produire un score de
+pertinence plus précis.
+4.3.4.2 Query Rewriting
+LeQueryRewritingconsisteàreformulerautomatiquementlarequêtedel’utilisateur
+afin d’améliorer la qualité de la recherche documentaire. Cette technique permet de rendre
+les questions plus claires, plus précises ou mieux adaptées au contenu des documents
+indexés, ce qui augmente généralement la pertinence des passages récupérés dans les
+systèmes RAG.
+4.3.5 Évaluation du système RAG
+L’évaluation d’un système RAG est une étape essentielle afin de mesurer la qualité
+des réponses générées, la pertinence des passages récupérés ainsi que les performances
+51
+
+===== PAGE 53 =====
+globales du système.
+4.3.5.1 Introduction au framework RAGAS
+RAGAS (Retrieval Augmented Generation Assessment) est un framework d’évaluation
+conçu pour mesurer automatiquement la qualité des systèmes RAG. Il permet d’analyser
+différents aspects du système, comme la pertinence des passages récupérés, la fidélité des
+réponses générées et la cohérence entre la réponse et les sources utilisées.
+4.3.5.2 Critères d’évaluation
+Critère Description
+Context Recall Mesure la capacité du système à récupérer les
+passages contenant réellement les informations
+nécessaires pour répondre à la question.
+Factual Correctness Évalue si la réponse générée contient des
+informations factuellement correctes par rapport
+à la réponse attendue ou aux documents sources.
+Faithfulness Mesure le degré de fidélité de la réponse générée
+par rapport aux passages récupérés, afin de
+détecter les hallucinations ou les informations non
+présentes dans les sources.
+Table 4.4– Critères d’évaluation utilisés avec le framework RAGAS
+4.4 Choix technologiques du nouveau système
+52
+
+===== PAGE 54 =====
+4.4.1 Comparaison des modèles LLM étudiés et approche retenue
+Modèle LLM Performance Coût Facilité
+d’utilisation
+OpenAI GPT-5 Très bonnes
+performances
+en raisonnement,
+générationdetexte,
+compréhension du
+contexte et qualité
+des réponses.
+Très adapté aux
+systèmes RAG
+avancés.
+Élevé API simple à intégrer,
+documentation
+complète et
+écosystème mature.
+Google Gemini
+2.5 Pro
+Très performant
+sur les tâches
+multimodales, le
+raisonnement et
+le traitement de
+grands contextes.
+Moyen à élevé Bonne intégration
+avec les services
+Google et interface
+de développement
+accessible.
+DeepSeek-V3.2 Bonnes
+performances
+générales avec un
+excellent rapport
+qualité/prix,
+particulièrement
+intéressant pour les
+tâches techniques
+et le code.
+Faible Facile à déployer et
+utilisable en open
+source, mais avec un
+écosystème moins
+mature.
+Table 4.5– Comparaison des modèles LLM étudiés
+Le choix final s’est porté surGPT-5en raison de la qualité de ses réponses, de sa
+robustesse dans les tâches de génération contextuelle et de sa capacité à produire des
+réponses plus cohérentes et fiables dans le cadre de notre système RAG.
+4.4.2 Comparaison des modèles d’embeddings et approche retenue
+Le choix du modèle LLM principal s’étant porté sur les solutions d’OpenAI, l’étude
+des modèles d’embeddings a également été réalisée à partir des modèles proposés par
+cette même plateforme. Ce choix permet de simplifier l’intégration du système grâce à
+une plateforme unifiée donnant accès aux modèles de génération de texte, d’embeddings,
+de génération d’images et de transcription audio à travers une seule API et une seule clé
+d’accès.
+53
+
+===== PAGE 55 =====
+Modèle Performance Coût Cas d’utilisation
+text-embedding-3-small Bonnes performances
+générales avec une
+génération rapide des
+embeddings et une
+faible consommation
+de ressources.
+Faible Applications RAG
+classiques, recherche
+documentaire et
+systèmes nécessitant
+un bon compromis
+entre coût et
+performance.
+text-embedding-3-large Très haute qualité de
+représentation vectorielle
+avec une meilleure
+compréhension sémantique
+des documents complexes.
+Élevé Applications
+nécessitant une
+précision élevée
+et des recherches
+sémantiques
+avancées sur de
+grands volumes de
+données.
+Table 4.6– Comparaison des modèles d’embeddings OpenAI
+Le choix final s’est porté sur le modèletext-embedding-3-small, car il offre un bon
+équilibre entre coût, rapidité et qualité des résultats pour notre cas d’utilisation.
+La figure 4.1 présente l’interface de la plateforme OpenAI utilisée pour accéder aux
+différents services proposés, notamment les modèles LLM, les embeddings, la transcription
+audio et la génération d’images.
+Figure 4.1– Interface de la plateforme OpenAI
+54
+
+===== PAGE 56 =====
+4.4.3 Comparaison des bases de données vectorielles et approche retenue
+Base vectorielle Caractéristiques Recherche
+hybride
+Cas d’utilisation
+ChromaDB Base vectorielle simple
+et légère, facile à intégrer
+dans des prototypes
+locaux.
+Limitée Prototypes RAG
+simples et projets de
+petite taille.
+Pinecone Solution cloud
+performante avec une
+bonne scalabilité et une
+gestion simplifiée de
+l’infrastructure.
+Partielle Applications
+de production
+nécessitant un service
+managé.
+Weaviate Base vectorielle
+avancée offrant des
+fonctionnalités natives
+de recherche hybride, de
+filtrage et de scalabilité.
+Native Systèmes RAG
+avancés, recherche
+hybride et
+architectures
+modulaires.
+Table 4.7– Comparaison des bases de données vectorielles étudiées
+Le choix final s’est porté surWeaviate, principalement en raison de son support natif
+de la recherche hybride, qui correspond mieux aux besoins de notre système RAG. Cette
+solution permet de combiner efficacement la recherche sémantique et la recherche par
+mots-clés tout en offrant une architecture flexible et facilement extensible. Dans notre
+projet, Weaviate est exécuté dans un environnement conteneurisé à l’aide de Docker afin
+de simplifier le déploiement, l’isolation des services et la portabilité du système.
+Figure 4.2– Déploiement de Weaviate avec Docker
+4.5 Conception de la nouvelle architecture
+55
+
+===== PAGE 57 =====
+4.5.1 Objectifs de la nouvelle architecture
+La nouvelle architecture a pour objectif de rendre le système plus modulaire, plus
+flexibleetplusfacilementmaintenable.Ellepermetégalementdemieuxséparerlesresponsabilités
+entre les composants du projet et de préparer l’intégration future de fonctionnalités plus
+avancées.
+AprèsdiscussionavecleProductOwner,lagestiondesrôlesaétésimplifiée:l’administrateur
+devient désormais le seul responsable du chargement et de la validation des documents,
+la séparation des rôles de gestion ayant été jugée non nécessaire.
+4.5.2 Architecture générale Sprint 2
+la figure 4.3 représente une architecture générale du Sprint 2 pour la plateforme RAG
+multi-services. Elle montre les utilisateurs, le frontend en React + Vite, les microservices
+backendpourl’authentification,l’ingestion,leprétraitement,lesembeddingsetlagénération
+de réponses via le LLM, ainsi que les services externes Supabase et Weaviate.
+Figure 4.3– Architecture globale du Sprint 2
+4.5.3 Diagramme Use case
+La figure 4.4 montre les interactions des utilisateurs et des administrateurs avec le
+système, incluant l’authentification, la soumission et consultation de documents, la gestion
+56
+
+===== PAGE 58 =====
+des utilisateurs et l’utilisation du chatbot RAG.
+Figure 4.4– Diagramme de cas d’utilisation du Sprint 2
+4.6 Mise en place des microservices
+4.6.1 Service d’ingestion
+Rôle principalLe service d’ingestion est responsable de la gestion centralisée des
+documents côté administrateur. Il coordonne l’ensemble du cycle documentaire : réception
+des fichiers, déclenchement du prétraitement, calcul des embeddings, et mise à jour de
+l’état des documents dans le système. Il assure également l’upload, la validation initiale
+et la récupération des documents depuis la base de données relationnelle Supabase où les
+fichiers bruts sont stockés avant leur traitement dans le pipeline RAG.
+Flux de traitement
+Upload document
+↓
+Stockage Supabase
+↓
+Validation document
+↓
+Mise à jour de l’état du document
+↓
+Document prêt
+57
+
+===== PAGE 59 =====
+ImplémentationL’architecture modulaire du service d’ingestion permet de séparer
+le stockage des fichiers bruts du reste du pipeline RAG. Elle prend en charge plusieurs
+formatsdedocuments(PDF,TXT,MD)etfacilitel’intégrationfuturedenouvellessources
+de données tout en garantissant la coordination complète du cycle documentaire.
+4.6.2 Service de preprocessing
+RôleprincipalLeservicedepreprocessingestresponsabledelapréparationdesdocuments
+avant leur indexation dans le système RAG. Il assure le nettoyage, la normalisation, le
+découpage des documents en chunks ainsi que l’ajout des métadonnées nécessaires pour
+faciliter la recherche et la récupération des informations.
+Flux de traitement
+Document brut
+↓
+Adaptateur de lecture
+↓
+Normalisation du texte
+↓
+Stratégie de découpage
+↓
+Génération des métadonnées
+↓
+Chunks prêts pour le service d’embedding
+ImplémentationflexibleLeservicedepreprocessingaétéconçudemanièremodulaire
+afin de permettre l’intégration et le test de différentes stratégies de chunking (overlap
+, semantic , late ) sans modifier l’architecture globale du système. Une configuration
+par défaut est utilisée dans l’implémentation actuelle, mais la logique nécessaire pour
+supporter plusieurs approches de découpage est déjà intégrée dans le système. Cette
+conception offre une grande flexibilité et facilite l’évolution future du pipeline RAG ainsi
+que l’expérimentation de nouvelles stratégies de traitement des documents.
+4.6.3 Service d’embeddings
+Rôle principalLe service d’embedding est responsable de la transformation des chunks
+textuels en vecteurs numériques afin de permettre la recherche sémantique dans le système
+RAG. Il génère les embeddings des documents puis les stocke avec leurs métadonnées dans
+la base vectorielle Weaviate.
+58
+
+===== PAGE 60 =====
+Flux de traitement
+Chunks textuels
+↓
+Génération embeddings
+↓
+Ajout métadonnées
+↓
+Indexation Weaviate
+↓
+Chunks vectorisés
+4.6.4 Service de retrieval
+Rôle principalLe service de retrieval reçoit une question utilisateur, effectue une
+recherche documentaire dans Weaviate, puis retourne les chunks les plus pertinents avec
+leurs scores et métadonnées.
+Fonctionnalités principales
+— Recherche hybride
+— Fusion des résultats récupérés.
+— Reranking optionnel des passages.
+— Retour des chunks classés avec métadonnées.
+Flux de traitement
+Question utilisateur
+↓
+Recherche documentaire
+↓
+Fusion résultats
+↓
+Reranking passages
+↓
+Chunks pertinents
+ImplémentationLe service de retrieval a été conçu de manière modulaire afin de
+supporter une recherche hybride combinant la recherche lexicale avec BM25 et la recherche
+sémantiquebaséesurlasimilaritécosinus(cosine similarity).Lesystèmeintègreégalement
+plusieurs stratégies de fusiondesrésultats, commeAlpha FusionetReciprocal Rank Fusion
+(RRF), ainsi que différentes techniques de reranking telles que leCross-Encoder Reranking
+et leLLM Reranking. Chaque composant est isolé dans une couche dédiée, ce qui permet
+59
+
+===== PAGE 61 =====
+d’ajouter ou de modifier facilement les stratégies de recherche et de classement sans
+impacter le reste du pipeline RAG. Cette architecture offre une grande flexibilité pour
+expérimenter et optimiser les techniques de récupération d’information.
+4.6.5 Service de génération
+Le service de génération est responsable de la production de la réponse finale à
+l’utilisateur. Il récupère les chunks pertinents via le service de retrieval, construit le
+contexte documentaire puis appelle le modèle de génération afin de produire une réponse
+contextualisée avec citations.
+Rôle principalLe service de génération reçoit une question utilisateur, récupère les
+passages pertinents depuis le service de retrieval puis génère une réponse finale à l’aide
+du modèle LLM.
+Fonctionnalités principales
+— Réception des requêtes utilisateur.
+— Communication avec le service de retrieval.
+— Construction du prompt contextuel.
+— Génération des réponses avec le LLM.
+— Vérification et ajout des citations.
+— Retour des réponses avec les sources utilisées.
+Flux de traitement
+Question utilisateur
+↓
+Recherche chunks
+↓
+Construction prompt
+↓
+Génération réponse
+↓
+Ajout citations
+↓
+Réponse finale
+ImplémentationLeservicedegénérationaétéconçucommeunecouched’orchestration
+entre le système de retrieval et le modèle LLM. Son architecture modulaire permet de
+remplacer facilement le modèle de génération, les prompts ou les mécanismes de contrôle
+des citations sans modifier le reste du pipeline RAG. Cette conception facilite également
+60
+
+===== PAGE 62 =====
+l’intégrationfuturedefonctionnalitésavancéescommelamémoireconversationnelle,l’évaluation
+automatique ou les agents intelligents.
+4.6.6 Service d’authentification
+Rôle principalLe service d’authentification structure les premières règles d’accès au
+système et sécurise l’entrée des utilisateurs. Il assure la connexion, la gestion des sessions,
+ladistinctionentrelesparcoursadministrateuretutilisateur,etoffrelapossibilitéd’utiliser
+Google OAuth comme méthode d’authentification alternative.
+Fonctionnalités principales
+— Création et gestion des comptes utilisateurs
+— Authentification des utilisateurs (mot de passe classique, option Google OAuth)
+— Gestion des sessions JWT
+— Vérification des rôles et permissions
+— Gestion administrative des utilisateurs
+— Réinitialisation des mots de passe
+Flux de traitement
+Connexion utilisateur
+↓
+Validation identifiants (ou OAuth)
+↓
+Vérification des accès et rôles
+↓
+Génération de la session JWT
+↓
+Accès à la plateforme
+ImplémentationLeserviced’authentificationaétéconçucommeunecouchecentralisée
+degestiondesaccèsafind’isolerlalogiquedesécuritédurestedusystème.Sonarchitecture
+modulaire permet de gérer facilement les rôles, les validations administratives, les sessions
+JWT, et l’ajout futur d’options d’authentification comme Google OAuth ou d’autres
+méthodes sans impacter les autres microservices.
+61
+
+===== PAGE 63 =====
+4.7 Fonctionnalités développées
+Figure 4.5– Interface d’authentification du système
+La figure ci-dessus présente l’interface d’authentification développée durant le Sprint 2.
+Cetteinterfacepermetauxutilisateursdeseconnecterdemanièresécuriséeàlaplateforme
+selon leurs rôles et leurs permissions d’accès.
+Figure 4.6– Réponse finale générée par le système
+La figure ci-dessus présente la réponse finale générée par le système RAG à partir des
+passages pertinents récupérés depuis la base documentaire.
+62
+
+===== PAGE 64 =====
+Figure 4.7– Passages pertinents récupérés par le système RAG
+La figure ci-dessus illustre les passages documentaires récupérés par le système RAG
+afin de construire le contexte utilisé pour la génération de la réponse.
+Figure 4.8– Interface de gestion documentaire
+La figure ci-dessus présente l’interface de gestion documentaire de l’administrateur,
+permettantl’upload,laconsultation,lavalidationetlasuppressiondesdocumentsintégrés
+dans le système RAG.
+63
+
+===== PAGE 65 =====
+Figure 4.9– Interface de gestion des utilisateurs
+Lafigureci-dessusprésentel’interfacedegestiondesutilisateurs,permettantàl’administrateur
+de consulter les comptes, suivre leur statut, inviter de nouveaux utilisateurs et gérer les
+accès à la plateforme.
+Figure 4.10– Stockage des documents dans Supabase
+La figure ci-dessus présente l’espace de stockage des documents dans Supabase, utilisé
+pour conserver les fichiers bruts avant leur traitement et leur indexation dans le pipeline
+RAG.
+64
+
+===== PAGE 66 =====
+4.8 Rétrospective du Sprint 2
+Le Sprint 2 a permis de transformer le prototype initial en une architecture RAG plus
+robuste, modulaire et extensible. Une nouvelle organisation basée sur les microservices a
+été mise en place afin de mieux séparer les responsabilités entre les différentes parties du
+système,notammentl’ingestion,lepreprocessing,lesembeddings,leretrieval,lagénération
+et l’authentification.
+L’interfaceutilisateuretlesfonctionnalitésadministrativesontégalementétéaméliorées
+avec la gestion documentaire, la gestion des utilisateurs et une meilleure intégration du
+pipeline RAG complet.
+Malgrécesavancées,certaineslimitesrestentprésentes.Lesystèmenécessiteencoredes
+optimisations de performance, des évaluations plus approfondies ainsi qu’une amélioration
+de la qualité des réponses générées dans certains scénarios complexes. De plus, plusieurs
+composantsavancéscommel’agentintelligentd’administrationrestentenphasedepréparation.
+Ce sprint constitue ainsi une base technique solide pour les prochains sprints, qui
+seront principalement orientés vers l’intégration d’agents IA, l’automatisation du pilotage
+du système, l’amélioration de la sécurité ainsi que l’optimisation globale des performances
+du pipeline RAG.
+65
+
+===== PAGE 67 =====
+CHAPITRE 5
+Étude et Réalisation Sprint 3 :Intégration d’un agent IA
+administratif et amélioration de l’expérience utilisateur
+
+===== PAGE 68 =====
+5 Sprint 3 : Agent IA administratif
+5.1 Introduction
+Le Sprint 3 s’est principalement concentré sur l’intégration d’une première version
+d’un agent IA administratif ainsi que sur plusieurs améliorations de l’interface utilisateur
+et de l’expérience utilisateur. Ce sprint a également permis de corriger certains problèmes
+du système et de préparer l’architecture pour les prochaines évolutions de la plateforme.
+5.2 Backlog du Sprint 3
+Table 5.1: Backlog du Sprint 3
+ID Fonctionnalité Description Priorité
+1 Première version de
+l’agent IA administratif
+Mettre en place une première version
+d’un agent intelligent capable d’assister
+l’administrateur dans certaines actions de
+gestion du système.
+Élevée
+4 Gestion des outils de
+l’agent
+Mettre en place une première logique
+d’utilisation d’outils et d’exécution
+d’actions par l’agent IA.
+Élevée
+5 Entrée vocale Ajouter la possibilité d’envoyer des
+requêtes vocales dans l’interface du
+chatbot.
+Moyenne
+6 Lisibilité des
+documents
+Améliorer l’affichage des chunks et des
+passages documentaires récupérés par le
+système RAG.
+Moyenne
+67
+
+===== PAGE 69 =====
+ID Fonctionnalité Description Priorité
+7 Réinitialisation du mot
+de passe
+Permettre aux utilisateurs de réinitialiser
+leur mot de passe depuis l’interface de
+connexion.
+Moyenne
+8 Modification du profil
+utilisateur
+Ajouter une interface permettant aux
+utilisateurs de modifier leurs informations
+personnelles.
+Moyenne
+9 Amélioration de
+l’expérience utilisateur
+Optimiser certains composants UI/UX
+afin de rendre la plateforme plus fluide et
+plus intuitive.
+Moyenne
+10 Correction des
+problèmes techniques
+Corriger plusieurs bugs détectés durant
+les phases de test et d’utilisation de la
+plateforme.
+Élevée
+11 Optimisation de la
+stabilité
+Améliorer la stabilité générale du système
+et la gestion des erreurs entre les services.
+Élevée
+5.3 Étude théorique des agents IA
+5.3.1 Définition d’un agent IA
+Un agent IA est un système intelligent capable de comprendre une requête, prendre
+des décisions et exécuter des actions de manière autonome afin d’atteindre un objectif
+précis.
+5.3.2 Différence entre un chatbot classique et un agent IA
+Contrairement à un chatbot classique qui se limite principalement à générer des
+réponses textuelles, un agent IA peut interagir avec plusieurs outils, analyser un contexte,
+raisonner sur les étapes à suivre et effectuer des tâches spécifiques au sein d’un système.
+68
+
+===== PAGE 70 =====
+5.3.3 Concept de raisonnement et d’utilisation des outils
+Figure 5.1– Boucle de raisonnement et d’utilisation des outils par un agent IA
+La figure ci-dessus illustre le fonctionnement général d’un agent IA. Le modèle LLM
+analyse la requête, décide des actions à effectuer, utilise les outils nécessaires puis réinjecte
+les résultats dans son raisonnement afin de produire une réponse adaptée.
+5.4 Architecture et conception du Sprint 3
+5.4.1 Architecture générale Sprint 3
+la figure 5.2 représente une architecture générale du Sprint 3 pour la plateforme RAG
+multi-services. Elle montre les utilisateurs, le frontend en React + Vite, les microservices
+backendpourl’authentification,l’ingestion,leprétraitement,lesembeddingsetlagénération
+de réponses via le LLM, ainsi que les services externes Supabase et Weaviate.
+69
+
+===== PAGE 71 =====
+Figure 5.2– Architecture globale du Sprint 3
+5.4.2 Architecture de l’agent IA administratif
+La figure 5.3 représente l’architecture du prototype d’agent admin développé durant
+le Sprint 3 de Synapse. Elle montre l’interaction entre l’administrateur, le frontend admin
+et le nouveauadmin-service, qui constitue un prototype agentique branché sur le socle
+RAG existant. Ce service reçoit la demande, l’analyse, puis choisit entre deux modes de
+traitement : unfast pathpour les demandes simples et un agent récursif pour les demandes
+complexes ou exploratoires. L’architecture montre également la réutilisation des services
+existants du socle RAG, notammentauth-service,retrieval-serviceetgeneration-service,
+ainsi que l’intégration avec Supabase pour l’authentification et les métadonnées.
+70
+
+===== PAGE 72 =====
+Figure 5.3– Architecture du prototype d’agent admin du Sprint 3.
+5.4.3 Diagramme Use case
+La figure 5.4 présente les interactions entre l’utilisateur, l’administrateur et le système.
+L’utilisateur peut poser une question, consulter la réponse, utiliser la transcription et
+visualiserlessourcesainsiqueleschunksrécupérés.L’administrateur,aprèsauthentification,
+peut consulter les documents, gérer les utilisateurs et interagir avec le prototype admin
+afin de traiter les demandes fréquentes et récursives.
+71
+
+===== PAGE 73 =====
+Figure 5.4– Diagramme de cas d’utilisation du sprint 3.
+5.4.4 Diagrammes de séquence principaux
+5.4.4.1 Diagramme de séquence du prototype d’agent d’administration
+La figure 5.5 présente le déroulement du prototype d’agent d’administration introduit
+durant le Sprint 3. Elle montre comment une demande administrative est transmise
+depuis l’interface dédiée vers leadmin-service. Celui-ci vérifie d’abord l’autorisation,
+puis analyse la demande. Si la requête est fréquente, le système applique unfast pathet
+retourne une réponse directe. En revanche, si la demande est plus complexe, le prototype
+récupère des informations système ou documentaires utiles, puis s’appuie sur une logique
+d’agent récursif afin de produire une réponse ou une orientation adaptée.
+72
+
+===== PAGE 74 =====
+Figure 5.5– Diagramme de séquence du processus de prototype agent admin
+5.4.4.2 Diagramme de séquence du processus de sign in
+La figure 5.6 illustre le processus de connexion à la plateformeSynapse. L’utilisateur
+ou l’administrateur saisit ses identifiants dans l’interface, puis la demande est transmise
+auauth-service, qui s’appuie surSupabasepour vérifier l’authentification. Le système
+contrôle ensuite l’état du compte, notamment la validation administrative, l’invitation
+non finalisée ou le blocage éventuel. Selon le cas, l’accès est accordé ou refusé avec un
+message explicatif adapté.
+73
+
+===== PAGE 75 =====
+Figure 5.6– Diagramme de séquence du processus de sign in
+74
+
+===== PAGE 76 =====
+5.4.4.3 Diagramme de séquence du processus de sign up
+La figure 5.7 montre le déroulement du processus d’inscription dansSynapse. Deux
+cas y sont distingués. Le premier correspond à l’inscription classique d’un utilisateur,
+qui crée un compte en attente de validation administrative. Le second correspond à
+l’invitation d’un nouvel administrateur par un administrateur existant. Dans ce cas, un
+lien d’invitation est envoyé, et le compte conserve le statutinvitedjusqu’à la finalisation
+de l’onboarding.
+Figure 5.7– Diagramme de séquence du processus de sign up
+75
+
+===== PAGE 77 =====
+5.5 Fonctionnalités développés
+5.5.1 Entrée vocale dans le chatbot
+Figure 5.8– Fonctionnalité d’entrée vocale dans le chatbot
+La figure ci-dessus présente la fonctionnalité d’entrée vocale intégrée au chatbot.
+Cette fonctionnalité a été implémentée à l’aide des API audio d’OpenAI intégrées au
+service de génération. Les enregistrements audio envoyés depuis l’interface utilisateur
+sont transmis au backend puis transcrits automatiquement en texte à l’aide du modèle
+gpt-4o-mini-transcribe. Une fois la transcription effectuée, la requête textuelle est
+injectée dans le pipeline RAG afin de générer la réponse finale.
+76
+
+===== PAGE 78 =====
+5.5.2 Réinitialisation du mot de passe
+Figure 5.9– Interface de réinitialisation du mot de passe
+La figure ci-dessus présente l’interface de réinitialisation du mot de passe intégrée
+à la plateforme. Cette fonctionnalité a été implémentée à travers leauth-serviceen
+utilisant les mécanismes d’authentification de Supabase Auth. Elle permet aux utilisateurs
+de modifier leur mot de passe de manière sécurisée tout en appliquant certaines règles de
+validation afin de renforcer la sécurité des comptes.
+5.5.3 Modification du profil utilisateur
+Figure 5.10– Interface de modification du profil utilisateur
+La figure ci-dessus présente l’interface de modification du profil utilisateur intégrée
+à la plateforme. Cette fonctionnalité permet aux utilisateurs de mettre à jour certaines
+informations personnelles telles que le nom d’utilisateur, le numéro de téléphone ou la
+photo de profil. Les données sont synchronisées avec Supabase afin d’assurer la persistance
+et la gestion centralisée des informations utilisateur.
+77
+
+===== PAGE 79 =====
+5.5.4 Première version de l’agent IA administratif
+Objectif principalL’objectif principal de l’agent IA administratif est de permettre
+à un administrateur non expert techniquement de piloter certaines parties du système
+à travers le langage naturel. L’agent est capable de répondre à des questions, consulter
+l’état du système, modifier certains paramètres de configuration et exécuter des tâches
+administratives sans interaction directe avec le code ou les services backend.
+Principe général de fonctionnementle fonctionnement de l’agent repose sur un
+catalogue d’outils relié au modèle LLM. Lorsqu’un administrateur envoie une requête, le
+modèle analyse l’objectif demandé puis décide automatiquement du mode de traitement
+le plus adapté.
+Pour les questions simples ou les demandes d’information, l’agent utilise un mode
+de questions/réponses classique permettant de retourner directement une réponse. Pour
+les tâches plus complexes nécessitant plusieurs étapes ou des modifications du système,
+l’agent utilise un mode récursif dans lequel il raisonne de manière itérative, sélectionne
+les outils appropriés, analyse les résultats obtenus puis continue son exécution jusqu’à
+atteindre l’objectif demandé.
+Capabilités de l’agentLa première version de l’agent IA administratif permet :
+— Répondre aux questions administratives à travers le pipeline RAG existant.
+— Consulter l’état global du système et des différents services backend.
+— Lire, comparer et modifier certaines configurations du système, notamment les
+embeddings, le chunking et les stratégies de reranking etc
+— Préparer des plans d’action multi-étapes avant l’exécution des tâches complexes.
+— Reprendreunetâcheouunediscussiongrâceàlagestionducontexteconversationnel
+et de l’état de session.
+— Expliquer ses suggestions ainsi que les observations collectées durant l’exécution
+des tâches.
+LimitesdelapremièreversionMalgrélesfonctionnalitésapportéesparcettepremière
+version de l’agent IA administratif, plusieurs limites restent présentes. Le système présente
+encore une latence relativement élevée pour les tâches complexes nécessitant plusieurs
+étapes de raisonnement et plusieurs appels aux services backend. La logique de l’agent
+reste également fortement dépendante des décisions du modèle LLM, ce qui peut parfois
+provoquer des erreurs de classification, des choix d’outils inadaptés ou des raisonnements
+incohérents.
+L’architectureactuelleestdifficileàmaintenirpuisquelestestsunitairesdesfonctionnalités
+est difficile , l’observabilité est limité ainsi que la sépération entre le raisonnement et
+l’éxécution n’est pas optimale .
+78
+
+===== PAGE 80 =====
+5.6 Corrections et optimisations
+5.6.1 Améliorations de l’expérience conversationnelle
+Durant le Sprint 2, le flux conversationnel présentait certaines limites, notamment
+l’absence de continuité dans les échanges et le manque de contexte conversationnel entre
+les différentes requêtes utilisateur. Afin d’améliorer l’expérience conversationnelle, une
+approche basée sur l’algorithmeSliding Windowa été intégrée.
+Cette approche consiste à conserver un nombre limité des derniers échanges (turns)
+entre l’utilisateur et le chatbot afin de maintenir un contexte conversationnel dynamique.
+Àchaquenouvellequestionouréponse,lafenêtredecontexteestmiseàjourautomatiquement
+en supprimant les anciens échanges et en conservant uniquement les interactions les plus
+pertinentes.
+Cette amélioration permet au système de mieux comprendre les questions de suivi, de
+maintenir la cohérence des réponses et d’offrir une interaction plus fluide et plus naturelle
+avec l’utilisateur.
+5.6.2 Amélioration de la stabilité du système
+Durant le Sprint 2, plusieurs problèmes liés à la gestion des sessions utilisateurs ont été
+détectés, notamment des déconnexions automatiques inattendues causées par des conflits
+d’état entre le frontend et Supabase Auth. Afin d’améliorer la stabilité du système,
+la logique de gestion des sessions a été revue en ajoutant un meilleur mécanisme de
+rafraîchissement des tokens et une gestion plus robuste des événements d’authentification.
+Des optimisations ont également été réalisées pour synchroniser correctement les états
+de connexion entre plusieurs onglets du navigateur et éviter les incohérences de cache
+local.Cetteaméliorationapermisdedistinguerlesvéritablescasdedéconnexionsécurisée,
+commeleblocaged’unutilisateurouunedéconnexionmanuelle,dessimplesétatstemporaires
+de chargement ou de rafraîchissement des sessions.
+5.6.3 Dockerisation des microservices
+Afin de simplifier le déploiement et l’exécution de l’architecture microservices, une
+dockerisation des différents services du système a été mise en place. Chaque microservice
+possède son propre conteneur Docker, permettant d’isoler les dépendances et d’assurer
+une meilleure portabilité de l’environnement de développement.
+L’orchestration des services a été réalisée à l’aide deDocker Compose, facilitant le
+lancement simultané des différents composants de la plateforme tels que les services
+backend, la base vectorielle Weaviate et les services de génération, retrieval, preprocessing
+et authentification.
+Cette approche a permis de standardiser l’environnement d’exécution, réduire les
+problèmes de configuration locale et améliorer la maintenabilité globale du système.
+79
+
+===== PAGE 81 =====
+Figure 5.11– Principe de fonctionnement de Docker Compose dans une architecture
+microservices
+Cette figure illustre le rôle de Docker Compose dans l’orchestration des différents
+microservices du système. Chaque service est construit à partir d’une image Docker puis
+exécuté dans un conteneur indépendant, facilitant ainsi le déploiement, l’isolation des
+dépendances et la gestion globale de l’architecture.
+5.7 Rétrospective du Sprint 3
+L’introduction de la première version de l’agent IA administratif durant ce sprint a
+mis en évidence plusieurs limites architecturales et techniques. Les phases de test nous
+ont poussés à repenser une architecture plus adaptée aux systèmes agentiques avancés. À
+ce stade du développement, une étude approfondie des agents IA devient donc nécessaire
+pour les prochains sprints.
+Par ailleurs, les améliorations UI/UX ont été appréciées par les encadrants, qui ont
+égalementproposéplusieurspistesd’améliorationsupplémentaires,notammentlaresponsivité
+de l’interface, la consultation des documents PDF directement dans le chat ainsi que
+l’amélioration du mode clair/sombre.
+80
+
+===== PAGE 82 =====
+CHAPITRE 6
+Étude et Réalisation Sprint 4 : Agent IA avancé, sécurité et
+amélioration de la plateforme
+
+===== PAGE 83 =====
+6 Sprint 4 : Agent IA avancé
+6.1 Introduction
+Le Sprint 4 s’est principalement concentré sur l’évolution de l’agent IA administratif
+vers une architecture agentique plus avancée basée sur le framework LangGraph. Ce
+sprint a également permis d’introduire un Security Dashboard dédié au suivi des alertes
+et des événements de sécurité du système, ainsi que plusieurs améliorations UI/UX et
+optimisations techniques de la plateforme.
+6.2 Backlog du Sprint 4
+Table 6.1: Backlog du Sprint 4
+ID Fonctionnalité Description Priorité
+2 Nouvelle architecture
+agentique
+Mettre en place une architecture
+orientée graphe permettant une
+meilleure séparation des étapes de
+raisonnement, décision et exécution.
+Élevée
+3 Gestion des
+confirmations
+Intégrer un mécanisme
+Human-in-the-loop pour les actions
+sensibles nécessitant une validation
+administrateur.
+Élevée
+4 Mémoire
+conversationnelle
+avancée
+Améliorer la gestion du contexte et
+des états conversationnels dans les
+workflows agentiques.
+Élevée
+5 Security Dashboard Développer un tableau de bord dédié au
+suivi des alertes et des événements de
+sécurité du système.
+Élevée
+82
+
+===== PAGE 84 =====
+ID Fonctionnalité Description Priorité
+9 Amélioration de la
+responsivité
+Optimiser l’affichage et l’adaptation des
+interfaces sur différentes tailles d’écran.
+Moyenne
+10 Branding et identité
+visuelle
+Ajouter un logo, un favicon et
+améliorer certains éléments visuels
+de la plateforme.
+Faible
+11 Optimisation des
+interfaces
+Améliorer plusieurs composants UI/UX
+des interfaces administrateur et
+utilisateur.
+Moyenne
+13 Documentation
+technique
+Documenter l’architecture LangGraph
+et les nouveaux workflows de l’agent
+administratif.
+Faible
+6.3 Évolution vers une architecture agentique avancée
+6.3.1 Introduction au framework LangGraph
+LangGraph est un framework conçu pour le développement de systèmes agentiques
+basés sur les modèles LLM. Il permet de représenter le comportement d’un agent sous
+forme de graphe composé de plusieurs nœuds et transitions, où chaque nœud correspond
+à une étape précise du raisonnement ou de l’exécution.
+Figure 6.1– Exemple simplifié d’un graphe LangGraph
+6.3.2 Intérêt des graphes agentiques
+Contrairement aux architectures linéaires classiques, LangGraph facilite la création de
+workflows complexes capables de gérer plusieurs étapes de décision, des appels d’outils,
+des boucles de raisonnement, des mécanismes de confirmation ainsi que la gestion de l’état
+83
+
+===== PAGE 85 =====
+conversationnel.
+6.3.3 Human-in-the-loop et gestion des confirmations
+Dans les systèmes agentiques, certaines actions peuvent modifier l’état du système
+ou impacter directement les configurations des services. Afin d’éviter les exécutions non
+désirées, une approcheHuman-in-the-loopa été intégrée dans l’architecture de l’agent IA
+administratif.
+Le principe consiste à maintenir l’intervention humaine dans les étapes sensibles du
+raisonnementagentique.Lorsquel’agentdétectequ’uneactionpeutentraînerunemodification
+importante, comme un changement de configuration ou le redémarrage d’un service, il ne
+l’exécute pas immédiatement. L’agent prépare d’abord un plan d’action puis demande
+une confirmation explicite de l’administrateur avant l’exécution.
+Ce mécanisme permet d’améliorer la sécurité, la traçabilité et le contrôle des actions
+réaliséesparl’agenttoutenconservantlesavantagesdel’automatisationetduraisonnement
+intelligent.
+6.4 Architecture et conception du Sprint 4
+6.4.1 Architecture générale Sprint 4
+La figure 6.2 présente l’architecture globale du Sprint 4 de Synapse. Elle montre
+l’évolutiondelaplateformeversuneadministrationintelligente,baséesurunadmin-service
+capable d’orchestrer les demandes administratives, de classifier les intentions, de gérer des
+workflows multi-étapes et de produire une synthèse finale.
+L’architecture s’appuie toujours sur le frontend React + Vite, les microservices RAG,
+Supabase, Weaviate et le LLM, avec unsecurity-servicechargé de contrôler les opérations
+sensibles.
+84
+
+===== PAGE 86 =====
+Figure 6.2– Architecture globale du Sprint 4
+6.4.2 Diagramme Use Case
+Lafigure6.3présentelesprincipalesinteractionsdusprint4entrel’utilisateur,l’administrateur
+etlesystème.L’utilisateurpeuts’authentifier,gérersonprofil,poserunequestion,consulter
+la réponse, utiliser la transcription et afficher les sources récupérées. L’administrateur
+peut gérer les documents, les utilisateurs et interagir avec le chat admin intelligent tout
+en appliquant les contrôles de sécurité.
+Figure 6.3– Diagramme de cas d’utilisation du sprint 4.
+85
+
+===== PAGE 87 =====
+6.4.3 schéma simplifié du workflow LangGraph
+Figure 6.4– Workflow simplifié du graphe LangGraph utilisé par l’agent administratif
+Le workflow commence par une étape de classification des intentions réalisée par le
+nœudclassify_intent_llm. Selon la nature de la requête administrateur, le graphe
+redirigel’exécutionversunagentspécialisé:advisory_agentpourlesquestionsconceptuelles,
+inspect_agentpour les opérations d’inspection et de consultation, oumutate_executor
+pour les actions de modification du système. Les résultats sont ensuite centralisés par le
+nœudsummarize_llm, chargé de produire la réponse finale retournée à l’administrateur.
+86
+
+===== PAGE 88 =====
+6.4.4 Architecture Agent IA administratif détaillé
+Figure 6.5– Architecture générale et détaillé de l’agent IA administratif basée sur
+LangGraph
+6.4.5 Diagrammes de séquence principaux
+6.4.5.1 Diagramme de séquence global de l’agent d’administration
+Lafigure6.6présenteunevuesynthétiquedufonctionnementglobaldel’agentd’administration
+durant le Sprint 4. Elle met en évidence les trois chemins principaux, à savoir le conseil,
+l’inspection et la mutation, ainsi que le cas particulier des workflows multi-tâches. Ce
+diagramme permet de visualiser la logique générale d’orchestration mise en place autour
+duadmin-service, deLangGraph, des services backend et dugeneration-service.
+87
+
+===== PAGE 89 =====
+Figure 6.6– Diagramme de séquence global de l’agent d’administration
+88
+
+===== PAGE 90 =====
+6.4.5.2 Diagramme de séquence du chemin de conseil
+Lafigure6.7présenteledéroulementduchemindeconseildansl’agentd’administration
+deSynapse.Ellemontrecommentunedemanded’informationesttransmisedepuisl’interface
+d’administrationversleadmin-service,puisclassifiéeparLangGraph.Lesystèmerécupère
+ensuite le contexte documentaire utile via leretrieval-service, avant de solliciter le
+generation-servicepour produire une réponse contextuelle destinée à l’administrateur.
+Figure 6.7– Diagramme de séquence du processus de chemin de conseil
+6.4.5.3 Diagramme de séquence du chemin d’inspection
+Lafigure6.8illustreledéroulementduchemind’inspectiondansl’agentd’administration.
+Après vérification de la session, la demande est transmise auadmin-service, qui s’appuie
+surLangGraphpourclassifierl’intention.Lesystèmeinterrogeensuitelesservicesd’inspection
+afin de récupérer l’état du système. Ce chemin peut également inclure, en lecture seule,
+la consultation des paramètres du pipeline RAG, tels que le chunking ou le reranking.
+Figure 6.8– Diagramme de séquence du processus de chemin d’inspection
+6.4.5.4 Diagramme de séquence du chemin de mutation
+La figure 6.9 présente le chemin de mutation de l’agent d’administration. Ce processus
+correspond aux opérations qui modifient réellement l’état du système. Après classification
+del’intention,lesystèmepeuteffectuerunelecturepréparatoire,puisvérifierlesautorisations
+89
+
+===== PAGE 91 =====
+via lesecurity-service. Une confirmation explicite de l’administrateur est ensuite
+requise avant l’exécution effective de la mutation.
+Figure 6.9– Diagramme de séquence du processus de chemin de mutation
+6.5 Fonctionnalités développées
+6.5.1 Catalogue d’outils administratifs
+L’agent IA administratif repose sur un catalogue d’outils spécialisés lui permettant
+d’interagir avec les différentsservices du système. Chaque outil correspond àune opération
+précisepouvantêtreexécutéeparl’agentselonl’intentiondétectéedanslarequêteadministrateur.
+Le catalogue inclut des outils de consultation (read-only) permettant d’inspecter l’état
+du système, les configurations et les rapports d’évaluation, ainsi que des outils de mutation
+capablesdemodifiercertainesconfigurationsdupipelineRAGoud’exécuterdesopérations
+administratives sensibles.
+Les principales capacités de l’agent sont :
+— Répondre aux questions administratives et fournir des recommandations sur le
+système.
+— Inspecterl’étatglobaldelaplateforme:documents,ingestion,embeddings,retrieval
+et génération.
+90
+
+===== PAGE 92 =====
+— Lire les configurations du preprocessing, du retrieval, des embeddings et de la
+génération.
+— Comparer différentes stratégies de chunking, reranking et embeddings.
+— ModifiercertainesconfigurationsdupipelineRAGaprèsconfirmationadministrateur.
+— Lancer, consulter et comparer des évaluations RAG.
+— Réindexer un document ou l’ensemble des documents validés.
+— Supprimer complètement un document du système.
+— Reprendreuneexécutionaprèsvalidationgrâceàlapersistancedel’étatconversationnel.
+6.5.2 Gestion des confirmations et actions sensibles
+Figure 6.10– Interface de confirmation avant l’exécution d’actions administratives
+sensibles
+Avant l’exécution d’actions sensibles, le système affiche une interface de confirmation
+afind’éviterlesmodificationsinvolontairesetd’intégrerunmécanismeHuman-in-the-loop.
+91
+
+===== PAGE 93 =====
+Figure 6.11– Exemple de confirmation d’une modification sensible proposée par l’agent
+IA administratif
+Lorsqu’une requête administrateur implique une modification du système, l’agent
+prépare d’abord une action en attente de validation avant toute exécution. L’interface
+affiche alors les paramètres concernés ainsi qu’un bouton de confirmation permettant à
+l’administrateur d’approuver ou de rejeter l’opération proposée.
+6.5.3 Streaming des événements et suivi des exécutions
+Figure 6.12– Streaming des événements et suivi des étapes d’exécution de l’agent IA
+administratif
+92
+
+===== PAGE 94 =====
+Afin d’améliorer la transparence du raisonnement agentique, le système affiche en
+temps réel les différentes étapes d’exécution de l’agent IA administratif. Le workflow
+présentéàl’administrateurinclutnotammentlaclassificationdelarequête,laplanification
+des actions, la préparation des mutations, les confirmations et la génération de la réponse
+finale.Cettefonctionnalitépermetàl’administrateurdesuivrel’évolutionduraisonnement
+de l’agent, de mieux comprendre les décisions prises et de renforcer la confiance dans les
+opérations exécutées par le système.
+Dans cet exemple, un administrateur non technique souhaite réduire les coûts liés
+à la consommation des tokens OpenAI. L’agent IA analyse alors la demande, inspecte
+les configurations actuelles du système puis propose plusieurs modifications optimisées,
+comme la réduction de certains paramètres de génération, l’ajustement des paramètres de
+retrieval ou la diminution du nombre de chunks utilisés dans le contexte.
+Chaque modification sensible est ensuite soumise à une confirmation explicite avant
+exécution.
+6.6 Security Dashboard et observabilité
+6.6.1 Objectif principal
+Le Security Dashboard a été développé afin d’améliorer l’observabilité et la sécurité
+globale de la plateforme Synapse. Son objectif principal est de centraliser les événements
+de sécurité, surveiller certaines activités sensibles du système et fournir une visibilité en
+temps réel sur les alertes importantes.
+Ce tableau de bord permet notamment de détecter certaines activités suspectes comme
+les tentatives répétées de connexion échouées, certaines requêtes de prompt injection ou
+encore les mutations administratives sensibles exécutées par l’agent IA administratif.
+6.6.2 Concepts de sécurité utilisés
+Dans cette section, plusieurs concepts liés à la cybersécurité et à l’observabilité du
+systèmesontintroduitsafindemieuxcomprendrelefonctionnementduSecurityDashboard.
+—Brute-forceattack:attaqueconsistantàeffectuerplusieurstentativesdeconnexion
+successives afin de deviner les identifiants d’un utilisateur.
+—Prompt injection :technique visant à manipuler le comportement d’un modèle
+LLM à travers des instructions malveillantes intégrées dans les prompts utilisateur.
+—Audit logs :journaux permettant d’enregistrer les actions importantes réalisées
+dans le système afin d’assurer la traçabilité et le suivi des événements sensibles.
+6.6.3 Gestion des alertes sécurité
+Lesystèmeintègreunmécanismedenotificationspermettantd’informerl’administrateur
+desévénementsdesécuritéimportantsdétectésdanslaplateforme.Uneicônedenotification
+93
+
+===== PAGE 95 =====
+accessible depuis l’interface administrateur ouvre un panneau contenant la liste des alertes
+récentes ainsi qu’un boutonOpen dashboardpermettant d’accéder au Security Dashboard
+complet.
+Les alertes sont classées selon leur niveau de criticité en trois catégories principales :
+—Info alerts :événements informatifs liés aux activités normales du système.
+—Warningalerts:événementssuspectsnécessitantunesurveillanceouuneattention
+particulière.
+—Critical alerts :événements critiques pouvant représenter une menace importante
+pour la sécurité du système.
+Figure 6.13– Panneau des notifications et alertes sécurité
+6.6.4 Alertes informatives
+LesInfo Alertscorrespondent aux événements informatifs générés par les différents
+services du système. Elles permettent principalement d’assurer la traçabilité des actions
+administratives et utilisateur sans représenter une menace directe pour la sécurité.
+Parmi les événements enregistrés :
+—ADMIN_MUTATION_CONFIRMED: exécution confirmée d’une mutation sensible par
+l’agent IA administratif.
+—USER_INVITED: invitation d’un nouvel utilisateur par un administrateur.
+—USER_VALIDATION_STATUS_CHANGED: changement du statut de validation d’un
+utilisateur.
+—USER_PASSWORD_CHANGED: modification du mot de passe d’un utilisateur.
+—DOCUMENT_UPLOADED: ajout d’un nouveau document dans le système.
+—DOCUMENT_APPROVED: validation d’un document avant son intégration dans le
+pipeline RAG.
+—DOCUMENT_DELETED: suppression d’un document du système.
+94
+
+===== PAGE 96 =====
+6.6.5 Alertes de vigilance
+LesWarning Alertssignalentdescomportementssuspectsoudesévénementsnécessitant
+unesurveillanceparticulière.Cesalertesnereprésententpasforcémentuneattaquecritique,
+mais peuvent indiquer une tentative d’abus ou une utilisation anormale du système.
+Les principales alertes de cette catégorie sont :
+—PROMPT_INJECTION_DETECTED:détectiond’unetentativedemanipulationdumodèle
+LLM via une requête malveillante.
+—RATE_LIMIT_EXCEEDED: dépassement du nombre maximal de requêtes autorisées
+sur une période donnée.
+—REQUEST_SIZE_LIMIT_EXCEEDED: dépassement de la taille maximale autorisée
+pour une requête ou un upload.
+Ces alertes permettent d’identifier rapidement certaines activités anormales pouvant
+affecter la stabilité ou la sécurité de la plateforme.
+6.6.6 Alertes critiques
+LesCritical Alertsreprésentent les événements de sécurité les plus sensibles détectés
+par le système. Elles nécessitent généralement une intervention rapide de l’administrateur.
+Dans la version actuelle du système, l’alerte critique principale est :
+—BRUTE_FORCE_ATTEMPTS: déclenchée lorsqu’un utilisateur dépasse le seuil autorisé
+de tentatives de connexion échouées.
+Cette alerte permet de détecter d’éventuelles attaques de type brute-force visant à
+compromettre les comptes utilisateurs.
+6.7 Améliorations UI/UX
+6.7.1 Responsivité de l’interface
+Dans ce sprint, plusieurs améliorations ont été apportées afin de rendre l’interface
+utilisateur plus responsive et adaptée aux différentes tailles d’écran. Des ajustements ont
+été réalisés sur plusieurs composants du frontend tels que les pages d’authentification, le
+chatbot, les tableaux administratifs, les modals et la barre de navigation.
+L’objectif principal de ces modifications était d’améliorer l’expérience utilisateur sur
+les écrans de petite taille, de réduire les problèmes d’affichage et d’assurer une meilleure
+fluidité de navigation entre les différentes fonctionnalités du système. Des optimisations
+CSS supplémentaires ont également été ajoutées afin d’améliorer l’organisation visuelle et
+la cohérence générale de l’interface.
+95
+
+===== PAGE 97 =====
+Figure 6.14– Adaptation de l’interface du chatbot aux écrans mobiles
+6.7.2 Mode Sombre
+Un mode sombre a été intégré afin d’améliorer le confort visuel des utilisateurs,
+particulièrement lors d’une utilisation prolongée de la plateforme. Cette fonctionnalité
+permet également de moderniser l’interface et d’offrir une meilleure expérience utilisateur
+selon les préférences d’affichage.
+Figure 6.15– Interface de la plateforme en mode sombre
+96
+
+===== PAGE 98 =====
+6.8 Rétrospective du Sprint 4
+Ce sprint a permis une avancée importante du projet grâce à l’introduction de la
+nouvelle architecture de l’agent IA administratif avec LangGraph ainsi que la mise en
+place d’un système de monitoring de sécurité. Cependant, plusieurs limites et défis ont
+été identifiés durant les phases de test et d’expérimentation.
+LeSecurity Dashboardresteactuellementunepremièreversiondusystèmed’observabilité.
+Certaines alertes sont encore basées sur des règles simples et le dashboard ne propose pas
+encore de mécanismes avancés d’analyse comportementale ou de corrélation intelligente
+entre événements de sécurité.
+L’introduction de l’agent IA administratif apporte également de nouveaux risques
+potentiels.Malgrél’intégrationdemécanismesdeconfirmation(Human-in-the-loop),certaines
+modifications système peuvent avoir un impact important sur les performances ou la
+stabilitédupipelineRAGsiellessontexécutéesparunadministrateurnonexperttechniquement.
+Cesobservationsontmisenévidencelanécessitéderenforcerdavantagelesmécanismes
+de sécurité, les garde-fous et les stratégies de validation avant exécution des actions
+sensibles.
+97
+
+===== PAGE 99 =====
+7 Conclusion
+98

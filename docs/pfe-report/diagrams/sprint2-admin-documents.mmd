@@ -1,0 +1,15 @@
+sequenceDiagram
+    actor Admin
+    participant Frontend
+    participant AdminAPI as admin-service
+    participant SupabaseDB as Supabase DB
+    participant SupabaseStorage as Supabase Storage
+
+    Admin->>Frontend: Ouvrir liste des documents
+    Frontend->>AdminAPI: Demander la liste admin
+    AdminAPI->>SupabaseDB: Lire metadonnees + uploader
+    AdminAPI->>SupabaseStorage: Recuperer apercus / chemins
+    SupabaseDB-->>AdminAPI: Documents + statuts
+    SupabaseStorage-->>AdminAPI: Liens fichiers
+    AdminAPI-->>Frontend: Liste enrichie
+    Frontend-->>Admin: Consultation detaillee

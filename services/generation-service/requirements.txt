@@ -2,7 +2,17 @@ fastapi>=0.115.0
 pydantic>=2.7.0
 uvicorn>=0.30.0
 httpx>=0.28.0
-ragas>=0.2.0
+# Ragas evaluation stack — pinned to a mutually compatible set.
+# Left unpinned, pip resolves ragas to a build whose import pulls
+# `langchain_community.chat_models.vertexai`, a module removed in
+# langchain-community>=0.4, which makes `import ragas` fail at runtime.
+# This 0.2.x stack is verified to import and evaluate end-to-end.
+ragas==0.2.15
+langchain-core>=0.3,<0.4
+langchain-community>=0.3,<0.4
+langchain-openai>=0.2,<0.3
+openai>=1.40,<2
+datasets>=2.16,<3
 pandas>=2.2.0
 python-multipart>=0.0.9
 python-dotenv>=1.0.0

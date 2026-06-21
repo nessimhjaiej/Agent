@@ -1,0 +1,18 @@
+sequenceDiagram
+    actor Utilisateur
+    participant Frontend
+    participant Generation
+    participant Retrieval
+    participant Weaviate
+    participant LLM
+
+    Utilisateur->>Frontend: Poser une question
+    Frontend->>Generation: POST /ask
+    Generation->>Retrieval: Rechercher passages pertinents
+    Retrieval->>Weaviate: Recherche vectorielle / hybride
+    Weaviate-->>Retrieval: Passages recuperes
+    Retrieval-->>Generation: Chunks classes
+    Generation->>LLM: Generer la reponse contextualisee
+    LLM-->>Generation: Reponse + citations
+    Generation-->>Frontend: Reponse finale
+    Frontend-->>Utilisateur: Affichage de la reponse

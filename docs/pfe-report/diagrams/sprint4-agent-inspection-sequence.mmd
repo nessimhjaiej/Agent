@@ -1,0 +1,21 @@
+sequenceDiagram
+    actor Admin
+    participant UI as Frontend
+    participant Auth
+    participant Agent as admin-service
+    participant Graph as LangGraph
+    participant Read as Inspection
+
+    Admin->>UI: Demander une inspection
+    UI->>Auth: Verifier la session
+    Auth-->>UI: Session valide
+    UI->>Agent: Transmettre la demande
+    Agent->>Graph: Classifier l'intention
+    Graph->>Read: Interroger l'etat du systeme
+    Read-->>Graph: Informations d'inspection
+    opt Consultation des parametres RAG en lecture seule
+        Graph->>Read: Lire les parametres RAG
+        Read-->>Graph: Parametres actuels
+    end
+    Graph-->>UI: Retourner la synthese
+    UI-->>Admin: Afficher l'inspection

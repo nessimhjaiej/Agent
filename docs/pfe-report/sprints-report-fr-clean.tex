@@ -1,0 +1,540 @@
+\chapter{Etude et realisation Sprint 2 : Mise en place du socle technique, de l'integration initiale et de la premiere version fonctionnelle}
+
+\section{Introduction}
+
+Le sprint 2 correspond a la vraie phase de fondation technique de \texttt{Synapse}. Durant cette periode, l'objectif n'etait pas encore d'affiner l'experience utilisateur ou d'introduire des mecanismes d'orchestration avances, mais plutot de construire une base fiable sur laquelle les evolutions futures pourraient reposer. L'equipe s'est donc concentree sur la structuration du depot, la definition d'une architecture microservices, l'installation des premiers services backend et la mise en place d'un premier cycle complet allant de l'authentification jusqu'a la generation de reponse.
+
+Ce sprint a egalement joue un role important dans la clarification de la vision du projet. A ce stade, il fallait valider que \texttt{Synapse} etait capable de gerer des documents, d'extraire leur contenu, d'indexer les passages utiles, puis de produire une reponse contextualisee a partir d'une question utilisateur. Il fallait aussi verifier que les differentes briques du projet pouvaient effectivement fonctionner ensemble, aussi bien cote backend que cote frontend. En d'autres termes, ce sprint a permis de passer d'une idee d'architecture a une premiere version executable et integree du systeme.
+
+\section{Backlog du Sprint 2}
+
+Les principales taches de ce sprint peuvent etre presentees comme suit :
+
+\begin{itemize}
+\item initialisation de l'arborescence du projet
+\item mise en place de la documentation technique et des README
+\item definition de l'architecture microservices
+\item mise en place du service d'authentification
+\item mise en place du service de preprocessing
+\item mise en place du service d'embedding
+\item mise en place du service de retrieval
+\item mise en place du service de generation
+\item mise en place du service d'ingestion
+\item integration Docker et Docker Compose
+\item connexion du frontend au backend
+\item integration initiale de l'espace admin et user
+\item ajout des premiers tests unitaires et d'integration
+\item premiers essais d'evaluation de la qualite des reponses
+\item evolution de la gestion des utilisateurs et des parcours d'authentification
+\item premiers ajustements sur l'experience de chat
+\end{itemize}
+
+\section{Etude approfondie des systemes RAG}
+
+\subsection{Architecture microservices et structuration du systeme}
+
+Le choix d'une architecture microservices repondait a un besoin de modularite et de separation claire des responsabilites. Chaque service prend en charge une etape bien precise du cycle de traitement : authentification, ingestion, pretraitement, embeddings, recherche ou generation. Cette approche facilite la maintenance, permet de faire evoluer un composant sans remettre en cause l'ensemble du systeme, et rend l'architecture plus lisible dans un contexte de projet de fin d'etudes.
+
+\subsection{Etude du flux documentaire initial}
+
+Le flux documentaire initial commence par le depot d'un document, suivi de son stockage et de l'enregistrement de ses metadonnees. Les operations de traitement et d'indexation s'appuient ensuite sur les services dedies au preprocessing et aux embeddings, qui preparent les passages puis produisent les representations vectorielles necessaires a la recherche. Cette chaine est essentielle, car elle conditionne directement la qualite de la recherche et donc la pertinence des reponses generees.
+
+\subsection{Etude du flux question-reponse}
+
+Le flux question-reponse repose sur une logique RAG classique. Lorsqu'un utilisateur pose une question, le systeme interroge d'abord la base vectorielle afin de recuperer les passages les plus pertinents. Ces passages sont ensuite injectes dans le contexte de generation, ce qui permet au modele de produire une reponse plus fiable, plus ciblee et mieux fondee sur le contenu documentaire reel.
+
+\subsection{Etude de l'authentification et de la gestion des roles}
+
+Des le debut du projet, il etait necessaire de distinguer les espaces d'usage entre les utilisateurs classiques et l'administrateur de \texttt{Synapse}. L'etude a donc porte sur la gestion des sessions, la protection des routes et l'association entre l'identite authentifiee et les droits disponibles dans l'application. Cette base etait indispensable pour preparer les evolutions des sprints suivants.
+
+\section{Choix technologiques du nouveau systeme}
+
+\subsection{Choix du framework backend}
+
+Le backend s'appuie sur \texttt{FastAPI}, un framework bien adapte a la creation de services web modernes. Ce choix se justifie par sa simplicite de prise en main, son support naturel des API REST, sa documentation automatique et ses bonnes performances pour des services decoupes en plusieurs composants.
+
+\subsection{Choix de la technologie frontend}
+
+Le frontend repose sur \texttt{React + Vite}, ce qui permet d'obtenir une interface rapide, reactive et facile a faire evoluer. Ce choix etait pertinent pour separer clairement la couche presentation de la couche metier tout en gardant une bonne fluidite de developpement.
+
+\subsection{Choix du systeme d'authentification}
+
+L'utilisation de \texttt{Supabase} a permis de gerer rapidement l'authentification, les sessions et une partie des metadonnees associees aux utilisateurs. Cela a evite de reimplementer un mecanisme complet d'authentification et a offert une base solide pour la gestion des acces.
+
+\subsection{Choix du stockage vectoriel et des modeles}
+
+Pour la partie recherche semantique, la base vectorielle choisie est \texttt{Weaviate}. Ce choix s'inscrit dans une logique de recherche efficace sur les passages documents. Cote generation et embeddings, le projet prepare deja la coexistence entre plusieurs modeles ou fournisseurs, ce qui ouvre la voie a des ajustements ulterieurs selon les besoins du systeme.
+
+\section{Conception de la nouvelle architecture}
+
+\subsection{Objectifs de l'architecture initiale}
+
+Les objectifs de l'architecture mise en place durant ce sprint etaient les suivants :
+
+\begin{itemize}
+\item garantir une bonne separation des responsabilites
+\item obtenir une base technique modulable
+\item rendre possible une integration progressive des services
+\item preparer le terrain pour les optimisations futures
+\end{itemize}
+
+\subsection{Architecture generale Sprint 2}
+
+L'architecture generale du sprint 2 repose sur un decoupage clair entre les services documentaires, les services de recherche et de generation, ainsi que les composants transverses comme l'authentification et le stockage. Cette organisation permet de suivre plus facilement le parcours complet d'un document et celui d'une question utilisateur.
+
+\subsection{Diagramme Use Case du Sprint 2}
+
+Le diagramme de cas d'utilisation du sprint 2 met en evidence les interactions principales entre les acteurs et la plateforme, notamment l'acces aux fonctions documentaires, la consultation des reponses et les actions d'administration de base.
+
+\subsection{Diagrammes de sequence du Sprint 2}
+
+Les diagrammes de sequence servent a expliciter les premiers flux critiques du systeme, en particulier l'authentification, l'ingestion documentaire et la chaine de question-reponse.
+
+\section{Mise en place des microservices}
+
+\subsection{Service d'authentification}
+
+\paragraph{Role principal}
+
+Le service d'authentification a permis de structurer les premieres regles d'acces au systeme. Il assure la connexion des utilisateurs, la gestion des sessions et la distinction entre les parcours admin et user.
+
+\subsection{Service de preprocessing}
+
+\paragraph{Role principal}
+
+Le service de preprocessing prepare les documents avant leur indexation. Son role est de nettoyer, normaliser et segmenter le texte de maniere a produire des passages exploitables par les etapes ulterieures.
+
+\subsection{Service d'embedding}
+
+\paragraph{Role principal}
+
+Le service d'embedding transforme les segments textuels en vecteurs numeriques. Cette etape est fondamentale, car elle rend possible la recherche semantique dans la base vectorielle.
+
+\subsection{Service de retrieval}
+
+\paragraph{Role principal}
+
+Le service de retrieval interroge la base vectorielle afin de recuperer les passages les plus pertinents en fonction d'une question donnee. Il constitue le lien entre la connaissance indexee et la generation finale.
+
+\subsection{Service de generation}
+
+\paragraph{Role principal}
+
+Le service de generation construit le contexte et formule la reponse finale. Il exploite les passages recuperes pour guider le modele et produire une sortie plus precise qu'une generation sans contexte.
+
+\subsection{Service d'ingestion}
+
+\paragraph{Role principal}
+
+Le service d'ingestion prend en charge les operations documentaires de base, notamment le depot des fichiers, leur stockage, la gestion des metadonnees et la mise a jour de leur etat dans le systeme. Il constitue le point d'entree du cycle documentaire, sans porter a lui seul toute la logique d'indexation.
+
+\subsection{Frontend et integration initiale}
+
+\paragraph{Role principal}
+
+Le frontend a servi de point d'entree unique pour les utilisateurs et l'administrateur. Durant ce sprint, l'effort a surtout porte sur l'integration des premiers appels backend et sur la validation d'un parcours fonctionnel complet.
+
+\section{Fonctionnalites developpees dans le Sprint 2}
+
+\subsection{Authentification et gestion des utilisateurs}
+
+Une premiere gestion des comptes utilisateurs a ete mise en place afin de controler l'acces a \texttt{Synapse}. Cette fonctionnalite couvre la connexion, la persistance minimale des sessions et la distinction entre les droits d'un utilisateur classique et ceux d'un administrateur.
+
+\subsection{Upload et indexation des documents}
+
+Le systeme est devenu capable de recevoir des documents, de les enregistrer, de les preparer puis de les indexer. Cette fonctionnalite constitue une brique centrale, car elle alimente directement la base de connaissances exploitee ensuite par le systeme RAG.
+
+\subsection{Recherche et generation de reponses}
+
+La recherche documentaire et la generation de reponses ont ete reliees dans un premier pipeline fonctionnel. L'utilisateur peut ainsi poser une question, obtenir une reponse contextualisee et beneficier d'un systeme fonde sur des passages reels extraits des documents.
+
+\subsection{Tableau de bord initial Admin / User}
+
+Les premiers espaces d'interaction de \texttt{Synapse} ont ete rendus operationnels, aussi bien pour l'utilisateur final que pour l'administrateur. Meme si l'interface restait encore simple, elle permettait deja de tester les parcours essentiels du projet.
+
+\subsection{Mise en place des tests et de l'environnement Docker}
+
+Afin de rendre le projet plus reproductible, un environnement conteneurise a ete introduit avec Docker Compose. Des premiers tests ont egalement ete ajoutes pour verifier le bon fonctionnement des services et reduire les risques de regression.
+
+\subsection{Enrichissement progressif des parcours utilisateur}
+
+En fin de sprint, \texttt{Synapse} a aussi commence a gagner en confort d'utilisation avec des evolutions sur la gestion des comptes, l'invitation des utilisateurs et certains parcours d'authentification. Ces ajouts restent encore en construction, mais ils montrent que la plateforme n'etait deja plus seulement un assemblage technique.
+
+\section{Retrospective du Sprint 2}
+
+Le sprint 2 a permis de transformer une idee architecturale en une premiere plateforme executable. Il a confirme la pertinence du decoupage microservices, valide le fonctionnement general du pipeline RAG et montre qu'une integration reelle entre frontend, backend et services externes etait possible. En revanche, cette premiere version a aussi mis en lumiere plusieurs besoins de consolidation, notamment autour de la stabilite des sessions, de la lisibilite des donnees documentaires, de la supervision administrative et de l'experience utilisateur. Ces constats ont naturellement oriente le travail du sprint suivant.
+
+\chapter{Etude et realisation Sprint 3 : Conception d'un prototype agentique d'administration pour Synapse}
+
+\section{Introduction}
+
+Le sprint 3 a marque un changement important dans l'orientation du projet. Apres avoir pose les bases du systeme RAG et de son architecture microservices, l'equipe a travaille sur deux axes complementaires. D'une part, la branche principale a apporte plusieurs corrections et ameliorations necessaires pour rendre \texttt{Synapse} plus stable, plus coherent et plus agreable a utiliser. D'autre part, la branche \texttt{admin-agentic} a servi de terrain d'experimentation pour concevoir un prototype agentique dedie a l'administration de la plateforme.
+
+Cette phase a donc combine un travail de consolidation et un travail d'innovation. Elle a permis, d'un cote, d'integrer des correctifs lies a l'authentification, aux sessions et a certaines fonctionnalites d'administration, et, de l'autre, de demarrer la construction du \texttt{admin-service}, de tester une premiere logique d'agent recursif, d'introduire un fast path pour certaines demandes frequentes et de mieux formaliser l'architecture cible a travers des diagrammes, des specifications d'API et une documentation plus claire. Ce sprint a ainsi joue le role de passerelle entre un systeme RAG fonctionnel et une vision plus intelligente de l'administration.
+
+\section{Backlog du Sprint 3}
+
+Les principales taches de ce sprint peuvent etre presentees comme suit :
+
+\begin{itemize}
+\item integration des correctifs issus de la branche principale
+\item amelioration de certaines fonctionnalites admin existantes
+\item ajustements autour de l'authentification et de l'experience utilisateur
+\item integration de la transcription dans les parcours d'usage
+\item demarrage du \texttt{admin-service}
+\item conception d'un prototype d'administration agentique
+\item experimentation d'un agent recursif
+\item ajout d'un fast path pour les questions administratives frequentes
+\item formalisation des premiers cas d'usage admin intelligents
+\item clarification de l'architecture cible du module admin
+\item production de diagrammes de conception plus explicites
+\item redaction de specifications d'API pour les services lies a l'administration
+\item ajustement de l'infrastructure et de la documentation projet
+\item preparation des evolutions futures vers une orchestration plus complete
+\end{itemize}
+
+\section{Etude approfondie du systeme}
+
+\subsection{Etude de la consolidation du systeme}
+
+Le sprint 3 ne s'est pas limite a la conception d'un prototype. Il a egalement integre un ensemble de correctifs et d'ameliorations provenant de la branche principale. Ce travail de consolidation etait indispensable pour continuer a faire evoluer \texttt{Synapse} sans fragiliser l'existant.
+
+\subsubsection{Corrections fonctionnelles cote administration}
+
+Certaines fonctionnalites admin ont ete corrigees ou ajustees afin d'assurer un comportement plus coherent de la plateforme. Ces corrections ont contribue a rendre les parcours deja disponibles plus fiables avant l'introduction d'une couche agentique plus ambitieuse.
+
+\subsubsection{Stabilisation de l'experience utilisateur}
+
+Les ajustements menes sur la branche principale ont egalement participe a une meilleure fluidite d'utilisation, notamment autour de l'authentification, du comportement de l'interface et de la coherence generale des interactions.
+
+\subsubsection{Integration de la transcription}
+
+Le sprint 3 a aussi marque l'apparition plus concrete de la transcription dans l'experience utilisateur. Cette integration a contribue a rendre les interactions avec \texttt{Synapse} plus naturelles et a ouvrir la voie a des usages conversationnels plus souples.
+
+\subsection{Etude du concept d'administration agentique}
+
+L'idee d'une administration agentique repose sur un principe simple : l'espace d'administration ne doit plus se limiter a des boutons ou a des formulaires statiques, mais devenir capable de comprendre une intention, de choisir une action adaptee et d'assister l'administrateur de maniere plus fluide. Cette reflexion a pousse l'equipe a etudier comment un agent pouvait intervenir dans des taches de supervision, d'explication ou d'orientation.
+
+\subsubsection{Difference entre chat RAG et agent d'administration}
+
+Un chat RAG classique a pour objectif principal de repondre a une question a partir de documents. A l'inverse, un agent d'administration doit pouvoir interpreter une demande plus operationnelle, raisonner sur l'etat du systeme et eventuellement mobiliser plusieurs operations pour produire une reponse utile.
+
+\subsubsection{Besoin d'un espace admin plus intelligent}
+
+Au fil de l'avancement de \texttt{Synapse}, il est devenu evident que l'administration du systeme allait depasser la simple gestion manuelle des documents et des utilisateurs. Un prototype intelligent permettait donc d'explorer une interface plus naturelle pour piloter la plateforme.
+
+\subsection{Etude d'une logique d'agent recursif}
+
+L'un des axes d'experimentation de ce sprint a ete l'etude d'un agent recursif. Cette logique consiste a permettre au systeme de decomposer une demande complexe en plusieurs etapes de raisonnement ou de verification, plutot que de tenter de produire une reponse en une seule passe.
+
+\subsubsection{Decomposition d'une demande complexe}
+
+Certaines demandes administratives ne peuvent pas etre traitees par une simple reponse directe. Elles necessitent une lecture du contexte, une selection d'outils ou une verification intermediaire. L'agent recursif represente une premiere piste pour gerer ce type de cas.
+
+\subsubsection{Limites d'une approche entierement generique}
+
+Cette experimentation a egalement montre qu'une approche totalement libre pouvait etre couteuse et parfois peu previsible. C'est pour cette raison qu'un mecanisme plus direct a aussi ete envisage pour les demandes frequentes.
+
+\subsection{Etude du fast path pour les requetes courantes}
+
+Le fast path correspond a une voie de traitement rapide pour certaines questions ou intentions recurrentes. L'idee est d'eviter un raisonnement trop lourd quand une reponse simple, guidee ou predefinie peut suffire.
+
+\subsubsection{Reduction du cout de traitement}
+
+En orientant rapidement les demandes les plus simples, il devient possible de diminuer le temps de reponse et de rendre l'interface admin plus reactive.
+
+\subsubsection{Amelioration de la lisibilite fonctionnelle}
+
+Le fast path permet aussi de mieux structurer les comportements du systeme. Il aide a distinguer les cas simples, traitables directement, des cas plus riches qui necessitent un raisonnement plus approfondi.
+
+\subsection{Etude de la formalisation architecturale}
+
+Ce sprint a egalement ete marque par un effort de formalisation. A mesure que la vision agentique prenait forme, il devenait necessaire de mieux documenter les interactions, les cas d'usage et les API afin de rendre la solution plus comprehensible et plus partageable au sein de l'equipe.
+
+\section{Choix technologiques et evolutions retenues}
+
+\subsection{Choix d'un prototype separe pour l'administration}
+
+L'equipe a fait le choix de demarrer un service specifique pour l'administration plutot que d'integrer cette logique directement dans les services RAG existants. Cette decision permettait d'isoler les experimentations agentiques sur la branche \texttt{admin-agentic} tout en preservant la stabilite du reste du systeme sur la branche principale.
+
+\subsection{Choix d'une approche progressive de l'agent}
+
+Plutot que de construire immediatement une orchestration complexe, le sprint 3 a privilegie une approche progressive : commencer par un prototype simple, tester une logique recursive, puis introduire des mecanismes de routage plus directs comme le fast path.
+
+\subsection{Choix de renforcer la documentation technique}
+
+La production de diagrammes, de schemas et de specifications d'API a ete retenue comme un axe important du sprint. Ce travail etait necessaire pour rendre la future architecture agentique plus claire, plus defendable et plus facile a faire evoluer.
+
+\section{Conception de la nouvelle architecture}
+
+\subsection{Objectifs de la nouvelle architecture}
+
+Les objectifs de cette evolution architecturale etaient les suivants :
+
+\begin{itemize}
+\item consolider la base existante avant d'introduire des comportements plus avances
+\item introduire un premier prototype d'administration intelligente
+\item separer la logique admin agentique du pipeline RAG principal
+\item explorer un raisonnement multi-etapes pour certaines demandes
+\item preparer l'orchestration plus complete du sprint suivant
+\end{itemize}
+
+\subsection{Architecture generale Sprint 3}
+
+L'architecture du sprint 3 conserve le socle microservices de \texttt{Synapse}, tout en evoluant sur deux plans. Le premier correspond a la consolidation du systeme existant sur la branche principale. Le second ajoute une nouvelle brique experimentale sur la branche \texttt{admin-agentic} : le \texttt{admin-service}. Ce service commence a jouer le role d'intermediaire intelligent entre l'interface d'administration, les informations du systeme et les futures actions outillees que l'agent devra pouvoir declencher.
+
+\subsection{Diagramme Use Case du Sprint 3}
+
+Le diagramme de cas d'utilisation du sprint 3 met cette fois l'accent sur les interactions entre l'administrateur et le prototype agentique, tout en conservant les fonctionnalites admin deja consolidees sur la branche principale.
+
+\subsection{Diagramme du prototype d'administration}
+
+Un diagramme de sequence ou d'activite peut utilement illustrer le fonctionnement du prototype, notamment la reception d'une demande admin, le passage par une logique de selection, puis le retour d'une reponse ou d'une orientation adaptee.
+
+\section{Mise en place des evolutions systeme}
+
+\subsection{Integration des correctifs de la branche principale}
+
+Une partie importante du sprint a consiste a recuperer et integrer les correctifs issus de la branche principale. Ce travail a concerne plusieurs aspects de la plateforme, notamment certaines fonctionnalites d'administration, des ajustements d'interface et des ameliorations liees au comportement global du systeme.
+
+\subsection{Integration de la transcription dans l'interface}
+
+La transcription a ete ajoutee dans les parcours visibles du produit afin de permettre une interaction plus fluide avec la plateforme. Meme si cette fonctionnalite restait encore perfectible, elle representait deja une evolution notable de l'experience d'utilisation.
+
+\subsection{Demarrage du admin-service}
+
+L'une des avancees majeures du sprint a ete le lancement effectif du \texttt{admin-service}. Cette etape a permis de donner une existence concrete a l'idee d'une administration plus intelligente et de creer un espace dedie aux futures logiques agentiques.
+
+\subsection{Construction du prototype agentique}
+
+Le prototype a ete pense comme une premiere preuve de concept. Il ne s'agissait pas encore d'un agent completement mature, mais plutot d'une base experimentale capable de recevoir une demande d'administration, de l'interpreter et de renvoyer une premiere forme de reponse utile.
+
+\subsection{Experimentation d'un agent recursif}
+
+Le travail mene autour de l'agent recursif a permis de tester une logique de raisonnement plus souple. Cette experimentation est importante, car elle annonce directement les mecanismes d'orchestration plus structures qui seront approfondis par la suite.
+
+\subsection{Ajout d'un fast path}
+
+L'introduction d'un fast path pour certaines questions frequentes a contribue a rendre le prototype plus pragmatique. Ce choix a montre qu'une architecture agentique efficace ne repose pas uniquement sur le raisonnement profond, mais aussi sur la capacite a traiter rapidement les cas simples.
+
+\subsection{Documentation et specifications}
+
+En parallele du travail de prototype, un effort important a ete fourni sur les diagrammes, les cas d'usage et les specifications d'API. Cette documentation a aide a clarifier la direction prise par \texttt{Synapse} et a structurer la suite du projet.
+
+\section{Fonctionnalites developpees}
+
+\subsection{Corrections et consolidation de la plateforme}
+
+Le sprint 3 a d'abord permis de renforcer la base existante de \texttt{Synapse} grace a l'integration de correctifs provenant de la branche principale. Cette consolidation etait importante pour maintenir un produit exploitable pendant que les experimentations plus avancees etaient menees en parallele.
+
+\subsection{Integration de la transcription dans l'experience utilisateur}
+
+L'ajout de la transcription a enrichi les modes d'interaction avec \texttt{Synapse}. Cette fonctionnalite a rendu l'utilisation du systeme plus accessible et plus naturelle, tout en preparant des evolutions futures autour des interfaces conversationnelles.
+
+\subsection{Premiere base du module d'administration intelligente}
+
+Le sprint 3 a permis de transformer une idee en premier module exploitable. Avec le demarrage du \texttt{admin-service}, \texttt{Synapse} ne se limite plus a un systeme RAG conversationnel ; la plateforme commence a se doter d'un espace admin plus intelligent.
+
+\subsection{Prototype d'agent pour le raisonnement administratif}
+
+La mise en place d'un prototype agentique constitue l'une des contributions les plus marquantes de ce sprint. Meme si cette version reste exploratoire, elle represente une etape concrete vers un assistant capable d'aider l'administrateur dans ses decisions et ses analyses.
+
+\subsection{Traitement recursif des demandes complexes}
+
+L'experimentation de l'agent recursif a permis d'etudier la faisabilite d'un raisonnement en plusieurs etapes. Cette capacite est importante pour les demandes qui ne peuvent pas etre resolues par une simple reponse directe.
+
+\subsection{Traitement rapide des cas simples}
+
+Avec le fast path, le systeme commence a distinguer les demandes simples des demandes plus complexes. Cette evolution contribue a une meilleure reactivite du prototype et montre deja une forme de maturite dans la conception.
+
+\subsection{Documentation plus claire de l'architecture cible}
+
+Le travail de formalisation mene sur les diagrammes, les specifications et les schemas a facilite la comprehension du prototype et a pose des bases solides pour les evolutions du sprint 4.
+
+\section{Retrospective du Sprint 3}
+
+Le sprint 3 a ete une phase de transition tres riche pour \texttt{Synapse}. Il a combine deux dynamiques complementaires : d'un cote, l'integration de correctifs et d'ameliorations issus de la branche principale ; de l'autre, l'ouverture d'une nouvelle direction produit avec la conception d'un prototype d'administration agentique. Le lancement du \texttt{admin-service}, l'experimentation de l'agent recursif et l'ajout d'un fast path ont permis de verifier que cette orientation etait realiste et pertinente.
+
+Ce sprint reste volontairement exploratoire. Tout n'y etait pas encore finalise, mais il a permis de clarifier la vision, de valider des choix importants et de donner une forme concrete a l'idee d'un agent d'administration. En ce sens, il constitue le vrai point de depart de l'intelligence administrative qui sera approfondie et structuree dans le sprint 4.
+
+\chapter{Etude et realisation Sprint 4 : Administration intelligente de Synapse, orchestration agentique et optimisation avancee}
+
+\section{Introduction}
+
+Le sprint 4 marque une evolution majeure du projet. Alors que les deux sprints precedents ont permis de construire puis de stabiliser \texttt{Synapse}, cette nouvelle phase introduit une dimension plus intelligente et plus dynamique dans l'administration du systeme. L'objectif n'etait plus uniquement d'executer des flux documentaires ou d'afficher des informations, mais de permettre a l'espace admin de raisonner sur les demandes, de choisir une strategie d'action et de coordonner plusieurs outils ou services.
+
+\section{Backlog du Sprint 4}
+
+Les principales taches de ce sprint peuvent etre resumees comme suit :
+
+\begin{itemize}
+\item integration de \texttt{LangGraph} dans \texttt{admin-service}
+\item mise en place d'une logique de classification des intentions
+\item ajout de branches d'execution : conseil, inspection, mutation, workflow
+\item detection des workflows multi-etapes
+\item exposition des strategies de chunking disponibles
+\item ajout ou evolution des endpoints de reranking
+\item ameliorations semantiques et optimisations multi-taches
+\item introduction du \texttt{security-service}
+\item correction du token admin bloquant certaines reponses
+\item ameliorations UI/UX du chat admin
+\item ameliorations responsive et animation de frappe
+\end{itemize}
+
+\section{Etude du systeme agentique}
+
+\subsection{Etude de l'orchestration basee sur graphe}
+
+Le recours a une orchestration basee sur graphe permet de structurer proprement la prise de decision de l'agent d'administration \texttt{Synapse}. Au lieu d'enchainer des appels de maniere rigide, le systeme peut classifier la demande, choisir une branche de traitement adaptee puis produire une synthese finale.
+
+\subsubsection{Classification des intentions}
+
+La classification des intentions consiste a identifier la nature exacte de la demande admin : besoin d'information, inspection d'un etat, action de mutation ou lancement d'un workflow plus complexe.
+
+\subsubsection{Branches d'execution}
+
+Chaque branche du graphe repond a une logique differente. Cette organisation rend le systeme plus lisible, plus maintenable et plus facile a faire evoluer.
+
+\subsubsection{Synthese finale de la reponse}
+
+La synthese finale joue un role central, car elle rassemble les resultats des branches traitees et les reformule dans une reponse claire pour l'administrateur.
+
+\subsection{Etude du traitement multi-taches}
+
+Le traitement multi-taches repond au besoin de gerer des demandes qui ne se limitent pas a une seule action. Certaines questions admin supposent une sequence d'etapes, voire plusieurs verifications ou appels outils.
+
+\subsubsection{Detection des demandes multi-etapes}
+
+Cette sous-partie peut expliquer comment le systeme reconnait qu'une demande doit etre decomposee en plusieurs operations.
+
+\subsubsection{Coordination entre outils et services}
+
+Une fois la demande decomposee, le systeme doit coordonner les services existants de maniere coherente. C'est ici que l'orchestration agentique prend tout son sens.
+
+\subsubsection{Optimisation semantique}
+
+Les ameliorations semantiques visent a rendre les reponses plus pertinentes, les actions plus ciblees et l'exploitation des outils plus intelligente.
+
+\subsection{Etude du volet securite}
+
+Avec l'introduction d'un espace admin plus puissant, la question de la securite devient encore plus importante. Il ne s'agit plus seulement de proteger l'acces, mais aussi de controler les actions sensibles.
+
+\subsubsection{Controle des appels sensibles}
+
+Cette partie peut decrire les controles introduits avant certaines operations critiques.
+
+\subsubsection{Separation des responsabilites}
+
+La separation des responsabilites permet de garder une architecture plus sure et plus lisible.
+
+\subsubsection{Fiabilisation de l'authentification admin}
+
+La correction des problemes lies au token admin a contribue a rendre les reponses et les actions du chat admin plus fiables.
+
+\subsection{Etude de l'experience admin}
+
+L'experience admin ne depend pas uniquement de la puissance du systeme, mais aussi de la maniere dont les reponses et les actions sont exposees dans l'interface.
+
+\subsubsection{Evolution du chat d'administration}
+
+Le chat admin devient un point central d'interaction, capable de guider l'utilisateur administrateur dans ses actions.
+
+\subsubsection{Ameliorations responsive}
+
+Les ameliorations responsive renforcent l'impression de finition et rendent l'interface plus confortable sur differents formats d'ecran.
+
+\subsubsection{Rendu des reponses et feedback visuel}
+
+Le soin apporte au rendu des reponses, aux messages et aux animations contribue a une experience plus fluide et plus professionnelle.
+
+\section{Choix technologiques et d'architecture}
+
+\subsection{Choix de LangGraph pour l'orchestration}
+
+\texttt{LangGraph} a ete retenu pour modeliser le raisonnement de l'agent \texttt{Synapse} sous forme de graphe de traitement. Ce choix convient particulierement bien a des enchainements conditionnels et a des branches specialisees.
+
+\subsection{Choix d'une architecture admin pilotee par intentions}
+
+L'approche par intentions permet d'eviter une logique trop rigide. Elle rend l'administration plus souple et plus adaptative face a des demandes variees.
+
+\subsection{Choix d'une couche de securite dediee}
+
+L'introduction d'un \texttt{security-service} s'inscrit dans une logique de maturation de la plateforme, ou les controles de securite commencent a etre traites comme une preoccupation a part entiere.
+
+\section{Conception de la nouvelle architecture}
+
+\subsection{Objectifs de l'architecture agentique}
+
+Les objectifs principaux de cette nouvelle architecture sont les suivants :
+
+\begin{itemize}
+\item centraliser l'administration intelligente
+\item mieux orchestrer les services existants
+\item introduire la multi-tache
+\item renforcer la securite
+\item ameliorer l'experience du chat admin
+\end{itemize}
+
+\subsection{Architecture generale Sprint 4}
+
+L'architecture du sprint 4 se distingue par une logique d'orchestration plus avancee, dans laquelle l'espace admin ne se contente plus de consommer des services, mais devient capable de piloter des actions, de choisir des branches de traitement et de coordonner plusieurs composants.
+
+\subsection{Diagramme Use Case du Sprint 4}
+
+Le diagramme de cas d'utilisation du sprint 4 met en evidence les interactions propres a l'administration intelligente, notamment le chat admin, les fonctions d'inspection, les mutations, les workflows multi-etapes et les ajustements des parametres RAG.
+
+\section{Mise en place des evolutions systeme}
+
+\subsection{Integration de LangGraph dans Admin-Service}
+
+L'integration de \texttt{LangGraph} a permis de structurer le comportement de l'agent admin et de sortir d'une logique purement lineaire.
+
+\subsection{Detection d'intentions et branches d'execution}
+
+Le systeme peut desormais distinguer plusieurs types de demandes et choisir un traitement adapte.
+
+\subsection{Gestion des workflows multi-etapes}
+
+Les workflows multi-etapes rendent possible la prise en charge de demandes plus riches, impliquant plusieurs actions successives ou coordonnees.
+
+\subsection{Ajout du Security-Service}
+
+L'ajout du \texttt{security-service} marque une etape importante dans la structuration des controles autour des operations sensibles.
+
+\subsection{Evolution des endpoints et parametres RAG}
+
+Le sprint a aussi permis d'exposer davantage de parametres techniques, comme certaines strategies de chunking ou des endpoints lies au reranking.
+
+\subsection{Ameliorations UI/UX du chat admin}
+
+L'interface admin a beneficie de plusieurs refinements visuels et ergonomiques, donnant au systeme une impression de maturite plus forte.
+
+\section{Fonctionnalites developpees}
+
+\subsection{Chat admin intelligent}
+
+Le chat admin de \texttt{Synapse} ne se contente plus d'afficher des informations ; il devient un veritable point d'orchestration des actions et des analyses.
+
+\subsection{Inspection et pilotage des outils}
+
+L'administrateur peut interroger le systeme sur son etat, ses outils ou certaines configurations, ce qui renforce la capacite de supervision.
+
+\subsection{Mutations et actions d'administration}
+
+Le systeme peut aussi accompagner des actions de mise a jour ou de transformation, ce qui elargit notablement le role du chat admin.
+
+\subsection{Workflows complexes et multi-taches}
+
+La prise en charge de demandes composees represente un gain important en souplesse et en richesse fonctionnelle.
+
+\subsection{Securisation des interactions sensibles}
+
+Les operations sensibles sont mieux encadrees, ce qui rend l'administration plus sure et plus credible dans une perspective de deploiement futur.
+
+\subsection{Experience utilisateur admin amelioree}
+
+Les ameliorations de rendu, de fluidite et de responsivite donnent au volet admin une meilleure qualite percue et une utilisation plus confortable.
+
+\section{Retrospective du Sprint 4}
+
+Le sprint 4 a fait franchir a \texttt{Synapse} une etape de maturite importante. La plateforme n'est plus seulement une solution RAG modulaire ; elle devient aussi un environnement d'administration intelligent, capable de coordonner plusieurs services et de mieux assister l'administrateur dans ses taches. Cette evolution ouvre la voie a des usages plus complexes et a une architecture de plus en plus orientee vers l'agentification.

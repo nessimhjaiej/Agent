@@ -1,0 +1,20 @@
+sequenceDiagram
+    actor Admin
+    participant UI as Frontend
+    participant Auth
+    participant Agent as admin-service
+    participant Graph as LangGraph
+    participant Retrieval
+    participant LLM
+
+    Admin->>UI: Poser une question
+    UI->>Auth: Verifier la session
+    Auth-->>UI: Session valide
+    UI->>Agent: Envoyer la demande
+    Agent->>Graph: Classifier l'intention
+    Graph->>Retrieval: Recuperer le contexte
+    Retrieval-->>Graph: Sources utiles
+    Graph->>LLM: Generer la reponse
+    LLM-->>Graph: Reponse contextuelle
+    Graph-->>UI: Retourner la reponse
+    UI-->>Admin: Afficher la reponse

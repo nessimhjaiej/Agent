@@ -1,0 +1,20 @@
+sequenceDiagram
+    actor User as Utilisateur / Admin
+    participant Frontend
+    participant Auth as auth-service
+    participant Supabase
+
+    User->>Frontend: Ouvrir l'application
+    Frontend->>Auth: Verifier la session courante
+    Auth->>Supabase: Valider le token / recuperer l'etat utilisateur
+    Supabase-->>Auth: Session valide + profil
+    Auth-->>Frontend: Etat authentifie
+    Frontend-->>User: Afficher l'espace correspondant
+
+    opt Rafraichissement ou changement d'onglet
+        Frontend->>Auth: Synchroniser l'etat d'authentification
+        Auth->>Supabase: Relire l'etat de session
+        Supabase-->>Auth: Etat utilisateur a jour
+        Auth-->>Frontend: Session maintenue ou invalidee
+        Frontend-->>User: Mettre a jour l'interface
+    end

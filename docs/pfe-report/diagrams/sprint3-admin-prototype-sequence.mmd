@@ -1,0 +1,24 @@
+sequenceDiagram
+    actor Admin
+    participant Frontend as Frontend Admin
+    participant AdminService as admin-service
+    participant Auth as auth-service
+    participant Context as Informations systeme / documents
+
+    Admin->>Frontend: Envoyer une demande admin
+    Frontend->>Auth: Verifier l'authentification
+    Auth-->>Frontend: Autorisation valide
+    Frontend->>AdminService: Transmettre la demande
+    AdminService->>AdminService: Analyser la demande
+
+    alt Demande frequente
+        AdminService->>AdminService: Appliquer le fast path
+        AdminService-->>Frontend: Retourner une reponse directe
+    else Demande complexe
+        AdminService->>Context: Recuperer le contexte utile
+        Context-->>AdminService: Informations pertinentes
+        AdminService->>AdminService: Executer l'agent recursif
+        AdminService-->>Frontend: Retourner une reponse ou orientation
+    end
+
+    Frontend-->>Admin: Afficher le resultat

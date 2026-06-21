@@ -27,6 +27,10 @@ MUTATING_TOOLS = {
     "delete_document_completely",
     "reindex_document",
     "reindex_validated_documents",
+    "bulk_delete_by_filter",
+    "bulk_reindex_by_filter",
+    "confirm_pending_documents",
+    "refuse_pending_documents",
     "run_evaluation",
     "compare_evaluation_reports",
 }
@@ -279,6 +283,8 @@ class AdminService:
             result_payload["next_pending_action"] = next_pending
 
         if next_pending is not None:
+            if isinstance(next_pending, dict):
+                next_pending["summary"] = _describe_pending_step(next_pending, language=language)
             answer = _build_confirmation_prompt(next_pending, language=language)
             pending_next = next_pending
             status = "needs_confirmation"
@@ -472,6 +478,8 @@ class AdminService:
         executed_steps = self._workflow_executed_steps(workflow_tasks)
 
         if next_pending is not None:
+            if isinstance(next_pending, dict):
+                next_pending["summary"] = _describe_pending_step(next_pending, language=language)
             answer = _build_confirmation_prompt(next_pending, language=language)
             pending_next = next_pending
             status = "needs_confirmation"
@@ -675,6 +683,8 @@ class AdminService:
                 }
             )
 
+        if isinstance(next_pending, dict):
+            next_pending["summary"] = _describe_pending_step(next_pending, language=language)
         next_model = AdminPendingAction(**next_pending)
         next_answer = _build_confirmation_prompt(next_pending, language=language)
         next_agent_run = (
@@ -1914,6 +1924,50 @@ def _single_reranking_advantage(method: str, language: str) -> str:
     return ""
 
 
+def _doc_scope_phrase(arguments: dict[str, Any]) -> str:
+    """Human-readable phrase naming the document(s) a mutation targets.
+
+    Prefers the actual document names (resolved at plan time into target_names),
+    then a resolved id, then the name/status filter, and finally a safe default.
+    It is never empty, so the confirmation prompt never shows '' in the UI.
+    """
+    names = [str(n) for n in (arguments.get("target_names") or []) if str(n).strip()]
+    count = arguments.get("match_count")
+    total = count if isinstance(count, int) else (len(names) if names else None)
+    if names:
+        shown = names[:8]
+        listed = ", ".join(f"'{n}'" for n in shown)
+        if total and total > len(shown):
+            listed += f", and {total - len(shown)} more"
+        if (total or len(shown)) == 1:
+            return f"the document {listed}"
+        return f"{total or len(shown)} documents: {listed}"
+
+    doc_id = str(arguments.get("document_id") or "").strip()
+    if doc_id:
+        return f"the document {doc_id}"
+
+    query = str(
+        arguments.get("query")
+        or arguments.get("name_contains")
+        or arguments.get("document_query")
+        or arguments.get("document_name")
+        or arguments.get("document_type")
+        or ""
+    ).strip()
+    status = str(arguments.get("status") or "").strip()
+    bits: list[str] = []
+    if query:
+        bits.append(f"matching '{query}'")
+    if status:
+        bits.append(f"with status '{status}'")
+    if bits:
+        return "documents " + " ".join(bits)
+    if isinstance(total, int) and total == 0:
+        return "no matching documents"
+    return "all matching documents"
+
+
 def _describe_pending_step(step: dict[str, Any], language: str = "en") -> str:
     tool_name = str(step.get("tool") or "")
     arguments = (
@@ -1929,16 +1983,36 @@ def _describe_pending_step(step: dict[str, Any], language: str = "en") -> str:
         return f"update the {scope} settings with {changes}"
     if tool_name == "delete_document_completely":
         if language == "fr":
-            return f"supprimer le document `{arguments.get('document_id', '')}` et nettoyer les vecteurs"
+            return f"supprimer {_doc_scope_phrase(arguments)} et nettoyer les vecteurs"
         if language == "ar":
-            return f"Ø­Ø°Ù Ø§Ù„Ù…Ø³ØªÙ†Ø¯ `{arguments.get('document_id', '')}` ÙˆØªÙ†Ø¸ÙŠÙ Ø§Ù„Ù…ØªØ¬Ù‡Ø§Øª"
-        return f"delete document '{arguments.get('document_id', '')}' and clean vectors"
+            return f"Ø­Ø°Ù Ø§Ù„Ù…Ø³ØªÙ†Ø¯ `{_doc_scope_phrase(arguments)}` ÙˆØªÙ†Ø¸ÙŠÙ Ø§Ù„Ù…ØªØ¬Ù‡Ø§Øª"
+        return f"delete {_doc_scope_phrase(arguments)} and clean vectors"
     if tool_name == "reindex_document":
         if language == "fr":
-            return f"reindexer le document `{arguments.get('document_id', '')}`"
+            return f"reindexer {_doc_scope_phrase(arguments)}"
         if language == "ar":
-            return f"Ø¥Ø¹Ø§Ø¯Ø© ÙÙ‡Ø±Ø³Ø© Ø§Ù„Ù…Ø³ØªÙ†Ø¯ `{arguments.get('document_id', '')}`"
-        return f"reindex document '{arguments.get('document_id', '')}'"
+            return f"Ø¥Ø¹Ø§Ø¯Ø© ÙÙ‡Ø±Ø³Ø© Ø§Ù„Ù…Ø³ØªÙ†Ø¯ `{_doc_scope_phrase(arguments)}`"
+        return f"reindex {_doc_scope_phrase(arguments)}"
+    if tool_name == "bulk_delete_by_filter":
+        return f"delete {_doc_scope_phrase(arguments)} and clean vectors"
+    if tool_name == "bulk_reindex_by_filter":
+        return f"reindex {_doc_scope_phrase(arguments)}"
+    if tool_name in {"confirm_pending_documents", "refuse_pending_documents"}:
+        is_confirm = tool_name == "confirm_pending_documents"
+        target = _doc_scope_phrase(arguments)
+        if is_confirm:
+            extra = " (validate, then preprocess + embed)"
+            if language == "fr":
+                return f"confirmer {target}{extra}"
+            if language == "ar":
+                return f"ØªØ£ÙƒÙŠØ¯ {target}{extra}"
+            return f"confirm {target}{extra}"
+        extra = " (status change only)"
+        if language == "fr":
+            return f"refuser {target}{extra}"
+        if language == "ar":
+            return f"Ø±ÙØ¶ {target}{extra}"
+        return f"refuse {target}{extra}"
     if tool_name == "reindex_validated_documents":
         return (
             "reindexer tous les documents valides"
@@ -1966,6 +2040,27 @@ def _describe_pending_step(step: dict[str, Any], language: str = "en") -> str:
                 f"Ù…Ù‚Ø§Ø±Ù†Ø© ØªÙ‚Ø±ÙŠØ±ÙŠ Ø§Ù„ØªÙ‚ÙŠÙŠÙ… `{baseline}` Ùˆ`{candidate}`"
             )
         return f"compare evaluation reports '{baseline}' and '{candidate}'"
+    if tool_name in {"confirm_pending_documents", "refuse_pending_documents"}:
+        verb_en = "confirm" if tool_name == "confirm_pending_documents" else "refuse"
+        ids = arguments.get("document_ids")
+        query = str(arguments.get("query") or "").strip()
+        if isinstance(ids, list) and ids:
+            target = f"{len(ids)} document(s)"
+        elif query:
+            target = f"documents matching '{query}'"
+        else:
+            target = "all pending documents"
+        if tool_name == "confirm_pending_documents":
+            if language == "fr":
+                return f"confirmer {target} (validation + indexation/embedding)"
+            if language == "ar":
+                return f"ØªØ£ÙƒÙŠØ¯ {target} (Ø§Ù„ØªØ­Ù‚Ù‚ + Ø§Ù„ÙÙ‡Ø±Ø³Ø©)"
+            return f"confirm {target} (validate, then preprocess + embed)"
+        if language == "fr":
+            return f"refuser {target} (changement de statut uniquement)"
+        if language == "ar":
+            return f"Ø±ÙØ¶ {target} (ØªØºÙŠÙŠØ± Ø§Ù„Ø­Ø§Ù„Ø© ÙÙ‚Ø·)"
+        return f"refuse {target} (status change only)"
     return tool_name.replace("_", " ")
 
 

@@ -1,0 +1,31 @@
+sequenceDiagram
+    actor Admin
+    participant Frontend
+    participant Ingestion as ingestion-service
+    participant Supabase as Supabase Storage / DB
+
+    Admin->>Frontend: Soumettre un document
+    Frontend->>Ingestion: POST /ingestion/documents/upload
+    Ingestion->>Supabase: Enregistrer le fichier et les metadonnees
+    Supabase-->>Ingestion: Identifiant document + chemin de stockage
+    Ingestion-->>Frontend: Confirmation du depot
+
+    alt Document valide
+        Frontend->>Ingestion: Valider le document
+        Ingestion->>Supabase: Mettre a jour le statut du document
+        Supabase-->>Ingestion: Document marque comme valide
+        Ingestion-->>Frontend: Document marque comme valide
+        Frontend-->>Admin: Afficher le document comme valide
+    else Document non valide
+        Frontend->>Ingestion: Rejeter le document
+        Ingestion->>Supabase: Mettre a jour le statut a rejected
+        Supabase-->>Ingestion: Document marque comme rejete
+        Ingestion-->>Frontend: Document marque comme rejete
+        opt Suppression du document
+            Frontend->>Ingestion: Supprimer le document
+            Ingestion->>Supabase: Supprimer le fichier et les metadonnees
+            Supabase-->>Ingestion: Confirmation de suppression
+            Ingestion-->>Frontend: Document supprime
+            Frontend-->>Admin: Retirer le document de la liste
+        end
+    end

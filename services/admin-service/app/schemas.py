@@ -33,6 +33,9 @@ class AdminPendingAction(BaseModel):
     steps: list[AdminPlanStep] = Field(default_factory=list)
     task_index: int | None = None
     workflow_tasks: list[AdminWorkflowTask] = Field(default_factory=list)
+    # Human-readable description of exactly what will happen (names the target
+    # documents). Shown on the frontend confirmation card so it is never empty.
+    summary: str = ""
 
 
 class AdminActivityItem(BaseModel):

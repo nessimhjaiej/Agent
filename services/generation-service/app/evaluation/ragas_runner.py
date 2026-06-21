@@ -93,17 +93,29 @@ class RagasEvaluationRunner:
 
     @staticmethod
     def _build_eval_llm():
-        from openai import OpenAI
-        from ragas.llms import llm_factory
-
         model_name = os.getenv("RAGAS_EVAL_MODEL", os.getenv("GENERATION_MODEL", "gpt-4o-mini"))
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        return llm_factory(
-            model=model_name,
-            provider="openai",
-            client=client,
-            temperature=0.0,
-        )
+        api_key = os.getenv("OPENAI_API_KEY")
+
+        # Modern ragas (>=0.3) llm_factory takes an explicit OpenAI client.
+        try:
+            from openai import OpenAI
+            from ragas.llms import llm_factory
+
+            return llm_factory(
+                model=model_name,
+                provider="openai",
+                client=OpenAI(api_key=api_key),
+                temperature=0.0,
+            )
+        except TypeError:
+            # Older ragas (0.2.x) exposes a different llm_factory signature;
+            # wrap a LangChain chat model instead, which is stable across versions.
+            from langchain_openai import ChatOpenAI
+            from ragas.llms import LangchainLLMWrapper
+
+            return LangchainLLMWrapper(
+                ChatOpenAI(model=model_name, api_key=api_key, temperature=0.0)
+            )
 
     @staticmethod
     def run_ragas(rows: list[dict]) -> tuple[dict[str, float], list[dict]]:

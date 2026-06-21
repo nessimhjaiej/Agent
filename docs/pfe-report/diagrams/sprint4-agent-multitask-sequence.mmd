@@ -1,0 +1,33 @@
+sequenceDiagram
+    actor Admin
+    participant UI as Frontend
+    participant Auth
+    participant Agent as admin-service
+    participant Graph as LangGraph
+    participant Sec as security-service
+    participant Read as Inspection
+    participant Write as Mutation
+    participant LLM
+
+    Admin->>UI: Soumettre une demande complexe
+    UI->>Auth: Verifier la session
+    Auth-->>UI: Session valide
+    UI->>Agent: Envoyer la demande
+    Agent->>Graph: Detecter un workflow multi-taches
+    opt Etapes mutantes presentes dans le workflow
+        Graph->>Sec: Verifier les operations sensibles
+        Sec-->>Graph: Autorisation
+    end
+    Graph-->>UI: Proposer un plan
+    Admin->>UI: Confirmer le workflow
+    UI->>Graph: Lancer les taches
+    Graph->>Read: Executer une inspection
+    Read-->>Graph: Resultat
+    opt Tache de mutation necessaire
+        Graph->>Write: Executer une mutation
+        Write-->>Graph: Resultat
+    end
+    Graph->>LLM: Produire la synthese
+    LLM-->>Graph: Synthese finale
+    Graph-->>UI: Retourner la reponse
+    UI-->>Admin: Afficher le resultat

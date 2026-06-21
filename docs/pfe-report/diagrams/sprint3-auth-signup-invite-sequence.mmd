@@ -1,0 +1,48 @@
+sequenceDiagram
+    actor User as Utilisateur
+    actor Admin
+    participant Frontend
+    participant Auth as auth-service
+    participant Supabase
+    participant Email as Email / lien d'invitation
+
+    alt Inscription classique d'un utilisateur
+        User->>Frontend: Remplir le formulaire Sign Up
+        Frontend->>Auth: POST /auth/signup
+        Auth->>Supabase: Creer le compte
+        Supabase-->>Auth: Compte cree (role user)
+        Auth->>Supabase: Initialiser app_metadata
+        Note over Auth,Supabase: account_validated = false\ninvited_by_admin = false
+        Auth-->>Frontend: Inscription acceptee
+        Frontend-->>User: Compte cree, en attente de validation admin
+
+        Admin->>Frontend: Ouvrir la gestion des utilisateurs
+        Frontend->>Auth: GET /auth/admin/users
+        Auth->>Supabase: Lister les utilisateurs
+        Supabase-->>Auth: Utilisateurs + statuts
+        Auth-->>Frontend: Liste des utilisateurs
+
+        Admin->>Frontend: Valider l'utilisateur
+        Frontend->>Auth: POST /auth/admin/users/{user_id}/validate
+        Auth->>Supabase: Mettre account_validated = true
+        Supabase-->>Auth: Utilisateur valide
+        Auth-->>Frontend: Statut mis a jour
+        Frontend-->>Admin: Utilisateur valide
+    else Invitation d'un autre admin
+        Admin->>Frontend: Saisir l'email de l'admin a inviter
+        Frontend->>Auth: POST /auth/admin/invite
+        Auth->>Supabase: Creer ou promouvoir le compte admin
+        Note over Auth,Supabase: role = admin\naccount_validated = true\ninvited_by_admin = true\nstatut = invited tant que l'onboarding n'est pas termine
+        Supabase-->>Auth: Compte admin prepare
+        Auth->>Email: Envoyer le lien d'invitation / recovery
+        Email-->>User: Invitation recue
+        Auth-->>Frontend: Invitation creee
+        Frontend-->>Admin: Invitation envoyee, statut invited
+
+        User->>Email: Ouvrir le lien d'invitation
+        Email-->>Frontend: Rediriger vers l'onboarding
+        User->>Frontend: Definir mot de passe et profil
+        Frontend->>Supabase: Finaliser invite_onboarding_completed
+        Supabase-->>Frontend: Compte admin actif, statut admin
+        Frontend-->>User: Onboarding termine
+    end

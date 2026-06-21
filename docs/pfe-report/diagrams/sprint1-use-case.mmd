@@ -1,0 +1,28 @@
+flowchart LR
+    classDef actor fill:#ffffff,stroke:#ffffff,color:#111827;
+    classDef usecase fill:#dbeafe,stroke:#6b8fb8,stroke-width:1.8,color:#111827;
+
+    U[Utilisateur]:::actor
+    A[Admin]:::actor
+
+    Q([Poser une question]):::usecase
+    R([Voir reponse et sources]):::usecase
+    S([Soumettre document]):::usecase
+    C([Consulter documents]):::usecase
+    M([Gerer les utilisateurs]):::usecase
+    V([Utiliser la saisie vocale]):::usecase
+    AUTH([S'authentifier]):::usecase
+
+    U --> Q
+    U --> R
+    A --> S
+    A --> C
+    A --> M
+    A --> R
+
+    Q -. "<<include>>" .-> AUTH
+    R -. "<<include>>" .-> AUTH
+    S -. "<<include>>" .-> AUTH
+    C -. "<<include>>" .-> AUTH
+    M -. "<<include>>" .-> AUTH
+    V -. "<<extend>>" .-> Q

@@ -461,7 +461,7 @@ export default function SecurityPage() {
                   return (
                     <motion.div
                       key={alert.id}
-                      className="relative min-h-[460px] min-w-0 overflow-visible rounded-xl px-5 pb-6 pt-3 sm:h-[320px] sm:min-h-0 sm:overflow-hidden sm:px-8 sm:pb-5 sm:pt-2 md:px-10 md:pb-6 md:pt-2"
+                      className="relative min-h-[460px] min-w-0 overflow-visible rounded-xl px-6 pb-6 pt-3 sm:h-[320px] sm:min-h-0 sm:overflow-hidden sm:px-9 sm:pb-5 sm:pt-2 md:px-11 md:pb-6 md:pt-2"
                       style={{
                         background: 'var(--bg-secondary)',
                         border: `1px solid ${cfg.border}`,

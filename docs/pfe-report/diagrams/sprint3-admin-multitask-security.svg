@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760">
+  <defs>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #143b6b; }
+      .label { font: 600 18px Arial, sans-serif; fill: #1f2937; }
+      .text { font: 14px Arial, sans-serif; fill: #334155; }
+      .blue { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2; }
+      .green { fill: #f0fdf4; stroke: #22c55e; stroke-width: 2; }
+      .orange { fill: #fff7ed; stroke: #f97316; stroke-width: 2; }
+      .purple { fill: #faf5ff; stroke: #a855f7; stroke-width: 2; }
+      .arrow { stroke: #111827; stroke-width: 2.5; fill: none; marker-end: url(#m); }
+    </style>
+    <marker id="m" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#111827"/></marker>
+  </defs>
+  <text x="40" y="48" class="title">Sprint 3 - Traitement multi-taches et securite admin</text>
+
+  <rect x="60" y="250" rx="18" ry="18" width="180" height="90" class="blue"/>
+  <text x="150" y="300" text-anchor="middle" class="label">Demande admin</text>
+
+  <rect x="310" y="250" rx="18" ry="18" width="220" height="90" class="green"/>
+  <text x="420" y="290" text-anchor="middle" class="label">Analyse semantique</text>
+  <text x="420" y="315" text-anchor="middle" class="text">classification et contexte</text>
+
+  <rect x="610" y="120" rx="18" ry="18" width="220" height="90" class="purple"/>
+  <text x="720" y="160" text-anchor="middle" class="label">Security Service</text>
+  <text x="720" y="185" text-anchor="middle" class="text">verifications et controles</text>
+
+  <rect x="610" y="380" rx="18" ry="18" width="220" height="90" class="green"/>
+  <text x="720" y="420" text-anchor="middle" class="label">Detection multi-taches</text>
+  <text x="720" y="445" text-anchor="middle" class="text">plusieurs actions possibles</text>
+
+  <rect x="920" y="250" rx="18" ry="18" width="220" height="90" class="orange"/>
+  <text x="1030" y="290" text-anchor="middle" class="label">Outils et services</text>
+  <text x="1030" y="315" text-anchor="middle" class="text">admin, preprocessing, retrieval...</text>
+
+  <rect x="1200" y="250" rx="18" ry="18" width="150" height="90" class="blue"/>
+  <text x="1275" y="290" text-anchor="middle" class="label">Synthese</text>
+  <text x="1275" y="315" text-anchor="middle" class="text">reponse finale</text>
+
+  <path d="M240 295 L310 295" class="arrow"/>
+  <path d="M530 280 L610 190" class="arrow"/>
+  <path d="M530 310 L610 420" class="arrow"/>
+  <path d="M830 165 L920 275" class="arrow"/>
+  <path d="M830 425 L920 315" class="arrow"/>
+  <path d="M1140 295 L1200 295" class="arrow"/>
+</svg>

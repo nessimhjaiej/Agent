@@ -43,7 +43,8 @@ class Settings:
     max_iterations: int = 8
     max_tool_calls: int = 8
     auth_base_url: str = "http://localhost:8001"
-    auth_validation_timeout_seconds: float = 5.0
+    auth_validation_timeout_seconds: float = 10.0
+    auth_cache_ttl_seconds: float = 30.0
     admin_http_timeout_seconds: float = 120.0
     admin_evaluation_timeout_seconds: float = 900.0
     security_base_url: str = ""
@@ -77,9 +78,10 @@ class Settings:
             max_tool_calls=_parse_int("ADMIN_MAX_TOOL_CALLS", 8),
             auth_base_url=os.getenv("AUTH_BASE_URL", "http://localhost:8001"),
             auth_validation_timeout_seconds=_parse_float(
-                "ADMIN_AUTH_VALIDATION_TIMEOUT_SECONDS", 5.0
+                "ADMIN_AUTH_VALIDATION_TIMEOUT_SECONDS", 10.0
             ),
-            admin_http_timeout_seconds=_parse_float("ADMIN_HTTP_TIMEOUT_SECONDS", 60.0),
+            auth_cache_ttl_seconds=_parse_float("ADMIN_AUTH_CACHE_TTL_SECONDS", 30.0),
+            admin_http_timeout_seconds=_parse_float("ADMIN_HTTP_TIMEOUT_SECONDS", 120.0),
             admin_evaluation_timeout_seconds=_parse_float(
                 "ADMIN_EVALUATION_TIMEOUT_SECONDS", 900.0
             ),

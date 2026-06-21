@@ -1,0 +1,38 @@
+sequenceDiagram
+    actor User as Utilisateur / Admin
+    participant Frontend
+    participant Auth as auth-service
+    participant Supabase
+
+    User->>Frontend: Saisir email et mot de passe
+    Frontend->>Auth: POST /auth/login
+    Auth->>Supabase: Sign in with password
+
+    alt Compte valide et accessible
+        Supabase-->>Auth: Session + utilisateur
+        Auth->>Auth: Verifier blocage, invitation, validation
+        Auth-->>Frontend: Access token + role
+        Frontend-->>User: Redirection vers l'espace autorise
+    else Compte en attente de validation admin
+        Supabase-->>Auth: Session + utilisateur
+        Auth->>Auth: Detecter account_validated = false
+        Auth->>Supabase: Fermer la session
+        Auth-->>Frontend: Refus de connexion
+        Frontend-->>User: Message "Compte en attente de validation"
+    else Invitation admin non finalisee
+        Supabase-->>Auth: Session + utilisateur
+        Auth->>Auth: Detecter invited_by_admin = true et onboarding incomplet
+        Auth->>Supabase: Fermer la session
+        Auth-->>Frontend: Refus de connexion
+        Frontend-->>User: Message "Utilisez le lien d'invitation"
+    else Compte bloque
+        Supabase-->>Auth: Session + utilisateur
+        Auth->>Auth: Detecter account_blocked = true
+        Auth->>Supabase: Fermer la session
+        Auth-->>Frontend: Refus de connexion
+        Frontend-->>User: Message "Compte bloque"
+    else Identifiants invalides
+        Supabase-->>Auth: Echec de connexion
+        Auth-->>Frontend: Erreur d'authentification
+        Frontend-->>User: Message d'erreur
+    end

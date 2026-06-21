@@ -1,0 +1,18 @@
+flowchart LR
+    A[Admin]
+    U[Upload Document]
+    V[Validation]
+    I[Indexation]
+    S[(Supabase Storage)]
+    D[(Supabase DB)]
+    W[(Weaviate)]
+    C[Citations et apercus]
+    X[Consultation Admin]
+
+    A --> U --> V --> I
+    U --> S
+    U --> D
+    I --> W
+    D --> C
+    W --> C
+    C --> X

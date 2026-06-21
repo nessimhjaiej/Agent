@@ -10,6 +10,16 @@ from langchain_core.tools import tool
 from app.config import Settings
 
 
+def _normalize_name(text: str) -> str:
+    """Lowercase and collapse separators (space/hyphen/underscore/dot) to spaces
+    so document names match regardless of how the user types them."""
+    return re.sub(r"[\s\-_.]+", " ", str(text or "").lower()).strip()
+
+
+def _name_tokens(query: str) -> list[str]:
+    return [tok for tok in _normalize_name(query).split() if tok]
+
+
 CONFIG_SCOPES: dict[str, dict[str, Any]] = {
     "preprocessing": {
         "keys": {
@@ -92,6 +102,21 @@ class AdminToolbox:
         paths = payload.get("paths", {}) if isinstance(payload, dict) else {}
         return isinstance(paths, dict) and endpoint in paths
 
+    @staticmethod
+    def _http_error_detail(response: httpx.Response) -> str:
+        detail = ""
+        try:
+            payload = response.json()
+            if isinstance(payload, dict):
+                raw = payload.get("detail")
+                detail = raw if isinstance(raw, str) else (str(raw) if raw else "")
+        except ValueError:
+            detail = ""
+        if not detail:
+            text = (response.text or "").strip()
+            detail = text[:300] if text else f"HTTP {response.status_code}"
+        return detail
+
     def _request_generation_json(
         self,
         method: str,
@@ -110,11 +135,19 @@ class AdminToolbox:
                     response.raise_for_status()
                     return response.json()
                 except httpx.HTTPStatusError as exc:
-                    if response.status_code != 404:
-                        raise
-                    if self._generation_endpoint_exists(client, base_url, endpoint):
-                        raise
-                    last_missing_endpoint_error = exc
+                    # A 404 on a route the service does not expose means we should
+                    # try the next base URL candidate (service may be out of date).
+                    if response.status_code == 404 and not self._generation_endpoint_exists(
+                        client, base_url, endpoint
+                    ):
+                        last_missing_endpoint_error = exc
+                        continue
+                    # Any other error (400/422/500, or a real 404 resource miss) is a
+                    # genuine failure: surface the backend detail in plain language
+                    # instead of letting a raw HTTPStatusError become an opaque 500.
+                    raise ValueError(
+                        f"Could not {action}: {self._http_error_detail(response)}"
+                    ) from exc
 
         if last_missing_endpoint_error is not None:
             self._raise_generation_endpoint_not_found(action, endpoint, last_missing_endpoint_error)
@@ -243,6 +276,10 @@ class AdminToolbox:
                 "delete_document_completely",
                 "reindex_document",
                 "reindex_validated_documents",
+                "bulk_delete_by_filter",
+                "bulk_reindex_by_filter",
+                "confirm_pending_documents",
+                "refuse_pending_documents",
                 "run_evaluation",
                 "read_evaluation_report",
                 "compare_evaluation_reports",
@@ -438,6 +475,12 @@ class AdminToolbox:
             return response.json()
 
     def delete_document_completely(self, document_id: str) -> dict[str, Any]:
+        if not document_id or not document_id.strip():
+            return {
+                "status": "error",
+                "error": "document_id is required but was empty or missing. "
+                         "Use find_document or list_loaded_documents to resolve a valid ID.",
+            }
         remove_result = self.remove_document_chunks(document_id)
         delete_result = self.delete_document_record(document_id)
         return {
@@ -447,6 +490,12 @@ class AdminToolbox:
         }
 
     def reindex_document(self, document_id: str) -> dict[str, Any]:
+        if not document_id or not document_id.strip():
+            return {
+                "status": "error",
+                "error": "document_id is required but was empty or missing. "
+                         "Use find_document or list_loaded_documents to resolve a valid ID.",
+            }
         with self._client() as client:
             remove_response = client.post(
                 f"{self._settings.embedding_base_url.rstrip('/')}/embedding/remove-document",
@@ -478,17 +527,41 @@ class AdminToolbox:
             if isinstance(item, dict) and str(item.get("status") or "") == "validated"
         ]
 
-        results = []
+        results: list[dict[str, Any]] = []
+        succeeded = 0
+        failed = 0
         for item in candidates:
             document_id = str(item.get("id") or "")
             if not document_id:
                 continue
-            results.append(self.reindex_document(document_id))
+            name = str(item.get("original_name") or document_id)
+            # Isolate each document so a single slow/failed reindex (e.g. a large
+            # PDF exceeding the HTTP timeout) does not abort the whole batch and
+            # bubble up as an opaque 500. Partial progress is reported instead.
+            try:
+                result = self.reindex_document(document_id)
+            except (httpx.HTTPError, ValueError, RuntimeError) as exc:
+                result = {"status": "error", "error": str(exc)}
+            is_error = isinstance(result, dict) and str(result.get("status") or "") == "error"
+            if is_error:
+                failed += 1
+            else:
+                succeeded += 1
+            results.append(
+                {"document_id": document_id, "original_name": name, "result": result}
+            )
 
+        if failed == 0:
+            status = "ok"
+        elif succeeded == 0:
+            status = "error"
+        else:
+            status = "partial"
         return {
-            "status": "ok",
+            "status": status,
             "validated_count": len(candidates),
-            "reindexed_count": len(results),
+            "reindexed_count": succeeded,
+            "failed_count": failed,
             "results": results,
         }
 
@@ -523,6 +596,389 @@ class AdminToolbox:
             return None
         return ranked[0]
 
+    def find_documents_by_filter(
+        self,
+        *,
+        name_contains: str | None = None,
+        status: str | None = None,
+        embedded: bool | None = None,
+    ) -> list[dict[str, Any]]:
+        """Return all documents matching the given filters."""
+        documents = self._fetch_documents()
+        query_tokens = _name_tokens(name_contains) if name_contains else []
+        results: list[dict[str, Any]] = []
+        for item in documents:
+            if not isinstance(item, dict):
+                continue
+            if query_tokens:
+                # Token-based, separator-insensitive match so a non-technical user
+                # can type a partial name with spaces and no extension (e.g.
+                # "icc policy primer") and still match "icc-policy-primer-....pdf".
+                haystack = _normalize_name(
+                    f"{item.get('original_name') or ''} {item.get('storage_path') or ''}"
+                )
+                if not all(tok in haystack for tok in query_tokens):
+                    continue
+            if status is not None:
+                if str(item.get("status") or "").lower() != status.strip().lower():
+                    continue
+            if embedded is not None:
+                if bool(item.get("embedded")) != embedded:
+                    continue
+            results.append(item)
+        return results
+
+    def smart_delete(self, query: str) -> dict[str, Any]:
+        """Resolve a document by name/query and delete it.
+
+        Returns a status dict indicating whether the document was found,
+        whether multiple matches require disambiguation, or the delete result.
+        """
+        if not query or not query.strip():
+            return {"status": "error", "error": "A document name or query is required."}
+
+        candidates = self.find_documents_by_filter(name_contains=query)
+        if not candidates:
+            single = self.find_document(query)
+            if single is not None:
+                candidates = [single]
+
+        if not candidates:
+            return {
+                "status": "not_found",
+                "error": f"No documents found matching '{query}'.",
+                "query": query,
+            }
+
+        if len(candidates) == 1:
+            doc = candidates[0]
+            doc_id = str(doc.get("id") or "")
+            result = self.delete_document_completely(doc_id)
+            return {
+                "status": "ok",
+                "resolved_document": {
+                    "id": doc_id,
+                    "original_name": str(doc.get("original_name") or ""),
+                },
+                "delete_result": result,
+            }
+
+        return {
+            "status": "multiple_matches",
+            "error": f"Found {len(candidates)} documents matching '{query}'. Please refine your query or specify a document ID.",
+            "query": query,
+            "candidates": [
+                {
+                    "id": str(c.get("id") or ""),
+                    "original_name": str(c.get("original_name") or ""),
+                    "status": str(c.get("status") or ""),
+                }
+                for c in candidates
+            ],
+        }
+
+    def smart_reindex(self, query: str) -> dict[str, Any]:
+        """Resolve a document by name/query and reindex it."""
+        if not query or not query.strip():
+            return {"status": "error", "error": "A document name or query is required."}
+
+        candidates = self.find_documents_by_filter(name_contains=query)
+        if not candidates:
+            single = self.find_document(query)
+            if single is not None:
+                candidates = [single]
+
+        if not candidates:
+            return {
+                "status": "not_found",
+                "error": f"No documents found matching '{query}'.",
+                "query": query,
+            }
+
+        if len(candidates) == 1:
+            doc = candidates[0]
+            doc_id = str(doc.get("id") or "")
+            result = self.reindex_document(doc_id)
+            return {
+                "status": "ok",
+                "resolved_document": {
+                    "id": doc_id,
+                    "original_name": str(doc.get("original_name") or ""),
+                },
+                "reindex_result": result,
+            }
+
+        return {
+            "status": "multiple_matches",
+            "error": f"Found {len(candidates)} documents matching '{query}'. Please refine your query or specify a document ID.",
+            "query": query,
+            "candidates": [
+                {
+                    "id": str(c.get("id") or ""),
+                    "original_name": str(c.get("original_name") or ""),
+                    "status": str(c.get("status") or ""),
+                }
+                for c in candidates
+            ],
+        }
+
+    def _bulk_candidates(
+        self,
+        document_ids: list[str] | None,
+        name_contains: str | None,
+        status: str | None,
+        embedded: bool | None,
+    ) -> list[dict[str, Any]]:
+        if document_ids:
+            documents = self._fetch_documents()
+            by_id = {str(d.get("id") or ""): d for d in documents if isinstance(d, dict)}
+            resolved: list[dict[str, Any]] = []
+            for raw in document_ids:
+                doc_id = str(raw or "").strip()
+                if doc_id in by_id:
+                    resolved.append(by_id[doc_id])
+                elif doc_id:
+                    resolved.append({"id": doc_id})
+            return resolved
+        return self.find_documents_by_filter(
+            name_contains=name_contains, status=status, embedded=embedded,
+        )
+
+    def bulk_delete_by_filter(
+        self,
+        *,
+        document_ids: list[str] | None = None,
+        name_contains: str | None = None,
+        status: str | None = None,
+        embedded: bool | None = None,
+    ) -> dict[str, Any]:
+        """Delete all documents matching the given ids or filters."""
+        candidates = self._bulk_candidates(document_ids, name_contains, status, embedded)
+        if not candidates:
+            return {"status": "not_found", "deleted_count": 0, "error": "No documents matched the criteria."}
+
+        results = []
+        deleted = 0
+        failed = 0
+        for doc in candidates:
+            doc_id = str(doc.get("id") or "")
+            if not doc_id:
+                continue
+            try:
+                result = self.delete_document_completely(doc_id)
+            except (httpx.HTTPError, ValueError, RuntimeError) as exc:
+                result = {"status": "error", "error": str(exc)}
+            if isinstance(result, dict) and str(result.get("status") or "") == "error":
+                failed += 1
+            else:
+                deleted += 1
+            results.append({
+                "document_id": doc_id,
+                "original_name": str(doc.get("original_name") or ""),
+                "result": result,
+            })
+        status_label = "ok" if failed == 0 else ("partial" if deleted else "error")
+        return {"status": status_label, "deleted_count": deleted, "failed_count": failed, "results": results}
+
+    def bulk_reindex_by_filter(
+        self,
+        *,
+        document_ids: list[str] | None = None,
+        name_contains: str | None = None,
+        status: str | None = None,
+        embedded: bool | None = None,
+    ) -> dict[str, Any]:
+        """Reindex all documents matching the given ids or filters."""
+        candidates = self._bulk_candidates(document_ids, name_contains, status, embedded)
+        if not candidates:
+            return {"status": "not_found", "reindexed_count": 0, "error": "No documents matched the criteria."}
+
+        results = []
+        reindexed = 0
+        failed = 0
+        for doc in candidates:
+            doc_id = str(doc.get("id") or "")
+            if not doc_id:
+                continue
+            try:
+                result = self.reindex_document(doc_id)
+            except (httpx.HTTPError, ValueError, RuntimeError) as exc:
+                result = {"status": "error", "error": str(exc)}
+            if isinstance(result, dict) and str(result.get("status") or "") == "error":
+                failed += 1
+            else:
+                reindexed += 1
+            results.append({
+                "document_id": doc_id,
+                "original_name": str(doc.get("original_name") or ""),
+                "result": result,
+            })
+        status_label = "ok" if failed == 0 else ("partial" if reindexed else "error")
+        return {"status": status_label, "reindexed_count": reindexed, "failed_count": failed, "results": results}
+
+    # ------------------------------------------------------------------
+    # Pending-document review: confirm (validate + preprocess + embed) or
+    # refuse (status change only). Mirrors what the admin UI does on the
+    # documents page.
+    # ------------------------------------------------------------------
+    def _update_document_status(self, document_id: str, target_status: str) -> dict[str, Any]:
+        with self._client() as client:
+            response = client.post(
+                f"{self._settings.ingestion_base_url.rstrip('/')}/ingestion/documents/{document_id}/status",
+                json={"target_status": target_status},
+                headers=self._headers(require_admin_token=True),
+            )
+            response.raise_for_status()
+            return response.json()
+
+    def _index_document(self, document_id: str, skip_if_embedded: bool = True) -> dict[str, Any]:
+        with self._client() as client:
+            response = client.post(
+                f"{self._settings.embedding_base_url.rstrip('/')}/embedding/index-document",
+                json={"document_id": document_id, "skip_if_embedded": skip_if_embedded},
+            )
+            response.raise_for_status()
+            return response.json()
+
+    def list_pending_documents(self) -> dict[str, Any]:
+        pending = self.find_documents_by_filter(status="pending")
+        return {"status": "ok", "count": len(pending), "documents": pending}
+
+    def confirm_document(self, document_id: str) -> dict[str, Any]:
+        """Validate a document then run its preprocessing + embedding."""
+        if not document_id or not document_id.strip():
+            return {
+                "status": "error",
+                "error": "document_id is required but was empty or missing.",
+            }
+        status_result = self._update_document_status(document_id, "validated")
+        index_result = self._index_document(document_id, skip_if_embedded=True)
+        return {
+            "status": "ok",
+            "document_id": document_id,
+            "status_result": status_result,
+            "index_result": index_result,
+        }
+
+    def refuse_document(self, document_id: str) -> dict[str, Any]:
+        """Mark a document as rejected without embedding it."""
+        if not document_id or not document_id.strip():
+            return {
+                "status": "error",
+                "error": "document_id is required but was empty or missing.",
+            }
+        status_result = self._update_document_status(document_id, "rejected")
+        return {"status": "ok", "document_id": document_id, "status_result": status_result}
+
+    def _resolve_document_targets(
+        self,
+        document_ids: list[str] | None,
+        query: str | None,
+        default_status: str | None,
+    ) -> list[dict[str, Any]]:
+        """Resolve which documents an action applies to.
+
+        Priority: explicit ids -> name/category query -> all documents in
+        `default_status` (e.g. every pending document when nothing else given).
+        """
+        documents = self._fetch_documents()
+        by_id = {str(d.get("id") or ""): d for d in documents if isinstance(d, dict)}
+
+        if document_ids:
+            resolved: list[dict[str, Any]] = []
+            for raw in document_ids:
+                doc_id = str(raw or "").strip()
+                if doc_id and doc_id in by_id:
+                    resolved.append(by_id[doc_id])
+                elif doc_id:
+                    resolved.append({"id": doc_id})
+            return resolved
+
+        if query and query.strip():
+            matches = self.find_documents_by_filter(name_contains=query.strip())
+            if default_status:
+                # Scope to the actionable status so e.g. confirming a pending file
+                # never matches an already-validated copy with the same name.
+                matches = [
+                    d for d in matches
+                    if isinstance(d, dict) and str(d.get("status") or "") == default_status
+                ]
+            return matches
+
+        if default_status:
+            return [d for d in documents if isinstance(d, dict) and str(d.get("status") or "") == default_status]
+        return []
+
+    def confirm_pending_documents(
+        self,
+        document_ids: list[str] | None = None,
+        query: str | None = None,
+    ) -> dict[str, Any]:
+        targets = self._resolve_document_targets(document_ids, query, default_status="pending")
+        if not targets:
+            return {"status": "not_found", "confirmed_count": 0, "error": "No matching documents to confirm."}
+
+        results: list[dict[str, Any]] = []
+        confirmed = 0
+        failed = 0
+        for doc in targets:
+            doc_id = str(doc.get("id") or "")
+            if not doc_id:
+                continue
+            name = str(doc.get("original_name") or doc_id)
+            try:
+                result = self.confirm_document(doc_id)
+            except (httpx.HTTPError, ValueError, RuntimeError) as exc:
+                result = {"status": "error", "error": str(exc)}
+            if isinstance(result, dict) and str(result.get("status") or "") == "error":
+                failed += 1
+            else:
+                confirmed += 1
+            results.append({"document_id": doc_id, "original_name": name, "result": result})
+
+        status = "ok" if failed == 0 else ("partial" if confirmed else "error")
+        return {
+            "status": status,
+            "confirmed_count": confirmed,
+            "failed_count": failed,
+            "results": results,
+        }
+
+    def refuse_pending_documents(
+        self,
+        document_ids: list[str] | None = None,
+        query: str | None = None,
+    ) -> dict[str, Any]:
+        targets = self._resolve_document_targets(document_ids, query, default_status="pending")
+        if not targets:
+            return {"status": "not_found", "refused_count": 0, "error": "No matching documents to refuse."}
+
+        results: list[dict[str, Any]] = []
+        refused = 0
+        failed = 0
+        for doc in targets:
+            doc_id = str(doc.get("id") or "")
+            if not doc_id:
+                continue
+            name = str(doc.get("original_name") or doc_id)
+            try:
+                result = self.refuse_document(doc_id)
+            except (httpx.HTTPError, ValueError, RuntimeError) as exc:
+                result = {"status": "error", "error": str(exc)}
+            if isinstance(result, dict) and str(result.get("status") or "") == "error":
+                failed += 1
+            else:
+                refused += 1
+            results.append({"document_id": doc_id, "original_name": name, "result": result})
+
+        status = "ok" if failed == 0 else ("partial" if refused else "error")
+        return {
+            "status": status,
+            "refused_count": refused,
+            "failed_count": failed,
+            "results": results,
+        }
+
     def resolve_report_pair(self, message: str) -> tuple[str, str] | None:
         reports_payload = self.list_evaluation_reports()
         reports = reports_payload.get("reports", []) if isinstance(reports_payload, dict) else []
@@ -541,8 +997,94 @@ class AdminToolbox:
 
         return None
 
+    def _recent_report_pair(self) -> tuple[str, str] | None:
+        """Return (baseline, candidate) = (second-newest, newest) report ids."""
+        reports_payload = self.list_evaluation_reports()
+        reports = reports_payload.get("reports", []) if isinstance(reports_payload, dict) else []
+        report_ids = [
+            str(item.get("report_id") or "")
+            for item in reports
+            if isinstance(item, dict) and item.get("report_id")
+        ]
+        if len(report_ids) >= 2:
+            return report_ids[1], report_ids[0]
+        return None
+
+    def _resolve_compare_ids(self, arguments: dict) -> tuple[str, str]:
+        """Accept the many key spellings a planner/LLM may emit and resolve them.
+
+        Falls back to the two most recent reports when ids are missing so a
+        request like 'compare the two latest reports' works without explicit ids.
+        """
+        def pick(*keys: str) -> str:
+            for key in keys:
+                value = arguments.get(key)
+                if isinstance(value, str) and value.strip():
+                    return value.strip()
+            return ""
+
+        baseline = pick("baseline_report_id", "baseline", "report1", "first", "from", "report_a")
+        candidate = pick("candidate_report_id", "candidate", "report2", "second", "to", "report_b")
+
+        if not baseline or not candidate:
+            reports = arguments.get("reports") or arguments.get("report_ids")
+            if isinstance(reports, list) and len(reports) >= 2:
+                baseline = baseline or str(reports[0])
+                candidate = candidate or str(reports[1])
+
+        if not baseline or not candidate:
+            pair = self._recent_report_pair()
+            if pair is not None:
+                baseline = baseline or pair[0]
+                candidate = candidate or pair[1]
+
+        return baseline, candidate
+
+    @staticmethod
+    def _document_query_from_arguments(arguments: dict) -> str:
+        """Extract a name/category query from whatever key a planner emitted."""
+        for key in (
+            "document_name",
+            "document_query",
+            "document_type",
+            "name",
+            "query",
+            "file",
+            "filename",
+            "title",
+            "document",
+            "category",
+            "keyword",
+        ):
+            value = arguments.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return ""
+
+    @staticmethod
+    def _document_ids_from_arguments(arguments: dict) -> list[str] | None:
+        """Collect explicit document ids from list or single-id arguments."""
+        for key in ("document_ids", "ids", "documents"):
+            value = arguments.get(key)
+            if isinstance(value, list) and value:
+                ids = [str(item).strip() for item in value if str(item).strip()]
+                if ids:
+                    return ids
+        single = str(arguments.get("document_id") or "").strip()
+        if single:
+            return [single]
+        return None
+
     def execute_pending_action(self, pending_action: dict) -> dict[str, Any]:
         tool_name = str(pending_action.get("tool") or "").strip()
+        try:
+            return self._dispatch_pending_action(tool_name, pending_action)
+        except (ValueError, RuntimeError, httpx.HTTPError) as exc:
+            # Never let a tool failure bubble out as an opaque HTTP 500. Return a
+            # structured error the summarizer can relay to the admin in plain text.
+            return {"status": "error", "tool": tool_name, "error": str(exc)}
+
+    def _dispatch_pending_action(self, tool_name: str, pending_action: dict) -> dict[str, Any]:
         arguments = pending_action.get("arguments", {})
         if not isinstance(arguments, dict):
             arguments = {}
@@ -569,20 +1111,56 @@ class AdminToolbox:
             return {"status": "ok", "results": results}
 
         if tool_name == "run_evaluation":
-            return self.run_evaluation(str(arguments.get("dataset_path") or "evals/sample_eval_dataset.json"))
+            dataset = str(
+                arguments.get("dataset_path") or arguments.get("dataset") or ""
+            ).strip()
+            if not dataset.endswith(".json"):
+                dataset = "evals/sample_eval_dataset.json"
+            return self.run_evaluation(dataset)
         if tool_name == "read_evaluation_report":
             return self.read_evaluation_report(str(arguments.get("report_id") or "latest"))
         if tool_name == "compare_evaluation_reports":
-            return self.compare_evaluation_reports(
-                str(arguments.get("baseline_report_id") or ""),
-                str(arguments.get("candidate_report_id") or ""),
-            )
+            baseline, candidate = self._resolve_compare_ids(arguments)
+            if not baseline or not candidate:
+                return {
+                    "status": "error",
+                    "tool": tool_name,
+                    "error": "Two evaluation report ids are required to compare, and fewer than two reports are available.",
+                }
+            return self.compare_evaluation_reports(baseline, candidate)
         if tool_name == "reindex_document":
-            return self.reindex_document(str(arguments.get("document_id") or ""))
+            doc_id = str(arguments.get("document_id") or "").strip()
+            if doc_id:
+                return self.reindex_document(doc_id)
+            query = self._document_query_from_arguments(arguments)
+            if query:
+                # A name/category may match several documents; reindex is safe and
+                # idempotent, so rebuild all matches rather than failing on ambiguity.
+                matches = self.find_documents_by_filter(name_contains=query)
+                if len(matches) > 1:
+                    return self.bulk_reindex_by_filter(name_contains=query)
+                return self.smart_reindex(query)
+            return self.reindex_document("")
         if tool_name == "reindex_validated_documents":
             return self.reindex_validated_documents()
         if tool_name == "delete_document_completely":
-            return self.delete_document_completely(str(arguments.get("document_id") or ""))
+            doc_id = str(arguments.get("document_id") or "").strip()
+            if doc_id:
+                return self.delete_document_completely(doc_id)
+            query = self._document_query_from_arguments(arguments)
+            if query:
+                # Deletion stays conservative: smart_delete asks for disambiguation
+                # when a query matches multiple documents instead of deleting them all.
+                return self.smart_delete(query)
+            return self.delete_document_completely("")
+        if tool_name in {"confirm_pending_documents", "refuse_pending_documents"}:
+            document_ids = self._document_ids_from_arguments(arguments)
+            query = self._document_query_from_arguments(arguments) or None
+            if tool_name == "confirm_pending_documents":
+                return self.confirm_pending_documents(document_ids=document_ids, query=query)
+            return self.refuse_pending_documents(document_ids=document_ids, query=query)
+        if tool_name == "list_pending_documents":
+            return self.list_pending_documents()
         if tool_name == "update_repo_config":
             return self.update_repo_config(
                 str(arguments.get("service_name") or ""),
@@ -600,6 +1178,35 @@ class AdminToolbox:
             return self.list_loaded_documents()
         if tool_name == "list_evaluation_reports":
             return self.list_evaluation_reports()
+        if tool_name == "find_document":
+            return self.find_document(str(arguments.get("query") or "")) or {"status": "not_found"}
+        if tool_name == "find_documents_by_filter":
+            return {
+                "status": "ok",
+                "documents": self.find_documents_by_filter(
+                    name_contains=arguments.get("name_contains"),
+                    status=arguments.get("status"),
+                    embedded=arguments.get("embedded"),
+                ),
+            }
+        if tool_name == "smart_delete":
+            return self.smart_delete(str(arguments.get("query") or ""))
+        if tool_name == "smart_reindex":
+            return self.smart_reindex(str(arguments.get("query") or ""))
+        if tool_name == "bulk_delete_by_filter":
+            return self.bulk_delete_by_filter(
+                document_ids=arguments.get("document_ids"),
+                name_contains=arguments.get("name_contains"),
+                status=arguments.get("status"),
+                embedded=arguments.get("embedded"),
+            )
+        if tool_name == "bulk_reindex_by_filter":
+            return self.bulk_reindex_by_filter(
+                document_ids=arguments.get("document_ids"),
+                name_contains=arguments.get("name_contains"),
+                status=arguments.get("status"),
+                embedded=arguments.get("embedded"),
+            )
         raise ValueError(f"Unsupported pending action tool: {tool_name}")
 
 
@@ -655,9 +1262,49 @@ def build_tools(toolbox: AdminToolbox, include_mutations: bool = True) -> list:
         return toolbox.get_reranking_methods()
 
     @tool
+    def get_chunking_methods() -> dict[str, Any]:
+        """Return the available preprocessing chunking strategies and the current default strategy."""
+        return toolbox.get_chunking_methods()
+
+    @tool
+    def list_pending_documents() -> dict[str, Any]:
+        """Return documents awaiting review (status 'pending') that can be confirmed or refused."""
+        return toolbox.list_pending_documents()
+
+    @tool
     def update_repo_config(service_name: str, changes: dict[str, Any]) -> dict[str, Any]:
         """Update supported repo config values by writing overrides into .env.local. Use only for confirmed admin changes."""
         return toolbox.update_repo_config(service_name, changes)
+
+    @tool
+    def find_document(query: str) -> dict[str, Any]:
+        """Find a document by name, partial name, or ID. Returns the best matching document or None."""
+        result = toolbox.find_document(query)
+        return result if result is not None else {"status": "not_found", "query": query}
+
+    @tool
+    def find_documents_by_filter(
+        name_contains: str = "",
+        status: str = "",
+        embedded: bool | None = None,
+    ) -> dict[str, Any]:
+        """Find all documents matching the given filters (name substring, status, embedded flag)."""
+        docs = toolbox.find_documents_by_filter(
+            name_contains=name_contains or None,
+            status=status or None,
+            embedded=embedded,
+        )
+        return {"status": "ok", "count": len(docs), "documents": docs}
+
+    @tool
+    def smart_delete(query: str) -> dict[str, Any]:
+        """Find a document by name and delete it. Resolves name to ID automatically. Returns candidates if ambiguous."""
+        return toolbox.smart_delete(query)
+
+    @tool
+    def smart_reindex(query: str) -> dict[str, Any]:
+        """Find a document by name and reindex it. Resolves name to ID automatically. Returns candidates if ambiguous."""
+        return toolbox.smart_reindex(query)
 
     tools = [
         get_ingestion_status,
@@ -670,6 +1317,12 @@ def build_tools(toolbox: AdminToolbox, include_mutations: bool = True) -> list:
         reindex_validated_documents,
         get_repo_config,
         get_reranking_methods,
+        get_chunking_methods,
+        list_pending_documents,
+        find_document,
+        find_documents_by_filter,
+        smart_delete,
+        smart_reindex,
     ]
 
     if include_mutations:
@@ -678,8 +1331,64 @@ def build_tools(toolbox: AdminToolbox, include_mutations: bool = True) -> list:
             """Delete a document record and best-effort remove its indexed vectors."""
             return toolbox.delete_document_completely(document_id)
 
+        @tool
+        def bulk_delete_by_filter(
+            name_contains: str = "",
+            status: str = "",
+            embedded: bool | None = None,
+        ) -> dict[str, Any]:
+            """Delete all documents matching the given filters (name substring, status, embedded flag)."""
+            return toolbox.bulk_delete_by_filter(
+                name_contains=name_contains or None,
+                status=status or None,
+                embedded=embedded,
+            )
+
+        @tool
+        def bulk_reindex_by_filter(
+            name_contains: str = "",
+            status: str = "",
+            embedded: bool | None = None,
+        ) -> dict[str, Any]:
+            """Reindex all documents matching the given filters (name substring, status, embedded flag)."""
+            return toolbox.bulk_reindex_by_filter(
+                name_contains=name_contains or None,
+                status=status or None,
+                embedded=embedded,
+            )
+
+        @tool
+        def confirm_pending_documents(
+            document_ids: list[str] = [],
+            query: str = "",
+        ) -> dict[str, Any]:
+            """Confirm/validate pending documents and run their preprocessing + embedding.
+
+            Provide document_ids for specific documents, a name/category query, or
+            neither to confirm every pending document. Works for one or many."""
+            return toolbox.confirm_pending_documents(
+                document_ids=document_ids or None, query=query or None
+            )
+
+        @tool
+        def refuse_pending_documents(
+            document_ids: list[str] = [],
+            query: str = "",
+        ) -> dict[str, Any]:
+            """Refuse/reject pending documents (status change only, no embedding).
+
+            Provide document_ids for specific documents, a name/category query, or
+            neither to refuse every pending document. Works for one or many."""
+            return toolbox.refuse_pending_documents(
+                document_ids=document_ids or None, query=query or None
+            )
+
         tools.append(delete_document_completely)
         tools.append(update_repo_config)
+        tools.append(bulk_delete_by_filter)
+        tools.append(bulk_reindex_by_filter)
+        tools.append(confirm_pending_documents)
+        tools.append(refuse_pending_documents)
 
     return tools
 

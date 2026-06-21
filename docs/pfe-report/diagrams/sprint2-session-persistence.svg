@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1350" height="760" viewBox="0 0 1350 760">
+  <defs>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #143b6b; }
+      .label { font: 600 18px Arial, sans-serif; fill: #1f2937; }
+      .text { font: 14px Arial, sans-serif; fill: #334155; }
+      .line { stroke: #64748b; stroke-width: 2; }
+      .msg { stroke: #111827; stroke-width: 2.2; fill: none; marker-end: url(#m); }
+    </style>
+    <marker id="m" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#111827"/></marker>
+  </defs>
+  <text x="40" y="48" class="title">Sprint 2 - Persistance de session et synchronisation entre onglets</text>
+  <text x="70" y="110" class="label">Utilisateur</text>
+  <text x="290" y="110" class="label">Frontend Onglet A</text>
+  <text x="630" y="110" class="label">Storage navigateur</text>
+  <text x="960" y="110" class="label">Supabase</text>
+  <text x="1170" y="110" class="label">Frontend Onglet B</text>
+
+  <line x1="100" y1="130" x2="100" y2="650" class="line"/>
+  <line x1="360" y1="130" x2="360" y2="650" class="line"/>
+  <line x1="700" y1="130" x2="700" y2="650" class="line"/>
+  <line x1="1010" y1="130" x2="1010" y2="650" class="line"/>
+  <line x1="1220" y1="130" x2="1220" y2="650" class="line"/>
+
+  <path d="M100 180 L360 180" class="msg"/><text x="170" y="170" class="text">Connexion</text>
+  <path d="M360 240 L1010 240" class="msg"/><text x="610" y="230" class="text">Authentification</text>
+  <path d="M1010 300 L360 300" class="msg"/><text x="600" y="290" class="text">Session valide</text>
+  <path d="M360 360 L700 360" class="msg"/><text x="470" y="350" class="text">Sauvegarder session</text>
+  <path d="M700 420 L1220 420" class="msg"/><text x="880" y="410" class="text">Synchroniser l'etat de connexion</text>
+  <path d="M1220 480 L100 480" class="msg"/><text x="560" y="470" class="text">Experience continue sans deconnexion parasite</text>
+  <path d="M100 560 L360 560" class="msg"/><text x="180" y="550" class="text">Deconnexion</text>
+  <path d="M360 620 L700 620" class="msg"/><text x="470" y="610" class="text">Effacer session</text>
+  <path d="M700 660 L1220 660" class="msg"/><text x="900" y="650" class="text">Propagation de la deconnexion</text>
+</svg>

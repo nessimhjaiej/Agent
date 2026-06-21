@@ -1,0 +1,16 @@
+sequenceDiagram
+    actor Utilisateur
+    participant TabA as Frontend Onglet A
+    participant Storage as Navigateur / Storage
+    participant Supabase
+    participant TabB as Frontend Onglet B
+
+    Utilisateur->>TabA: Connexion
+    TabA->>Supabase: Authentification
+    Supabase-->>TabA: Session valide
+    TabA->>Storage: Sauvegarder session
+    Storage-->>TabB: Synchroniser etat de connexion
+    TabB-->>Utilisateur: Session persistante
+    Utilisateur->>TabA: Deconnexion
+    TabA->>Storage: Effacer session
+    Storage-->>TabB: Propager la deconnexion

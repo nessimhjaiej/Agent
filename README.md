@@ -1,19 +1,13 @@
 # Agentic RAG Platform
 
-Microservice-based Retrieval-Augmented Generation (RAG) platform with:
-
-- Supabase auth + document metadata/storage
-- Preprocessing + chunking
-- Embedding + Weaviate indexing
-- Retrieval + generation services
-- React admin/user frontend
+Microservice-based Retrieval-Augmented Generation platform with Supabase auth and storage, document preprocessing, OpenAI embeddings, Weaviate retrieval, answer generation, admin tooling, security monitoring, and a React frontend.
 
 ## Stack
 
 - Frontend: React + Vite
 - Backend: FastAPI services
 - Vector DB: Weaviate
-- Metadata/File storage: Supabase
+- Auth, metadata, and storage: Supabase
 - Containers: Docker Compose
 
 ## Prerequisites
@@ -21,102 +15,89 @@ Microservice-based Retrieval-Augmented Generation (RAG) platform with:
 - Docker Desktop
 - Node.js 20+
 - npm
+- Python 3.11+ only if running services outside Docker
 - A Supabase project
-- OpenAI API key
+- An OpenAI API key
+- Windows PowerShell for the included helper scripts
 
-## 1) Environment Setup
+## 1) Create Environment Files
 
-Create root `.env` from `.env.example` and fill real values.
+From the project root, create the backend env file:
 
-Required minimum:
-
-- `OPENAI_KEY`
-- `AUTH_SUPABASE_URL`
-- `AUTH_SUPABASE_KEY`
-- `WEAVIATE_HTTP_URL` (for local Docker: `http://localhost:8080`)
-- `WEAVIATE_COLLECTION` (default: `Chunk`)
-
-Create frontend env:
-
-1. Copy `frontend/.env.example` to `frontend/.env`
-2. Fill:
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-- `VITE_SUPABASE_DOCS_BUCKET` (default: `documents`)
-- `VITE_SUPABASE_DOCS_TABLE` (default: `documents`)
-
-## 2) Supabase Setup
-
-### 2.1 Create `documents` table
-
-Run SQL from:
-
-- `docs/supabase_documents_table.sql`
-
-This creates:
-
-- `public.documents`
-- RLS policies for `select/insert/update/delete` on own rows (`auth.uid() = user_id`)
-
-### 2.2 Create storage bucket
-
-In Supabase Storage, create bucket:
-
-- `documents`
-
-Set bucket visibility:
-
-- Private (recommended)
-
-### 2.3 Storage RLS policies (required)
-
-If upload fails with `new row violates row-level security policy`, add storage policies in Supabase SQL Editor:
-
-```sql
-create policy "docs_storage_select_own"
-on storage.objects
-for select
-to authenticated
-using (
-  bucket_id = 'documents'
-  and (storage.foldername(name))[2] = auth.uid()::text
-);
-
-create policy "docs_storage_insert_own"
-on storage.objects
-for insert
-to authenticated
-with check (
-  bucket_id = 'documents'
-  and (storage.foldername(name))[2] = auth.uid()::text
-);
-
-create policy "docs_storage_update_own"
-on storage.objects
-for update
-to authenticated
-using (
-  bucket_id = 'documents'
-  and (storage.foldername(name))[2] = auth.uid()::text
-);
-
-create policy "docs_storage_delete_own"
-on storage.objects
-for delete
-to authenticated
-using (
-  bucket_id = 'documents'
-  and (storage.foldername(name))[2] = auth.uid()::text
-);
+```powershell
+Copy-Item .env.example .env
 ```
 
-Note:
+Fill these required values in `.env`:
 
-- Upload paths are like `pending/<user_id>/<filename>` then moved to `validated/<user_id>/...` or `rejected/<user_id>/...`.
+```dotenv
+OPENAI_KEY=your-openai-api-key
+AUTH_SUPABASE_URL=https://your-project.supabase.co
+AUTH_SUPABASE_KEY=your-supabase-service-role-key
+```
 
-## 3) Start Infrastructure + Services
+Use the Supabase `service_role` key for `AUTH_SUPABASE_KEY`. The backend performs admin user actions, metadata writes, and storage operations that an anon key usually cannot perform.
 
-From project root:
+Optional backend values:
+
+```dotenv
+FRONTEND_URL=http://localhost:5173
+WEAVIATE_COLLECTION=Chunk
+AUTH_SMTP_HOST=
+AUTH_SMTP_PORT=587
+AUTH_SMTP_USERNAME=
+AUTH_SMTP_PASSWORD=
+AUTH_SMTP_FROM_EMAIL=
+AUTH_SMTP_FROM_NAME=ICC Agent Admin
+AUTH_SMTP_USE_TLS=true
+```
+
+Create the frontend env file:
+
+```powershell
+Copy-Item frontend\.env.example frontend\.env
+```
+
+Fill these values in `frontend/.env`:
+
+```dotenv
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+VITE_SUPABASE_DOCS_BUCKET=documents
+VITE_SUPABASE_DOCS_TABLE=documents
+VITE_SUPABASE_PROFILE_BUCKET=profiles
+```
+
+Use the Supabase anon/public key for `VITE_SUPABASE_ANON_KEY`.
+
+## 2) Configure Supabase
+
+In the Supabase SQL Editor, run these files in order:
+
+```text
+infrastructure/supabase/supabase_users_table.sql
+infrastructure/supabase/app_tables.sql
+infrastructure/supabase/security_alerts.sql
+```
+
+These create the tables used by auth, login tracking, document metadata, and security alerts.
+
+In Supabase Storage, create these buckets:
+
+- `documents`: private
+- `profiles`: public, or private if you later change profile image handling
+
+For document uploads through the current backend, the backend service-role key handles storage access. If you later upload directly from the browser with the anon key, add storage RLS policies for paths like:
+
+```text
+pending/<user_id>/<filename>
+validated/<user_id>/<filename>
+rejected/<user_id>/<filename>
+```
+
+## 3) Start Backend With Docker
+
+From the project root:
 
 ```powershell
 docker compose up -d --build
@@ -124,23 +105,28 @@ docker compose up -d --build
 
 This starts:
 
-- `weaviate` (8080)
-- `auth-service` (8001)
-- `preprocessing-service` (8000)
-- `embedding-service` (8002)
-- `retrieval-service` (8003)
-- `generation-service` (8004)
-- `ingestion-service` (8005)
+- `weaviate`: http://localhost:8080
+- `preprocessing-service`: http://localhost:8000
+- `auth-service`: http://localhost:8001
+- `embedding-service`: http://localhost:8002
+- `retrieval-service`: http://localhost:8003
+- `generation-service`: http://localhost:8004
+- `ingestion-service`: http://localhost:8005
+- `admin-service`: http://localhost:8006
+- `security-service`: http://localhost:8007
 
-Check status:
+Useful helper scripts:
 
 ```powershell
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+powershell -ExecutionPolicy Bypass -File .\infrastructure\docker\start-stack.ps1
+powershell -ExecutionPolicy Bypass -File .\infrastructure\docker\status.ps1
+powershell -ExecutionPolicy Bypass -File .\infrastructure\docker\logs.ps1 -Tail 120
+powershell -ExecutionPolicy Bypass -File .\infrastructure\docker\stop-stack.ps1
 ```
 
 ## 4) Bootstrap Weaviate Schema
 
-Run once (or whenever resetting Weaviate):
+Run once after Weaviate is running:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File infrastructure\weaviate\bootstrap-schema.ps1 `
@@ -148,11 +134,21 @@ powershell -ExecutionPolicy Bypass -File infrastructure\weaviate\bootstrap-schem
   -SchemaPath "infrastructure\weaviate\schema.chunk.json"
 ```
 
-Schema file:
+Verify Weaviate:
 
-- `infrastructure/weaviate/schema.chunk.json`
+```powershell
+Invoke-RestMethod http://localhost:8080/v1/.well-known/ready
+```
+
+Expected response:
+
+```text
+READY
+```
 
 ## 5) Start Frontend
+
+Open a new terminal:
 
 ```powershell
 cd frontend
@@ -160,72 +156,151 @@ npm install
 npm run dev
 ```
 
-Frontend runs on:
+Open:
 
-- `http://localhost:5173`
+```text
+http://localhost:5173
+```
+
+Vite proxies `/api/...` requests to the local backend services, so keep the backend stack running while using the frontend.
 
 ## 6) Smoke Checks
 
-Backend health:
+Run these from PowerShell:
 
 ```powershell
 Invoke-RestMethod http://localhost:8000/health
+Invoke-RestMethod http://localhost:8001/health
 Invoke-RestMethod http://localhost:8002/health
 Invoke-RestMethod http://localhost:8003/health
 Invoke-RestMethod http://localhost:8004/health
 Invoke-RestMethod http://localhost:8005/health
-```
-
-Weaviate ready:
-
-```powershell
+Invoke-RestMethod http://localhost:8006/health
+Invoke-RestMethod http://localhost:8007/health
 Invoke-RestMethod http://localhost:8080/v1/.well-known/ready
 ```
 
-## 7) Document Workflow
+If all checks return successfully, the local stack is up.
 
-In Admin page:
+## 7) Create First Admin User
 
-1. Drag-and-drop upload (multiple files supported)
-2. Validate or reject docs (single or bulk)
-3. On validation, system auto-checks Weaviate and embeds if not already indexed
-4. Deleting a document removes:
-- Supabase storage object
-- Supabase `documents` row
-- Related Weaviate chunks
+Create or sign up a user in the app, then promote that user in Supabase. In the SQL Editor, replace the email and run:
+
+```sql
+update auth.users
+set
+  raw_user_meta_data = jsonb_set(
+    coalesce(raw_user_meta_data, '{}'::jsonb),
+    '{role}',
+    '"admin"'::jsonb,
+    true
+  ),
+  raw_app_meta_data = jsonb_set(
+    jsonb_set(
+      coalesce(raw_app_meta_data, '{}'::jsonb),
+      '{account_validated}',
+      'true'::jsonb,
+      true
+    ),
+    '{account_blocked}',
+    'false'::jsonb,
+    true
+  )
+where email = 'admin@example.com';
+```
+
+Then log in again. Admin-only screens and admin APIs require a user whose metadata role is `admin`.
+
+## 8) Document Workflow
+
+In the Admin page:
+
+1. Upload one or more documents.
+2. Validate the documents.
+3. The system moves files from `pending/<user_id>/...` to `validated/<user_id>/...`.
+4. Validated documents are indexed through preprocessing, embedding, and Weaviate.
+5. Ask questions in the chat page after indexing finishes.
+
+Deleting a document removes:
+
+- the Supabase storage object
+- the Supabase `documents` row
+- related Weaviate chunks
+
+## 9) Run Backend Locally Without Docker
+
+Docker is the recommended path. For local uvicorn development, install Python dependencies first:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Start Weaviate:
+
+```powershell
+docker compose up -d weaviate
+```
+
+Then run the launcher:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-local-backend.ps1
+```
+
+Stop local uvicorn processes:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\stop-local-backend.ps1
+```
 
 ## Troubleshooting
 
-- `Could not find table public.documents`
-  - Run SQL file `docs/supabase_documents_table.sql`.
-- `Bucket not found`
-  - Create `documents` bucket in Supabase Storage.
-- `new row violates row-level security policy`
-  - Add storage RLS policies (section 2.3).
-- Frontend `HTTP 502` on chat
-  - Ensure `retrieval-service` and `generation-service` are both up.
-- Weaviate schema/collection missing
-  - Run bootstrap script in section 4.
+- `Could not find table public.documents`: run `infrastructure/supabase/app_tables.sql`.
+- `Could not find table public.login_attempts`: run `infrastructure/supabase/app_tables.sql`.
+- `Could not find table public.security_alerts`: run `infrastructure/supabase/security_alerts.sql`.
+- `Bucket not found`: create the `documents` and `profiles` buckets in Supabase Storage.
+- Auth admin, invite, upload, or delete actions fail: confirm `AUTH_SUPABASE_KEY` is the service-role key, not the anon key.
+- Frontend chat returns a proxy or 502 error: confirm `retrieval-service` and `generation-service` are running.
+- Admin page cannot load agent/security data: confirm `admin-service` on port `8006` and `security-service` on port `8007` are running.
+- Weaviate collection missing: run the bootstrap command in section 4.
+- Embedding fails with OpenAI errors: confirm `OPENAI_KEY` is valid and has API access.
 
 ## Useful Commands
 
-Tail logs:
+Show containers:
 
 ```powershell
-docker logs generation-service --tail 120
-docker logs retrieval-service --tail 120
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+```
+
+Tail selected logs:
+
+```powershell
+docker logs auth-service --tail 120
 docker logs ingestion-service --tail 120
+docker logs embedding-service --tail 120
+docker logs retrieval-service --tail 120
+docker logs generation-service --tail 120
+docker logs admin-service --tail 120
+docker logs security-service --tail 120
 ```
 
-Rebuild specific service:
+Rebuild selected services:
 
 ```powershell
-docker compose up -d --build ingestion-service
-docker compose up -d --build retrieval-service generation-service
+docker compose up -d --build auth-service
+docker compose up -d --build ingestion-service embedding-service
+docker compose up -d --build retrieval-service generation-service admin-service security-service
 ```
 
-Run ingestion service tests:
+Run tests:
 
 ```powershell
+pytest services\auth-service\tests -q
 pytest services\ingestion-service\tests -q
+pytest services\embedding-service\tests -q
+pytest services\retrieval-service\tests -q
+pytest services\generation-service\tests -q
+pytest services\admin-service\tests -q
+pytest services\security-service\tests -q
 ```
