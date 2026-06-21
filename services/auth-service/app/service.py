@@ -477,6 +477,10 @@ class AuthService:
         generated_password = self._generate_password()
         existing_user = self._find_user_by_email(email)
         message = "Invitation created"
+        # Admin invites always grant admin access by design: the `role` argument
+        # is intentionally not honored here (mirrors signup forcing 'user'), so
+        # an admin can only ever hand out admin via this path. See
+        # test_invite_user_* which pin this behavior.
         target_role = "admin"
 
         try:

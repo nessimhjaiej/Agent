@@ -1,5 +1,14 @@
 -- Run in Supabase SQL editor.
--- Creates a public users table and keeps role changes synced to auth.users metadata.
+-- Creates a public users table and keeps it two-way synced with auth.users.
+--
+-- Source of truth for role is auth.users.raw_user_meta_data->>'role'
+-- (the SDK's user_metadata.role). public.users mirrors it.
+--
+-- Sync is bidirectional:
+--   * auth.users  -> public.users  on INSERT or UPDATE of email / metadata
+--   * public.users -> auth.users   on INSERT or UPDATE of role
+-- Both directions only write when the value actually changed, so the two
+-- triggers cannot bounce each other into an infinite loop.
 
 create extension if not exists pgcrypto;
 
@@ -26,8 +35,11 @@ create trigger trg_users_set_updated_at
 before update on public.users
 for each row execute function public.set_updated_at();
 
--- Create/refresh a public.users row whenever a new auth user is created.
-create or replace function public.handle_new_auth_user()
+-- auth.users -> public.users
+-- Create or refresh the mirror row whenever a new auth user is created OR an
+-- existing one's email / metadata changes (e.g. role edited in the dashboard,
+-- or an invite promoting an existing user to admin).
+create or replace function public.handle_auth_user_change()
 returns trigger
 language plpgsql
 security definer
@@ -41,17 +53,29 @@ begin
     coalesce(new.raw_user_meta_data ->> 'role', 'user')
   )
   on conflict (id) do update
-    set email = excluded.email;
+    set email = excluded.email,
+        -- keep existing role if the new metadata doesn't carry one,
+        -- so unrelated auth updates can't silently downgrade an admin.
+        role  = coalesce(new.raw_user_meta_data ->> 'role', public.users.role)
+    where public.users.email is distinct from excluded.email
+       or public.users.role  is distinct from
+            coalesce(new.raw_user_meta_data ->> 'role', public.users.role);
   return new;
 end;
 $$;
 
 drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-after insert on auth.users
-for each row execute function public.handle_new_auth_user();
+drop trigger if exists on_auth_user_changed on auth.users;
+-- `update of email, raw_user_meta_data` keeps the trigger from firing on every
+-- login (which only touches last_sign_in_at) or on block/validate changes
+-- (which touch raw_app_meta_data). It fires only when something we mirror moves.
+create trigger on_auth_user_changed
+after insert or update of email, raw_user_meta_data on auth.users
+for each row execute function public.handle_auth_user_change();
 
--- Keep auth.users role metadata aligned when public.users.role changes.
+-- public.users -> auth.users
+-- Push role changes back into auth metadata, but only when it actually differs,
+-- which breaks the sync loop with on_auth_user_changed above.
 create or replace function public.sync_role_to_auth_user()
 returns trigger
 language plpgsql
@@ -66,7 +90,8 @@ begin
     to_jsonb(new.role::text),
     true
   )
-  where id = new.id;
+  where id = new.id
+    and coalesce(raw_user_meta_data ->> 'role', '') is distinct from new.role;
 
   return new;
 end;
@@ -77,7 +102,7 @@ create trigger trg_users_sync_role_to_auth
 after insert or update of role on public.users
 for each row execute function public.sync_role_to_auth_user();
 
--- Backfill existing auth users into public.users.
+-- Backfill existing auth users into public.users (email + role).
 insert into public.users (id, email, role)
 select
   u.id,
@@ -85,7 +110,8 @@ select
   coalesce(u.raw_user_meta_data ->> 'role', 'user') as role
 from auth.users u
 on conflict (id) do update
-  set email = excluded.email;
+  set email = excluded.email,
+      role  = excluded.role;
 
 -- Optional: strict client-side access.
 alter table public.users enable row level security;
@@ -99,4 +125,3 @@ with check (false);
 
 -- Promote a user to admin (example):
 -- update public.users set role = 'admin' where email = 'user@example.com';
-

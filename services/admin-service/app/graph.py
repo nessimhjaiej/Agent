@@ -1751,9 +1751,17 @@ def _build_capability_answer(
         if tool_name == "delete_document_completely":
             workflow_labels.append("delete a document and clean its vectors")
         elif tool_name == "reindex_document":
-            workflow_labels.append("reindex one document")
+            workflow_labels.append("reindex one document (by name or id)")
         elif tool_name == "reindex_validated_documents":
             workflow_labels.append("reindex all validated documents")
+        elif tool_name == "bulk_reindex_by_filter":
+            workflow_labels.append("reindex many documents at once (by name/category, status, or all)")
+        elif tool_name == "bulk_delete_by_filter":
+            workflow_labels.append("delete many documents at once (by name/category, status, or all)")
+        elif tool_name == "confirm_pending_documents":
+            workflow_labels.append("confirm pending documents (validate, then preprocess + embed) — one, several, or all")
+        elif tool_name == "refuse_pending_documents":
+            workflow_labels.append("refuse pending documents (mark as rejected) — one, several, or all")
         elif tool_name == "run_evaluation":
             workflow_labels.append("run an evaluation")
         elif tool_name == "compare_evaluation_reports":
@@ -1789,6 +1797,13 @@ def _build_capability_answer(
         docs = documents.get("documents", [])
         if isinstance(docs, list):
             live_lines.append(f"- Loaded documents visible right now: {len(docs)}")
+            pending_count = sum(
+                1 for d in docs if isinstance(d, dict) and str(d.get("status") or "") == "pending"
+            )
+            if pending_count:
+                live_lines.append(
+                    f"- Pending documents awaiting your review (confirm/refuse): {pending_count}"
+                )
     if isinstance(reports, dict):
         report_list = reports.get("reports", [])
         if isinstance(report_list, list):

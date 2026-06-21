@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { isPasswordStrong, PASSWORD_POLICY_MESSAGE } from '../utils/passwordPolicy';
-import { loginWithPassword } from '../config/api';
+import { loginWithPassword, setUnauthorizedHandler, setTokenRefresher } from '../config/api';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -262,13 +262,13 @@ export function AuthProvider({ children }) {
     let isUnmounted = false;
     let isSigningOut = false;
 
-    const forceSignOut = async ({ redirectHome = false } = {}) => {
+    const forceSignOut = async ({ redirectHome = false, reason = 'blocked' } = {}) => {
       if (isSigningOut) return;
       isSigningOut = true;
       try {
         clearUserState();
         bumpAuthRefreshKey();
-        broadcastSignOut('blocked');
+        broadcastSignOut(reason);
         await supabase.auth.signOut();
         if (redirectHome) {
           redirectToMainPage();
@@ -277,6 +277,23 @@ export function AuthProvider({ children }) {
         isSigningOut = false;
       }
     };
+
+    // Let the API layer silently recover a stale token: force-refresh the
+    // Supabase session and hand back a fresh access token so the failed request
+    // can be retried without the user noticing.
+    setTokenRefresher(async () => {
+      try {
+        return await getAccessToken({ forceRefresh: true });
+      } catch {
+        return '';
+      }
+    });
+
+    // Only reached when the refresh above could not save the session: tear it
+    // down and send the user back to the login page.
+    setUnauthorizedHandler(() => {
+      forceSignOut({ redirectHome: true, reason: 'expired' });
+    });
 
     const syncKnownUser = async (currentUser) => {
       if (!currentUser) {
@@ -360,6 +377,8 @@ export function AuthProvider({ children }) {
 
     return () => {
       isUnmounted = true;
+      setUnauthorizedHandler(null);
+      setTokenRefresher(null);
       subscription.unsubscribe();
       window.removeEventListener('storage', handleStorage);
       authBroadcastRef.current?.removeEventListener('message', handleBroadcastMessage);

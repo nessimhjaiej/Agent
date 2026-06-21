@@ -21,7 +21,42 @@ const API = {
   security: '/api/security',
 };
 
-async function parseResponse(response) {
+// The 401 detail strings the backends return for a dead session — a missing,
+// malformed, empty, or expired/invalid token. These differ across services:
+//   - auth-service & ingestion-service: "Missing or invalid Authorization header"
+//   - all three on an expired/invalid token: "Invalid or expired token"
+//   - admin-service (chat) with no token: "Missing admin access token"
+// We treat any of them the same: try a silent refresh, then log out. NOTE: this
+// excludes 403 "Admin access required" (a valid non-admin user) and 401
+// "Invalid credentials" (a failed login) — those must NOT sign anyone out.
+const DEAD_SESSION_ERRORS = [
+  'Missing or invalid Authorization header',
+  'Invalid or expired token',
+  'Missing admin access token',
+];
+
+let unauthorizedHandler = null;
+let tokenRefresher = null;
+
+/**
+ * Register a callback invoked when an authenticated request is rejected for a
+ * dead session that could NOT be recovered by refreshing. AuthContext wires
+ * this to sign the user out. Pass null to unregister.
+ */
+export function setUnauthorizedHandler(handler) {
+  unauthorizedHandler = typeof handler === 'function' ? handler : null;
+}
+
+/**
+ * Register an async callback that force-refreshes the Supabase session and
+ * resolves to a fresh access token (or '' if it cannot). Used to silently
+ * retry a request once before giving up and logging the user out.
+ */
+export function setTokenRefresher(refresher) {
+  tokenRefresher = typeof refresher === 'function' ? refresher : null;
+}
+
+async function readResponse(response) {
   const rawText = await response.text();
   let payload = null;
   if (rawText) {
@@ -32,17 +67,32 @@ async function parseResponse(response) {
     }
   }
 
-  if (response.ok) {
-    return payload ?? {};
-  }
-
   let detail = `HTTP ${response.status}`;
   if (payload?.detail) {
     detail = typeof payload.detail === 'string' ? payload.detail : JSON.stringify(payload.detail);
   } else if (rawText) {
     detail = rawText;
   }
-  throw new Error(detail);
+
+  return { ok: response.ok, status: response.status, payload, detail };
+}
+
+// True for a 401 that means the session is dead (any of the messages above).
+// Strictly 401-scoped so a 403 (e.g. non-admin) never counts.
+function isDeadSessionError(result) {
+  return result.status === 401
+    && DEAD_SESSION_ERRORS.some((message) => result.detail.includes(message));
+}
+
+async function parseResponse(response) {
+  const result = await readResponse(response);
+  if (result.ok) {
+    return result.payload ?? {};
+  }
+  if (isDeadSessionError(result) && unauthorizedHandler) {
+    unauthorizedHandler(result.detail);
+  }
+  throw new Error(result.detail);
 }
 
 async function postJson(url, body) {
@@ -54,47 +104,63 @@ async function postJson(url, body) {
   return parseResponse(response);
 }
 
+/**
+ * Authenticated request with silent token recovery. If the call comes back with
+ * a dead-session 401, we force-refresh the token once and retry. Only if the
+ * retry still fails (or no fresh token could be obtained) do we trigger logout.
+ */
+async function fetchWithAuth(url, { method = 'GET', accessToken, jsonBody, formBody } = {}) {
+  const doFetch = (token) => {
+    const headers = { Authorization: `Bearer ${token}` };
+    const init = { method, headers };
+    if (formBody !== undefined) {
+      init.body = formBody;
+    } else if (jsonBody !== undefined) {
+      headers['Content-Type'] = 'application/json';
+      init.body = JSON.stringify(jsonBody);
+    }
+    return fetch(url, init);
+  };
+
+  let result = await readResponse(await doFetch(accessToken));
+
+  if (isDeadSessionError(result) && tokenRefresher) {
+    let refreshedToken = '';
+    try {
+      refreshedToken = await tokenRefresher();
+    } catch {
+      refreshedToken = '';
+    }
+    // Only retry if we actually got a different, usable token; a same/empty
+    // token would just fail again and delay the logout.
+    if (refreshedToken && refreshedToken !== accessToken) {
+      result = await readResponse(await doFetch(refreshedToken));
+    }
+  }
+
+  if (result.ok) {
+    return result.payload ?? {};
+  }
+  if (isDeadSessionError(result) && unauthorizedHandler) {
+    unauthorizedHandler(result.detail);
+  }
+  throw new Error(result.detail);
+}
+
 async function postJsonWithAuth(url, body, accessToken) {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(body),
-  });
-  return parseResponse(response);
+  return fetchWithAuth(url, { method: 'POST', accessToken, jsonBody: body });
 }
 
 async function postFormWithAuth(url, formData, accessToken) {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: formData,
-  });
-  return parseResponse(response);
+  return fetchWithAuth(url, { method: 'POST', accessToken, formBody: formData });
 }
 
 async function getJsonWithAuth(url, accessToken) {
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-  return parseResponse(response);
+  return fetchWithAuth(url, { method: 'GET', accessToken });
 }
 
 async function deleteWithAuth(url, accessToken) {
-  const response = await fetch(url, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-  return parseResponse(response);
+  return fetchWithAuth(url, { method: 'DELETE', accessToken });
 }
 
 async function getJson(url) {
@@ -131,14 +197,36 @@ export async function loginWithPassword(email, password) {
 
 export async function streamAdmin(payload, onEvent) {
   const accessToken = typeof payload?.access_token === 'string' ? payload.access_token.trim() : '';
-  const response = await fetch(`${API.admin}/admin/chat/stream`, {
+
+  // The admin token travels in both the header and the body, so a refreshed
+  // retry has to rebuild both.
+  const doFetch = (token) => fetch(`${API.admin}/admin/chat/stream`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(token ? { ...payload, access_token: token } : payload),
   });
+
+  let response = await doFetch(accessToken);
+
+  // Dead-session 401: try a silent refresh + retry once before surfacing it
+  // (parseResponse below will log out if it still fails).
+  if (response.status === 401 && tokenRefresher) {
+    const peek = await readResponse(response.clone());
+    if (isDeadSessionError(peek)) {
+      let refreshedToken = '';
+      try {
+        refreshedToken = await tokenRefresher();
+      } catch {
+        refreshedToken = '';
+      }
+      if (refreshedToken && refreshedToken !== accessToken) {
+        response = await doFetch(refreshedToken);
+      }
+    }
+  }
 
   if (!response.ok || !response.body) {
     const detail = await parseResponse(response);

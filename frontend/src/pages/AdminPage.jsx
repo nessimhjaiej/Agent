@@ -35,6 +35,8 @@ import {
   uploadDocument,
 } from '../config/api';
 import logo from '../assets/logo.png';
+import { useVoiceTranscription } from '../hooks/useVoiceTranscription';
+import VoiceRecordButton from '../components/VoiceRecordButton';
 
 const DOCS_TABLE = import.meta.env.VITE_SUPABASE_DOCS_TABLE || 'documents';
 const ADMIN_AGENT_WARNING =
@@ -340,6 +342,28 @@ export default function AdminPage() {
   const dragDepthRef = useRef(0);
   const endRef = useRef(null);
 
+  const adminVoice = useVoiceTranscription({
+    onTranscript: (text) => {
+      setAgentInput((prev) => (prev.trim() ? `${prev.trim()}\n${text}` : text));
+    },
+    onError: (message) => {
+      setAgentMsgs((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: message,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          sources: [],
+          activity: [],
+          detailsOpen: false,
+          isStreaming: false,
+        },
+      ]);
+    },
+    canRecord: () => agentWarningConfirmed && !typing,
+  });
+
   const appendAssistantPlaceholder = (messageId) => {
     setAgentMsgs((prev) => [
       ...prev,
@@ -489,9 +513,11 @@ export default function AdminPage() {
     setUsersError('');
     try {
       const token = await getAccessToken();
+      // Invites always grant admin access (enforced by the auth-service); we
+      // send 'admin' so the request reflects what actually happens.
       const response = await inviteUser(token, {
         email: inviteEmail.trim(),
-        role: 'user',
+        role: 'admin',
       });
       if (response.message === 'User promoted to admin') {
         setInviteMessage(`${response.email} turned into an admin.`);
@@ -501,7 +527,7 @@ export default function AdminPage() {
           : response.recovery_link
             ? `Email could not be sent. Share this recovery link: ${response.recovery_link}`
             : `Email could not be sent. Temporary password: ${response.generated_password}`;
-        setInviteMessage(`${deliveryNote} ${response.message} for ${response.email}. User status remains invited until account setup is completed.`);
+        setInviteMessage(`${deliveryNote} ${response.message} for ${response.email}. They are granted admin access and stay marked as invited until they complete account setup.`);
       }
       setInviteEmail('');
       await loadManagedUsersData();
@@ -1861,10 +1887,23 @@ export default function AdminPage() {
                           </div>
                         )}
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 rounded-2xl p-4 sm:p-6 transition-all input-glow" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-                          <textarea id="admin-agent-input" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }} placeholder='Try: "refresh status", "embed validated", or "run evaluation"' rows={3} disabled={!agentWarningConfirmed} className="flex-1 bg-transparent outline-none text-sm resize-none max-h-72 disabled:opacity-50 sm:min-h-[132px] min-h-[96px]" style={{ color: 'var(--text-primary)', padding: '16px 18px' }} />
-                          <motion.button id="admin-send" onClick={sendAgent} disabled={!agentWarningConfirmed || !agentInput.trim() || typing} className="rounded-xl disabled:opacity-20 shrink-0 w-auto self-end sm:self-auto ml-auto" style={{ padding: '16px 22px', marginRight: '0px' }}>
-                            <Send size={16} color={agentInput.trim() && !typing ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
-                          </motion.button>
+                          <textarea id="admin-agent-input" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgent(); } }} placeholder='Try: "refresh status", "embed validated", or "run evaluation"' rows={3} disabled={!agentWarningConfirmed || adminVoice.isRecording || adminVoice.isTranscribing} className="flex-1 bg-transparent outline-none text-sm resize-none max-h-72 disabled:opacity-50 sm:min-h-[132px] min-h-[96px]" style={{ color: 'var(--text-primary)', padding: '16px 18px' }} />
+                          <div className="flex items-end gap-2 self-end sm:self-auto ml-auto">
+                            <VoiceRecordButton
+                              isRecording={adminVoice.isRecording}
+                              isTranscribing={adminVoice.isTranscribing}
+                              disabled={!agentWarningConfirmed || typing}
+                              elapsedSeconds={adminVoice.recordingElapsedSeconds}
+                              waveformSamples={adminVoice.waveformSamples}
+                              formatTimer={adminVoice.formatRecordingTimer}
+                              onStart={adminVoice.startRecording}
+                              onStop={adminVoice.stopRecording}
+                              theme={theme}
+                            />
+                            <motion.button id="admin-send" onClick={sendAgent} disabled={!agentWarningConfirmed || !agentInput.trim() || typing} className="rounded-xl disabled:opacity-20 shrink-0 w-auto" style={{ padding: '16px 22px', marginRight: '0px' }}>
+                              <Send size={16} color={agentInput.trim() && !typing ? '#7c3aed' : (theme === 'dark' ? 'white' : 'black')} />
+                            </motion.button>
+                          </div>
                         </div>
                       </div>
                     </div>

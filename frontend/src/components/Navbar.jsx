@@ -13,6 +13,7 @@ import {
   Bell,
   ShieldAlert,
   LayoutDashboard,
+  MessageSquare,
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 import { useTheme } from '../context/ThemeContext';
@@ -67,6 +68,7 @@ export default function Navbar() {
   const isAdmin = user?.user_metadata?.role === 'admin';
   const isAdminPage = location.pathname === '/admin';
   const isSecurityPage = location.pathname === '/security';
+  const isChatPage = location.pathname === '/';
   const homeRoute = isAdmin ? '/admin' : '/';
 
   useEffect(() => {
@@ -304,6 +306,23 @@ export default function Navbar() {
 
             {user ? (
               <div className="hidden lg:flex items-center gap-1.5 sm:gap-3 min-w-0">
+                {isAdmin && (
+                  <motion.button
+                    type="button"
+                    onClick={() => {
+                      closeTransientMenus();
+                      navigate(isChatPage ? '/admin' : '/');
+                    }}
+                    className="relative p-2.5 rounded-xl transition-colors hover:bg-primary-500/10"
+                    style={{ color: isChatPage ? 'var(--color-primary-400)' : 'var(--text-secondary)' }}
+                    title={isChatPage ? 'Back to admin dashboard' : 'Open user chat'}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {isChatPage ? <LayoutDashboard size={18} /> : <MessageSquare size={18} />}
+                  </motion.button>
+                )}
+
                 {isAdmin && (
                   <motion.button
                     type="button"
@@ -681,6 +700,26 @@ export default function Navbar() {
 
                     {user ? (
                       <>
+                        {isAdmin && (
+                          <button
+                          type="button"
+                          onClick={() => {
+                            closeTransientMenus();
+                            navigate(isChatPage ? '/admin' : '/');
+                          }}
+                          className="w-full flex items-center justify-center gap-3 rounded-2xl px-4 md:px-5 py-4 md:py-4.5 text-sm md:text-base text-center"
+                          style={{
+                            background: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-primary)',
+                            minHeight: '60px',
+                          }}
+                          >
+                            {isChatPage ? <LayoutDashboard size={18} /> : <MessageSquare size={18} />}
+                            <span>{isChatPage ? 'Admin dashboard' : 'User chat'}</span>
+                          </button>
+                        )}
+
                         {isAdmin && (
                           <button
                           type="button"

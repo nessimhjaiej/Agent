@@ -36,7 +36,9 @@ export default function App() {
     if (loading || !user) return;
     const isAdmin = userRole === 'admin';
 
-    if (isAdmin && (location.pathname === '/' || location.pathname === '/login')) {
+    // Only force admins to the dashboard right after login. Visiting '/' directly
+    // is allowed so an admin can open the user chat from the nav.
+    if (isAdmin && location.pathname === '/login') {
       navigate('/admin', { replace: true });
       return;
     }
