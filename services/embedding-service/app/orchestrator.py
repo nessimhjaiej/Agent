@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
+from uuid import UUID
 
 import httpx
 
@@ -72,7 +74,7 @@ class EmbeddingOrchestrator:
 
     def index_document(self, document_id: str, skip_if_embedded: bool = True) -> IndexDocumentResult:
         with self._client() as client:
-            document = self._get_document(client, document_id)
+            document = self._get_document_flexible(client, document_id)
             if document["status"] != "validated":
                 raise ConfigurationError("Only validated documents can be indexed")
             if skip_if_embedded and document.get("embedded") is True:
@@ -93,7 +95,7 @@ class EmbeddingOrchestrator:
 
             update_response = client.patch(
                 self._rest_url(self._settings.supabase_docs_table),
-                params={"id": f"eq.{document_id}", "select": "id,storage_path"},
+                params={"id": f"eq.{document['id']}", "select": "id,storage_path"},
                 headers={
                     **self._json_headers(),
                     "Prefer": "return=representation",
@@ -103,7 +105,7 @@ class EmbeddingOrchestrator:
                     "embedded_at": self._utc_now_iso(),
                 },
             )
-            self._raise_for_status(update_response, f"mark embedded {document_id}")
+            self._raise_for_status(update_response, f"mark embedded {document['id']}")
 
         return IndexDocumentResult(
             status="indexed",
@@ -117,7 +119,7 @@ class EmbeddingOrchestrator:
 
     def remove_document(self, document_id: str) -> RemoveDocumentResult:
         with self._client() as client:
-            document = self._get_document(client, document_id)
+            document = self._get_document_flexible(client, document_id)
             source_uri = str(self._local_document_path(str(document["storage_path"])))
             object_ids = self._lookup_weaviate_object_ids_by_source(
                 client=client,
@@ -128,11 +130,11 @@ class EmbeddingOrchestrator:
 
             update_response = client.patch(
                 self._rest_url(self._settings.supabase_docs_table),
-                params={"id": f"eq.{document_id}"},
+                params={"id": f"eq.{document['id']}"},
                 headers=self._json_headers(),
                 json={"embedded": False, "embedded_at": None},
             )
-            self._raise_for_status(update_response, f"clear embedded state {document_id}")
+            self._raise_for_status(update_response, f"clear embedded state {document['id']}")
 
         return RemoveDocumentResult(
             status="ok",
@@ -231,6 +233,63 @@ class EmbeddingOrchestrator:
         if not isinstance(payload, list) or not payload or not isinstance(payload[0], dict):
             raise ConfigurationError(f"Document not found: {document_id}")
         return payload[0]
+
+    def _get_document_flexible(self, client: httpx.Client, document_id: str) -> dict:
+        normalized = document_id.strip()
+        if not normalized:
+            raise ValueError("document_id is required")
+
+        if self._looks_like_uuid(normalized):
+            return self._get_document(client, normalized)
+
+        resolved = self._get_document_by_indexed_document_id(client, normalized)
+        if resolved is not None:
+            return resolved
+
+        raise ConfigurationError(f"Document not found: {document_id}")
+
+    def _get_document_by_indexed_document_id(self, client: httpx.Client, indexed_document_id: str) -> dict | None:
+        source_stem = self._source_stem_from_indexed_document_id(indexed_document_id)
+        if not source_stem:
+            return None
+
+        response = client.get(
+            self._rest_url(self._settings.supabase_docs_table),
+            params={
+                "select": "id,user_id,original_name,storage_path,status,embedded,size_bytes,created_at,embedded_at",
+                "storage_path": f"ilike.*{source_stem}*",
+                "order": "created_at.desc",
+                "limit": 20,
+            },
+            headers=self._auth_headers(),
+        )
+        self._raise_for_status(response, f"resolve indexed document id {indexed_document_id}")
+        payload = response.json()
+        if not isinstance(payload, list):
+            return None
+
+        for item in payload:
+            if not isinstance(item, dict):
+                continue
+            storage_path = str(item.get("storage_path") or "")
+            if Path(storage_path).stem == source_stem:
+                return item
+        return None
+
+    @staticmethod
+    def _looks_like_uuid(value: str) -> bool:
+        try:
+            UUID(value)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def _source_stem_from_indexed_document_id(indexed_document_id: str) -> str:
+        match = re.match(r"^(?P<stem>.+)-[0-9a-f]{12}$", indexed_document_id.strip(), re.IGNORECASE)
+        if match:
+            return match.group("stem")
+        return indexed_document_id.strip()
 
     def _lookup_weaviate_object_ids_by_source(
         self,

@@ -9,7 +9,6 @@ graph TD;
 	advisory_agent(advisory_agent)
 	inspect_agent(inspect_agent)
 	mutate_executor(mutate_executor)
-	workflow_executor(workflow_executor)
 	summarize_llm(summarize_llm)
 	__end__([<p>__end__</p>]):::last
 	__start__ --> classify_intent_llm;
@@ -17,10 +16,8 @@ graph TD;
 	classify_intent_llm -. &nbsp;advisory&nbsp; .-> advisory_agent;
 	classify_intent_llm -. &nbsp;inspect&nbsp; .-> inspect_agent;
 	classify_intent_llm -. &nbsp;mutate&nbsp; .-> mutate_executor;
-	classify_intent_llm -. &nbsp;workflow&nbsp; .-> workflow_executor;
 	inspect_agent --> summarize_llm;
 	mutate_executor --> summarize_llm;
-	workflow_executor --> summarize_llm;
 	summarize_llm --> __end__;
 	classDef default fill:#f2f0ff,line-height:1.2
 	classDef first fill-opacity:0

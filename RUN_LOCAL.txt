@@ -5,12 +5,64 @@ For the full setup guide, read README.md first.
 
 Option A) Start backend services with Docker Compose
 ----------------------------------------------------
-From the project root:
+cd C:\Users\NESSIM\Desktop\agentic
+docker compose up -d weaviate auth-service preprocessing-service embedding-service retrieval-service generation-service ingestion-service admin-service security-service
 
-docker compose up -d --build
+Optional: rebuild images before starting
+docker compose build auth-service preprocessing-service embedding-service retrieval-service generation-service ingestion-service admin-service security-service
 
-Check backend service health:
+Recommended when updating admin-service
+docker compose up -d --build --force-recreate admin-service
 
+Option B) Start backend services locally with uvicorn
+-----------------------------------------------------
+Notes:
+- Open one PowerShell terminal per service.
+- The Python services now auto-load C:\Users\NESSIM\Desktop\agentic\.env.
+- Weaviate still runs separately and is required for real retrieval/indexing.
+
+Single command:
+cd C:\Users\NESSIM\Desktop\agentic
+powershell -ExecutionPolicy Bypass -File .\scripts\start-local-backend.ps1
+
+1. Start Weaviate
+cd C:\Users\NESSIM\Desktop\agentic
+docker compose up -d weaviate
+
+2. Start auth-service
+cd C:\Users\NESSIM\Desktop\agentic\services\auth-service
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+
+3. Start preprocessing-service
+cd C:\Users\NESSIM\Desktop\agentic\services\preprocessing-service
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+4. Start embedding-service
+cd C:\Users\NESSIM\Desktop\agentic\services\embedding-service
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload
+
+5. Start retrieval-service
+cd C:\Users\NESSIM\Desktop\agentic\services\retrieval-service
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8003 --reload
+
+6. Start generation-service
+cd C:\Users\NESSIM\Desktop\agentic\services\generation-service
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8004 --reload
+
+7. Start ingestion-service
+cd C:\Users\NESSIM\Desktop\agentic\services\ingestion-service
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload
+
+8. Start admin-service
+cd C:\Users\NESSIM\Desktop\agentic\services\admin-service
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8006 --reload
+
+9. Start security-service
+cd C:\Users\NESSIM\Desktop\agentic\services\security-service
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8007 --reload
+
+Check backend service health
+----------------------------
 curl.exe http://localhost:8000/health
 curl.exe http://localhost:8001/health
 curl.exe http://localhost:8002/health
