@@ -1,8 +1,12 @@
+"""Fixed-size sliding-window chunker with a fixed character overlap."""
+
 from app.models import ChunkMetadata, ChunkRecord, ChunkingContext, NormalizedDocument
 from chunking.base import BaseChunker
 
 
 class OverlapChunker(BaseChunker):
+    """Cut the text into `chunk_size` windows advancing by `size - overlap` each step."""
+
     @property
     def name(self) -> str:
         return "overlap"
@@ -10,6 +14,7 @@ class OverlapChunker(BaseChunker):
     def chunk(
         self, document: NormalizedDocument, context: ChunkingContext
     ) -> list[ChunkRecord]:
+        """Split into fixed-size overlapping chunks (no boundary snapping)."""
         if context.chunk_size <= 0:
             raise ValueError("chunk_size must be > 0")
         if context.chunk_overlap < 0:

@@ -1,3 +1,5 @@
+"""OpenAI embeddings provider with batching + retry/backoff."""
+
 from time import sleep
 
 import httpx
@@ -8,6 +10,8 @@ from embeddings.base import BaseEmbedder
 
 
 class OpenAIEmbedder(BaseEmbedder):
+    """Turn texts into vectors via the OpenAI embeddings API."""
+
     def __init__(self, settings: Settings) -> None:
         self._api_key = settings.openai_key
         self._model = settings.embedding_model
@@ -31,6 +35,7 @@ class OpenAIEmbedder(BaseEmbedder):
         return "openai"
 
     def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        """Embed all texts, splitting into batches of `embedding_batch_size`."""
         if not texts:
             return []
 
@@ -41,6 +46,7 @@ class OpenAIEmbedder(BaseEmbedder):
         return embeddings
 
     def _embed_batch(self, batch: list[str]) -> list[list[float]]:
+        """Embed one batch; retries with exponential backoff on 429 / 5xx / network errors."""
         body: dict[str, object] = {
             "model": self._model,
             "input": batch,

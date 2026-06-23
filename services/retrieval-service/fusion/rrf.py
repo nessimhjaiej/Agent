@@ -1,3 +1,11 @@
+"""Reciprocal Rank Fusion (RRF) for combining BM25 and vector result lists.
+
+RRF ignores raw scores and uses only each item's *rank* in each list, which makes
+it robust when BM25 and vector scores are on different scales. A chunk's fused
+score is the sum over the lists it appears in of ``1 / (k + rank)``, where ``k``
+(``rrf_k``, default 60) dampens the influence of top ranks.
+"""
+
 from dataclasses import replace
 
 from app.models import CandidateChunk, QueryContext
@@ -5,6 +13,8 @@ from fusion.base import BaseFusion
 
 
 class RRFFusion(BaseFusion):
+    """Rank-based fusion: score = Σ 1/(k + rank) across the BM25 and vector lists."""
+
     @property
     def name(self) -> str:
         return "rrf"
@@ -15,9 +25,13 @@ class RRFFusion(BaseFusion):
         vector_candidates: list[CandidateChunk],
         ctx: QueryContext,
     ) -> list[CandidateChunk]:
+        """Fuse the two ranked lists into one, ordered by descending RRF score."""
         merged = self._merge_candidates(bm25_candidates, vector_candidates)
         if not merged:
             return []
+
+        # Map each chunk to its 1-based rank in each list (fall back to the loop
+        # index when a precomputed rank is absent).
 
         bm25_rank: dict[str, int] = {}
         vector_rank: dict[str, int] = {}
@@ -54,6 +68,7 @@ class RRFFusion(BaseFusion):
         bm25_candidates: list[CandidateChunk],
         vector_candidates: list[CandidateChunk],
     ) -> dict[str, CandidateChunk]:
+        """Union the two lists by chunk_id, preferring populated fields from each."""
         merged: dict[str, CandidateChunk] = {}
         for c in bm25_candidates:
             merged[c.chunk_id] = c

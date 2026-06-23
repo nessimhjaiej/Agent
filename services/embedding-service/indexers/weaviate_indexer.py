@@ -1,3 +1,11 @@
+"""Weaviate vector indexer.
+
+Upserts chunks into the `Chunk` collection using **deterministic UUIDs**, so
+re-indexing the same logical chunk overwrites its object instead of creating a
+duplicate. Each chunk is written with its externally generated embedding vector
+(the collection's vectorizer is `none`).
+"""
+
 from uuid import NAMESPACE_URL, uuid5
 
 import httpx
@@ -9,6 +17,8 @@ from indexers.base import BaseVectorIndexer
 
 
 class WeaviateIndexer(BaseVectorIndexer):
+    """Idempotent upsert of chunk+vector objects into a Weaviate collection."""
+
     def __init__(self, settings: Settings) -> None:
         self._base_url = settings.weaviate_http_url.rstrip("/")
         self._collection = settings.weaviate_collection
@@ -64,6 +74,7 @@ class WeaviateIndexer(BaseVectorIndexer):
         object_id: str,
         object_body: dict[str, object],
     ) -> IndexChunkResult:
+        """Upsert one object: PUT (update) first, then POST (create) if it's missing."""
         update_url = f"{self._base_url}/v1/objects/{object_id}"
         try:
             update_response = self._client.put(update_url, json=object_body)
@@ -115,6 +126,7 @@ class WeaviateIndexer(BaseVectorIndexer):
             )
 
     def _build_object_uuid(self, chunk: Chunk) -> str:
+        """Deterministic object id from chunk_id + checksum + model + dims (→ idempotent)."""
         dim_marker = self._embedding_dimensions or 0
         seed = (
             f"{chunk.chunk_id}|{chunk.metadata.document_checksum}|"

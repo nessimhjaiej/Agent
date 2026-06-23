@@ -1,3 +1,11 @@
+"""LLM-as-reranker.
+
+Sends the query plus candidate chunk texts to an OpenAI chat model in batches and
+asks for a relevance score in [0, 1] per chunk (strict JSON). Candidates are then
+reordered by that score. If the LLM call or parsing fails, the fused order is kept
+unchanged, so reranking can never make results worse than fusion alone.
+"""
+
 import json
 import os
 import re
@@ -11,6 +19,8 @@ from rankers.base import BaseRanker
 
 
 class LLMBatchRanker(BaseRanker):
+    """Reorder candidates by an LLM relevance score (batched, JSON, fail-safe)."""
+
     def __init__(
         self,
         api_key: str | None = None,
@@ -49,6 +59,7 @@ class LLMBatchRanker(BaseRanker):
         return "llm_batch"
 
     def rank(self, query: str, candidates: list[CandidateChunk], top_n: int) -> list[CandidateChunk]:
+        """Score the top_n candidates with the LLM and return them re-sorted by score."""
         if not candidates:
             return []
 
@@ -99,6 +110,11 @@ class LLMBatchRanker(BaseRanker):
         query: str,
         batch: list[CandidateChunk],
     ) -> list[tuple[str, float]]:
+        """Ask the model to score one batch; returns (chunk_id, score) pairs.
+
+        Chunk text is truncated to ``max_chars`` to bound prompt size, and only
+        scores for chunk_ids actually in this batch are kept (clamped to [0, 1]).
+        """
         prompt_candidates = [
             {
                 "chunk_id": item.chunk_id,

@@ -77,16 +77,24 @@ class EmbeddingOrchestrator:
             document = self._get_document_flexible(client, document_id)
             if document["status"] != "validated":
                 raise ConfigurationError("Only validated documents can be indexed")
-            if skip_if_embedded and document.get("embedded") is True:
-                return IndexDocumentResult(
-                    status="already_embedded",
-                    document_id=str(document["id"]),
-                    storage_path=str(document["storage_path"]),
-                    chunks_count=0,
-                    indexed_count=0,
-                    embedded=True,
-                    message="Document is already marked embedded",
-                )
+
+            # Vectors live only in each machine's local Weaviate, not in the shared
+            # Supabase row. The Supabase `embedded` flag therefore cannot tell us whether
+            # *this* machine already has the vectors -- another machine may have set it.
+            # Gate the skip on the local Weaviate state instead so each machine embeds
+            # independently and the shared flag never starves a machine of its vectors.
+            if skip_if_embedded:
+                source_uri = str(self._local_document_path(str(document["storage_path"])))
+                if self._lookup_weaviate_object_ids_by_source(client, source_uri, limit=1):
+                    return IndexDocumentResult(
+                        status="already_embedded",
+                        document_id=str(document["id"]),
+                        storage_path=str(document["storage_path"]),
+                        chunks_count=0,
+                        indexed_count=0,
+                        embedded=True,
+                        message="Document already embedded in this machine's Weaviate",
+                    )
 
             local_path = self._download_document(client, document)
             chunks = self._call_preprocessing(client, str(local_path), str(document["id"]))
@@ -295,11 +303,12 @@ class EmbeddingOrchestrator:
         self,
         client: httpx.Client,
         source_uri: str,
+        limit: int = 5000,
     ) -> list[str]:
         escaped = source_uri.replace("\\", "\\\\").replace('"', '\\"')
         query = (
             "{ Get { "
-            f"{self._settings.weaviate_collection}(where: {{path: [\"source_uri\"], operator: Equal, valueText: \"{escaped}\"}}, limit: 5000) "
+            f"{self._settings.weaviate_collection}(where: {{path: [\"source_uri\"], operator: Equal, valueText: \"{escaped}\"}}, limit: {limit}) "
             "{ _additional { id } } } }"
         )
         response = client.post(

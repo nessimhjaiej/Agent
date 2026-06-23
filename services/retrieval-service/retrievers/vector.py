@@ -1,3 +1,5 @@
+"""Vector (semantic) retriever: embed the query, then nearVector search Weaviate."""
+
 from app.config import Settings
 from app.errors import RetrievalValidationError
 from app.models import CandidateChunk, QueryContext
@@ -7,6 +9,8 @@ from retrievers.base import BaseRetriever
 
 
 class VectorRetriever(BaseRetriever):
+    """Semantic retrieval: OpenAI-embed the query and nearVector-search Weaviate."""
+
     def __init__(
         self,
         embedder: OpenAIClient | None = None,
@@ -29,6 +33,11 @@ class VectorRetriever(BaseRetriever):
         return "vector"
 
     def retrieve(self, ctx: QueryContext) -> list[CandidateChunk]:
+        """Embed the query and search Weaviate; `vector_score = 1 - distance`.
+
+        Guards against a query/index embedding-model mismatch (which would make
+        distances meaningless) when `enforce_embedding_model_match` is on.
+        """
         query_vector = self._embedder.embed_query(ctx.query)
         rows = self._weaviate.vector_search(
             query_vector=query_vector,

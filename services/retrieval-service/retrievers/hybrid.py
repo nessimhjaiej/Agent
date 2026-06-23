@@ -1,9 +1,13 @@
+"""Runs the BM25 and/or vector retrievers according to the requested mode."""
+
 from app.models import CandidateChunk, QueryContext
 from retrievers.bm25 import BM25Retriever
 from retrievers.vector import VectorRetriever
 
 
 class HybridRetriever:
+    """Dispatches to BM25, vector, or both, returning the two candidate lists."""
+
     def __init__(
         self,
         bm25_retriever: BM25Retriever | None = None,
@@ -19,6 +23,7 @@ class HybridRetriever:
         return self._vector.retrieve(ctx)
 
     def retrieve(self, ctx: QueryContext) -> tuple[list[CandidateChunk], list[CandidateChunk]]:
+        """Return ``(bm25_candidates, vector_candidates)`` per mode; either may be empty."""
         mode = ctx.mode.strip().lower()
         if mode == "bm25":
             return self.retrieve_bm25(ctx), []

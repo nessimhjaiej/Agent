@@ -1,3 +1,11 @@
+"""Semantic chunker: size-based windows whose edges snap to natural boundaries.
+
+Like the overlap chunker it walks the text in ~`chunk_size` windows with
+`chunk_overlap`, but instead of cutting mid-sentence it snaps each window's end
+(and the next start) to the nearest sentence/paragraph break, so chunks stay
+semantically coherent.
+"""
+
 import re
 from pathlib import Path
 
@@ -6,6 +14,8 @@ from chunking.base import BaseChunker
 
 
 class SemanticChunker(BaseChunker):
+    """Window-based chunker that snaps boundaries to sentence/paragraph breaks."""
+
     @property
     def name(self) -> str:
         return "semantic"
@@ -13,6 +23,7 @@ class SemanticChunker(BaseChunker):
     def chunk(
         self, document: NormalizedDocument, context: ChunkingContext
     ) -> list[ChunkRecord]:
+        """Split into overlapping chunks, snapping each boundary to a breakpoint."""
         if context.chunk_size <= 0:
             raise ValueError("chunk_size must be > 0")
         if context.chunk_overlap < 0:
@@ -52,6 +63,7 @@ class SemanticChunker(BaseChunker):
         return chunks
 
     def _collect_breakpoints(self, text: str) -> list[int]:
+        """Character offsets of sentence/paragraph boundaries (always incl. 0 and len)."""
         points: set[int] = {0, len(text)}
         # sentence-like endings
         for match in re.finditer(r"[.!?]+(?:\s+|$)", text):

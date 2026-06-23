@@ -1,19 +1,26 @@
+"""Language detection used to tag chunks (returns an ISO code or "und")."""
+
 import re
 from abc import ABC, abstractmethod
 
 
 class BaseLanguageDetector(ABC):
+    """Interface: map text to a language code (or "und" when unknown)."""
+
     @abstractmethod
     def detect(self, text: str) -> str:
         raise NotImplementedError
 
 
 class LightweightLanguageDetector(BaseLanguageDetector):
+    """`langdetect` when available, with a regex/stop-word heuristic fallback."""
+
     def __init__(self, min_chars: int = 50, min_confidence: float = 0.65) -> None:
         self._min_chars = min_chars
         self._min_confidence = min_confidence
 
     def detect(self, text: str) -> str:
+        """Return an ISO code; "und" if the text is too short or confidence is low."""
         cleaned = text.strip()
         if len(cleaned) < self._min_chars:
             return "und"
@@ -25,6 +32,7 @@ class LightweightLanguageDetector(BaseLanguageDetector):
         return self._heuristic_detect(cleaned)
 
     def _detect_with_langdetect(self, text: str) -> str | None:
+        """Try the `langdetect` library; None if unavailable, "und" if low-confidence."""
         try:
             from langdetect import DetectorFactory, detect_langs
         except ImportError:
@@ -43,6 +51,7 @@ class LightweightLanguageDetector(BaseLanguageDetector):
             return None
 
     def _heuristic_detect(self, text: str) -> str:
+        """Fallback: Arabic vs Latin script, then French/English stop-word counts."""
         arabic_chars = len(re.findall(r"[\u0600-\u06FF]", text))
         latin_chars = len(re.findall(r"[A-Za-z]", text))
         if arabic_chars > latin_chars:

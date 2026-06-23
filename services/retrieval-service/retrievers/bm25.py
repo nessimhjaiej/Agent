@@ -1,3 +1,5 @@
+"""BM25 (keyword) retriever backed by Weaviate's BM25 search."""
+
 from app.config import Settings
 from app.models import CandidateChunk, QueryContext
 from clients.weaviate_client import WeaviateClient
@@ -5,6 +7,8 @@ from retrievers.base import BaseRetriever
 
 
 class BM25Retriever(BaseRetriever):
+    """Keyword retrieval: query Weaviate BM25 and map rows to CandidateChunks."""
+
     def __init__(self, client: WeaviateClient | None = None) -> None:
         if client is not None:
             self._client = client
@@ -20,6 +24,7 @@ class BM25Retriever(BaseRetriever):
         return "bm25"
 
     def retrieve(self, ctx: QueryContext) -> list[CandidateChunk]:
+        """Run BM25 search and return candidates; `rank_bm25` is the 1-based result order."""
         rows = self._client.bm25_search(
             query=ctx.query,
             top_k=ctx.top_k_retrieve,

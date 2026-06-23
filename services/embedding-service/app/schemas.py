@@ -110,7 +110,7 @@ class IndexChunksResponse(BaseModel):
 
 class IndexDocumentRequest(BaseModel):
     document_id: str = Field(..., min_length=1, description="Supabase document row id.")
-    skip_if_embedded: bool = Field(default=True, description="Skip work if the document is already marked embedded.")
+    skip_if_embedded: bool = Field(default=True, description="Skip work if this machine's local Weaviate already has the document's chunks.")
 
 
 class IndexDocumentResponse(BaseModel):

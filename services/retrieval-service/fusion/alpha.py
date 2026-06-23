@@ -1,3 +1,10 @@
+"""Alpha (weighted) fusion of BM25 and vector results.
+
+Each list's scores are min-max normalized to [0, 1] (so the two scales are
+comparable), then blended: ``score = (1 - alpha) * bm25 + alpha * vector``.
+``alpha`` (default 0.7) controls the lean: 0 = keyword only, 1 = semantic only.
+"""
+
 from dataclasses import replace
 
 from app.models import CandidateChunk, QueryContext
@@ -5,6 +12,8 @@ from fusion.base import BaseFusion
 
 
 class AlphaFusion(BaseFusion):
+    """Weighted fusion: blend min-max-normalized BM25 and vector scores by ``alpha``."""
+
     @property
     def name(self) -> str:
         return "alpha"
@@ -15,9 +24,13 @@ class AlphaFusion(BaseFusion):
         vector_candidates: list[CandidateChunk],
         ctx: QueryContext,
     ) -> list[CandidateChunk]:
+        """Fuse the two lists into one, ordered by descending blended score."""
         merged = self._merge_candidates(bm25_candidates, vector_candidates)
         if not merged:
             return []
+
+        # Collect each list's raw scores (fall back to 1/rank when a score is
+        # missing), so both branches always contribute a comparable signal.
 
         bm25_raw: dict[str, float] = {}
         vector_raw: dict[str, float] = {}
@@ -53,6 +66,7 @@ class AlphaFusion(BaseFusion):
         return fused
 
     def _normalize_scores(self, scores: dict[str, float]) -> dict[str, float]:
+        """Min-max scale scores to [0, 1] (all-equal scores collapse to 1.0)."""
         if not scores:
             return {}
         values = list(scores.values())
@@ -67,6 +81,7 @@ class AlphaFusion(BaseFusion):
         bm25_candidates: list[CandidateChunk],
         vector_candidates: list[CandidateChunk],
     ) -> dict[str, CandidateChunk]:
+        """Union the two lists by chunk_id, preferring populated fields from each."""
         merged: dict[str, CandidateChunk] = {}
         for c in bm25_candidates:
             merged[c.chunk_id] = c

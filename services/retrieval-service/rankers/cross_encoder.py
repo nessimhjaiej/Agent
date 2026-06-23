@@ -1,3 +1,10 @@
+"""Cross-encoder reranker (local sentence-transformers model).
+
+Scores each (query, chunk_text) pair with a cross-encoder — more accurate than
+the fusion score because the model reads the query and chunk together — then
+sorts by that score. The model is loaded lazily on first use.
+"""
+
 import os
 from dataclasses import replace
 
@@ -7,6 +14,8 @@ from rankers.base import BaseRanker
 
 
 class CrossEncoderRanker(BaseRanker):
+    """Rerank candidates with a local cross-encoder model."""
+
     def __init__(
         self,
         model_name: str | None = None,
@@ -55,6 +64,7 @@ class CrossEncoderRanker(BaseRanker):
         return scored[:top_n]
 
     def _get_model(self):
+        """Lazily import + load the cross-encoder model, caching it after first use."""
         if self._model is not None:
             return self._model
         try:

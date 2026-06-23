@@ -1,3 +1,10 @@
+"""Late chunker: larger, boundary-snapped windows for late-chunking workflows.
+
+Multiplies the base `chunk_size`/`chunk_overlap` (by `late_size_multiplier` /
+`late_overlap_multiplier`, default 2x) to produce bigger windows, then snaps the
+edges to paragraph/sentence breaks (paragraphs preferred for the larger spans).
+"""
+
 import re
 from pathlib import Path
 
@@ -6,6 +13,8 @@ from chunking.base import BaseChunker
 
 
 class LateChunker(BaseChunker):
+    """Boundary-snapped chunker using enlarged windows (size/overlap × multiplier)."""
+
     @property
     def name(self) -> str:
         return "late"
@@ -13,6 +22,7 @@ class LateChunker(BaseChunker):
     def chunk(
         self, document: NormalizedDocument, context: ChunkingContext
     ) -> list[ChunkRecord]:
+        """Split into enlarged, breakpoint-snapped overlapping chunks."""
         base_size = context.chunk_size
         base_overlap = context.chunk_overlap
         if base_size <= 0:

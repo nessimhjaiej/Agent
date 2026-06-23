@@ -1,3 +1,9 @@
+"""Environment-driven configuration for auth-service.
+
+Loads `.env` / `.env.local` from the project root and exposes a typed `Settings`
+dataclass. Build it with `Settings.from_env()`.
+"""
+
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -14,6 +20,8 @@ load_dotenv(_PROJECT_ROOT / ".env.local", override=True)
 
 @dataclass(slots=True)
 class Settings:
+    """Typed settings for auth-service (Supabase creds, lockout policy, SMTP)."""
+
     app_name: str = "auth-service"
     app_version: str = "0.1.0"
 

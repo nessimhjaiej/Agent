@@ -42,9 +42,18 @@ This service receives preprocessed chunks, generates embeddings with OpenAI, and
 - `POST /embedding/index-chunks`: index a batch of already-built chunks into Weaviate.
 - `POST /embedding/index-document`: full pipeline for one document — fetch the
   Supabase row, download the file, call `preprocessing-service` to chunk it, embed,
-  upsert to Weaviate, and mark the row `embedded=true` (skips if already embedded).
+  upsert to Weaviate, and mark the row `embedded=true`. When `skip_if_embedded` is
+  true (default) the skip is decided by **this machine's local Weaviate** (a
+  `source_uri` lookup), not the shared Supabase `embedded` flag — see the note below.
 - `POST /embedding/remove-document`: delete a document's vectors from Weaviate and
   clear its `embedded` flag.
+
+> **Why the skip checks Weaviate, not the Supabase flag:** vectors live only in
+> each machine's *local* Weaviate, while the `documents` row is shared in Supabase.
+> If one machine indexes a document it sets `embedded=true` for everyone, which
+> would wrongly stop other machines from ever building their own vectors. So
+> `index-document` decides "already embedded" by looking up the document's objects
+> in the local Weaviate, letting every machine embed independently.
 
 ## Request Contract (`POST /embedding/index-chunks`)
 
