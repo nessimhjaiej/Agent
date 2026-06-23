@@ -39,7 +39,12 @@ This service receives preprocessed chunks, generates embeddings with OpenAI, and
 ## API Endpoints
 
 - `GET /health`: service status/version.
-- `POST /embedding/index-chunks`: index chunk batch into Weaviate.
+- `POST /embedding/index-chunks`: index a batch of already-built chunks into Weaviate.
+- `POST /embedding/index-document`: full pipeline for one document — fetch the
+  Supabase row, download the file, call `preprocessing-service` to chunk it, embed,
+  upsert to Weaviate, and mark the row `embedded=true` (skips if already embedded).
+- `POST /embedding/remove-document`: delete a document's vectors from Weaviate and
+  clear its `embedded` flag.
 
 ## Request Contract (`POST /embedding/index-chunks`)
 

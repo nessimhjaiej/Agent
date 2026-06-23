@@ -1,155 +1,99 @@
-﻿# auth-service
+# auth-service
 
-This service provides secure authentication and authorization for the Agentic RAG platform using Supabase Auth as the backend authentication provider.
+Authentication, session management, and admin user-management for the platform,
+built on top of **Supabase Auth (GoTrue)**. The browser talks only to this
+service for auth — it never calls Supabase Auth directly.
 
-## Workflow
+> **Key requirement:** `AUTH_SUPABASE_KEY` must be the Supabase **service-role**
+> key. The service performs admin user actions and writes RLS-protected tables
+> (`login_attempts`, `audit_logs`). An anon/public key makes login and user
+> management fail.
 
-1. **Signup**: Client sends email/password to `POST /auth/signup`.
-2. `AuthService.signup(...)` validates input using password validators.
-3. Request is forwarded to Supabase Auth via `SupabaseClient`.
-4. Supabase creates user account and sends confirmation email automatically.
-5. Supabase returns session with JWT access token and refresh token.
-6. Service maps Supabase user to `AuthUser` model and returns `AuthSession` with tokens.
+## How it works
 
-7. **Login**: Client sends credentials to `POST /auth/login`.
-8. `AuthService.login(...)` forwards to Supabase Auth for verification.
-9. Supabase validates credentials and checks email confirmation status.
-10. On success, Supabase returns valid session with tokens.
-11. Service tracks login attempts for rate limiting and audit logging.
+- **Signup** (`POST /auth/signup`): creates the account via the Supabase **admin**
+  API (`admin.create_user`, `email_confirm=true`) — no confirmation email is sent.
+  The new user gets `role=user` and `account_validated=false`, so they **cannot log
+  in until an admin validates them**. Signup returns no session.
+- **Login** (`POST /auth/login`): enforces a lockout (max attempts within a window),
+  records every attempt in `login_attempts`, emits a `BRUTE_FORCE_ATTEMPTS` alert at
+  the threshold, and rejects blocked / invite-pending / unvalidated accounts. On
+  success it returns a Supabase session (access + refresh token).
+- **Refresh** (`POST /auth/refresh`): exchanges a refresh token for a new session.
+  The browser uses this to renew tokens (server-owned refresh).
+- **Profile** (`GET /auth/me`, `POST /auth/update-profile`): returns / updates the
+  caller's own profile (username, phone, avatar URL, onboarding flag, password).
+- **Password reset** (`POST /auth/password-reset`): self-service, but only for an
+  existing, non-blocked, **non-admin** account (admins must be re-invited). Sends a
+  branded reset email; returns `{ success, message }`.
+- **Admin** endpoints: list users, invite (always grants admin), validate, block
+  (also force-kicks active sessions), and delete users. All are audit-logged and
+  emit security events.
 
-12. **Protected Routes**: Client includes JWT token in Authorization header.
-13. `AuthService.verify_token(...)` validates token via Supabase.
-14. Supabase verifies token signature and expiration.
-15. Service retrieves user data and checks role permissions if needed.
+## API endpoints
 
-## Folder Overview
+| Method & path | Auth | Purpose |
+|---------------|------|---------|
+| `GET /health` | — | service status / version |
+| `POST /auth/signup` | — | register (pending admin validation) |
+| `POST /auth/login` | — | authenticate, return session |
+| `POST /auth/refresh` | refresh token | renew session |
+| `POST /auth/password-reset` | — | email a reset link (gated) |
+| `POST /auth/update-password` | bearer | change own password |
+| `GET /auth/me` | bearer | full self-profile |
+| `POST /auth/update-profile` | bearer | update own metadata / password |
+| `POST /auth/logout` | bearer | sign out |
+| `GET /auth/admin/users` | admin | list users |
+| `POST /auth/admin/invite` | admin | invite an admin |
+| `POST /auth/admin/users/{id}/validate` | admin | approve / un-approve |
+| `POST /auth/admin/users/{id}/block` | admin | block / unblock |
+| `DELETE /auth/admin/users/{id}` | admin | delete a user |
 
-- `app/`: API and core authentication logic.
-- `app/main.py`: FastAPI entrypoint and router registration.
-- `app/config.py`: environment-driven settings (Supabase credentials, rate limits).
-- `app/schemas.py`: Pydantic request/response models for API endpoints.
-- `app/models.py`: domain models (`AuthUser`, `AuthSession`).
-- `app/service.py`: `AuthService` — core business logic wrapping Supabase Auth.
-- `app/database.py`: `SupabaseClient` — Supabase auth client wrapper.
-- `app/exceptions.py`: custom exception hierarchy for auth errors.
-- `app/validators.py`: password and email validation logic.
-- `app/utils.py`: utility functions (reserved for future use).
-- `app/routers/`: API route handlers.
-- `app/routers/health.py`: health check endpoint.
-- `app/routers/auth.py`: authentication endpoints (signup, login, profile, etc.).
-- `tests/`: unit and API contract tests.
+## Folder overview
 
-## API Endpoints
+- `app/main.py` — FastAPI entrypoint and router registration.
+- `app/routers/auth.py` — all `/auth/*` endpoints; maps service exceptions to HTTP
+  codes (e.g. `AccountLocked`→429, `InvalidCredentials`→401, `Unauthorized`→403).
+- `app/routers/health.py` — health check.
+- `app/service.py` — `AuthService`: the core business logic over Supabase Auth.
+- `app/database.py` — `SupabaseClient`: Supabase client + `log_audit`,
+  `record_login_attempt`, `get_failed_login_count`.
+- `app/schemas.py` — Pydantic request/response models (the API contract).
+- `app/models.py` — domain models (`AuthUser`, `AuthSession`).
+- `app/validators.py` — `PasswordValidator`, `EmailValidator`.
+- `app/exceptions.py` — exception hierarchy under `AuthServiceException`.
+- `app/security_events.py` — emits events to `security-service`.
+- `app/assets/logo.png` — logo embedded in the branded HTML emails.
+- `tests/` — unit + API-contract tests.
 
-- `GET /health`: service status and version.
-- `POST /auth/signup`: register new user account.
-- `POST /auth/login`: authenticate user and get tokens.
-- `GET /auth/me`: get current user profile (requires auth token).
-- `POST /auth/change-password`: change user password (requires auth token).
-- `POST /auth/deactivate`: deactivate user account (requires auth token).
-- `GET /admin/users/{user_id}`: get user by ID (admin role required).
+## Run
 
-## Usage
-
-1. Install dependencies:
-
-```bash
-pip install -r requirements.txt
+```powershell
+uvicorn app.main:app --reload --app-dir services/auth-service --port 8001
 ```
 
-2. Run the API:
+Interactive docs: `http://127.0.0.1:8001/docs`
 
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
-```
+## Environment variables
 
-Or from project root:
+| Var | Required | Default | Purpose |
+|-----|----------|---------|---------|
+| `AUTH_SUPABASE_URL` | ✅ | — | Supabase project URL |
+| `AUTH_SUPABASE_KEY` | ✅ | — | Supabase **service-role** key |
+| `AUTH_MAX_LOGIN_ATTEMPTS` | | `5` | failed logins before lockout |
+| `AUTH_LOCKOUT_DURATION_MINUTES` | | `15` | lockout window |
+| `FRONTEND_URL` | | — | base URL used in email links |
+| `SECURITY_BASE_URL` | | `http://security-service:8007` | where to emit security events |
+| `AUTH_SMTP_HOST` / `AUTH_SMTP_PORT` / `AUTH_SMTP_USERNAME` / `AUTH_SMTP_PASSWORD` / `AUTH_SMTP_FROM_EMAIL` / `AUTH_SMTP_FROM_NAME` / `AUTH_SMTP_USE_TLS` | | — | SMTP for branded invite / reset emails (falls back to Supabase's built-in email if unset) |
 
-```bash
-uvicorn app.main:app --reload --app-dir services/auth-service --host 0.0.0.0 --port 8001
-```
+See `app/config.py` for the full list and exact defaults.
 
-3. Open interactive docs:
+## Security features
 
-`http://127.0.0.1:8001/docs`
-
-4. Example request body for `POST /auth/signup`:
-
-```json
-{
-  "email": "user@example.com",
-  "password": "SecureP@ssw0rd!",
-  "role": "user"
-}
-```
-
-5. Example request body for `POST /auth/login`:
-
-```json
-{
-  "email": "user@example.com",
-  "password": "SecureP@ssw0rd!"
-}
-```
-
-6. Example Authorization header for protected endpoints:
-
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-## Environment Variables
-
-- `AUTH_APP_NAME`: service name (default: `auth-service`)
-- `AUTH_APP_VERSION`: service version (default: `0.1.0`)
-- `AUTH_SUPABASE_URL`: **Required** — your Supabase project URL
-- `AUTH_SUPABASE_KEY`: **Required** — your Supabase anon/public API key
-- `AUTH_MAX_LOGIN_ATTEMPTS`: max login attempts before lockout (default: `5`)
-- `AUTH_LOCKOUT_DURATION_MINUTES`: account lockout duration in minutes (default: `15`)
-
-**Getting Supabase Credentials:**
-1. Sign up at [Supabase](https://supabase.com)
-2. Create a new project
-3. Navigate to: Project Settings → API
-4. Copy the project URL and anon/public key to your `.env` file
-
-## Design Patterns Used
-
-- **Service Layer Pattern**:
-  - `AuthService` encapsulates business logic and Supabase Auth integration
-  - Separates API layer from domain logic
-  
-- **Wrapper Pattern**:
-  - `SupabaseClient` wraps Supabase SDK for easier testing and abstraction
-  
-- **Exception Hierarchy**:
-  - Custom exceptions (`InvalidCredentialsException`, `UserNotFoundException`, etc.)
-  - Centralized error handling and meaningful error messages
-  
-- **Validator Pattern**:
-  - `PasswordValidator` and `EmailValidator` enforce security policies
-  - Reusable validation logic separate from business logic
-  
-- **Layered Architecture** (separation of concerns):
-  - API layer (`routers`, `schemas`)
-  - Service layer (`service.py`)
-  - Domain layer (`models`, `validators`, `exceptions`)
-  - Infrastructure layer (`database.py`, `config.py`)
-
-## Security Features
-
-**Supabase Auth handles:**
-- Password hashing & verification (bcrypt)
-- JWT token creation, signing & validation
-- Email verification (automatic confirmation emails on signup)
-- Password reset flows via email
-- Secure session management with refresh tokens
-- Token expiration and rotation
-
-**Application-level security:**
-- Strong password policy validation (8+ chars, uppercase, lowercase, special characters)
-- Rate limiting on login attempts (configurable)
-- Account lockout on suspicious activity
-- Role-based access control (user / admin roles)
-- Audit logging for authentication events
-- Input validation and sanitization
+- Strong password policy (8+ chars, upper, lower, digit, special).
+- Login lockout + brute-force detection → security alerts.
+- Account validation gate (new users wait for admin approval).
+- Blocking with global session kick + ban.
+- Role-based access (`user` / `admin`); admin endpoints require an admin token.
+- Gated self-service password reset (existing, non-blocked, non-admin only).
+- Audit logging of auth events; security events forwarded to `security-service`.

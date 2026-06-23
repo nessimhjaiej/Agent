@@ -6,7 +6,7 @@ This service performs retrieval for RAG with three modes:
 2. `vector` semantic retrieval
 3. `hybrid` retrieval (BM25 + vector) with pluggable fusion (`alpha` or `rrf`)
 
-It also includes internal reranker modules (`none`, `cross_encoder`, `llm_batch`), with `none` active by default.
+It also includes internal reranker modules (`none`, `cross_encoder`, `llm_batch`), with `llm_batch` active by default.
 
 ## Workflow
 
@@ -17,7 +17,7 @@ It also includes internal reranker modules (`none`, `cross_encoder`, `llm_batch`
    - `vector`: vector branch only
    - `hybrid`: both branches
 4. `FusionFactory` selects `AlphaFusion` or `RRFFusion` and combines candidates.
-5. `RankerFactory` selects reranker (`none` by default).
+5. `RankerFactory` selects the reranker (`llm_batch` by default).
 6. Service returns ranked chunks and grouped document hits.
 
 ## Folder Overview
@@ -39,7 +39,11 @@ It also includes internal reranker modules (`none`, `cross_encoder`, `llm_batch`
 ## API Endpoints
 
 - `GET /health`
-- `POST /retrieval/search`
+- `POST /retrieval/search` — run a search and return ranked chunks + document hits.
+- `GET /retrieval/config` — current fusion/rerank/top-k defaults.
+- `PUT /retrieval/config` — update those defaults (persisted to `config.py`; this is
+  what the admin agent tunes).
+- `GET /retrieval/rerankers` — list available reranker methods.
 
 ## Request Example
 
@@ -70,12 +74,12 @@ It also includes internal reranker modules (`none`, `cross_encoder`, `llm_batch`
 
 - `RETRIEVAL_APP_NAME`
 - `RETRIEVAL_APP_VERSION`
-- `RETRIEVAL_DEFAULT_TOP_K_RETRIEVE` (default `5`)
+- `RETRIEVAL_DEFAULT_TOP_K_RETRIEVE` (default `4`)
 - `RETRIEVAL_DEFAULT_TOP_K_RETURN` (default `3`)
-- `RETRIEVAL_DEFAULT_FUSION` (`alpha` or `rrf`)
+- `RETRIEVAL_DEFAULT_FUSION` (`alpha` or `rrf`; default `alpha`)
 - `RETRIEVAL_DEFAULT_ALPHA` (default `0.7`)
 - `RETRIEVAL_DEFAULT_RRF_K` (default `60`)
-- `RETRIEVAL_DEFAULT_RANKER` (`none`, `cross_encoder`, `llm_batch`)
+- `RETRIEVAL_DEFAULT_RANKER` (`none`, `cross_encoder`, `llm_batch`; default `llm_batch`)
 - `RETRIEVAL_DEFAULT_RERANK_TOP_N`
 - `RETRIEVAL_ENFORCE_EMBEDDING_MODEL_MATCH` (default `true`)
 - `WEAVIATE_HTTP_URL`

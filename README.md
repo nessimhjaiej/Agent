@@ -72,28 +72,29 @@ Use the Supabase anon/public key for `VITE_SUPABASE_ANON_KEY`.
 
 ## 2) Configure Supabase
 
-In the Supabase SQL Editor, run these files in order:
+In the Supabase SQL Editor, run these files in order. Each one is safe to re-run,
+and together they fully provision the project — **including the Storage buckets**,
+so you do not need to create anything by hand:
 
 ```text
 infrastructure/supabase/supabase_users_table.sql
 infrastructure/supabase/app_tables.sql
 infrastructure/supabase/security_alerts.sql
+infrastructure/supabase/storage_buckets.sql
 ```
 
-These create the tables used by auth, login tracking, document metadata, and security alerts.
+What they create:
 
-In Supabase Storage, create these buckets:
+- `public.users` + role-sync triggers (keep `role` mirrored with `auth.users`)
+- `public.documents`, `public.audit_logs`, `public.login_attempts`
+- `public.security_alerts`
+- the `documents` (private) and `profiles` (public) Storage buckets + access policies
 
-- `documents`: private
-- `profiles`: public, or private if you later change profile image handling
-
-For document uploads through the current backend, the backend service-role key handles storage access. If you later upload directly from the browser with the anon key, add storage RLS policies for paths like:
-
-```text
-pending/<user_id>/<filename>
-validated/<user_id>/<filename>
-rejected/<user_id>/<filename>
-```
+Documents are stored under `pending/<user_id>/...`, `validated/<user_id>/...`, and
+`rejected/<user_id>/...`; profile pictures under `<user_id>/...` in `profiles`. The
+backend reaches the `documents` bucket with the service-role key; the browser
+uploads profile pictures with the anon key (the policy created by
+`storage_buckets.sql` restricts each user to their own folder).
 
 ## 3) Start Backend With Docker
 
@@ -184,32 +185,18 @@ If all checks return successfully, the local stack is up.
 
 ## 7) Create First Admin User
 
-Create or sign up a user in the app, then promote that user in Supabase. In the SQL Editor, replace the email and run:
+Create or sign up a user in the app, then promote that user in Supabase. Because
+`supabase_users_table.sql` installs a role-sync trigger, you only need to set the
+role on `public.users` — it is pushed into `auth.users` automatically. In the SQL
+Editor, replace the email and run:
 
 ```sql
-update auth.users
-set
-  raw_user_meta_data = jsonb_set(
-    coalesce(raw_user_meta_data, '{}'::jsonb),
-    '{role}',
-    '"admin"'::jsonb,
-    true
-  ),
-  raw_app_meta_data = jsonb_set(
-    jsonb_set(
-      coalesce(raw_app_meta_data, '{}'::jsonb),
-      '{account_validated}',
-      'true'::jsonb,
-      true
-    ),
-    '{account_blocked}',
-    'false'::jsonb,
-    true
-  )
-where email = 'admin@example.com';
+update public.users set role = 'admin' where email = 'admin@example.com';
 ```
 
-Then log in again. Admin-only screens and admin APIs require a user whose metadata role is `admin`.
+Then log in again. Admin-only screens and admin APIs require a user whose role is
+`admin`. (Promoting via the dashboard or the older `auth.users` metadata update
+also works — the trigger keeps both tables in sync either way.)
 
 ## 8) Document Workflow
 

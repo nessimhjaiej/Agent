@@ -1,16 +1,69 @@
-# React + Vite
+# Frontend (Synapse)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite single-page app for the Agentic RAG platform. Users chat with the
+RAG assistant; admins manage documents, users, the admin agent, and security.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 19 + React Router 7
+- Vite (dev server + build)
+- Tailwind CSS 4
+- Framer Motion (animations)
+- `@supabase/supabase-js` — used **only** for Storage (avatar upload) + Realtime
+  (documents table). All authentication goes through `auth-service`.
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```powershell
+Copy-Item .env.example .env   # then fill in the values below
+npm install
+npm run dev                   # http://localhost:5173
+```
 
-## Expanding the ESLint configuration
+Requires the backend stack running (Vite proxies `/api/*` to the services — see
+`vite.config.js`). Scripts: `npm run dev`, `npm run build`, `npm run preview`,
+`npm run lint`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Environment variables (`frontend/.env`)
+
+| Var | Purpose |
+|-----|---------|
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase **anon/public** key (Storage + Realtime only) |
+| `VITE_SUPABASE_DOCS_TABLE` | documents table name (default `documents`) — Realtime |
+| `VITE_SUPABASE_PROFILE_BUCKET` | profile-picture bucket (default `profiles`) |
+
+## How `/api/*` maps to services
+
+The dev server proxies (and rewrites) each prefix to a backend port:
+
+| Prefix | Service | Port |
+|--------|---------|------|
+| `/api/auth` | auth | 8001 |
+| `/api/preprocessing` | preprocessing | 8000 |
+| `/api/embedding` | embedding | 8002 |
+| `/api/retrieval` | retrieval | 8003 |
+| `/api/generation` | generation | 8004 |
+| `/api/ingestion` | ingestion | 8005 |
+| `/api/admin` | admin | 8006 |
+| `/api/security` | security | 8007 |
+
+## Structure
+
+- `src/main.jsx` — mounts `BrowserRouter → ThemeProvider → AuthProvider → App`.
+- `src/App.jsx` — routing + role guards. `/` chat (public), `/admin` and
+  `/security` (admin only), `/login`, `*` not-found.
+- `src/config/api.js` — the single API layer (all backend calls + auth functions +
+  the admin chat stream). Handles silent token refresh; never auto-logs-out.
+- `src/context/AuthContext.jsx` — owns the session (tokens in `localStorage`),
+  refreshes via `auth-service`, hydrates the user from `/auth/me`, blocked-poll.
+- `src/context/ThemeContext.jsx` — dark/light theme (OS-aware, persisted).
+- `src/pages/` — `ChatPage` (RAG chat + citations + voice), `AdminPage`
+  (documents / users / admin agent tabs), `SecurityPage` (alerts dashboard),
+  `LoginPage`, `NotFoundPage`.
+- `src/components/` — `Navbar`, `Layout`, modals (`AuthModal`, `ProfileModal`,
+  `ChangePasswordModal`), `VoiceRecordButton` / `VoiceWaveform`, `SplashScreen`, …
+- `src/hooks/useVoiceTranscription.js` — mic capture → `/generation/transcribe`.
+- `src/utils/passwordPolicy.js` — password rules (mirrors the backend).
+
+For a deep dive into flows and every component, see `docs/PROJECT_GUIDE.md`.

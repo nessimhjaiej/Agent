@@ -32,6 +32,10 @@ This service transforms source files into normalized, chunked, metadata-enriched
 
 - `GET /health`: service status/version.
 - `POST /preprocessing/process-source`: process one source file into chunks.
+- `GET /preprocessing/config`: current chunking config (strategy, size, overlap).
+- `GET /preprocessing/chunking-strategies`: list available chunking strategies.
+- `PUT /preprocessing/config`: update chunking config (persisted to `config.py` /
+  `.env.local`; this is what the admin agent tunes).
 
 ## Usage
 
@@ -55,15 +59,16 @@ uvicorn app.main:app --reload --app-dir services/preprocessing-service
 
 ```json
 {
-  "source_path": "c:/Users/NESSIM/Desktop/agentic/shared/raw_data/example.pdf",
+  "source_path": "/shared/raw_data/example.pdf",
   "source_type": "pdf",
-  "chunk_strategy": "late",
+  "chunk_strategy": "semantic",
   "chunk_size": 800,
-  "chunk_overlap": 120,
-  "late_size_multiplier": 2.0,
-  "late_overlap_multiplier": 2.0
+  "chunk_overlap": 120
 }
 ```
+
+The default chunking strategy is `semantic` (configurable; `late`, `overlap`, and
+`sentence` are also available).
 
 ## Environment Variables
 
@@ -95,5 +100,3 @@ uvicorn app.main:app --reload --app-dir services/preprocessing-service
   - Domain/pipeline layer (`models`, `chunking`, `normalization`, `metadata`)
 - Middleware Pattern:
   - Rate limiting and request-size controls in FastAPI middleware
-
-## UML DIGRAMS
