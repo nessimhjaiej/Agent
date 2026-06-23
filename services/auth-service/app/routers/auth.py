@@ -21,12 +21,15 @@ from app.schemas import (
     AdminUserResponse,
     AdminUsersResponse,
     AdminValidationRequest,
+    CurrentUserResponse,
     LoginRequest,
     MessageResponse,
     PasswordResetRequest,
     PasswordUpdateRequest,
+    RefreshRequest,
     SessionResponse,
     SignupRequest,
+    UpdateProfileRequest,
     UserResponse,
 )
 from app.service import AuthService
@@ -74,7 +77,13 @@ def _require_admin_access(
 def signup(payload: SignupRequest) -> SessionResponse:
     service = _get_service()
     try:
-        session = service.signup(payload.email, payload.password, payload.role)
+        session = service.signup(
+            payload.email,
+            payload.password,
+            payload.role,
+            username=payload.username,
+            phone_number=payload.phone_number,
+        )
     except UserAlreadyExistsException as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except InvalidPasswordException as exc:
@@ -126,17 +135,40 @@ def login(payload: LoginRequest) -> SessionResponse:
     )
 
 
+@router.post("/refresh", response_model=SessionResponse)
+def refresh(payload: RefreshRequest) -> SessionResponse:
+    service = _get_service()
+    try:
+        session = service.refresh_session(payload.refresh_token)
+    except UnauthorizedException as exc:
+        raise HTTPException(status_code=401, detail=str(exc))
+
+    return SessionResponse(
+        access_token=session.access_token,
+        refresh_token=session.refresh_token,
+        token_type=session.token_type,
+        expires_in=session.expires_in,
+        user=UserResponse(
+            id=session.user.id if session.user else "",
+            email=session.user.email if session.user else "",
+            role=session.user.role if session.user else "",
+            email_confirmed=session.user.email_confirmed if session.user else False,
+            created_at=session.user.created_at if session.user else "",
+        ),
+    )
+
+
 @router.post("/password-reset", response_model=MessageResponse)
 def request_password_reset(payload: PasswordResetRequest) -> MessageResponse:
     service = _get_service()
     try:
-        service.request_password_reset(payload.email)
+        result = service.request_password_reset(payload.email)
     except AuthServiceException as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
     return MessageResponse(
-        success=True,
-        message="If the email exists, a password reset link has been sent.",
+        success=bool(result.get("success", False)),
+        message=str(result.get("message", "")),
     )
 
 
@@ -155,16 +187,40 @@ def update_password(
     return MessageResponse(success=True, message="Password updated successfully.")
 
 
-@router.get("/me", response_model=UserResponse)
-def me(authorization: str | None = Header(default=None)) -> UserResponse:
-    user = _get_current_user(authorization)
-    return UserResponse(
-        id=user.id,
-        email=user.email,
-        role=user.role,
-        email_confirmed=user.email_confirmed,
-        created_at=user.created_at,
-    )
+@router.get("/me", response_model=CurrentUserResponse)
+def me(authorization: str | None = Header(default=None)) -> CurrentUserResponse:
+    token = _extract_token(authorization)
+    service = _get_service()
+    try:
+        profile = service.get_current_user_profile(token)
+    except UnauthorizedException:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return CurrentUserResponse(**profile)
+
+
+@router.post("/update-profile", response_model=CurrentUserResponse)
+def update_profile(
+    payload: UpdateProfileRequest,
+    authorization: str | None = Header(default=None),
+) -> CurrentUserResponse:
+    token = _extract_token(authorization)
+    service = _get_service()
+    try:
+        profile = service.update_profile(
+            token,
+            username=payload.username,
+            phone_number=payload.phone_number,
+            profile_picture=payload.profile_picture,
+            invite_onboarding_completed=payload.invite_onboarding_completed,
+            new_password=payload.new_password,
+        )
+    except UnauthorizedException:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    except InvalidPasswordException as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except AuthServiceException as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    return CurrentUserResponse(**profile)
 
 
 @router.post("/logout", response_model=MessageResponse)

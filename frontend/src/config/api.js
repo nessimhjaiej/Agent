@@ -195,6 +195,57 @@ export async function loginWithPassword(email, password) {
   });
 }
 
+// The auth endpoints below use plain fetch (not fetchWithAuth) on purpose:
+// refresh/me must never go through the dead-session refresh-retry path, which
+// itself calls refresh — that would recurse.
+export async function signupRequest(payload) {
+  return postJson(`${API.auth}/signup`, payload);
+}
+
+// Returns { success, message }. The backend only emails a reset link to an
+// existing, non-blocked, non-admin account; admins must be re-invited instead.
+export async function requestPasswordReset(email) {
+  return postJson(`${API.auth}/password-reset`, { email });
+}
+
+export async function refreshSessionRequest(refreshToken) {
+  return postJson(`${API.auth}/refresh`, { refresh_token: refreshToken });
+}
+
+export async function fetchCurrentUser(accessToken) {
+  const response = await fetch(`${API.auth}/me`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  return parseResponse(response);
+}
+
+export async function updateProfileRequest(accessToken, payload) {
+  const response = await fetch(`${API.auth}/update-profile`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify(payload),
+  });
+  return parseResponse(response);
+}
+
+export async function updatePasswordRequest(accessToken, newPassword) {
+  const response = await fetch(`${API.auth}/update-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ new_password: newPassword }),
+  });
+  return parseResponse(response);
+}
+
+export async function logoutRequest(accessToken) {
+  const response = await fetch(`${API.auth}/logout`, {
+    method: 'POST',
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+  });
+  return parseResponse(response);
+}
+
 export async function streamAdmin(payload, onEvent) {
   const accessToken = typeof payload?.access_token === 'string' ? payload.access_token.trim() : '';
 

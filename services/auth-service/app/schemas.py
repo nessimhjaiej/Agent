@@ -7,6 +7,8 @@ class SignupRequest(BaseModel):
     email: str = Field(..., min_length=1)
     password: str = Field(..., min_length=6)
     role: str = Field(default="user", pattern=r"^(user|admin)$")
+    username: str | None = None
+    phone_number: str | None = None
 
 
 class LoginRequest(BaseModel):
@@ -20,6 +22,18 @@ class PasswordResetRequest(BaseModel):
 
 class PasswordUpdateRequest(BaseModel):
     new_password: str = Field(..., min_length=6)
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str = Field(..., min_length=1)
+
+
+class UpdateProfileRequest(BaseModel):
+    username: str | None = None
+    phone_number: str | None = None
+    profile_picture: str | None = None
+    invite_onboarding_completed: bool | None = None
+    new_password: str | None = Field(default=None, min_length=6)
 
 
 class AdminInviteRequest(BaseModel):
@@ -41,6 +55,23 @@ class UserResponse(BaseModel):
     role: str
     email_confirmed: bool
     created_at: str
+
+
+class CurrentUserResponse(BaseModel):
+    """Full self-profile for the frontend (mirrors the Supabase user shape).
+
+    Keeps id/email/role at the top level so the admin-service token check
+    (which reads those from /auth/me) stays compatible, and adds the metadata
+    the UI needs now that it no longer calls Supabase directly.
+    """
+
+    id: str
+    email: str
+    role: str
+    email_confirmed: bool
+    created_at: str
+    user_metadata: dict = {}
+    app_metadata: dict = {}
 
 
 class SessionResponse(BaseModel):

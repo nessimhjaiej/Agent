@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, Eye, EyeOff, CheckCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { isPasswordStrong, PASSWORD_POLICY_MESSAGE } from '../utils/passwordPolicy';
+import { requestPasswordReset } from '../config/api';
 
 export default function AuthModal({ isOpen, onClose }) {
   const [mode, setMode] = useState('signin');
@@ -12,6 +13,7 @@ export default function AuthModal({ isOpen, onClose }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [recoverResult, setRecoverResult] = useState(null);
   const { signIn, signUp } = useAuth();
 
   const handleSubmit = async (e) => {
@@ -19,7 +21,10 @@ export default function AuthModal({ isOpen, onClose }) {
     setError('');
     setLoading(true);
     try {
-      if (mode === 'signin') {
+      if (mode === 'recover') {
+        const res = await requestPasswordReset(email.trim());
+        setRecoverResult({ success: Boolean(res?.success), message: res?.message || '' });
+      } else if (mode === 'signin') {
         await signIn(email, password);
         onClose();
       } else {
@@ -40,7 +45,11 @@ export default function AuthModal({ isOpen, onClose }) {
   };
 
   const resetForm = () => {
-    setEmail(''); setPassword(''); setError(''); setEmailSent(false);
+    setEmail(''); setPassword(''); setError(''); setEmailSent(false); setRecoverResult(null);
+  };
+
+  const switchMode = (nextMode) => {
+    setMode(nextMode); setError(''); setRecoverResult(null);
   };
 
   return (
@@ -109,10 +118,14 @@ export default function AuthModal({ isOpen, onClose }) {
                   <div className="modal-panel__body pr-1">
                   <div className="text-center" style={{ marginBottom: '24px' }}>
                     <h2 className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>
-                      {mode === 'signin' ? 'Welcome back' : 'Create account'}
+                      {mode === 'signin' ? 'Welcome back' : mode === 'recover' ? 'Reset password' : 'Create account'}
                     </h2>
                     <p className="text-sm mt-3" style={{ color: 'var(--text-secondary)' }}>
-                      {mode === 'signin' ? 'Sign in to continue your conversation' : 'Sign up to start querying legal content'}
+                      {mode === 'signin'
+                        ? 'Sign in to continue your conversation'
+                        : mode === 'recover'
+                          ? 'Enter your email and we’ll send you a reset link'
+                          : 'Sign up to start exploring documents'}
                     </p>
                   </div>
 
@@ -123,13 +136,21 @@ export default function AuthModal({ isOpen, onClose }) {
                       <input id="auth-email" type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} required className="flex-1 bg-transparent outline-none text-sm" style={{ color: 'var(--text-primary)' }} />
                     </div>
 
-                    <div className="flex items-center gap-3 px-4 py-4 rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', minHeight: '54px', paddingLeft: '16px', paddingRight: '16px', paddingTop: '14px', paddingBottom: '14px' }}>
-                      <Lock size={16} style={{ color: 'var(--text-muted)' }} />
-                      <input id="auth-password" type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="flex-1 bg-transparent outline-none text-sm" style={{ color: 'var(--text-primary)' }} />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ color: 'var(--text-muted)' }}>
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {mode !== 'recover' && (
+                      <div className="flex items-center gap-3 px-4 py-4 rounded-xl transition-all input-glow" style={{ border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', minHeight: '54px', paddingLeft: '16px', paddingRight: '16px', paddingTop: '14px', paddingBottom: '14px' }}>
+                        <Lock size={16} style={{ color: 'var(--text-muted)' }} />
+                        <input id="auth-password" type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="flex-1 bg-transparent outline-none text-sm" style={{ color: 'var(--text-primary)' }} />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ color: 'var(--text-muted)' }}>
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    )}
+
+                    {mode === 'signin' && (
+                      <button type="button" onClick={() => switchMode('recover')} className="self-end text-xs font-medium gradient-text hover:opacity-80 transition-opacity">
+                        Forgot password?
                       </button>
-                    </div>
+                    )}
 
                     {mode === 'signup' && (
                       <p className="text-xs px-1" style={{ color: 'var(--text-secondary)' }}>
@@ -137,9 +158,28 @@ export default function AuthModal({ isOpen, onClose }) {
                       </p>
                     )}
 
+                    {mode === 'recover' && (
+                      <p className="text-xs px-1" style={{ color: 'var(--text-secondary)' }}>
+                        If you are an administrator, ask another admin to send you a new invitation to recover access.
+                      </p>
+                    )}
+
                     {error && (
                       <motion.p className="text-sm text-danger bg-danger/10 rounded-lg px-3 py-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                         {error}
+                      </motion.p>
+                    )}
+
+                    {recoverResult && (
+                      <motion.p
+                        className="text-sm rounded-lg px-3 py-2"
+                        style={recoverResult.success
+                          ? { color: 'var(--color-success, #10b981)', background: 'rgba(16,185,129,0.1)' }
+                          : { color: 'var(--text-secondary)', background: 'rgba(148,163,184,0.12)' }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        {recoverResult.message}
                       </motion.p>
                     )}
 
@@ -150,16 +190,30 @@ export default function AuthModal({ isOpen, onClose }) {
                       whileHover={{ boxShadow: '0 0 40px rgba(139,92,246,0.5)', scale: 1.01 }}
                       whileTap={{ scale: 0.99 }}
                     >
-                      {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+                      {loading
+                        ? 'Please wait...'
+                        : mode === 'signin'
+                          ? 'Sign In'
+                          : mode === 'recover'
+                            ? 'Send reset link'
+                            : 'Create Account'}
                       {!loading && <ArrowRight size={16} />}
                     </motion.button>
                   </form>
 
                   <p className="text-center text-sm" style={{ color: 'var(--text-secondary)', marginTop: '22px' }}>
-                    {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
-                    <button onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); }} className="font-semibold gradient-text hover:opacity-80 transition-opacity">
-                      {mode === 'signin' ? 'Sign Up' : 'Sign In'}
-                    </button>
+                    {mode === 'recover' ? (
+                      <button onClick={() => switchMode('signin')} className="font-semibold gradient-text hover:opacity-80 transition-opacity">
+                        ← Back to Sign In
+                      </button>
+                    ) : (
+                      <>
+                        {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
+                        <button onClick={() => switchMode(mode === 'signin' ? 'signup' : 'signin')} className="font-semibold gradient-text hover:opacity-80 transition-opacity">
+                          {mode === 'signin' ? 'Sign Up' : 'Sign In'}
+                        </button>
+                      </>
+                    )}
                   </p>
                   </div>
                 </>

@@ -1179,17 +1179,20 @@ export default function AdminPage() {
   ];
 
   const getManagedUserStatus = (managedUser) => {
-    if (managedUser.role === 'admin') return 'admin';
-    if (managedUser.status) return managedUser.status;
+    // Blocked and invited take precedence over the admin role: a freshly invited
+    // admin stays "invited" until they set their password / first sign-in, then
+    // the backend clears the invited flag and they show as "admin".
     if (managedUser.blocked) return 'blocked';
     if (managedUser.invited) return 'invited';
+    if (managedUser.role === 'admin') return 'admin';
+    if (managedUser.status) return managedUser.status;
     if (managedUser.validated) return 'validated';
     return 'pending';
   };
 
   const userStats = useMemo(() => ({
     total: managedUsers.length,
-    admins: managedUsers.filter((managedUser) => managedUser.role === 'admin').length,
+    admins: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'admin').length,
     validated: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'validated').length,
     invited: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'invited').length,
     pending: managedUsers.filter((managedUser) => getManagedUserStatus(managedUser) === 'pending').length,

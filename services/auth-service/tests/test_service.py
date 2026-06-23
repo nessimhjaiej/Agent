@@ -214,7 +214,7 @@ def test_signup_marks_new_users_as_pending_non_admin(mock_create: MagicMock) -> 
     created_user = _make_user(
         id="new-user",
         email="new@example.com",
-        user_metadata={"role": "admin"},
+        user_metadata={"role": "user", "invite_onboarding_completed": True},
         app_metadata={},
     )
     updated_user = _make_user(
@@ -223,22 +223,18 @@ def test_signup_marks_new_users_as_pending_non_admin(mock_create: MagicMock) -> 
         user_metadata={"role": "user", "invite_onboarding_completed": True},
         app_metadata={"account_validated": False, "account_blocked": False, "invited_by_admin": False},
     )
-    mock_client.auth.sign_up.return_value = SimpleNamespace(
-        user=created_user,
-        session=SimpleNamespace(
-            access_token="token",
-            refresh_token="refresh",
-            expires_in=3600,
-        ),
-    )
+    mock_client.auth.admin.create_user.return_value = SimpleNamespace(user=created_user)
     mock_client.auth.admin.update_user_by_id.return_value = SimpleNamespace(user=updated_user)
 
     service = AuthService(Settings())
 
     session = service.signup("new@example.com", "SecurePass1!", role="admin")
 
-    payload = mock_client.auth.sign_up.call_args.args[0]
-    assert payload["options"]["data"]["role"] == "user"
+    # Signup goes through the admin API (no confirmation email) and forces 'user'.
+    create_payload = mock_client.auth.admin.create_user.call_args.args[0]
+    assert create_payload["user_metadata"]["role"] == "user"
+    assert create_payload["email_confirm"] is True
+    assert "app_metadata" not in create_payload
     update_payload = mock_client.auth.admin.update_user_by_id.call_args.args[1]
     assert update_payload["app_metadata"]["account_validated"] is False
     assert session.user.role == "user"

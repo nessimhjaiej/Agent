@@ -5,6 +5,7 @@ import { Mail, Lock, Eye, EyeOff, CheckCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AnimatedPage from '../components/AnimatedPage';
 import { isPasswordStrong, PASSWORD_POLICY_MESSAGE } from '../utils/passwordPolicy';
+import { requestPasswordReset } from '../config/api';
 import logo from '../assets/logo.png';
 
 export default function LoginPage() {
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [recoverResult, setRecoverResult] = useState(null);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -23,7 +25,10 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      if (mode === 'signin') {
+      if (mode === 'recover') {
+        const res = await requestPasswordReset(email.trim());
+        setRecoverResult({ success: Boolean(res?.success), message: res?.message || '' });
+      } else if (mode === 'signin') {
         const data = await signIn(email, password);
         const role = data?.user?.user_metadata?.role;
         navigate(role === 'admin' ? '/admin' : '/');
@@ -42,6 +47,12 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const switchMode = (nextMode) => {
+    setMode(nextMode);
+    setError('');
+    setRecoverResult(null);
   };
 
   return (
@@ -84,11 +95,12 @@ export default function LoginPage() {
               <CheckCircle className="w-10 h-10 text-success" />
             </motion.div>
             <h2 className="text-2xl font-bold font-display mb-3" style={{ color: 'var(--text-primary)' }}>
-              Account created
+              Account created — pending validation
             </h2>
             <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-              Your signup request for <strong>{email}</strong> was submitted.
-              <br />An admin must validate your account before you can sign in.
+              Your account for <strong>{email}</strong> has been created, but it needs to be
+              validated by an administrator before you can sign in and access the platform.
+              <br /><br />You'll be able to log in once an admin approves your account.
             </p>
             <button
               onClick={() => { setEmailSent(false); setMode('signin'); setEmail(''); setPassword(''); }}
@@ -117,12 +129,14 @@ export default function LoginPage() {
                 <img src={logo} alt="Agentic RAG logo" className="w-12 h-12 object-contain" />
               </motion.div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-display text-balance" style={{ color: 'var(--text-primary)' }}>
-                {mode === 'signin' ? 'Welcome back' : 'Get started'}
+                {mode === 'signin' ? 'Welcome back' : mode === 'recover' ? 'Reset password' : 'Get started'}
               </h1>
               <p className="text-sm mt-4" style={{ color: 'var(--text-secondary)' }}>
                 {mode === 'signin'
-                  ? 'Sign in to your Legal Intelligence account'
-                  : 'Create your account to access legal RAG'}
+                  ? 'Sign in to your Synapse account'
+                  : mode === 'recover'
+                    ? 'Enter your email and we’ll send you a reset link'
+                    : 'Create your Synapse account'}
               </p>
             </div>
 
@@ -164,39 +178,57 @@ export default function LoginPage() {
                   />
                 </div>
 
-                <div
-                  className="flex items-center gap-3 px-4 py-4.5 rounded-xl transition-all input-glow"
-                  style={{
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-tertiary)',
-                    minHeight: '58px',
-                    paddingLeft: '18px',
-                    paddingRight: '18px',
-                    paddingTop: '15px',
-                    paddingBottom: '15px',
-                  }}
-                >
-                  <Lock size={16} style={{ color: 'var(--text-muted)' }} />
-                  <input
-                    id="login-password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={8}
-                    autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                    className="flex-1 bg-transparent outline-none text-sm"
-                    style={{ color: 'var(--text-primary)' }}
-                  />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ color: 'var(--text-muted)' }}>
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                {mode !== 'recover' && (
+                  <div
+                    className="flex items-center gap-3 px-4 py-4.5 rounded-xl transition-all input-glow"
+                    style={{
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-tertiary)',
+                      minHeight: '58px',
+                      paddingLeft: '18px',
+                      paddingRight: '18px',
+                      paddingTop: '15px',
+                      paddingBottom: '15px',
+                    }}
+                  >
+                    <Lock size={16} style={{ color: 'var(--text-muted)' }} />
+                    <input
+                      id="login-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                      className="flex-1 bg-transparent outline-none text-sm"
+                      style={{ color: 'var(--text-primary)' }}
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ color: 'var(--text-muted)' }}>
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                )}
+
+                {mode === 'signin' && (
+                  <button
+                    type="button"
+                    onClick={() => switchMode('recover')}
+                    className="self-end text-xs font-medium gradient-text hover:opacity-80 transition-opacity"
+                  >
+                    Forgot password?
                   </button>
-                </div>
+                )}
 
                 {mode === 'signup' && (
                   <p className="text-xs px-1" style={{ color: 'var(--text-secondary)' }}>
                     Password must be at least 8 characters and include uppercase, lowercase, number, and special character.
+                  </p>
+                )}
+
+                {mode === 'recover' && (
+                  <p className="text-xs px-1" style={{ color: 'var(--text-secondary)' }}>
+                    If you are an administrator, ask another admin to send you a new invitation to recover access.
                   </p>
                 )}
 
@@ -207,6 +239,19 @@ export default function LoginPage() {
                     animate={{ opacity: 1 }}
                   >
                     {error}
+                  </motion.p>
+                )}
+
+                {recoverResult && (
+                  <motion.p
+                    className="text-sm rounded-lg px-4 py-3"
+                    style={recoverResult.success
+                      ? { color: 'var(--color-success, #10b981)', background: 'rgba(16,185,129,0.1)' }
+                      : { color: 'var(--text-secondary)', background: 'rgba(148,163,184,0.12)' }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    {recoverResult.message}
                   </motion.p>
                 )}
 
@@ -230,22 +275,36 @@ export default function LoginPage() {
                   }}
                   whileTap={{ scale: 0.99 }}
                 >
-                  {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+                  {loading
+                    ? 'Please wait...'
+                    : mode === 'signin'
+                      ? 'Sign In'
+                      : mode === 'recover'
+                        ? 'Send reset link'
+                        : 'Create Account'}
                   {!loading && <ArrowRight size={16} />}
                 </motion.button>
               </form>
 
               <p className="text-center text-sm" style={{ color: 'var(--text-secondary)', marginTop: '22px' }}>
-                {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
-                <button
-                  onClick={() => {
-                    setMode(mode === 'signin' ? 'signup' : 'signin');
-                    setError('');
-                  }}
-                  className="font-semibold gradient-text hover:opacity-80 transition-opacity"
-                >
-                  {mode === 'signin' ? 'Sign Up' : 'Sign In'}
-                </button>
+                {mode === 'recover' ? (
+                  <button
+                    onClick={() => switchMode('signin')}
+                    className="font-semibold gradient-text hover:opacity-80 transition-opacity"
+                  >
+                    ← Back to Sign In
+                  </button>
+                ) : (
+                  <>
+                    {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
+                    <button
+                      onClick={() => switchMode(mode === 'signin' ? 'signup' : 'signin')}
+                      className="font-semibold gradient-text hover:opacity-80 transition-opacity"
+                    >
+                      {mode === 'signin' ? 'Sign Up' : 'Sign In'}
+                    </button>
+                  </>
+                )}
               </p>
             </div>
           </motion.div>

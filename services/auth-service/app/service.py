@@ -40,10 +40,21 @@ def _load_invite_logo_bytes() -> bytes | None:
         return None
 
 
-def _render_invite_email_html(
-    *, recipient_email: str, recovery_link: str, login_url: str, include_logo: bool
+def _render_action_email_html(
+    *,
+    recipient_email: str,
+    recovery_link: str,
+    login_url: str,
+    include_logo: bool,
+    title: str,
+    preview_text: str,
+    heading: str,
+    intro_html: str,
+    cta_label: str,
+    card_inner_html: str,
+    footer_note: str,
 ) -> str:
-    """A responsive, brand-styled HTML invite email (table-based for mail clients)."""
+    """Shared responsive, brand-styled HTML email shell (table-based for mail clients)."""
     logo_block = (
         f'<img src="cid:{INVITE_LOGO_CID}" width="56" height="56" alt="{INVITE_BRAND_NAME}" '
         'style="display:block;border:0;border-radius:14px;background:rgba(255,255,255,0.12);" />'
@@ -63,10 +74,10 @@ def _render_invite_email_html(
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="color-scheme" content="light only" />
-<title>Welcome to {INVITE_BRAND_NAME}</title>
+<title>{title}</title>
 </head>
 <body style="margin:0;padding:0;background:#eef0f5;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;">You've been invited to {INVITE_BRAND_NAME} as an administrator. Set your password to get started.</div>
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">{preview_text}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef0f5;padding:32px 12px;">
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 16px 48px rgba(15,23,42,0.12);font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
@@ -82,25 +93,15 @@ def _render_invite_email_html(
   </tr>
   <tr>
     <td style="padding:40px 40px 8px;">
-      <h1 style="margin:0 0 6px;font-size:24px;line-height:32px;color:#0f172a;font-weight:700;">You're invited</h1>
-      <p style="margin:0 0 20px;font-size:15px;line-height:24px;color:#475569;">
-        Hello <strong style="color:#0f172a;">{recipient_email}</strong>, an administrator has invited you to join
-        <strong>{INVITE_BRAND_NAME}</strong> with <strong>admin access</strong>. To activate your account, set your password using the secure button below.
-      </p>
+      <h1 style="margin:0 0 6px;font-size:24px;line-height:32px;color:#0f172a;font-weight:700;">{heading}</h1>
+      <p style="margin:0 0 20px;font-size:15px;line-height:24px;color:#475569;">{intro_html}</p>
       <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 28px;"><tr>
         <td style="border-radius:12px;background:#7c3aed;background:linear-gradient(135deg,#7c3aed 0%,#06b6d4 100%);box-shadow:0 10px 24px rgba(124,58,237,0.35);">
-          <a href="{recovery_link}" style="display:inline-block;padding:15px 34px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px;">Set your password &rarr;</a>
+          <a href="{recovery_link}" style="display:inline-block;padding:15px 34px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px;">{cta_label} &rarr;</a>
         </td>
       </tr></table>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #eef0f5;border-radius:14px;">
-        <tr><td style="padding:18px 22px;">
-          <p style="margin:0 0 10px;font-size:13px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:0.6px;">Next steps</p>
-          <p style="margin:0;font-size:14px;line-height:24px;color:#475569;">
-            1. Set your password<br/>
-            2. Choose your username<br/>
-            3. Phone number &amp; profile picture are optional
-          </p>
-        </td></tr>
+        <tr><td style="padding:18px 22px;">{card_inner_html}</td></tr>
       </table>
       {login_row}
     </td>
@@ -116,7 +117,7 @@ def _render_invite_email_html(
   </tr>
   <tr>
     <td style="background:#0f172a;padding:22px 40px;">
-      <p style="margin:0;font-size:12px;line-height:18px;color:#94a3b8;">&copy; {INVITE_BRAND_NAME} &middot; This invitation was sent to {recipient_email}. If you weren't expecting it, you can ignore this email.</p>
+      <p style="margin:0;font-size:12px;line-height:18px;color:#94a3b8;">&copy; {INVITE_BRAND_NAME} &middot; {footer_note}</p>
     </td>
   </tr>
 </table>
@@ -124,6 +125,73 @@ def _render_invite_email_html(
 </table>
 </body>
 </html>"""
+
+
+def _render_invite_email_html(
+    *, recipient_email: str, recovery_link: str, login_url: str, include_logo: bool
+) -> str:
+    """Brand-styled HTML invite email."""
+    card = (
+        '<p style="margin:0 0 10px;font-size:13px;font-weight:700;color:#0f172a;'
+        'text-transform:uppercase;letter-spacing:0.6px;">Next steps</p>'
+        '<p style="margin:0;font-size:14px;line-height:24px;color:#475569;">'
+        '1. Set your password<br/>2. Choose your username<br/>'
+        '3. Phone number &amp; profile picture are optional</p>'
+    )
+    return _render_action_email_html(
+        recipient_email=recipient_email,
+        recovery_link=recovery_link,
+        login_url=login_url,
+        include_logo=include_logo,
+        title=f"Welcome to {INVITE_BRAND_NAME}",
+        preview_text=(
+            f"You've been invited to {INVITE_BRAND_NAME} as an administrator. "
+            "Set your password to get started."
+        ),
+        heading="You're invited",
+        intro_html=(
+            f'Hello <strong style="color:#0f172a;">{recipient_email}</strong>, an administrator '
+            f'has invited you to join <strong>{INVITE_BRAND_NAME}</strong> with <strong>admin '
+            "access</strong>. To activate your account, set your password using the secure button below."
+        ),
+        cta_label="Set your password",
+        card_inner_html=card,
+        footer_note=(
+            f"This invitation was sent to {recipient_email}. "
+            "If you weren't expecting it, you can ignore this email."
+        ),
+    )
+
+
+def _render_password_reset_email_html(
+    *, recipient_email: str, recovery_link: str, login_url: str, include_logo: bool
+) -> str:
+    """Brand-styled HTML password-reset email."""
+    card = (
+        '<p style="margin:0;font-size:14px;line-height:24px;color:#475569;">'
+        'For your security this link expires shortly. If you did not request a password '
+        "reset, you can safely ignore this email &mdash; your password will not change.</p>"
+    )
+    return _render_action_email_html(
+        recipient_email=recipient_email,
+        recovery_link=recovery_link,
+        login_url=login_url,
+        include_logo=include_logo,
+        title=f"Reset your {INVITE_BRAND_NAME} password",
+        preview_text=f"Reset your {INVITE_BRAND_NAME} password.",
+        heading="Reset your password",
+        intro_html=(
+            f'Hello <strong style="color:#0f172a;">{recipient_email}</strong>, we received a '
+            f"request to reset the password for your <strong>{INVITE_BRAND_NAME}</strong> "
+            "account. Click the button below to choose a new password."
+        ),
+        cta_label="Reset password",
+        card_inner_html=card,
+        footer_note=(
+            f"This email was sent to {recipient_email}. "
+            "If you didn't request a password reset, no action is needed."
+        ),
+    )
 
 
 class AuthService:
@@ -179,6 +247,21 @@ class AuthService:
             expires_in=session.expires_in or 3600,
             user=user,
         )
+
+    @staticmethod
+    def _build_profile(supabase_user) -> dict[str, Any]:
+        """Full self-profile dict mirroring the Supabase user shape."""
+        user_metadata = dict(getattr(supabase_user, "user_metadata", None) or {})
+        app_metadata = dict(getattr(supabase_user, "app_metadata", None) or {})
+        return {
+            "id": str(supabase_user.id),
+            "email": supabase_user.email or "",
+            "role": user_metadata.get("role", "user"),
+            "email_confirmed": getattr(supabase_user, "email_confirmed_at", None) is not None,
+            "created_at": str(getattr(supabase_user, "created_at", "") or ""),
+            "user_metadata": user_metadata,
+            "app_metadata": app_metadata,
+        }
 
     @staticmethod
     def _is_user_validated(supabase_user) -> bool:
@@ -259,17 +342,32 @@ class AuthService:
                     kicked += 1
         return kicked
 
-    def signup(self, email: str, password: str, role: str = "user") -> AuthSession:
+    def signup(
+        self,
+        email: str,
+        password: str,
+        role: str = "user",
+        username: str | None = None,
+        phone_number: str | None = None,
+    ) -> AuthSession:
+        # Create via the admin API rather than public sign_up: this app gates
+        # access on admin validation (not email confirmation), so the signup
+        # confirmation email is unnecessary and triggers Supabase's email rate
+        # limit. admin.create_user with email_confirm sends no email.
+        # NOTE: app_metadata must NOT be passed at creation time (GoTrue rejects
+        # it with "Database error creating new user"); set it in a follow-up.
         try:
-            response = self._db.auth.sign_up(
+            response = self._db.auth.admin.create_user(
                 {
                     "email": email,
                     "password": password,
-                    "options": {
-                        "data": {
-                            "role": "user",
-                            "invite_onboarding_completed": True,
-                        },
+                    "email_confirm": True,
+                    "user_metadata": {
+                        "role": "user",
+                        "username": username or "",
+                        "phone_number": phone_number or "",
+                        "profile_picture": "",
+                        "invite_onboarding_completed": True,
                     },
                 }
             )
@@ -290,11 +388,6 @@ class AuthService:
             updated = self._db.auth.admin.update_user_by_id(
                 response.user.id,
                 {
-                    "user_metadata": {
-                        **(response.user.user_metadata or {}),
-                        "role": "user",
-                        "invite_onboarding_completed": True,
-                    },
                     "app_metadata": {
                         **(response.user.app_metadata or {}),
                         "account_validated": False,
@@ -313,9 +406,6 @@ class AuthService:
             self._db.log_audit(user.id, "USER_SIGNUP", {"email": email, "role": "user"})
         except Exception:
             pass
-
-        if response.session:
-            return self._map_session(response.session, user)
 
         return AuthSession(
             access_token="",
@@ -400,6 +490,73 @@ class AuthService:
             raise UnauthorizedException("Invalid or expired token")
 
         return self._map_user(response.user)
+
+    def get_current_user_profile(self, access_token: str) -> dict[str, Any]:
+        """Validate the token and return the full self-profile for the frontend."""
+        try:
+            response = self._db.auth.get_user(access_token)
+        except Exception as exc:
+            raise UnauthorizedException("Invalid or expired token") from exc
+
+        if not response.user:
+            raise UnauthorizedException("Invalid or expired token")
+
+        # Blocked state is returned in app_metadata; the frontend reads it and
+        # performs the (allowed) sign-out, so /auth/me itself must not error.
+        return self._build_profile(response.user)
+
+    def refresh_session(self, refresh_token: str) -> AuthSession:
+        """Exchange a refresh token for a new session (server-owned refresh)."""
+        try:
+            response = self._db.auth.refresh_session(refresh_token)
+        except Exception as exc:
+            raise UnauthorizedException("Invalid or expired refresh token") from exc
+
+        if not response.session or not response.user:
+            raise UnauthorizedException("Invalid or expired refresh token")
+
+        return self._map_session(response.session, self._map_user(response.user))
+
+    def update_profile(
+        self,
+        access_token: str,
+        *,
+        username: str | None = None,
+        phone_number: str | None = None,
+        profile_picture: str | None = None,
+        invite_onboarding_completed: bool | None = None,
+        new_password: str | None = None,
+    ) -> dict[str, Any]:
+        """Update the current user's own metadata (and optionally password)."""
+        try:
+            current = self._db.auth.get_user(access_token)
+        except Exception as exc:
+            raise UnauthorizedException("Invalid or expired token") from exc
+
+        if not current.user:
+            raise UnauthorizedException("Invalid or expired token")
+
+        metadata = dict(getattr(current.user, "user_metadata", None) or {})
+        if username is not None:
+            metadata["username"] = username
+        if phone_number is not None:
+            metadata["phone_number"] = phone_number
+        if profile_picture is not None:
+            metadata["profile_picture"] = profile_picture
+        if invite_onboarding_completed is not None:
+            metadata["invite_onboarding_completed"] = invite_onboarding_completed
+
+        attributes: dict[str, Any] = {"user_metadata": metadata}
+        if new_password:
+            attributes["password"] = new_password
+
+        try:
+            response = self._db.auth.admin.update_user_by_id(current.user.id, attributes)
+        except Exception as exc:
+            raise AuthServiceException(f"Profile update failed: {exc}") from exc
+
+        updated_user = getattr(response, "user", None) or current.user
+        return self._build_profile(updated_user)
 
     def _require_admin_token(self, access_token: str) -> AuthUser:
         try:
@@ -863,20 +1020,151 @@ class AuthService:
         except Exception:
             return False
 
-    def request_password_reset(self, email: str) -> bool:
+    def _send_password_reset_email(self, recipient_email: str) -> tuple[bool, str]:
+        login_url = (
+            f"{self._settings.frontend_url.rstrip('/')}/login"
+            if self._settings.frontend_url
+            else ""
+        )
+        options = {"redirect_to": login_url} if login_url else None
+        recovery_link = ""
         try:
-            self._db.auth.reset_password_email(email)
-            return True
-        except Exception as exc:
-            raise AuthServiceException(f"Password reset failed: {exc}") from exc
+            recovery_link = self._generate_recovery_link(
+                recipient_email=recipient_email,
+                login_url=login_url,
+            )
+        except Exception:
+            recovery_link = ""
+
+        smtp_ready = bool(
+            self._settings.smtp_host
+            and self._settings.smtp_username
+            and self._settings.smtp_password
+            and self._settings.smtp_from_email
+        )
+        if not smtp_ready or not recovery_link:
+            # Fall back to Supabase's built-in reset email delivery.
+            try:
+                self._db.auth.reset_password_email(recipient_email, options)
+                return True, ""
+            except Exception:
+                return (False, recovery_link) if recovery_link else (False, "")
+
+        logo_bytes = _load_invite_logo_bytes()
+        html_body = _render_password_reset_email_html(
+            recipient_email=recipient_email,
+            recovery_link=recovery_link,
+            login_url=login_url,
+            include_logo=logo_bytes is not None,
+        )
+        lines = [
+            f"Reset your {INVITE_BRAND_NAME} password.",
+            "",
+            f"Hello {recipient_email},",
+            "",
+            "We received a request to reset your password.",
+            "Use the secure link below to choose a new password:",
+            "",
+            recovery_link,
+            "",
+            "If you didn't request this, you can safely ignore this email.",
+        ]
+        if login_url:
+            lines.extend(["", f"Login page: {login_url}"])
+
+        msg = MIMEMultipart("related")
+        msg["Subject"] = f"Reset your {INVITE_BRAND_NAME} password"
+        msg["From"] = f"{self._settings.smtp_from_name} <{self._settings.smtp_from_email}>"
+        msg["To"] = recipient_email
+        alternative = MIMEMultipart("alternative")
+        alternative.attach(MIMEText("\n".join(lines), "plain", "utf-8"))
+        alternative.attach(MIMEText(html_body, "html", "utf-8"))
+        msg.attach(alternative)
+        if logo_bytes is not None:
+            logo_part = MIMEImage(logo_bytes, _subtype="png")
+            logo_part.add_header("Content-ID", f"<{INVITE_LOGO_CID}>")
+            logo_part.add_header("Content-Disposition", "inline", filename="logo.png")
+            msg.attach(logo_part)
+
+        try:
+            with smtplib.SMTP(self._settings.smtp_host, self._settings.smtp_port, timeout=20) as smtp:
+                if self._settings.smtp_use_tls:
+                    smtp.starttls()
+                smtp.login(self._settings.smtp_username, self._settings.smtp_password)
+                smtp.send_message(msg)
+            return True, ""
+        except Exception:
+            try:
+                self._db.auth.reset_password_email(recipient_email, options)
+                return True, ""
+            except Exception:
+                return (False, recovery_link) if recovery_link else (False, "")
+
+    def request_password_reset(self, email: str) -> dict[str, Any]:
+        """Send a password-reset email, but only for an existing, non-blocked,
+        non-admin account. Admins must be re-invited by another admin."""
+        user = self._find_user_by_email(email)
+        if not user:
+            return {
+                "success": False,
+                "status": "not_found",
+                "message": "No account is registered with this email address.",
+            }
+        if self._is_user_blocked(user):
+            return {
+                "success": False,
+                "status": "blocked",
+                "message": "This account is blocked. Please contact an administrator.",
+            }
+        role = (getattr(user, "user_metadata", None) or {}).get("role", "user")
+        if role == "admin":
+            return {
+                "success": False,
+                "status": "admin",
+                "message": (
+                    "Admin accounts can't be reset here. Ask another administrator to "
+                    "send you a new invitation to recover your account."
+                ),
+            }
+
+        sent, link = self._send_password_reset_email(user.email or email)
+        try:
+            self._db.log_audit(
+                getattr(user, "id", "") or "",
+                "PASSWORD_RESET_REQUESTED",
+                {"email": user.email or email, "email_sent": sent},
+            )
+        except Exception:
+            pass
+
+        if sent:
+            return {
+                "success": True,
+                "status": "sent",
+                "message": "A password reset link has been sent to your email.",
+            }
+        if link:
+            return {
+                "success": False,
+                "status": "manual_link",
+                "message": f"Email delivery failed. Use this link to reset your password: {link}",
+            }
+        return {
+            "success": False,
+            "status": "error",
+            "message": "Could not send the reset email right now. Please try again later.",
+        }
 
     def update_password(self, access_token: str, new_password: str) -> bool:
         try:
-            response = self._db.auth.update_user(
-                jwt=access_token,
-                attributes={"password": new_password},
+            current = self._db.auth.get_user(access_token)
+            if not current.user:
+                raise UnauthorizedException("Invalid or expired token")
+            response = self._db.auth.admin.update_user_by_id(
+                current.user.id,
+                {"password": new_password},
             )
-            user = getattr(response, "user", None)
+            user = getattr(response, "user", None) or current.user
             emit_security_event(
                 self._settings,
                 event_type="USER_PASSWORD_CHANGED",

@@ -65,13 +65,11 @@ def test_health_endpoint() -> None:
 @patch.object(database_module, "create_client", return_value=MagicMock())
 def test_signup_success(mock_create: MagicMock) -> None:
     mock_client = mock_create.return_value
-    mock_user = _make_mock_supabase_user()
-    mock_session = _make_mock_session()
+    mock_user = _make_mock_supabase_user(app_metadata={})
 
-    mock_client.auth.sign_up.return_value = SimpleNamespace(
-        user=mock_user,
-        session=mock_session,
-    )
+    # Signup uses the admin API (no confirmation email), which returns no session.
+    mock_client.auth.admin.create_user.return_value = SimpleNamespace(user=mock_user)
+    mock_client.auth.admin.update_user_by_id.return_value = SimpleNamespace(user=mock_user)
     # Mock audit log (non-fatal)
     mock_client.table.return_value.insert.return_value.execute.return_value = MagicMock(
         data=[]
@@ -87,22 +85,21 @@ def test_signup_success(mock_create: MagicMock) -> None:
 
     assert response.status_code == 200
     data = response.json()
-    assert "access_token" in data
-    assert "refresh_token" in data
+    assert data["access_token"] == ""
+    assert data["refresh_token"] == ""
     assert data["token_type"] == "bearer"
     assert data["user"]["email"] == "new@example.com"
+    assert data["user"]["role"] == "user"
 
 
 @patch.object(database_module, "create_client", return_value=MagicMock())
-def test_signup_email_confirmation(mock_create: MagicMock) -> None:
-    """When email confirmation is enabled, session is None."""
+def test_signup_returns_no_session(mock_create: MagicMock) -> None:
+    """Admin-created signups are pending admin validation and carry no session."""
     mock_client = mock_create.return_value
-    mock_user = _make_mock_supabase_user(email_confirmed_at=None)
+    mock_user = _make_mock_supabase_user(email_confirmed_at=None, app_metadata={})
 
-    mock_client.auth.sign_up.return_value = SimpleNamespace(
-        user=mock_user,
-        session=None,  # No session = needs email confirmation
-    )
+    mock_client.auth.admin.create_user.return_value = SimpleNamespace(user=mock_user)
+    mock_client.auth.admin.update_user_by_id.return_value = SimpleNamespace(user=mock_user)
     mock_client.table.return_value.insert.return_value.execute.return_value = MagicMock(
         data=[]
     )
@@ -117,7 +114,7 @@ def test_signup_email_confirmation(mock_create: MagicMock) -> None:
 
     assert response.status_code == 200
     data = response.json()
-    assert data["access_token"] == ""  # No token until confirmed
+    assert data["access_token"] == ""  # no session until an admin validates
     assert data["user"]["email_confirmed"] is False
 
 
@@ -219,7 +216,12 @@ def test_admin_users_requires_admin_role(mock_create: MagicMock) -> None:
 @patch.object(database_module, "create_client", return_value=MagicMock())
 def test_password_reset_request(mock_create: MagicMock) -> None:
     mock_client = mock_create.return_value
+    existing_user = _make_mock_supabase_user(
+        email="user@example.com", user_metadata={"role": "user"}, app_metadata={}
+    )
+    mock_client.auth.admin.list_users.return_value = [existing_user]
     mock_client.auth.reset_password_email.return_value = None
+    mock_client.table.return_value.insert.return_value.execute.return_value = MagicMock(data=[])
 
     app = create_app()
     client = TestClient(app)
@@ -233,3 +235,40 @@ def test_password_reset_request(mock_create: MagicMock) -> None:
     data = response.json()
     assert data["success"] is True
     assert "reset link" in data["message"].lower()
+
+
+@patch.object(database_module, "create_client", return_value=MagicMock())
+def test_password_reset_admin_must_be_reinvited(mock_create: MagicMock) -> None:
+    mock_client = mock_create.return_value
+    admin_user = _make_mock_supabase_user(
+        email="admin@example.com", user_metadata={"role": "admin"}, app_metadata={}
+    )
+    mock_client.auth.admin.list_users.return_value = [admin_user]
+
+    app = create_app()
+    client = TestClient(app)
+
+    response = client.post("/auth/password-reset", json={"email": "admin@example.com"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is False
+    assert "invitation" in data["message"].lower()
+    # No reset email is sent for admins.
+    mock_client.auth.reset_password_email.assert_not_called()
+
+
+@patch.object(database_module, "create_client", return_value=MagicMock())
+def test_password_reset_unknown_email(mock_create: MagicMock) -> None:
+    mock_client = mock_create.return_value
+    mock_client.auth.admin.list_users.return_value = []
+
+    app = create_app()
+    client = TestClient(app)
+
+    response = client.post("/auth/password-reset", json={"email": "ghost@example.com"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is False
+    mock_client.auth.reset_password_email.assert_not_called()

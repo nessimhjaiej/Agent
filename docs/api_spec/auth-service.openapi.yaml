@@ -62,6 +62,52 @@ paths:
           description: Account locked
         "422":
           description: Invalid payload
+  /auth/refresh:
+    post:
+      summary: Exchange a refresh token for a new session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: New auth session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "401":
+          description: Invalid or expired refresh token
+        "422":
+          description: Invalid payload
+  /auth/update-profile:
+    post:
+      summary: Update the current user's own profile (metadata + optional password)
+      parameters:
+        - $ref: "#/components/parameters/AuthorizationHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        "200":
+          description: Updated current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUserResponse"
+        "400":
+          description: Invalid password
+        "401":
+          description: Missing or invalid bearer token
+        "422":
+          description: Invalid payload
+        "500":
+          description: Internal server error
   /auth/password-reset:
     post:
       summary: Request password reset email
@@ -117,7 +163,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserResponse"
+                $ref: "#/components/schemas/CurrentUserResponse"
         "401":
           description: Missing or invalid bearer token
   /auth/logout:
@@ -298,6 +344,38 @@ components:
           type: string
           enum: [user, admin]
           default: user
+        username:
+          type: string
+          nullable: true
+        phone_number:
+          type: string
+          nullable: true
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+          minLength: 1
+    UpdateProfileRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          nullable: true
+        phone_number:
+          type: string
+          nullable: true
+        profile_picture:
+          type: string
+          nullable: true
+        invite_onboarding_completed:
+          type: boolean
+          nullable: true
+        new_password:
+          type: string
+          minLength: 6
+          nullable: true
     LoginRequest:
       type: object
       required: [email, password]
@@ -359,6 +437,26 @@ components:
           type: boolean
         created_at:
           type: string
+    CurrentUserResponse:
+      type: object
+      required: [id, email, role, email_confirmed, created_at, user_metadata, app_metadata]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        email_confirmed:
+          type: boolean
+        created_at:
+          type: string
+        user_metadata:
+          type: object
+          additionalProperties: true
+        app_metadata:
+          type: object
+          additionalProperties: true
     SessionResponse:
       type: object
       required: [access_token, refresh_token, token_type, expires_in, user]

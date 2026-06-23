@@ -1,22 +1,45 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { isPasswordStrong, PASSWORD_POLICY_MESSAGE } from '../utils/passwordPolicy';
-import { loginWithPassword, setUnauthorizedHandler, setTokenRefresher } from '../config/api';
+import {
+  loginWithPassword,
+  signupRequest,
+  refreshSessionRequest,
+  fetchCurrentUser,
+  updateProfileRequest,
+  updatePasswordRequest,
+  logoutRequest,
+  setUnauthorizedHandler,
+  setTokenRefresher,
+} from '../config/api';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const profileBucket = import.meta.env.VITE_SUPABASE_PROFILE_BUCKET || 'profiles';
 
+// Auth is owned by the auth-service. This client is kept ONLY for non-auth
+// features (Storage uploads + Realtime) and is fed a session via setSession;
+// it never manages or refreshes the session itself.
 const supabase =
   supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey)
+    ? createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+          // Keep URL detection so an invite/recovery link's session is parsed;
+          // bootstrap adopts it into the auth-service-owned token store.
+          detectSessionInUrl: true,
+        },
+      })
     : null;
 
 const AuthContext = createContext(null);
-const AUTH_OPERATION_TIMEOUT_MS = 8000;
 const AUTH_CACHE_KEY = 'agent.auth.cache.v1';
+const AUTH_TOKENS_KEY = 'agent.auth.tokens.v1';
 const AUTH_SIGN_OUT_EVENT_KEY = 'agent.auth.signout.v1';
 const AUTH_BROADCAST_CHANNEL = 'agent-auth';
+const TOKEN_REFRESH_SKEW_MS = 60_000;
+const BLOCKED_POLL_INTERVAL_MS = 60_000;
 
 function deriveUsernameFromEmail(email) {
   const localPart = (email || '').split('@')[0].trim().toLowerCase();
@@ -34,35 +57,32 @@ function getAccountFlags(currentUser) {
   const inviteOnboardingCompleted =
     currentUser?.user_metadata?.invite_onboarding_completed === true;
   const requireInviteOnboarding = invited && !inviteOnboardingCompleted;
-  return {
-    role,
-    blocked,
-    validated,
-    username,
-    requireInviteOnboarding,
-  };
+  return { role, blocked, validated, username, requireInviteOnboarding };
+}
+
+function readStoredTokens() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(AUTH_TOKENS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.access_token || !parsed?.refresh_token) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
 export function AuthProvider({ children }) {
   const readCachedAuthState = () => {
     if (typeof window === 'undefined') {
-      return {
-        user: null,
-        userRole: null,
-        requireInviteOnboarding: false,
-      };
+      return { user: null, userRole: null, requireInviteOnboarding: false };
     }
-
     try {
       const rawValue = window.localStorage.getItem(AUTH_CACHE_KEY);
       if (!rawValue) {
-        return {
-          user: null,
-          userRole: null,
-          requireInviteOnboarding: false,
-        };
+        return { user: null, userRole: null, requireInviteOnboarding: false };
       }
-
       const parsed = JSON.parse(rawValue);
       const cachedUser = parsed?.user ?? null;
       return {
@@ -71,11 +91,7 @@ export function AuthProvider({ children }) {
         requireInviteOnboarding: parsed?.requireInviteOnboarding === true,
       };
     } catch {
-      return {
-        user: null,
-        userRole: null,
-        requireInviteOnboarding: false,
-      };
+      return { user: null, userRole: null, requireInviteOnboarding: false };
     }
   };
 
@@ -85,9 +101,8 @@ export function AuthProvider({ children }) {
   const [requireInviteOnboarding, setRequireInviteOnboarding] = useState(cachedAuthState.requireInviteOnboarding);
   const [authRefreshKey, setAuthRefreshKey] = useState(0);
   const [loading, setLoading] = useState(!cachedAuthState.user);
-  const authMutationInFlightRef = useRef(false);
   const latestUserRef = useRef(cachedAuthState.user);
-  const manualSignOutRef = useRef(false);
+  const tokensRef = useRef(readStoredTokens());
   const authBroadcastRef = useRef(null);
 
   const persistUserState = (currentUser, role, requiresOnboarding) => {
@@ -95,11 +110,7 @@ export function AuthProvider({ children }) {
     try {
       window.localStorage.setItem(
         AUTH_CACHE_KEY,
-        JSON.stringify({
-          user: currentUser,
-          userRole: role,
-          requireInviteOnboarding: requiresOnboarding,
-        })
+        JSON.stringify({ user: currentUser, userRole: role, requireInviteOnboarding: requiresOnboarding })
       );
     } catch {
       // Ignore storage failures and keep in-memory auth state.
@@ -111,29 +122,71 @@ export function AuthProvider({ children }) {
     try {
       window.localStorage.removeItem(AUTH_CACHE_KEY);
     } catch {
-      // Ignore storage failures and keep in-memory auth state.
+      // Ignore storage failures.
     }
+  };
+
+  // ── Token store (frontend owns the tokens; auth-service mints them) ─────
+  const storeTokens = (session) => {
+    const accessToken = session?.access_token || '';
+    const refreshToken = session?.refresh_token || '';
+    if (!accessToken || !refreshToken) return null;
+    const expiresInMs = (Number(session?.expires_in) || 3600) * 1000;
+    const tokens = {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      expires_at: Date.now() + expiresInMs,
+    };
+    tokensRef.current = tokens;
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(AUTH_TOKENS_KEY, JSON.stringify(tokens));
+      } catch {
+        // Ignore storage failures and keep tokens in memory.
+      }
+    }
+    // Feed the thin client so Storage + Realtime have an authenticated context.
+    seedThinClient(tokens);
+    return tokens;
+  };
+
+  const clearTokens = () => {
+    tokensRef.current = null;
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.removeItem(AUTH_TOKENS_KEY);
+    } catch {
+      // Ignore storage failures.
+    }
+  };
+
+  const seedThinClient = (tokens) => {
+    if (!supabase || !tokens?.access_token) return;
+    // Fire-and-forget; if it fails, Realtime/Storage are simply unauthenticated.
+    Promise.resolve(
+      supabase.auth.setSession({
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+      })
+    ).catch(() => {});
   };
 
   const clearStoredAuthArtifacts = () => {
     clearPersistedUserState();
+    clearTokens();
     if (typeof window === 'undefined') return;
-
     const clearMatchingKeys = (storage) => {
       try {
         const keysToRemove = [];
         for (let index = 0; index < storage.length; index += 1) {
           const key = storage.key(index);
-          if (key && key.startsWith('sb-')) {
-            keysToRemove.push(key);
-          }
+          if (key && key.startsWith('sb-')) keysToRemove.push(key);
         }
         keysToRemove.forEach((key) => storage.removeItem(key));
       } catch {
-        // Ignore storage failures and keep in-memory auth state.
+        // Ignore storage failures.
       }
     };
-
     clearMatchingKeys(window.localStorage);
     clearMatchingKeys(window.sessionStorage);
   };
@@ -145,18 +198,12 @@ export function AuthProvider({ children }) {
 
   const broadcastSignOut = (reason = 'manual') => {
     if (typeof window === 'undefined') return;
-
-    const payload = JSON.stringify({
-      reason,
-      at: Date.now(),
-    });
-
+    const payload = JSON.stringify({ reason, at: Date.now() });
     try {
       window.localStorage.setItem(AUTH_SIGN_OUT_EVENT_KEY, payload);
     } catch {
-      // Ignore storage failures and rely on local cleanup.
+      // Ignore storage failures and rely on the broadcast channel.
     }
-
     try {
       authBroadcastRef.current?.postMessage(payload);
     } catch {
@@ -172,7 +219,6 @@ export function AuthProvider({ children }) {
       clearStoredAuthArtifacts();
       return;
     }
-
     const { role, requireInviteOnboarding: requiresOnboarding } = getAccountFlags(currentUser);
     setUser(currentUser);
     setUserRole(role || 'user');
@@ -180,107 +226,60 @@ export function AuthProvider({ children }) {
     persistUserState(currentUser, role || 'user', requiresOnboarding);
   };
 
-  const bumpAuthRefreshKey = () => {
-    setAuthRefreshKey((previousKey) => previousKey + 1);
+  const bumpAuthRefreshKey = () => setAuthRefreshKey((previousKey) => previousKey + 1);
+
+  const clearUserState = ({ clearCache = true } = {}) => {
+    setUser(null);
+    setUserRole(null);
+    setRequireInviteOnboarding(false);
+    if (clearCache) clearPersistedUserState();
   };
 
   useEffect(() => {
     latestUserRef.current = user;
   }, [user]);
 
-  const clearUserState = ({ clearCache = true } = {}) => {
-    setUser(null);
-    setUserRole(null);
-    setRequireInviteOnboarding(false);
-    if (clearCache) {
-      clearPersistedUserState();
-    }
-  };
+  // Returns a valid access token, refreshing via the auth-service when needed.
+  // Never throws and never logs the user out — on failure it returns whatever
+  // token we have (possibly stale) or '' so the caller can decide.
+  const getAccessToken = async ({ forceRefresh = false } = {}) => {
+    const tokens = tokensRef.current || readStoredTokens();
+    if (!tokens) return '';
 
-  const withTimeout = async (promise, timeoutMs = AUTH_OPERATION_TIMEOUT_MS) => {
-    let timeoutId;
+    const fresh = tokens.access_token
+      && tokens.expires_at
+      && tokens.expires_at - Date.now() > TOKEN_REFRESH_SKEW_MS;
+    if (!forceRefresh && fresh) {
+      return tokens.access_token;
+    }
+
     try {
-      return await Promise.race([
-        promise,
-        new Promise((_, reject) => {
-          timeoutId = window.setTimeout(() => {
-            reject(new Error('Authentication request timed out.'));
-          }, timeoutMs);
-        }),
-      ]);
-    } finally {
-      if (timeoutId) {
-        window.clearTimeout(timeoutId);
-      }
+      const refreshed = await refreshSessionRequest(tokens.refresh_token);
+      const stored = storeTokens(refreshed);
+      return stored?.access_token || tokens.access_token || '';
+    } catch {
+      return tokens.access_token || '';
     }
   };
 
-  const hasUsableAccessToken = (session) => (
-    Boolean(
-      session?.access_token
-      && (!session?.expires_at || (session.expires_at * 1000) > (Date.now() + 15_000))
-    )
-  );
-
+  // Kept for API compatibility with callers that expect a session-like object.
   const ensureActiveSession = async ({ forceRefresh = false } = {}) => {
-    if (!supabase) return null;
-
-    const { data, error } = await withTimeout(supabase.auth.getSession());
-    if (error) {
-      throw error;
-    }
-
-    let session = data?.session ?? null;
-    const expiresSoon = session?.expires_at
-      ? (session.expires_at * 1000) - Date.now() < 60_000
-      : false;
-
-    if ((forceRefresh || expiresSoon) && session?.refresh_token) {
-      try {
-        const { data: refreshedData, error: refreshError } = await withTimeout(
-          supabase.auth.refreshSession()
-        );
-        if (refreshError) {
-          throw refreshError;
-        }
-        session = refreshedData?.session ?? session;
-      } catch (refreshError) {
-        if (!hasUsableAccessToken(session)) {
-          throw refreshError;
-        }
-      }
-    }
-
-    return session;
+    const accessToken = await getAccessToken({ forceRefresh });
+    if (!accessToken) return null;
+    const tokens = tokensRef.current;
+    return {
+      access_token: accessToken,
+      refresh_token: tokens?.refresh_token || '',
+      expires_at: tokens?.expires_at ? Math.floor(tokens.expires_at / 1000) : undefined,
+    };
   };
 
   useEffect(() => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
     let isUnmounted = false;
-    let isSigningOut = false;
 
-    const forceSignOut = async ({ redirectHome = false, reason = 'blocked' } = {}) => {
-      if (isSigningOut) return;
-      isSigningOut = true;
-      try {
-        clearUserState();
-        bumpAuthRefreshKey();
-        broadcastSignOut(reason);
-        await supabase.auth.signOut();
-        if (redirectHome) {
-          redirectToMainPage();
-        }
-      } finally {
-        isSigningOut = false;
-      }
-    };
-
-    // Let the API layer silently recover a stale token: force-refresh the
-    // Supabase session and hand back a fresh access token so the failed request
-    // can be retried without the user noticing.
+    // Authenticated API requests can silently recover a stale token by asking
+    // the auth-service for a fresh one. (No unauthorized handler: a 401 must
+    // NEVER sign the user out — only manual sign-out or a block can.)
     setTokenRefresher(async () => {
       try {
         return await getAccessToken({ forceRefresh: true });
@@ -288,50 +287,82 @@ export function AuthProvider({ children }) {
         return '';
       }
     });
-
-    // Deliberately NO unauthorized handler: a request that 401s (e.g. a momentary
-    // refresh failure) must never sign the user out. Users are only ever logged
-    // out by a manual sign-out or by being blocked — never automatically.
     setUnauthorizedHandler(null);
 
-    const syncKnownUser = async (currentUser) => {
-      if (!currentUser) {
-        return;
+    const forceSignOut = ({ redirectHome = false, reason = 'blocked' } = {}) => {
+      clearUserState();
+      clearStoredAuthArtifacts();
+      bumpAuthRefreshKey();
+      broadcastSignOut(reason);
+      try {
+        supabase?.auth.signOut();
+      } catch {
+        // Best-effort thin-client cleanup.
+      }
+      if (redirectHome) redirectToMainPage();
+    };
+
+    // Validate the stored session against the auth-service and hydrate the user.
+    const bootstrap = async () => {
+      let tokens = tokensRef.current || readStoredTokens();
+
+      // No stored session yet — an invite/recovery link may have established one
+      // in the URL. Adopt it into our token store so onboarding can proceed.
+      if (!tokens && supabase) {
+        try {
+          const { data } = await supabase.auth.getSession();
+          if (data?.session?.access_token && data?.session?.refresh_token) {
+            tokens = storeTokens(data.session);
+          }
+        } catch {
+          // No URL session; fall through.
+        }
       }
 
-      const { blocked } = getAccountFlags(currentUser);
-      if (blocked) {
-        await forceSignOut({ redirectHome: true });
+      if (!tokens) {
+        // No session at all (never signed in, signed out, or migrating from the
+        // old client). Nothing to keep — clear any stale cached user. This is
+        // not an auto-logout: there is genuinely no token to work with.
+        if (!isUnmounted) clearUserState();
         return;
       }
+      tokensRef.current = tokens;
+      seedThinClient(tokens);
 
-      if (!isUnmounted) {
-        applyUserState(currentUser);
+      try {
+        const accessToken = await getAccessToken();
+        if (!accessToken) return; // keep cached user; never auto-logout
+        const profile = await fetchCurrentUser(accessToken);
+        if (isUnmounted) return;
+        if (getAccountFlags(profile).blocked) {
+          forceSignOut({ redirectHome: true, reason: 'blocked' });
+          return;
+        }
+        applyUserState(profile);
+      } catch {
+        // Validation failed (e.g. transient). Per the no-auto-logout rule we
+        // keep the cached user rather than signing them out.
       }
     };
 
-    Promise.resolve()
-      .then(() => ensureActiveSession().catch(() => null))
-      .then(async (session) => {
-        if (session?.user) {
-          await syncKnownUser(session.user);
-          return;
-        }
+    bootstrap().finally(() => {
+      if (!isUnmounted) setLoading(false);
+    });
 
-        if (!latestUserRef.current && !isUnmounted) {
-          clearUserState();
+    // Poll for an admin block so a blocked user is signed out (allowed case).
+    const blockedPollId = window.setInterval(async () => {
+      if (!latestUserRef.current) return;
+      try {
+        const accessToken = await getAccessToken();
+        if (!accessToken) return;
+        const profile = await fetchCurrentUser(accessToken);
+        if (getAccountFlags(profile).blocked) {
+          forceSignOut({ redirectHome: true, reason: 'blocked' });
         }
-      })
-      .catch(() => {
-        if (!isUnmounted && !latestUserRef.current) {
-          setLoading(false);
-        }
-      })
-      .finally(() => {
-        if (!isUnmounted) {
-          setLoading(false);
-        }
-      });
+      } catch {
+        // Ignore — a failed check must not log anyone out.
+      }
+    }, BLOCKED_POLL_INTERVAL_MS);
 
     if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
       authBroadcastRef.current = new BroadcastChannel(AUTH_BROADCAST_CHANNEL);
@@ -339,105 +370,70 @@ export function AuthProvider({ children }) {
 
     const handleSharedSignOut = () => {
       clearUserState();
+      clearStoredAuthArtifacts();
       bumpAuthRefreshKey();
       redirectToMainPage();
     };
 
     const handleStorage = (event) => {
-      if (event.key !== AUTH_SIGN_OUT_EVENT_KEY || !event.newValue) {
-        return;
-      }
+      if (event.key !== AUTH_SIGN_OUT_EVENT_KEY || !event.newValue) return;
       handleSharedSignOut();
     };
-
-    const handleBroadcastMessage = () => {
-      handleSharedSignOut();
-    };
+    const handleBroadcastMessage = () => handleSharedSignOut();
 
     window.addEventListener('storage', handleStorage);
     authBroadcastRef.current?.addEventListener('message', handleBroadcastMessage);
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_OUT') {
-          if (manualSignOutRef.current) {
-            clearUserState();
-          }
-          return;
-        }
-
-        if (!session?.user) {
-          return;
-        }
-
-        await syncKnownUser(session.user);
-      }
-    );
 
     return () => {
       isUnmounted = true;
       setUnauthorizedHandler(null);
       setTokenRefresher(null);
-      subscription.unsubscribe();
+      window.clearInterval(blockedPollId);
       window.removeEventListener('storage', handleStorage);
       authBroadcastRef.current?.removeEventListener('message', handleBroadcastMessage);
       authBroadcastRef.current?.close?.();
       authBroadcastRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const signIn = async (email, password) => {
-    if (!supabase) throw new Error('Supabase not configured');
-    const data = await loginWithPassword(email, password);
-
-    const accessToken = data?.access_token || '';
-    const refreshToken = data?.refresh_token || '';
+    const session = await loginWithPassword(email, password);
+    const accessToken = session?.access_token || '';
+    const refreshToken = session?.refresh_token || '';
     if (!accessToken || !refreshToken) {
       throw new Error('Login succeeded but no session tokens were returned.');
     }
+    storeTokens(session);
 
-    const { data: sessionData, error } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
-    if (error) throw error;
-
-    const resolvedUser = sessionData?.user ?? null;
-    const { blocked } = getAccountFlags(resolvedUser);
-    if (blocked) {
+    const profile = await fetchCurrentUser(accessToken);
+    if (getAccountFlags(profile).blocked) {
       clearUserState();
+      clearStoredAuthArtifacts();
       bumpAuthRefreshKey();
       broadcastSignOut('blocked');
-      await supabase.auth.signOut();
       throw new Error('Your account is blocked. Please contact an administrator.');
     }
 
-    applyUserState(resolvedUser);
+    applyUserState(profile);
     bumpAuthRefreshKey();
-    return sessionData;
+    return { user: profile };
   };
 
   const signUp = async ({ email, password, phoneNumber = '' }) => {
-    if (!supabase) throw new Error('Supabase not configured');
     if (!isPasswordStrong(password)) {
       throw new Error(PASSWORD_POLICY_MESSAGE);
     }
     const username = deriveUsernameFromEmail(email);
-    const { data, error } = await supabase.auth.signUp({
+    const data = await signupRequest({
       email,
       password,
-      options: {
-        data: {
-          role: 'user',
-          username,
-          phone_number: phoneNumber.trim(),
-          profile_picture: '',
-          invite_onboarding_completed: true,
-        },
-      },
+      username,
+      phone_number: phoneNumber.trim(),
     });
-    if (error) throw error;
-    bumpAuthRefreshKey();
+    // Intentionally do NOT bump the auth refresh key here: signup does not log
+    // the user in, and bumping it remounts the login page (keyed on it), which
+    // would wipe the "account created — pending admin validation" screen.
     return data;
   };
 
@@ -449,110 +445,81 @@ export function AuthProvider({ children }) {
     newPassword = '',
     completeInviteOnboarding = false,
   }) => {
-    if (!supabase) throw new Error('Supabase not configured');
-    authMutationInFlightRef.current = true;
-    try {
-      const currentUser = latestUserRef.current;
-      const existingMetadata = currentUser?.user_metadata || {};
-      const resolvedUsername = (username || '').trim()
-        || (existingMetadata.username || '').trim()
-        || deriveUsernameFromEmail(currentUser?.email || '');
+    const accessToken = await getAccessToken();
+    if (!accessToken) throw new Error('Your session has expired. Please sign in again.');
 
-      if (!resolvedUsername) {
-        throw new Error('Username is required.');
-      }
-      let uploadedProfilePictureUrl = removeProfilePicture
-        ? ''
-        : (existingMetadata.profile_picture || '').trim();
+    const currentUser = latestUserRef.current;
+    const existingMetadata = currentUser?.user_metadata || {};
+    const resolvedUsername = (username || '').trim()
+      || (existingMetadata.username || '').trim()
+      || deriveUsernameFromEmail(currentUser?.email || '');
+    if (!resolvedUsername) throw new Error('Username is required.');
 
-      if (profilePictureFile instanceof File) {
-        const originalName = profilePictureFile.name || 'profile-image';
-        const extension = originalName.includes('.') ? originalName.split('.').pop() : 'png';
-        const safeExtension = (extension || 'png').replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'png';
-        const targetPath = `${currentUser?.id || 'user'}/${Date.now()}.${safeExtension}`;
-        const { error: uploadError } = await supabase.storage
-          .from(profileBucket)
-          .upload(targetPath, profilePictureFile, { upsert: true });
-        if (uploadError) {
-          throw new Error(`Profile picture upload failed: ${uploadError.message}`);
-        }
-        const { data: publicData } = supabase.storage.from(profileBucket).getPublicUrl(targetPath);
-        uploadedProfilePictureUrl = publicData?.publicUrl || uploadedProfilePictureUrl;
-      }
+    let uploadedProfilePictureUrl = removeProfilePicture
+      ? ''
+      : (existingMetadata.profile_picture || '').trim();
 
-      const attributes = {
-        data: {
-          ...existingMetadata,
-          username: resolvedUsername,
-          phone_number: phoneNumber.trim(),
-          profile_picture: uploadedProfilePictureUrl,
-          ...(completeInviteOnboarding ? { invite_onboarding_completed: true } : {}),
-        },
-      };
-      if (newPassword && newPassword.trim()) {
-        if (!isPasswordStrong(newPassword.trim())) {
-          throw new Error(PASSWORD_POLICY_MESSAGE);
-        }
-        attributes.password = newPassword.trim();
+    if (profilePictureFile instanceof File) {
+      if (!supabase) throw new Error('Storage is not configured.');
+      const originalName = profilePictureFile.name || 'profile-image';
+      const extension = originalName.includes('.') ? originalName.split('.').pop() : 'png';
+      const safeExtension = (extension || 'png').replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'png';
+      const targetPath = `${currentUser?.id || 'user'}/${Date.now()}.${safeExtension}`;
+      const { error: uploadError } = await supabase.storage
+        .from(profileBucket)
+        .upload(targetPath, profilePictureFile, { upsert: true });
+      if (uploadError) {
+        throw new Error(`Profile picture upload failed: ${uploadError.message}`);
       }
-
-      const { data, error } = await supabase.auth.updateUser(attributes);
-      if (error) throw error;
-      applyUserState(data?.user ?? currentUser ?? null);
-      if (completeInviteOnboarding) {
-        setRequireInviteOnboarding(false);
-      }
-      return data;
-    } finally {
-      authMutationInFlightRef.current = false;
+      const { data: publicData } = supabase.storage.from(profileBucket).getPublicUrl(targetPath);
+      uploadedProfilePictureUrl = publicData?.publicUrl || uploadedProfilePictureUrl;
     }
+
+    const payload = {
+      username: resolvedUsername,
+      phone_number: phoneNumber.trim(),
+      profile_picture: uploadedProfilePictureUrl,
+    };
+    if (completeInviteOnboarding) payload.invite_onboarding_completed = true;
+    if (newPassword && newPassword.trim()) {
+      if (!isPasswordStrong(newPassword.trim())) {
+        throw new Error(PASSWORD_POLICY_MESSAGE);
+      }
+      payload.new_password = newPassword.trim();
+    }
+
+    const updatedProfile = await updateProfileRequest(accessToken, payload);
+    applyUserState(updatedProfile);
+    if (completeInviteOnboarding) setRequireInviteOnboarding(false);
+    return updatedProfile;
   };
 
   const updatePassword = async (newPassword) => {
-    if (!supabase) throw new Error('Supabase not configured');
     if (!isPasswordStrong(newPassword)) {
       throw new Error(PASSWORD_POLICY_MESSAGE);
     }
-    const { data, error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-    if (error) throw error;
-    return data;
-  };
-
-  const getAccessToken = async ({ forceRefresh = false } = {}) => {
-    if (!supabase) return '';
-    try {
-      const { data, error } = await withTimeout(supabase.auth.getSession());
-      if (error) {
-        throw error;
-      }
-
-      const currentSession = data?.session ?? null;
-      if (!forceRefresh && currentSession?.access_token) {
-        return currentSession.access_token;
-      }
-
-      const refreshedSession = await ensureActiveSession({ forceRefresh });
-      return refreshedSession?.access_token || currentSession?.access_token || '';
-    } catch {
-      return '';
-    }
+    const accessToken = await getAccessToken();
+    if (!accessToken) throw new Error('Your session has expired. Please sign in again.');
+    return updatePasswordRequest(accessToken, newPassword);
   };
 
   const signOut = async () => {
-    if (!supabase) return;
-    manualSignOutRef.current = true;
+    const accessToken = tokensRef.current?.access_token || '';
+    clearUserState();
+    clearStoredAuthArtifacts();
+    bumpAuthRefreshKey();
+    broadcastSignOut('manual');
     try {
-      clearUserState();
-      bumpAuthRefreshKey();
-      broadcastSignOut('manual');
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      redirectToMainPage();
-    } finally {
-      manualSignOutRef.current = false;
+      if (accessToken) await logoutRequest(accessToken);
+    } catch {
+      // Best-effort server-side logout; local tokens are already cleared.
     }
+    try {
+      await supabase?.auth.signOut();
+    } catch {
+      // Best-effort thin-client cleanup.
+    }
+    redirectToMainPage();
   };
 
   return (
