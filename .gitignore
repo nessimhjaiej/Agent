@@ -22,3 +22,6 @@ dist/
 # Local Codex / report artifacts
 .codex/
 .tmp/
+
+# Editor
+.vscode/
