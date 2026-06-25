@@ -104,6 +104,9 @@ export function AuthProvider({ children }) {
   const latestUserRef = useRef(cachedAuthState.user);
   const tokensRef = useRef(readStoredTokens());
   const authBroadcastRef = useRef(null);
+  // Holds the single in-flight refresh promise so concurrent callers share one
+  // refresh (and one refresh-token rotation) instead of racing each other.
+  const refreshInFlightRef = useRef(null);
 
   const persistUserState = (currentUser, role, requiresOnboarding) => {
     if (typeof window === 'undefined') return;
@@ -162,6 +165,11 @@ export function AuthProvider({ children }) {
 
   const seedThinClient = (tokens) => {
     if (!supabase || !tokens?.access_token) return;
+    // Never seed an expired access token: supabase-js's setSession refreshes it
+    // immediately (even with autoRefreshToken off), rotating the refresh token
+    // out from under the auth-service-owned refresh. Seed only fresh tokens;
+    // an expired one gets re-seeded right after getAccessToken refreshes.
+    if (tokens.expires_at && tokens.expires_at <= Date.now()) return;
     // Fire-and-forget; if it fails, Realtime/Storage are simply unauthenticated.
     Promise.resolve(
       supabase.auth.setSession({
@@ -253,12 +261,21 @@ export function AuthProvider({ children }) {
       return tokens.access_token;
     }
 
+    // De-dupe: if a refresh is already running, await it instead of starting a
+    // second one — a parallel refresh with the same (single-use) refresh token
+    // rotates it out and makes the loser fail with "Invalid or expired token".
+    if (!refreshInFlightRef.current) {
+      const refreshToken = tokens.refresh_token;
+      refreshInFlightRef.current = refreshSessionRequest(refreshToken)
+        .then((refreshed) => storeTokens(refreshed)?.access_token || '')
+        .finally(() => { refreshInFlightRef.current = null; });
+    }
+
     try {
-      const refreshed = await refreshSessionRequest(tokens.refresh_token);
-      const stored = storeTokens(refreshed);
-      return stored?.access_token || tokens.access_token || '';
+      const refreshedToken = await refreshInFlightRef.current;
+      return refreshedToken || tokensRef.current?.access_token || tokens.access_token || '';
     } catch {
-      return tokens.access_token || '';
+      return tokensRef.current?.access_token || tokens.access_token || '';
     }
   };
 
