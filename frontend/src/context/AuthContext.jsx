@@ -39,7 +39,7 @@ const AUTH_TOKENS_KEY = 'agent.auth.tokens.v1';
 const AUTH_SIGN_OUT_EVENT_KEY = 'agent.auth.signout.v1';
 const AUTH_BROADCAST_CHANNEL = 'agent-auth';
 const TOKEN_REFRESH_SKEW_MS = 60_000;
-const BLOCKED_POLL_INTERVAL_MS = 60_000;
+const BLOCKED_POLL_INTERVAL_MS = 20_000;
 
 function deriveUsernameFromEmail(email) {
   const localPart = (email || '').split('@')[0].trim().toLowerCase();
@@ -366,8 +366,8 @@ export function AuthProvider({ children }) {
       if (!isUnmounted) setLoading(false);
     });
 
-    // Poll for an admin block so a blocked user is signed out (allowed case).
-    const blockedPollId = window.setInterval(async () => {
+    // Check whether the current user got blocked (the one allowed auto-logout).
+    const checkBlocked = async () => {
       if (!latestUserRef.current) return;
       try {
         const accessToken = await getAccessToken();
@@ -379,7 +379,20 @@ export function AuthProvider({ children }) {
       } catch {
         // Ignore — a failed check must not log anyone out.
       }
+    };
+
+    // Poll on a modest interval, but skip while the tab is hidden (a hidden tab
+    // can't do anything anyway) and re-check immediately when it regains focus,
+    // so a blocked user is kicked promptly without hammering /auth/me.
+    const blockedPollId = window.setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      checkBlocked();
     }, BLOCKED_POLL_INTERVAL_MS);
+
+    const handleBlockedVisibility = () => {
+      if (document.visibilityState === 'visible') checkBlocked();
+    };
+    document.addEventListener('visibilitychange', handleBlockedVisibility);
 
     if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
       authBroadcastRef.current = new BroadcastChannel(AUTH_BROADCAST_CHANNEL);
@@ -406,6 +419,7 @@ export function AuthProvider({ children }) {
       setUnauthorizedHandler(null);
       setTokenRefresher(null);
       window.clearInterval(blockedPollId);
+      document.removeEventListener('visibilitychange', handleBlockedVisibility);
       window.removeEventListener('storage', handleStorage);
       authBroadcastRef.current?.removeEventListener('message', handleBroadcastMessage);
       authBroadcastRef.current?.close?.();

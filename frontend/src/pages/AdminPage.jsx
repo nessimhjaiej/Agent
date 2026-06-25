@@ -643,7 +643,10 @@ export default function AdminPage() {
   useEffect(() => {
     if (!user || user.user_metadata?.role !== 'admin') return undefined;
 
+    // Poll while visible only; the heavy admin list_users call is wasted on a
+    // hidden tab, and refocus refreshes immediately below.
     const intervalId = window.setInterval(() => {
+      if (document.hidden) return;
       loadManagedUsersData();
     }, 10000);
 
