@@ -606,12 +606,12 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="fixed inset-0 z-40 lg:hidden flex flex-col overflow-hidden"
+            className="fixed inset-0 z-40 lg:hidden"
             style={{
               background: 'var(--bg-primary)',
             }}
           >
-            <div className="h-full px-4 sm:px-6 md:px-8 py-4 sm:py-5 relative">
+            <div className="h-full relative">
               <div className="absolute top-5 sm:top-6 md:top-7 right-5 sm:right-6 md:right-8 z-10">
                 <motion.button
                   type="button"
@@ -631,11 +631,11 @@ export default function Navbar() {
                   <X size={20} />
                 </motion.button>
               </div>
-              <div className="h-[calc(100%-3.5rem)] w-full mx-auto relative">
+              <div className="h-full w-full overflow-y-auto overscroll-contain notification-scroll-area flex flex-col">
+                <div className="my-auto w-full flex flex-col items-center gap-7 sm:gap-8" style={{ maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto', alignItems: 'center', textAlign: 'center', paddingLeft: '20px', paddingRight: '20px', paddingTop: '92px', paddingBottom: '44px' }}>
                 {user ? (
                   <div
-                    className="absolute left-1/2 top-[24%] md:top-[22%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center text-center gap-2 sm:gap-2.5"
-                    style={{ width: 'clamp(260px, 70vw, 420px)' }}
+                    className="w-full flex flex-col items-center text-center gap-2 sm:gap-2.5"
                   >
                     <div className="relative">
                       {user.user_metadata?.profile_picture ? (
@@ -675,10 +675,10 @@ export default function Navbar() {
                   </div>
                 ) : null}
 
-                <div className="absolute left-1/2 top-[58%] md:top-[56%] -translate-x-1/2 -translate-y-1/2 w-full flex flex-col items-center gap-3 md:gap-4">
+                <div className="w-full flex flex-col items-center gap-3 md:gap-4" style={{ alignItems: 'center' }}>
                   <div
                     className="flex flex-col items-center gap-2.5 md:gap-3"
-                    style={{ width: 'clamp(260px, 78vw, 440px)' }}
+                    style={{ width: '100%', maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto', alignItems: 'center' }}
                   >
                     <button
                       type="button"
@@ -838,8 +838,7 @@ export default function Navbar() {
                 </div>
 
                 <div
-                  className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pt-1"
-                  style={{ width: 'clamp(220px, 60vw, 320px)' }}
+                  className="w-full flex flex-col items-center gap-2 pt-1"
                 >
                   <div
                     className="w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center"
@@ -853,6 +852,7 @@ export default function Navbar() {
                   <p className="text-sm md:text-base font-medium" style={{ color: 'var(--text-muted)' }}>
                     Synapse
                   </p>
+                </div>
                 </div>
               </div>
             </div>
